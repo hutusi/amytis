@@ -1,5 +1,7 @@
 import { getPostBySlug, getAllPosts } from '@/lib/markdown';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -57,7 +59,29 @@ export default async function PostPage({
           prose-code:text-accent prose-code:bg-muted/10 prose-code:px-1 prose-code:rounded
           prose-blockquote:border-l-accent prose-blockquote:text-muted prose-blockquote:italic
           dark:prose-invert">
-          <ReactMarkdown>{post.content}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              code({ node, inline, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {post.content}
+          </ReactMarkdown>
         </div>
       </article>
 
