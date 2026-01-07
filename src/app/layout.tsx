@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Libre_Baskerville } from "next/font/google";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,7 +30,10 @@ export default function RootLayout({
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
       >
         <div className="selection:bg-emerald-100 selection:text-emerald-900 dark:selection:bg-emerald-900 dark:selection:text-emerald-100">
-          {children}
+          <Navbar />
+          <main className="pt-16">
+            {children}
+          </main>
         </div>
       </body>
     </html>
