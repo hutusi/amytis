@@ -1,7 +1,7 @@
 import { getPostBySlug, getAllPosts } from '@/lib/markdown';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Mermaid from '@/components/Mermaid';
@@ -72,9 +72,18 @@ export default async function PostPage({
 
                 return !inline && match ? (
                   <SyntaxHighlighter
-                    style={vscDarkPlus}
+                    style={oneLight}
                     language={language}
                     PreTag="div"
+                    customStyle={{
+                      background: 'var(--background)',
+                      border: '1px solid var(--muted)',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.9rem',
+                      lineHeight: '1.5',
+                      padding: '1.5rem',
+                      opacity: 0.9
+                    }}
                     {...props}
                   >
                     {String(children).replace(/\n$/, '')}
