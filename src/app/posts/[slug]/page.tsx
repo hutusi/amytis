@@ -23,38 +23,51 @@ export default async function PostPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <nav className="mb-12">
+    <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
+      <nav className="mb-16">
         <Link 
           href="/" 
-          className="text-emerald-700 hover:text-emerald-900 font-medium flex items-center gap-2"
+          className="text-muted hover:text-accent transition-colors duration-200 font-sans text-sm flex items-center gap-1 group"
         >
-          ← Back to Garden
+          <span className="group-hover:-translate-x-1 transition-transform">←</span>
+          <span>Index</span>
         </Link>
       </nav>
 
       <article>
-        <header className="mb-12">
-          <time className="text-gray-500 mb-4 block">{post.date}</time>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+        <header className="mb-14">
+          <div className="mb-4">
+             <time className="text-sm font-mono text-muted">{post.date}</time>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-serif font-bold text-heading leading-tight mb-6">
             {post.title}
           </h1>
           {post.excerpt && (
-            <p className="text-xl text-gray-600 italic leading-relaxed">
+            <p className="text-xl text-foreground/80 font-serif italic leading-relaxed border-l-2 border-accent/30 pl-4">
               {post.excerpt}
             </p>
           )}
         </header>
 
-        <div className="prose prose-emerald lg:prose-xl max-w-none">
+        <div className="prose prose-lg max-w-none 
+          prose-headings:font-serif prose-headings:text-heading 
+          prose-p:text-foreground prose-p:leading-loose
+          prose-a:text-accent prose-a:no-underline hover:prose-a:underline
+          prose-strong:text-heading prose-strong:font-semibold
+          prose-code:text-accent prose-code:bg-muted/10 prose-code:px-1 prose-code:rounded
+          prose-blockquote:border-l-accent prose-blockquote:text-muted prose-blockquote:italic
+          dark:prose-invert">
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </div>
       </article>
 
-      <footer className="mt-20 pt-8 border-t border-gray-100">
-        <p className="text-gray-500 text-sm italic">
-          Grown in the Amytis digital garden.
-        </p>
+      <footer className="mt-24 pt-8 border-t border-muted/20">
+        <Link 
+          href="/" 
+          className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
+        >
+          Amytis Digital Garden
+        </Link>
       </footer>
     </div>
   );

@@ -26,9 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${baskerville.variable} antialiased bg-[#fdfcfb] text-slate-900 font-sans min-h-screen`}
+        className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
       >
-        <div className="selection:bg-emerald-100 selection:text-emerald-900">
+        <div className="selection:bg-emerald-100 selection:text-emerald-900 dark:selection:bg-emerald-900 dark:selection:text-emerald-100">
           {children}
         </div>
       </body>
