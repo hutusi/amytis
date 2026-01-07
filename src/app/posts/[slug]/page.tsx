@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Mermaid from '@/components/Mermaid';
 
 export async function generateStaticParams() {
   const posts = getAllPosts();
@@ -63,10 +64,16 @@ export default async function PostPage({
             components={{
               code({ node, inline, className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || '');
+                const language = match ? match[1] : '';
+                
+                if (!inline && language === 'mermaid') {
+                  return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+                }
+
                 return !inline && match ? (
                   <SyntaxHighlighter
                     style={vscDarkPlus}
-                    language={match[1]}
+                    language={language}
                     PreTag="div"
                     {...props}
                   >
