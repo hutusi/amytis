@@ -18,6 +18,18 @@ export default function Navbar() {
           >
             Garden
           </Link>
+          <Link 
+            href="/archive" 
+            className="text-sm font-sans font-medium text-muted hover:text-heading transition-colors duration-200"
+          >
+            Archive
+          </Link>
+          <Link 
+            href="/about" 
+            className="text-sm font-sans font-medium text-muted hover:text-heading transition-colors duration-200"
+          >
+            About
+          </Link>
         </div>
       </div>
     </nav>
