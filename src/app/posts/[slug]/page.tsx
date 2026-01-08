@@ -54,12 +54,19 @@ export default async function PostPage({
 
           <div className="flex items-center gap-2 mb-8 text-sm font-serif italic text-muted">
             <span>Written by</span>
-            <Link 
-              href={`/authors/${encodeURIComponent(post.author)}`}
-              className="text-foreground hover:text-accent transition-colors duration-200"
-            >
-              {post.author}
-            </Link>
+            <div className="flex items-center gap-1">
+              {post.authors.map((author, index) => (
+                <span key={author} className="flex items-center">
+                  <Link 
+                    href={`/authors/${encodeURIComponent(author)}`}
+                    className="text-foreground hover:text-accent transition-colors duration-200"
+                  >
+                    {author}
+                  </Link>
+                  {index < post.authors.length - 1 && <span className="mr-1">,</span>}
+                </span>
+              ))}
+            </div>
           </div>
 
           {post.excerpt && (

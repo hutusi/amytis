@@ -11,7 +11,7 @@ export interface PostData {
   excerpt: string;
   category: string;
   tags: string[];
-  author: string;
+  authors: string[];
   content: string;
 }
 
@@ -28,6 +28,15 @@ export function getAllPosts(): PostData[] {
       // Remove the first H1 heading if present to avoid duplication with the page title
       const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
 
+      let authors: string[] = [];
+      if (data.authors && Array.isArray(data.authors)) {
+        authors = data.authors;
+      } else if (data.author) {
+        authors = [data.author];
+      } else {
+        authors = ['Amytis'];
+      }
+
       return {
         slug,
         title: data.title,
@@ -35,7 +44,7 @@ export function getAllPosts(): PostData[] {
         excerpt: data.excerpt,
         category: data.category || 'Uncategorized',
         tags: data.tags || [],
-        author: data.author || 'Amytis',
+        authors: authors,
         content: contentWithoutH1,
       };
     });
@@ -52,6 +61,15 @@ export function getPostBySlug(slug: string): PostData | null {
     // Remove the first H1 heading if present to avoid duplication with the page title
     const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
 
+    let authors: string[] = [];
+    if (data.authors && Array.isArray(data.authors)) {
+      authors = data.authors;
+    } else if (data.author) {
+      authors = [data.author];
+    } else {
+      authors = ['Amytis'];
+    }
+
     return {
       slug,
       title: data.title,
@@ -59,7 +77,7 @@ export function getPostBySlug(slug: string): PostData | null {
       excerpt: data.excerpt,
       category: data.category || 'Uncategorized',
       tags: data.tags || [],
-      author: data.author || 'Amytis',
+      authors: authors,
       content: contentWithoutH1,
     };
   } catch (error) {
@@ -96,7 +114,7 @@ export function getAllTags(): Record<string, number> {
 export function getPostsByAuthor(author: string): PostData[] {
   const allPosts = getAllPosts();
   return allPosts.filter((post) => 
-    post.author.toLowerCase() === author.toLowerCase()
+    post.authors.map(a => a.toLowerCase()).includes(author.toLowerCase())
   );
 }
 
@@ -105,16 +123,13 @@ export function getAllAuthors(): Record<string, number> {
   const authors: Record<string, number> = {};
 
   allPosts.forEach((post) => {
-    const author = post.author;
-    // We can normalize author names if we want, but keeping original case for display is nice.
-    // However, for counting/slugs, we might want a normalized key.
-    // For simplicity, let's assume author names are consistent or just use the string as is for the key.
-    // To be safe for URLs, we'll usually use a slugified version, but here let's just count.
-    if (authors[author]) {
-      authors[author] += 1;
-    } else {
-      authors[author] = 1;
-    }
+    post.authors.forEach((author) => {
+      if (authors[author]) {
+        authors[author] += 1;
+      } else {
+        authors[author] = 1;
+      }
+    });
   });
 
   return authors;

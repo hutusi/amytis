@@ -15,12 +15,19 @@ export default function PostList({ posts }: PostListProps) {
               {post.category}
             </span>
             <span className="w-1 h-1 rounded-full bg-muted/30" />
-            <Link 
-              href={`/authors/${encodeURIComponent(post.author)}`}
-              className="italic hover:text-heading transition-colors duration-200"
-            >
-              {post.author}
-            </Link>
+            <div className="flex items-center gap-1">
+              {post.authors.map((author, index) => (
+                <span key={author} className="flex items-center">
+                  <Link 
+                    href={`/authors/${encodeURIComponent(author)}`}
+                    className="italic hover:text-heading transition-colors duration-200"
+                  >
+                    {author}
+                  </Link>
+                  {index < post.authors.length - 1 && <span className="mr-1">,</span>}
+                </span>
+              ))}
+            </div>
             <span className="w-1 h-1 rounded-full bg-muted/30" />
             <time className="font-mono">{post.date}</time>
           </div>
