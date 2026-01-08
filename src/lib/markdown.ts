@@ -15,6 +15,32 @@ export interface PostData {
   content: string;
 }
 
+function generateExcerpt(content: string): string {
+  // Remove headers
+  let plain = content.replace(/^#+\s+/gm, '');
+  // Remove code blocks
+  plain = plain.replace(/```[\s\S]*?```/g, '');
+  // Remove images
+  plain = plain.replace(/!\[[^\]]*\]\([^\)]+\)/g, '');
+  // Remove links (keep text)
+  plain = plain.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+  // Remove bold/italic
+  plain = plain.replace(/(\*\*|__|\*|_)/g, '');
+  // Remove inline code
+  plain = plain.replace(/`[^`]*`/g, '');
+  // Remove blockquotes
+  plain = plain.replace(/^>\s+/gm, '');
+  
+  // Normalize whitespace (replace newlines with spaces, collapse multiple spaces)
+  plain = plain.replace(/\s+/g, ' ').trim();
+  
+  if (plain.length <= 160) {
+    return plain;
+  }
+  
+  return plain.slice(0, 160).trim() + '...';
+}
+
 export function getAllPosts(): PostData[] {
   const fileNames = fs.readdirSync(contentDirectory);
   const allPostsData = fileNames
@@ -37,11 +63,13 @@ export function getAllPosts(): PostData[] {
         authors = ['Amytis'];
       }
 
+      const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+
       return {
         slug,
         title: data.title,
         date: data.date,
-        excerpt: data.excerpt,
+        excerpt: excerpt,
         category: data.category || 'Uncategorized',
         tags: data.tags || [],
         authors: authors,
@@ -70,11 +98,13 @@ export function getPostBySlug(slug: string): PostData | null {
       authors = ['Amytis'];
     }
 
+    const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+
     return {
       slug,
       title: data.title,
       date: data.date,
-      excerpt: data.excerpt,
+      excerpt: excerpt,
       category: data.category || 'Uncategorized',
       tags: data.tags || [],
       authors: authors,
