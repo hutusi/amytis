@@ -5,6 +5,7 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Mermaid from '@/components/Mermaid';
+import { siteConfig } from '../../../../amytis.config';
 
 export async function generateStaticParams() {
   const posts = getAllPosts();
@@ -110,7 +111,7 @@ export default async function PostPage({
           href="/" 
           className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
         >
-          Amytis Digital Garden
+          {siteConfig.title} Digital Garden
         </Link>
       </footer>
     </div>

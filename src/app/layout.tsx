@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Libre_Baskerville } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { siteConfig } from "../../amytis.config";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,8 +16,8 @@ const baskerville = Libre_Baskerville({
 });
 
 export const metadata: Metadata = {
-  title: "Amytis | Digital Garden",
-  description: "A minimalist digital garden for growing thoughts and sharing knowledge.",
+  title: `${siteConfig.title} | Digital Garden`,
+  description: siteConfig.description,
 };
 
 export default function RootLayout({

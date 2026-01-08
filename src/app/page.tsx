@@ -1,17 +1,19 @@
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/markdown';
+import { siteConfig } from '../../amytis.config';
 
 export default function Home() {
-  const posts = getAllPosts();
+  const allPosts = getAllPosts();
+  const posts = allPosts.slice(0, siteConfig.pagination.pageSize);
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-20 md:py-32">
       <header className="mb-20 text-center">
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-heading tracking-tight mb-4">
-          Amytis
+          {siteConfig.title}
         </h1>
         <p className="text-lg text-muted font-serif italic">
-          A digital garden.
+          {siteConfig.description}
         </p>
       </header>
 
@@ -35,10 +37,17 @@ export default function Home() {
             </li>
           ))}
         </ul>
+        {allPosts.length > siteConfig.pagination.pageSize && (
+          <div className="mt-12 text-center">
+            <Link href="/archive" className="text-accent hover:underline">
+              View all posts →
+            </Link>
+          </div>
+        )}
       </main>
 
       <footer className="mt-32 text-center text-sm text-muted">
-        <p>© {new Date().getFullYear()} Amytis. All rights reserved.</p>
+        <p>{siteConfig.footerText}</p>
       </footer>
     </div>
   );
