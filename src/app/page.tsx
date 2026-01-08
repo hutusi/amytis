@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/markdown';
-import { siteConfig } from '../../amytis.config';
+import { siteConfig } from '../../site.config';
 
 export default function Home() {
   const allPosts = getAllPosts();

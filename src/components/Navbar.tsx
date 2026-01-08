@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { siteConfig } from '../../amytis.config';
+import { siteConfig } from '../../site.config';
 
 export default function Navbar() {
   const navItems = [...siteConfig.nav].sort((a, b) => a.weight - b.weight);

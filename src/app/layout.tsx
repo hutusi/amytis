@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Libre_Baskerville } from "next/font/google";
 import Navbar from "@/components/Navbar";
-import { siteConfig } from "../../amytis.config";
+import { siteConfig } from "../../site.config";
 import "./globals.css";
 
 const inter = Inter({
