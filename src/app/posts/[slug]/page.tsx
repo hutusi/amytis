@@ -28,7 +28,7 @@ export default async function PostPage({
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
-      <nav className="mb-16">
+      <nav className="mb-12">
         <Link 
           href="/" 
           className="text-muted hover:text-accent transition-colors duration-200 font-sans text-sm flex items-center gap-1 group"
@@ -39,26 +39,37 @@ export default async function PostPage({
       </nav>
 
       <article>
-        <header className="mb-14">
-          <div className="mb-4">
-             <time className="text-sm font-mono text-muted">{post.date}</time>
+        <header className="mb-16 border-b border-muted/10 pb-12">
+          <div className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
+            <span className="uppercase tracking-widest font-semibold text-accent">
+              {post.category}
+            </span>
+            <span className="w-1 h-1 rounded-full bg-muted/30" />
+            <time className="font-mono">{post.date}</time>
           </div>
-          <h1 className="text-3xl md:text-5xl font-serif font-bold text-heading leading-tight mb-6">
+
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-6">
             {post.title}
           </h1>
+
+          <div className="flex items-center gap-2 mb-8 text-sm font-serif italic text-muted">
+            <span>Written by</span>
+            <span className="text-foreground">{post.author}</span>
+          </div>
+
           {post.excerpt && (
-            <p className="text-xl text-foreground/80 font-serif italic leading-relaxed border-l-2 border-accent/30 pl-4">
+            <p className="text-xl text-foreground/80 font-serif italic leading-relaxed mb-8">
               {post.excerpt}
             </p>
           )}
 
           {post.tags && post.tags.length > 0 && (
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (
                 <Link
                   key={tag}
                   href={`/tags/${tag.toLowerCase()}`}
-                  className="text-sm font-medium text-muted hover:text-accent transition-colors duration-200"
+                  className="px-3 py-1 bg-muted/10 rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent transition-colors duration-200"
                 >
                   #{tag}
                 </Link>
@@ -120,13 +131,16 @@ export default async function PostPage({
         </div>
       </article>
 
-      <footer className="mt-24 pt-8 border-t border-muted/20">
+      <footer className="mt-24 pt-8 border-t border-muted/20 flex justify-between items-center">
         <Link 
           href="/" 
           className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
         >
           {siteConfig.title} Digital Garden
         </Link>
+        <div className="text-xs text-muted/50 font-mono">
+          © {new Date().getFullYear()}
+        </div>
       </footer>
     </div>
   );
