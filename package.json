@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bun test",
+    "test:unit": "bun test src",
+    "test:int": "bun test tests/integration",
+    "test:e2e": "bun test tests/e2e"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",

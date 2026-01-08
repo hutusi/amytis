@@ -15,7 +15,7 @@ export interface PostData {
   content: string;
 }
 
-function generateExcerpt(content: string): string {
+export function generateExcerpt(content: string): string {
   // Remove headers
   let plain = content.replace(/^#+\s+/gm, '');
   // Remove code blocks
