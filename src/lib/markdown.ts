@@ -92,3 +92,30 @@ export function getAllTags(): Record<string, number> {
 
   return tags;
 }
+
+export function getPostsByAuthor(author: string): PostData[] {
+  const allPosts = getAllPosts();
+  return allPosts.filter((post) => 
+    post.author.toLowerCase() === author.toLowerCase()
+  );
+}
+
+export function getAllAuthors(): Record<string, number> {
+  const allPosts = getAllPosts();
+  const authors: Record<string, number> = {};
+
+  allPosts.forEach((post) => {
+    const author = post.author;
+    // We can normalize author names if we want, but keeping original case for display is nice.
+    // However, for counting/slugs, we might want a normalized key.
+    // For simplicity, let's assume author names are consistent or just use the string as is for the key.
+    // To be safe for URLs, we'll usually use a slugified version, but here let's just count.
+    if (authors[author]) {
+      authors[author] += 1;
+    } else {
+      authors[author] = 1;
+    }
+  });
+
+  return authors;
+}
