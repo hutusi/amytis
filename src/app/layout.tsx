@@ -1,19 +1,45 @@
 import type { Metadata } from "next";
-import { Inter, Libre_Baskerville } from "next/font/google";
+import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
-const inter = Inter({
+const inter = localFont({
+  src: [
+    {
+      path: "../fonts/Inter-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Inter-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-inter",
-  subsets: ["latin"],
 });
 
-const baskerville = Libre_Baskerville({
-  weight: ["400", "700"],
+const baskerville = localFont({
+  src: [
+    {
+      path: "../fonts/LibreBaskerville-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/LibreBaskerville-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/LibreBaskerville-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+  ],
   variable: "--font-baskerville",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
