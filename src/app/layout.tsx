@@ -45,6 +45,9 @@ const baskerville = localFont({
 export const metadata: Metadata = {
   title: `${siteConfig.title} | Digital Garden`,
   description: siteConfig.description,
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
