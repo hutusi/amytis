@@ -120,7 +120,9 @@ export function getAllPosts(): PostData[] {
     allPostsData.push(parseMarkdownFile(fullPath, slug));
   });
 
-  return allPostsData.sort((a, b) => (a.date < b.date ? 1 : -1));
+  return allPostsData
+    .filter(post => post.category !== 'Page')
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 /**
