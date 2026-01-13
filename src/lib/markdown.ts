@@ -12,6 +12,7 @@ export interface PostData {
   category: string;
   tags: string[];
   authors: string[];
+  layout?: string;
   content: string;
 }
 
@@ -107,6 +108,7 @@ export function getAllPosts(): PostData[] {
       category: data.category || 'Uncategorized',
       tags: data.tags || [],
       authors: authors,
+      layout: data.layout || 'post',
       content: contentWithoutH1,
     });
   });
@@ -163,6 +165,7 @@ export function getPostBySlug(slug: string): PostData | null {
       category: data.category || 'Uncategorized',
       tags: data.tags || [],
       authors: authors,
+      layout: data.layout || 'post',
       content: contentWithoutH1,
     };
   } catch (error) {
