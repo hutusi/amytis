@@ -51,9 +51,9 @@ export function generateExcerpt(content: string): string {
 export function getAllPosts(): PostData[] {
   const fileNames = fs.readdirSync(contentDirectory);
   const allPostsData = fileNames
-    .filter((fileName) => fileName.endsWith('.mdx'))
+    .filter((fileName) => fileName.endsWith('.mdx') || fileName.endsWith('.md'))
     .map((fileName) => {
-      const slug = fileName.replace(/\.mdx$/, '');
+      const slug = fileName.replace(/\.mdx?$/, '');
       const fullPath = path.join(contentDirectory, fileName);
       const fileContents = fs.readFileSync(fullPath, 'utf8');
       const { data, content } = matter(fileContents);
@@ -93,7 +93,15 @@ export function getAllPosts(): PostData[] {
  */
 export function getPostBySlug(slug: string): PostData | null {
   try {
-    const fullPath = path.join(contentDirectory, `${slug}.mdx`);
+    let fullPath = path.join(contentDirectory, `${slug}.mdx`);
+    if (!fs.existsSync(fullPath)) {
+      fullPath = path.join(contentDirectory, `${slug}.md`);
+    }
+    
+    if (!fs.existsSync(fullPath)) {
+      return null;
+    }
+
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     const { data, content } = matter(fileContents);
 
