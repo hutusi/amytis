@@ -11,7 +11,7 @@ export default function Home() {
   const posts = allPosts.slice(0, pageSize);
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-20 md:py-32">
+    <div className="max-w-4xl mx-auto px-6 py-20 md:py-32">
       <header className="mb-20 text-center">
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-heading tracking-tight mb-4">
           {siteConfig.title}

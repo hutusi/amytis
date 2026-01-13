@@ -40,7 +40,7 @@ export default function ArchivePage() {
   const years = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a));
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
+    <div className="max-w-4xl mx-auto px-6 py-12 md:py-20">
       <header className="mb-20">
         <h1 className="text-4xl font-serif font-bold text-heading mb-4">Archive</h1>
         <p className="text-lg text-muted font-serif italic">

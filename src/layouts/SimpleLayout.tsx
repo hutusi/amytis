@@ -9,7 +9,7 @@ interface SimpleLayoutProps {
 
 export default function SimpleLayout({ post }: SimpleLayoutProps) {
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
+    <div className="max-w-4xl mx-auto px-6 py-12 md:py-20">
       <article>
         <header className="mb-16 border-b border-muted/10 pb-8">
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">

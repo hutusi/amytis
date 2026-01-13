@@ -11,7 +11,7 @@ export default function TagsPage() {
   const sortedTags = Object.keys(tags).sort();
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 md:py-20">
+    <div className="max-w-4xl mx-auto px-6 py-12 md:py-20">
       <header className="mb-16">
         <h1 className="text-4xl font-serif font-bold text-heading mb-4">Tags</h1>
         <p className="text-lg text-muted font-serif italic">
