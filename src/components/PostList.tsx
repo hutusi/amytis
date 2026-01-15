@@ -11,6 +11,11 @@ export default function PostList({ posts }: PostListProps) {
       {posts.map((post) => (
         <li key={post.slug} className="group">
           <div className="flex items-center gap-3 text-xs font-sans text-muted mb-3">
+            {post.draft && (
+              <span className="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded tracking-wider">
+                DRAFT
+              </span>
+            )}
             <span className="uppercase tracking-widest font-semibold text-accent/80">
               {post.category}
             </span>

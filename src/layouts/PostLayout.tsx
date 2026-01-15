@@ -22,6 +22,13 @@ export default function PostLayout({ post }: PostLayoutProps) {
 
       <article>
         <header className="mb-16 border-b border-muted/10 pb-12">
+          {post.draft && (
+            <div className="mb-4">
+              <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
+                DRAFT
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
             <span className="uppercase tracking-widest font-semibold text-accent">
               {post.category}

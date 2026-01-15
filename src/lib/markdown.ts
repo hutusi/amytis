@@ -15,15 +15,16 @@ export interface PostData {
   tags: string[];
   authors: string[];
   layout?: string;
+  draft?: boolean;
   content: string;
 }
 
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\\[[^\\]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\\[^\\]+\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\*\*|__|\*|_)/g, '');
+  plain = plain.replace(/!\[[^\]]*\]\([^\]]+\)/g, '');
+  plain = plain.replace(/\*\[[^\]]+\]\([^\]]+\)/g, '$1');
+  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`[^`]*`/g, '');
   plain = plain.replace(/^>\s+/gm, '');
   plain = plain.replace(/\s+/g, ' ').trim();
@@ -51,7 +52,6 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
 
   const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
   
-  // Date priority: Frontmatter > Filename > Default
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
   date = date instanceof Date ? date.toISOString().split('T')[0] : (date || new Date().toISOString().split('T')[0]);
@@ -65,6 +65,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     tags: data.tags || [],
     authors,
     layout: data.layout || 'post',
+    draft: data.draft || false,
     content: contentWithoutH1,
   };
 }
@@ -78,7 +79,7 @@ export function getAllPosts(): PostData[] {
     let slug = '';
     let dateFromFileName = undefined;
 
-    const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+    const dateRegex = /^(\d{4}-\d{2}-\d{2)-(.*)$/;
     const rawName = item.name.replace(/\.mdx?$/, '');
     const match = rawName.match(dateRegex);
     
@@ -112,6 +113,11 @@ export function getAllPosts(): PostData[] {
   return allPostsData
     .filter(post => {
       if (post.category === 'Page') return false;
+      
+      if (process.env.NODE_ENV === 'production' && post.draft) {
+        return false;
+      }
+
       if (!siteConfig.showFuturePosts) {
         const postDate = new Date(post.date);
         const now = new Date();
@@ -122,7 +128,6 @@ export function getAllPosts(): PostData[] {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-// Helper to find file based on full name (with or without extension)
 function findPostFile(name: string, targetSlug: string): PostData | null {
   let fullPath = path.join(contentDirectory, `${name}.mdx`);
   if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
@@ -130,7 +135,6 @@ function findPostFile(name: string, targetSlug: string): PostData | null {
   fullPath = path.join(contentDirectory, `${name}.md`);
   if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
 
-  // Try directory
   if (fs.existsSync(path.join(contentDirectory, name))) {
     fullPath = path.join(contentDirectory, name, 'index.mdx');
     if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
@@ -143,28 +147,17 @@ function findPostFile(name: string, targetSlug: string): PostData | null {
 }
 
 export function getPostBySlug(slug: string): PostData | null {
-  // If includeDateInUrl is true, slug includes date, standard lookup works.
+  let post: PostData | null = null;
+
   if (siteConfig.includeDateInUrl) {
-    const post = findPostFile(slug, slug);
-    if (!post) return null;
-    
-    // Check visibility
-    if (!siteConfig.showFuturePosts) {
-        const postDate = new Date(post.date);
-        const now = new Date();
-        if (postDate > now) return null;
-    }
-    return post;
+    post = findPostFile(slug, slug);
   } else {
-    // Try standard lookup first (non-dated file)
-    let post = findPostFile(slug, slug);
-    
-    // If not found, scan directory for dated file matching slug
+    post = findPostFile(slug, slug);
     if (!post) {
         const items = fs.readdirSync(contentDirectory);
         for (const item of items) {
           const rawName = item.replace(/\.mdx?$/, '');
-          const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+          const dateRegex = /^(\d{4}-\d{2}-\d{2)-(.*)$/;
           const match = rawName.match(dateRegex);
           
           if (match && match[2] === slug) {
@@ -173,17 +166,20 @@ export function getPostBySlug(slug: string): PostData | null {
           }
         }
     }
-
-    if (!post) return null;
-
-    // Check visibility
-    if (!siteConfig.showFuturePosts) {
-        const postDate = new Date(post.date);
-        const now = new Date();
-        if (postDate > now) return null;
-    }
-    return post;
   }
+
+  if (!post) return null;
+
+  if (process.env.NODE_ENV === 'production' && post.draft) {
+    return null;
+  }
+
+  if (!siteConfig.showFuturePosts) {
+      const postDate = new Date(post.date);
+      const now = new Date();
+      if (postDate > now) return null;
+  }
+  return post;
 }
 
 export function getPageBySlug(slug: string): PostData | null {
