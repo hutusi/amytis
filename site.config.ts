@@ -11,5 +11,6 @@ export const siteConfig = {
   ],
   pagination: {
     pageSize: 10,
-  }
+  },
+  includeDateInUrl: false,
 };

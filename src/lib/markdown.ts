@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { siteConfig } from '../../site.config';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -19,42 +20,27 @@ export interface PostData {
 
 /**
  * Generates a plain text excerpt from markdown content by stripping formatting.
- * Used as a fallback when no excerpt is provided in the frontmatter.
  */
 export function generateExcerpt(content: string): string {
-  // Remove headers (e.g. # Header)
   let plain = content.replace(/^#+\s+/gm, '');
-  // Remove code blocks
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  // Remove images
-  plain = plain.replace(/!\[[^]]*\]\([^)]+\)/g, '');
-  // Remove links (keep text)
-  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  // Remove bold/italic
+  plain = plain.replace(/![[^]]*\]\([^)]+\)/g, '');
+  plain = plain.replace(/[[^]]+\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\*\*|__|\*|_)/g, '');
-  // Remove inline code
   plain = plain.replace(/`[^`]*`/g, '');
-  // Remove blockquotes
   plain = plain.replace(/^>\s+/gm, '');
-  
-  // Normalize whitespace (replace newlines with spaces, collapse multiple spaces)
   plain = plain.replace(/\s+/g, ' ').trim();
   
   if (plain.length <= 160) {
     return plain;
   }
-  
   return plain.slice(0, 160).trim() + '...';
 }
 
-/**
- * Common logic to parse markdown file content and frontmatter.
- */
-function parseMarkdownFile(fullPath: string, slug: string): PostData {
+function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string): PostData {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data, content } = matter(fileContents);
   
-  // Remove the first H1 heading if present to avoid duplication with the page title
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
 
   let authors: string[] = [];
@@ -67,7 +53,15 @@ function parseMarkdownFile(fullPath: string, slug: string): PostData {
   }
 
   const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
-  const date = data.date instanceof Date ? data.date.toISOString().split('T')[0] : (data.date || '');
+  
+  // Priority: Frontmatter Date > Filename Date
+  let date = data.date;
+  if (!date && dateFromFileName) {
+    date = dateFromFileName;
+  }
+  
+  // Normalize date
+  date = date instanceof Date ? date.toISOString().split('T')[0] : (date || '');
 
   return {
     slug,
@@ -82,9 +76,6 @@ function parseMarkdownFile(fullPath: string, slug: string): PostData {
   };
 }
 
-/**
- * Retrieves all MDX posts from the content directory, sorted by date (descending).
- */
 export function getAllPosts(): PostData[] {
   const items = fs.readdirSync(contentDirectory, { withFileTypes: true });
   const allPostsData: PostData[] = [];
@@ -92,23 +83,52 @@ export function getAllPosts(): PostData[] {
   items.forEach((item) => {
     let fullPath = '';
     let slug = '';
+    let dateFromFileName = undefined;
+
+    const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
 
     if (item.isFile()) {
       if (item.name.endsWith('.mdx') || item.name.endsWith('.md')) {
-        slug = item.name.replace(/\.mdx?$/, '');
+        const fileNameNoExt = item.name.replace(/\.mdx?$/, '');
+        const match = fileNameNoExt.match(dateRegex);
+        
+        if (match) {
+          dateFromFileName = match[1];
+          if (siteConfig.includeDateInUrl) {
+            slug = fileNameNoExt;
+          } else {
+            slug = match[2];
+          }
+        } else {
+          slug = fileNameNoExt;
+        }
+        
         fullPath = path.join(contentDirectory, item.name);
       } else {
         return;
       }
     } else if (item.isDirectory()) {
+      // Directory handling (nested posts)
+      // Check if directory name has date? Assuming directory name = slug
+      // If directory is '2026-01-12-post', handle same logic.
+      const match = item.name.match(dateRegex);
+      if (match) {
+        dateFromFileName = match[1];
+        if (siteConfig.includeDateInUrl) {
+          slug = item.name;
+        } else {
+          slug = match[2];
+        }
+      } else {
+        slug = item.name;
+      }
+
       const indexPathMdx = path.join(contentDirectory, item.name, 'index.mdx');
       const indexPathMd = path.join(contentDirectory, item.name, 'index.md');
 
       if (fs.existsSync(indexPathMdx)) {
-        slug = item.name;
         fullPath = indexPathMdx;
       } else if (fs.existsSync(indexPathMd)) {
-        slug = item.name;
         fullPath = indexPathMd;
       } else {
         return;
@@ -117,7 +137,7 @@ export function getAllPosts(): PostData[] {
       return;
     }
 
-    allPostsData.push(parseMarkdownFile(fullPath, slug));
+    allPostsData.push(parseMarkdownFile(fullPath, slug, dateFromFileName));
   });
 
   return allPostsData
@@ -125,37 +145,62 @@ export function getAllPosts(): PostData[] {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-/**
- * Retrieves a single post by its slug. Returns null if not found.
- */
 export function getPostBySlug(slug: string): PostData | null {
-  try {
-    let fullPath = path.join(contentDirectory, `${slug}.mdx`);
-    
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(contentDirectory, `${slug}.md`);
-    }
-    
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(contentDirectory, slug, 'index.mdx');
-    }
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(contentDirectory, slug, 'index.md');
-    }
-    
-    if (!fs.existsSync(fullPath)) {
-      return null;
-    }
+  // If includeDateInUrl is true, slug includes date, standard lookup works.
+  // If false, slug is just title. We need to find the file/dir.
+  
+  if (siteConfig.includeDateInUrl) {
+    // Standard lookup
+    return findPostFile(slug);
+  } else {
+    // Try standard lookup first (non-dated file)
+    let post = findPostFile(slug);
+    if (post) return post;
 
-    return parseMarkdownFile(fullPath, slug);
-  } catch (error) {
+    // Scan directory for dated file matching slug
+    const items = fs.readdirSync(contentDirectory);
+    for (const item of items) {
+      const fileNameNoExt = item.replace(/\.mdx?$/, '');
+      const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+      const match = fileNameNoExt.match(dateRegex);
+      
+      if (match && match[2] === slug) {
+        // Found matching dated file/dir
+        return findPostFile(fileNameNoExt); // Pass the full name to findPostFile
+      }
+    }
     return null;
   }
 }
 
-/**
- * Retrieves a single page by its slug from the root content directory.
- */
+// Helper to find file based on full name (with or without extension)
+function findPostFile(name: string): PostData | null {
+  // Try file direct (name + .mdx/.md)
+  let fullPath = path.join(contentDirectory, `${name}.mdx`);
+  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, getSlugFromName(name));
+  
+  fullPath = path.join(contentDirectory, `${name}.md`);
+  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, getSlugFromName(name));
+
+  // Try directory
+  if (fs.existsSync(path.join(contentDirectory, name))) {
+    fullPath = path.join(contentDirectory, name, 'index.mdx');
+    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, getSlugFromName(name));
+    
+    fullPath = path.join(contentDirectory, name, 'index.md');
+    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, getSlugFromName(name));
+  }
+
+  return null;
+}
+
+function getSlugFromName(name: string): string {
+  if (siteConfig.includeDateInUrl) return name;
+  const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+  const match = name.match(dateRegex);
+  return match ? match[2] : name;
+}
+
 export function getPageBySlug(slug: string): PostData | null {
   try {
     let fullPath = path.join(pagesDirectory, `${slug}.mdx`);
@@ -173,9 +218,6 @@ export function getPageBySlug(slug: string): PostData | null {
   }
 }
 
-/**
- * Retrieves all top-level markdown files in the content directory (pages).
- */
 export function getAllPages(): PostData[] {
   const items = fs.readdirSync(pagesDirectory, { withFileTypes: true });
   return items
@@ -187,9 +229,6 @@ export function getAllPages(): PostData[] {
     });
 }
 
-/**
- * Filters posts by a specific tag (case-insensitive).
- */
 export function getPostsByTag(tag: string): PostData[] {
   const allPosts = getAllPosts();
   return allPosts.filter((post) => 
@@ -197,16 +236,12 @@ export function getPostsByTag(tag: string): PostData[] {
   );
 }
 
-/**
- * Returns a map of all tags and their occurrence counts.
- */
 export function getAllTags(): Record<string, number> {
   const allPosts = getAllPosts();
   const tags: Record<string, number> = {};
 
   allPosts.forEach((post) => {
     post.tags.forEach((tag) => {
-      // Normalize tag to lowercase for consistent counting/URLs
       const normalizedTag = tag.toLowerCase();
       if (tags[normalizedTag]) {
         tags[normalizedTag] += 1;
@@ -219,9 +254,6 @@ export function getAllTags(): Record<string, number> {
   return tags;
 }
 
-/**
- * Filters posts by a specific author (case-insensitive).
- */
 export function getPostsByAuthor(author: string): PostData[] {
   const allPosts = getAllPosts();
   return allPosts.filter((post) => 
@@ -229,9 +261,6 @@ export function getPostsByAuthor(author: string): PostData[] {
   );
 }
 
-/**
- * Returns a map of all authors and their post counts.
- */
 export function getAllAuthors(): Record<string, number> {
   const allPosts = getAllPosts();
   const authors: Record<string, number> = {};
