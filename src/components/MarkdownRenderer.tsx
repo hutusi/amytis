@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Mermaid from '@/components/Mermaid';
@@ -14,11 +15,29 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           prose-blockquote:border-l-accent prose-blockquote:text-muted prose-blockquote:italic
           dark:prose-invert">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           // Use 'div' instead of 'p' to avoid hydration errors
           p: ({ children }) => <div className="mb-4 leading-relaxed">{children}</div>,
           // Render 'pre' as a 'div' to allow block-level children
           pre: ({ children }) => <div className="not-prose">{children}</div>,
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-6">
+              <table className="min-w-full border-collapse border border-muted">
+                {children}
+              </table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="border border-muted bg-muted/20 px-4 py-2 text-left font-semibold text-heading">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-muted px-4 py-2">
+              {children}
+            </td>
+          ),
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
