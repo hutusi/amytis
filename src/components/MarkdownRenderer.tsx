@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Mermaid from '@/components/Mermaid';
+import remarkGfm from 'remark-gfm';
 
 export default function MarkdownRenderer({ content }: { content: string }) {
   return (
@@ -14,6 +15,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           prose-blockquote:border-l-accent prose-blockquote:text-muted prose-blockquote:italic
           dark:prose-invert">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           // Use 'div' instead of 'p' to avoid hydration errors
           p: ({ children }) => <div className="mb-4 leading-relaxed">{children}</div>,
