@@ -15,9 +15,11 @@
 
 ## Writing Content
 
-1.  Create a new `.mdx` file in `content/posts/`.
-2.  The filename will be the URL slug (e.g., `my-new-post.mdx` -> `/posts/my-new-post`).
-3.  Add the required frontmatter:
+1.  **Create a Post:**
+    - **Flat File:** Create `content/posts/my-post.mdx`.
+    - **Nested Folder:** Create `content/posts/my-post/index.mdx`. This allows you to keep assets (images) inside the folder (e.g. `content/posts/my-post/images/pic.png`).
+
+2.  **Frontmatter:**
 
 ```yaml
 ---
@@ -27,9 +29,13 @@ excerpt: "A brief summary."
 category: "Thoughts"
 tags: ["example", "demo"]
 authors: ["Your Name"]
+draft: false
+latex: true # Enable if using math equations ($...$)
 ---
 
 Your content here...
+
+![My Image](./images/pic.png)
 ```
 
 ## Running Tests
