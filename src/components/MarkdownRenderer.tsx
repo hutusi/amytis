@@ -1,6 +1,5 @@
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Mermaid from '@/components/Mermaid';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -27,7 +26,7 @@ export default function MarkdownRenderer({ content, latex = false }: MarkdownRen
           prose-p:text-foreground prose-p:leading-loose
           prose-a:text-accent prose-a:no-underline hover:prose-a:underline
           prose-strong:text-heading prose-strong:font-semibold
-          prose-code:text-accent prose-code:bg-muted/10 prose-code:px-1 prose-code:rounded
+          prose-code:bg-muted/10 prose-code:px-1 prose-code:rounded
           prose-code:before:content-none prose-code:after:content-none
           prose-blockquote:italic
           prose-th:text-heading prose-td:text-foreground
@@ -60,18 +59,9 @@ export default function MarkdownRenderer({ content, latex = false }: MarkdownRen
               }
               return (
                 <SyntaxHighlighter
-                  style={oneLight}
                   language={language || 'text'}
                   PreTag="div"
-                  customStyle={{
-                    background: 'var(--background)',
-                    border: '1px solid var(--muted)',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.9rem',
-                    lineHeight: '1.5',
-                    padding: '1.5rem',
-                    opacity: 0.9
-                  }}
+                  useInlineStyles={false}
                   {...props}
                 >
                   {String(children).replace(/\n$/, '')}

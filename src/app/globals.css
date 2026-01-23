@@ -10,6 +10,7 @@
   --accent: #059669; /* Emerald 600 */
   --accent-hover: #047857; /* Emerald 700 */
   --muted: #a8a29e; /* Stone 400 */
+  --code-fg: #db2777; /* Pink 600 */
 }
 
 .dark {
@@ -19,6 +20,123 @@
   --accent: #34d399; /* Emerald 400 */
   --accent-hover: #10b981; /* Emerald 500 */
   --muted: #a8a29e; /* Stone 400 */
+  --code-fg: #f472b6; /* Pink 400 */
+}
+
+/* PrismJS Syntax Highlighting Custom Theme */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: var(--foreground);
+  text-shadow: none;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.token.namespace {
+  opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #d97706; /* Amber 600 */
+}
+.dark .token.property,
+.dark .token.tag,
+.dark .token.boolean,
+.dark .token.number,
+.dark .token.constant,
+.dark .token.symbol,
+.dark .token.deleted {
+  color: #fbbf24; /* Amber 400 */
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #16a34a; /* Green 600 */
+}
+.dark .token.selector,
+.dark .token.attr-name,
+.dark .token.string,
+.dark .token.char,
+.dark .token.builtin,
+.dark .token.inserted {
+  color: #4ade80; /* Green 400 */
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: var(--foreground);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #db2777; /* Pink 600 */
+}
+.dark .token.atrule,
+.dark .token.attr-value,
+.dark .token.keyword {
+  color: #f472b6; /* Pink 400 */
+}
+
+.token.function,
+.token.class-name {
+  color: #2563eb; /* Blue 600 */
+}
+.dark .token.function,
+.dark .token.class-name {
+  color: #60a5fa; /* Blue 400 */
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #eab308; /* Yellow 500 */
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
 }
 
 @layer components {
@@ -38,6 +156,41 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
+  
+  /* Map Typography colors to our variables for consistency */
+  --color-prose-body: var(--foreground);
+  --color-prose-headings: var(--heading);
+  --color-prose-lead: var(--foreground);
+  --color-prose-links: var(--accent);
+  --color-prose-bold: var(--heading);
+  --color-prose-counters: var(--muted);
+  --color-prose-bullets: var(--muted);
+  --color-prose-hr: var(--muted);
+  --color-prose-quotes: var(--foreground);
+  --color-prose-quote-borders: var(--accent);
+  --color-prose-captions: var(--muted);
+  --color-prose-code: var(--code-fg);
+  --color-prose-pre-code: var(--foreground);
+  --color-prose-pre-bg: var(--background);
+  --color-prose-th-borders: var(--muted);
+  --color-prose-td-borders: var(--muted);
+
+  --color-prose-invert-body: var(--foreground);
+  --color-prose-invert-headings: var(--heading);
+  --color-prose-invert-lead: var(--foreground);
+  --color-prose-invert-links: var(--accent);
+  --color-prose-invert-bold: var(--heading);
+  --color-prose-invert-counters: var(--muted);
+  --color-prose-invert-bullets: var(--muted);
+  --color-prose-invert-hr: var(--muted);
+  --color-prose-invert-quotes: var(--foreground);
+  --color-prose-invert-quote-borders: var(--accent);
+  --color-prose-invert-captions: var(--muted);
+  --color-prose-invert-code: var(--code-fg);
+  --color-prose-invert-pre-code: var(--foreground);
+  --color-prose-invert-pre-bg: var(--background);
+  --color-prose-invert-th-borders: var(--muted);
+  --color-prose-invert-td-borders: var(--muted);
   
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-baskerville), ui-serif, Georgia, serif;
