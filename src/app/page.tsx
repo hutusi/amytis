@@ -27,10 +27,6 @@ export default function Home() {
           <Pagination currentPage={page} totalPages={totalPages} />
         )}
       </main>
-
-      <footer className="mt-32 text-center text-sm text-muted">
-        <p>{siteConfig.footerText}</p>
-      </footer>
     </div>
   );
 }

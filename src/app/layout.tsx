@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
@@ -61,11 +62,12 @@ export default function RootLayout({
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
       >
         <ThemeProvider>
-          <div className="selection:bg-emerald-100 selection:text-emerald-900 dark:selection:bg-emerald-900 dark:selection:text-emerald-100">
+          <div className="selection:bg-emerald-100 selection:text-emerald-900 dark:selection:bg-emerald-900 dark:selection:text-emerald-100 min-h-screen flex flex-col">
             <Navbar />
-            <main className="pt-16">
+            <main className="pt-16 flex-grow">
               {children}
             </main>
+            <Footer />
           </div>
         </ThemeProvider>
       </body>

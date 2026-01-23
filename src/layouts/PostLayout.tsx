@@ -80,18 +80,6 @@ export default function PostLayout({ post }: PostLayoutProps) {
         </header>
 
         <MarkdownRenderer content={post.content} latex={post.latex} />
-
-        <footer className="mt-24 pt-8 border-t border-muted/20 flex justify-between items-center">
-          <Link 
-            href="/" 
-            className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
-          >
-            {siteConfig.title}
-          </Link>
-          <div className="text-xs text-muted/50 font-mono">
-            © {new Date().getFullYear()}
-          </div>
-        </footer>
       </article>
     </div>
   );

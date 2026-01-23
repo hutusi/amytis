@@ -23,15 +23,6 @@ export default function SimpleLayout({ post }: SimpleLayoutProps) {
         </header>
 
         <MarkdownRenderer content={post.content} latex={post.latex} />
-
-        <footer className="mt-24 pt-8 border-t border-muted/20 text-center">
-          <Link 
-            href="/" 
-            className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
-          >
-            Back to Home
-          </Link>
-        </footer>
       </article>
     </div>
   );

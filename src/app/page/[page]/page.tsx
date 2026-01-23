@@ -51,10 +51,6 @@ export default async function PaginatedPage({
         <PostList posts={posts} />
         <Pagination currentPage={currentPage} totalPages={totalPages} />
       </main>
-
-      <footer className="mt-32 text-center text-sm text-muted">
-        <p>{siteConfig.footerText}</p>
-      </footer>
     </div>
   );
 }
