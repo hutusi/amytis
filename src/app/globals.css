@@ -10,7 +10,7 @@
   --accent: #059669; /* Emerald 600 */
   --accent-hover: #047857; /* Emerald 700 */
   --muted: #a8a29e; /* Stone 400 */
-  --code-fg: #db2777; /* Pink 600 */
+  --code-fg: #1c1917; /* Stone 900 - High contrast neutral */
 }
 
 .dark {
@@ -20,7 +20,7 @@
   --accent: #34d399; /* Emerald 400 */
   --accent-hover: #10b981; /* Emerald 500 */
   --muted: #a8a29e; /* Stone 400 */
-  --code-fg: #f472b6; /* Pink 400 */
+  --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
 }
 
 /* PrismJS Syntax Highlighting Custom Theme */
