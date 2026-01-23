@@ -86,7 +86,7 @@ export default function PostLayout({ post }: PostLayoutProps) {
             href="/" 
             className="text-muted hover:text-heading transition-colors duration-200 font-serif italic text-sm"
           >
-            {siteConfig.title} Digital Garden
+            {siteConfig.title}
           </Link>
           <div className="text-xs text-muted/50 font-mono">
             © {new Date().getFullYear()}
