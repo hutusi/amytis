@@ -58,48 +58,63 @@ export default function ArchivePage() {
                return dateB.getTime() - dateA.getTime();
             });
 
-            // Calculate total posts for the year for display next to the header
+            // Calculate total posts for the year
             const yearTotal = months.reduce((total, month) => total + groupedPosts[year][month].length, 0);
 
             return (
-              <section key={year} className="relative">
-                <div className="flex items-baseline gap-4 mb-8">
-                  <h2 className="text-6xl md:text-8xl font-serif font-bold text-muted/40 select-none">
-                    {year}
-                  </h2>
-                  <span className="text-xl font-mono text-muted/60">
-                    ({yearTotal})
-                  </span>
+              <section key={year} className="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-8 md:gap-16">
+                <div className="relative">
+                  <div className="sticky top-32 text-right hidden md:block">
+                    <h2 className="text-5xl font-serif font-bold text-muted">
+                      {year}
+                    </h2>
+                    <span className="block text-sm font-mono text-muted mt-2">
+                      {yearTotal} posts
+                    </span>
+                  </div>
+                  {/* Mobile year header */}
+                  <div className="flex items-baseline justify-between md:hidden border-b border-muted/20 pb-2 mb-8">
+                    <h2 className="text-4xl font-serif font-bold text-heading">
+                      {year}
+                    </h2>
+                    <span className="text-sm font-mono text-muted">
+                      {yearTotal} posts
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="relative z-10 pt-2 pl-2 md:pl-4">
+                <div className="space-y-16">
                   {months.map((month) => {
                     const monthPosts = groupedPosts[year][month];
                     return (
-                      <div key={month} className="mb-10 pl-2">
-                        <h3 className="text-sm font-sans font-bold uppercase tracking-widest text-accent mb-6 flex items-center gap-2">
-                          <span className="w-2 h-px bg-accent"></span>
+                      <div key={month}>
+                        <h3 className="text-xs font-sans font-bold uppercase tracking-widest text-accent mb-6 flex items-center gap-4">
                           {month}
-                          <span className="text-muted/70 ml-1 font-normal normal-case tracking-normal">
-                            ({monthPosts.length})
-                          </span>
+                          <span className="h-px flex-1 bg-muted/10"></span>
                         </h3>
-                        <ul className="space-y-6 border-l border-muted/20 ml-1 pl-6">
-                          {monthPosts.map((post) => (
-                            <li key={post.slug} className="group relative">
-                               <span className="absolute -left-[29px] top-2.5 w-1.5 h-1.5 rounded-full bg-muted/40 group-hover:bg-accent transition-colors duration-200 ring-4 ring-background"></span>
-                              <Link href={`/posts/${post.slug}`} className="block">
-                                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
+                        <ul className="space-y-3">
+                          {monthPosts.map((post) => {
+                            const dateObj = new Date(post.date);
+                            const day = dateObj.getDate().toString().padStart(2, '0');
+                            
+                            return (
+                              <li key={post.slug} className="group">
+                                <Link href={`/posts/${post.slug}`} className="flex items-baseline gap-6 w-full hover:translate-x-1 transition-transform duration-200 py-1">
+                                  <time className="text-sm font-mono text-muted shrink-0 w-6 text-right">
+                                    {day}
+                                  </time>
                                   <h4 className="text-lg font-serif font-medium text-heading group-hover:text-accent transition-colors duration-200">
                                     {post.title}
                                   </h4>
-                                  <span className="text-xs font-mono text-muted mt-1 sm:mt-0">
-                                    {new Date(post.date).getDate().toString().padStart(2, '0')}
-                                  </span>
-                                </div>
-                              </Link>
-                            </li>
-                          ))}
+                                  {post.authors.length > 0 && (
+                                    <span className="text-xs font-sans italic text-muted ml-auto hidden sm:block shrink-0">
+                                      {post.authors[0]}
+                                    </span>
+                                  )}
+                                </Link>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     );
@@ -107,6 +122,7 @@ export default function ArchivePage() {
                 </div>
               </section>
             );
+
           })}
         </div>
       </main>
