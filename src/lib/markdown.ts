@@ -23,27 +23,40 @@ export interface PostData {
   layout?: string;
   draft?: boolean;
   latex?: boolean;
+  toc?: boolean;
   content: string;
   headings: Heading[];
 }
 
+/**
+ * Generates a plain text excerpt from markdown content by stripping formatting.
+ * Used as a fallback when no excerpt is provided in the frontmatter.
+ */
 export function generateExcerpt(content: string): string {
+  // Remove headers (e.g. # Header)
   let plain = content.replace(/^#+\s+/gm, '');
+  // Remove code blocks
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\{([^]]+)\}\[[^\]]*\]\([^)]+\)/g, '$1');
+  // Remove images
+  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+  // Remove links (keep text)
+  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  // Remove bold/italic
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
+  // Remove inline code
   plain = plain.replace(/`[^`]*`/g, '');
+  // Remove blockquotes
   plain = plain.replace(/^>\s+/gm, '');
+  
+  // Normalize whitespace (replace newlines with spaces, collapse multiple spaces)
   plain = plain.replace(/\s+/g, ' ').trim();
   
   if (plain.length <= 160) {
     return plain;
   }
+  
   return plain.slice(0, 160).trim() + '...';
 }
-
-
 
 function getHeadings(content: string): Heading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
@@ -55,7 +68,7 @@ function getHeadings(content: string): Heading[] {
     const text = match[2].trim();
     const id = text
       .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-') // Support Chinese characters if needed, mostly alphanumeric
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
       .replace(/(^-|-)+/g, '');
     
     headings.push({ id, text, level });
@@ -97,6 +110,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     layout: data.layout || 'post',
     draft: data.draft || false,
     latex: data.latex || false,
+    toc: data.toc !== false, // Default to true if not explicitly false
     content: contentWithoutH1,
     headings,
   };
@@ -160,7 +174,6 @@ export function getAllPosts(): PostData[] {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-// Helper to find file based on full name (with or without extension)
 function findPostFile(name: string, targetSlug: string): PostData | null {
   let fullPath = path.join(contentDirectory, `${name}.mdx`);
   if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
