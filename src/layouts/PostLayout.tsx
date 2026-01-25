@@ -34,13 +34,14 @@ export default function PostLayout({ post }: PostLayoutProps) {
               </div>
             )}
             <div className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
-              <span className="uppercase tracking-widest font-semibold text-accent">
-                {post.category}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <time className="font-mono">{post.date}</time>
-            </div>
-
+                          <span className="uppercase tracking-widest font-semibold text-accent">
+                            {post.category}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-muted/30" />
+                          <time className="font-mono">{post.date}</time>
+                          <span className="w-1 h-1 rounded-full bg-muted/30" />
+                          <span className="font-mono">{post.readingTime}</span>
+                        </div>
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-6">
               {post.title}
             </h1>

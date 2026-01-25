@@ -2,15 +2,15 @@
 
 ## High Priority
 
-- [ ] **SEO & Discovery**
-  - Generate `sitemap.xml` for search engines.
-  - Generate `rss.xml` / `atom.xml` for feed readers.
-  - Add Open Graph (OG) meta tags for social sharing.
+- [x] **SEO & Discovery**
+  - [x] Generate `sitemap.xml` for search engines.
+  - [x] Generate `rss.xml` / `atom.xml` for feed readers.
+  - [ ] Add Open Graph (OG) meta tags for social sharing.
 
-- [ ] **Navigation & UX**
-  - Implement a client-side Search bar (Command+K).
-  - Add a sticky Table of Contents (TOC) to post layouts.
-  - Add "Reading Time" estimate to post headers.
+- [x] **Navigation & UX**
+  - [x] Implement a client-side Search bar (Command+K).
+  - [x] Add a sticky Table of Contents (TOC) to post layouts.
+  - [x] Add "Reading Time" estimate to post headers.
 
 ## Enhancements
 

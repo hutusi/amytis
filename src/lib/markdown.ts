@@ -24,37 +24,33 @@ export interface PostData {
   draft?: boolean;
   latex?: boolean;
   toc?: boolean;
+  readingTime: string;
   content: string;
   headings: Heading[];
 }
 
-/**
- * Generates a plain text excerpt from markdown content by stripping formatting.
- * Used as a fallback when no excerpt is provided in the frontmatter.
- */
+function calculateReadingTime(content: string): string {
+  const wordsPerMinute = 200;
+  // Strip tags and special chars roughly for word count
+  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~\[\]()]/g, "");
+  const wordCount = text.split(/\s+/).length;
+  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  return `${minutes} min read`;
+}
+
 export function generateExcerpt(content: string): string {
-  // Remove headers (e.g. # Header)
   let plain = content.replace(/^#+\s+/gm, '');
-  // Remove code blocks
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  // Remove images
   plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  // Remove links (keep text)
-  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  // Remove bold/italic
+  plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
-  // Remove inline code
   plain = plain.replace(/`[^`]*`/g, '');
-  // Remove blockquotes
   plain = plain.replace(/^>\s+/gm, '');
-  
-  // Normalize whitespace (replace newlines with spaces, collapse multiple spaces)
   plain = plain.replace(/\s+/g, ' ').trim();
   
   if (plain.length <= 160) {
     return plain;
   }
-  
   return plain.slice(0, 160).trim() + '...';
 }
 
@@ -69,7 +65,7 @@ function getHeadings(content: string): Heading[] {
     const id = text
       .toLowerCase()
       .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-      .replace(/(^-|-)+/g, '');
+      .replace(/(^-|-$)+/g, '');
     
     headings.push({ id, text, level });
   }
@@ -92,6 +88,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   }
 
   const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+  const readingTime = calculateReadingTime(contentWithoutH1);
   
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
@@ -110,7 +107,8 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     layout: data.layout || 'post',
     draft: data.draft || false,
     latex: data.latex || false,
-    toc: data.toc !== false, // Default to true if not explicitly false
+    toc: data.toc !== false,
+    readingTime,
     content: contentWithoutH1,
     headings,
   };
@@ -174,6 +172,7 @@ export function getAllPosts(): PostData[] {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+// Helper to find file based on full name (with or without extension)
 function findPostFile(name: string, targetSlug: string): PostData | null {
   let fullPath = path.join(contentDirectory, `${name}.mdx`);
   if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
