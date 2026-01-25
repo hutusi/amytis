@@ -22,7 +22,9 @@ export default function SimpleLayout({ post }: SimpleLayoutProps) {
           )}
         </header>
 
-        <MarkdownRenderer content={post.content} latex={post.latex} />
+        <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+
+
       </article>
     </div>
   );

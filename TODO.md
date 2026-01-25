@@ -14,8 +14,8 @@
 
 ## Enhancements
 
-- [ ] **Performance**
-  - Re-enable image optimization (requires custom loader for static export or using a service like Cloudinary).
+- [x] **Performance**
+  - [x] Re-enable image optimization (requires custom loader for static export or using a service like Cloudinary).
   
 - [ ] **Content**
   - Add support for "Series" (grouping related posts).

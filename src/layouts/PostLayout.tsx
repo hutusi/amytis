@@ -84,7 +84,7 @@ export default function PostLayout({ post }: PostLayoutProps) {
             )}
           </header>
 
-          <MarkdownRenderer content={post.content} latex={post.latex} />
+          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
         </article>
 
         {showToc && <TableOfContents headings={post.headings} />}

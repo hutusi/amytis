@@ -6,15 +6,18 @@ import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
+import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import ExportedImage from 'next-image-export-optimizer';
 
 interface MarkdownRendererProps {
   content: string;
   latex?: boolean;
+  slug?: string;
 }
 
-export default function MarkdownRenderer({ content, latex = false }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug }: MarkdownRendererProps) {
   const remarkPlugins: any[] = [remarkGfm];
-  const rehypePlugins: any[] = [rehypeRaw, rehypeSlug];
+  const rehypePlugins: any[] = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
 
   if (latex) {
     remarkPlugins.push(remarkMath);
@@ -71,8 +74,21 @@ export default function MarkdownRenderer({ content, latex = false }: MarkdownRen
               </code>
             );
           },
-          // Ensure images are responsive and styled
-          img: (props) => <img {...props} className="max-w-full h-auto rounded-lg my-4" />,
+          // Ensure images are responsive and styled, using optimized image if dimensions exist
+          img: (props: any) => {
+            if (props.width && props.height) {
+              return (
+                <ExportedImage
+                  src={props.src}
+                  alt={props.alt || ''}
+                  width={props.width}
+                  height={props.height}
+                  className="max-w-full h-auto rounded-lg my-4"
+                />
+              );
+            }
+            return <img {...props} className="max-w-full h-auto rounded-lg my-4" />;
+          },
         }}
       >
         {content}
