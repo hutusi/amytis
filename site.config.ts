@@ -15,4 +15,5 @@ export const siteConfig = {
   },
   includeDateInUrl: false,
   showFuturePosts: false,
+  toc: true,
 };

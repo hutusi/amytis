@@ -6,6 +6,12 @@ import { siteConfig } from '../../site.config';
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
 
+export interface Heading {
+  id: string;
+  text: string;
+  level: number;
+}
+
 export interface PostData {
   slug: string;
   title: string;
@@ -18,12 +24,13 @@ export interface PostData {
   draft?: boolean;
   latex?: boolean;
   content: string;
+  headings: Heading[];
 }
 
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+  plain = plain.replace(/!\[[^]]*\]\([^)]+\)/g, '');
   plain = plain.replace(/\{([^]]+)\}\[[^\]]*\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`[^`]*`/g, '');
@@ -37,6 +44,24 @@ export function generateExcerpt(content: string): string {
 }
 
 
+
+function getHeadings(content: string): Heading[] {
+  const regex = /^(#{2,3})\s+(.*)$/gm;
+  const headings: Heading[] = [];
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const level = match[1].length;
+    const text = match[2].trim();
+    const id = text
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-') // Support Chinese characters if needed, mostly alphanumeric
+      .replace(/(^-|-)+/g, '');
+    
+    headings.push({ id, text, level });
+  }
+  return headings;
+}
 
 function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string): PostData {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
@@ -59,6 +84,8 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   if (!date && dateFromFileName) date = dateFromFileName;
   date = date instanceof Date ? date.toISOString().split('T')[0] : (date || new Date().toISOString().split('T')[0]);
 
+  const headings = getHeadings(content);
+
   return {
     slug,
     title: data.title,
@@ -71,6 +98,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     draft: data.draft || false,
     latex: data.latex || false,
     content: contentWithoutH1,
+    headings,
   };
 }
 

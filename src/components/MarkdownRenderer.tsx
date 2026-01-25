@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeSlug from 'rehype-slug';
 
 interface MarkdownRendererProps {
   content: string;
@@ -13,7 +14,7 @@ interface MarkdownRendererProps {
 
 export default function MarkdownRenderer({ content, latex = false }: MarkdownRendererProps) {
   const remarkPlugins: any[] = [remarkGfm];
-  const rehypePlugins: any[] = [rehypeRaw];
+  const rehypePlugins: any[] = [rehypeRaw, rehypeSlug];
 
   if (latex) {
     remarkPlugins.push(remarkMath);
