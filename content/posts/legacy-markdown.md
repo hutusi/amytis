@@ -1,6 +1,6 @@
 ---
 title: "Legacy Markdown Support"
-date: "2025-10-15"
+date: "2026-01-15"
 excerpt: "Demonstrating support for standard .md files."
 category: "Meta"
 tags: ["markdown", "legacy"]

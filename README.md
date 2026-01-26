@@ -2,6 +2,8 @@
 
 **Amytis** is a minimalist, elegant digital garden built with Next.js 15+ and Tailwind CSS v4. It is designed for cultivating thoughts, sharing knowledge, and growing ideas with a focus on typography and readability.
 
+[**Live Demo**](https://amytis.vercel.app/)
+
 ![Amytis Screenshot](public/screenshot.png)
 
 ## Features
