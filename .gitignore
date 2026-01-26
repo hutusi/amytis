@@ -44,5 +44,5 @@ next-env.d.ts
 /public/posts/
 
 # image optimization
-/public/nextImageExportOptimizer/
-/public/next-image-export-optimizer-hashes.json
+/public/**/nextImageExportOptimizer/
+!/public/next-image-export-optimizer-hashes.json
