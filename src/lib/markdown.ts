@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { siteConfig } from '../../site.config';
+import GithubSlugger from 'github-slugger';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -32,7 +33,7 @@ export interface PostData {
 function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
   // Strip tags and special chars roughly for word count
-  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~\[\]()]/g, "");
+  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~[\]()]/g, "");
   const wordCount = text.split(/\s+/).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return `${minutes} min read`;
@@ -57,15 +58,13 @@ export function generateExcerpt(content: string): string {
 function getHeadings(content: string): Heading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
   const headings: Heading[] = [];
+  const slugger = new GithubSlugger();
   let match;
 
   while ((match = regex.exec(content)) !== null) {
     const level = match[1].length;
     const text = match[2].trim();
-    const id = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
+    const id = slugger.slug(text);
     
     headings.push({ id, text, level });
   }
