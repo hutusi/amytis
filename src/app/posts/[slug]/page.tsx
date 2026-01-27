@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllPosts } from '@/lib/markdown';
+import { getPostBySlug, getAllPosts, getRelatedPosts } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -33,6 +33,8 @@ export default async function PostPage({
     return <SimpleLayout post={post} />;
   }
 
+  const relatedPosts = getRelatedPosts(slug);
+
   // Default to standard post layout
-  return <PostLayout post={post} />;
+  return <PostLayout post={post} relatedPosts={relatedPosts} />;
 }

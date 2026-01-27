@@ -2,13 +2,15 @@ import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import TableOfContents from '@/components/TableOfContents';
+import RelatedPosts from '@/components/RelatedPosts';
 import { siteConfig } from '../../site.config';
 
 interface PostLayoutProps {
   post: PostData;
+  relatedPosts?: PostData[];
 }
 
-export default function PostLayout({ post }: PostLayoutProps) {
+export default function PostLayout({ post, relatedPosts }: PostLayoutProps) {
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
 
   return (
@@ -16,7 +18,7 @@ export default function PostLayout({ post }: PostLayoutProps) {
       <nav className="mb-12">
         <Link 
           href="/" 
-          className="text-muted hover:text-accent transition-colors duration-200 font-sans text-sm flex items-center gap-1 group"
+          className="text-muted hover:text-accent no-underline transition-colors duration-200 font-sans text-sm flex items-center gap-1 group"
         >
           <span className="group-hover:-translate-x-1 transition-transform">←</span>
           <span>Index</span>
@@ -34,14 +36,15 @@ export default function PostLayout({ post }: PostLayoutProps) {
               </div>
             )}
             <div className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
-                          <span className="uppercase tracking-widest font-semibold text-accent">
-                            {post.category}
-                          </span>
-                          <span className="w-1 h-1 rounded-full bg-muted/30" />
-                          <time className="font-mono">{post.date}</time>
-                          <span className="w-1 h-1 rounded-full bg-muted/30" />
-                          <span className="font-mono">{post.readingTime}</span>
-                        </div>
+              <span className="uppercase tracking-widest font-semibold text-accent">
+                {post.category}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <time className="font-mono">{post.date}</time>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <span className="font-mono">{post.readingTime}</span>
+            </div>
+
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-6">
               {post.title}
             </h1>
@@ -53,7 +56,7 @@ export default function PostLayout({ post }: PostLayoutProps) {
                   <span key={author} className="flex items-center">
                     <Link 
                       href={`/authors/${encodeURIComponent(author)}`}
-                      className="text-foreground hover:text-accent transition-colors duration-200"
+                      className="text-foreground hover:text-accent no-underline transition-colors duration-200"
                     >
                       {author}
                     </Link>
@@ -75,7 +78,7 @@ export default function PostLayout({ post }: PostLayoutProps) {
                   <Link
                     key={tag}
                     href={`/tags/${tag.toLowerCase()}`}
-                    className="px-3 py-1 bg-muted/10 rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent transition-colors duration-200"
+                    className="px-3 py-1 bg-muted/10 rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent no-underline transition-colors duration-200"
                   >
                     #{tag}
                   </Link>
@@ -85,6 +88,8 @@ export default function PostLayout({ post }: PostLayoutProps) {
           </header>
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+
+          <RelatedPosts posts={relatedPosts || []} />
         </article>
 
         {showToc && <TableOfContents headings={post.headings} />}

@@ -24,7 +24,7 @@
 
 - [ ] **Content**
   - [ ] Add support for "Series" (grouping related posts).
-  - [ ] Add "Related Posts" section at the bottom of articles.
+  - [x] Add "Related Posts" section at the bottom of articles.
 
 - [ ] **Analytics**
   - [ ] Integrate a privacy-friendly analytics tool (e.g., Plausible, Fathom) or a simple script.

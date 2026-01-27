@@ -302,3 +302,30 @@ export function getAllAuthors(): Record<string, number> {
 
   return authors;
 }
+
+export function getRelatedPosts(currentSlug: string, limit: number = 3): PostData[] {
+  const allPosts = getAllPosts();
+  const currentPost = allPosts.find(p => p.slug === currentSlug);
+
+  if (!currentPost) return [];
+
+  const related = allPosts
+    .filter(post => post.slug !== currentSlug)
+    .map(post => {
+      let score = 0;
+      const commonTags = post.tags.filter(tag => currentPost.tags.includes(tag));
+      score += commonTags.length * 2;
+
+      if (post.category === currentPost.category && post.category !== 'Uncategorized') {
+        score += 1;
+      }
+
+      return { post, score };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.post);
+
+  return related;
+}
