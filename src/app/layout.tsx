@@ -45,6 +45,7 @@ const baskerville = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.baseUrl),
   title: `${siteConfig.title}`,
   description: siteConfig.description,
   icons: {

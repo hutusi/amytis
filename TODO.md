@@ -5,7 +5,7 @@
 - [x] **SEO & Discovery**
   - [x] Generate `sitemap.xml` for search engines.
   - [x] Generate `rss.xml` / `atom.xml` for feed readers.
-  - [ ] Add Open Graph (OG) meta tags for social sharing.
+  - [x] Add Open Graph (OG) meta tags for social sharing.
 
 - [x] **Navigation & UX**
   - [x] Implement a client-side fuzzy Search bar (Command+K) using Fuse.js.
