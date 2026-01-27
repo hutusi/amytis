@@ -16,4 +16,18 @@ export const siteConfig = {
   includeDateInUrl: false,
   showFuturePosts: false,
   toc: true,
+  analytics: {
+    provider: null, // 'umami' | 'plausible' | 'google' | null
+    umami: {
+      websiteId: '', // Your Umami Website ID
+      src: 'https://us.umami.is/script.js', // Default or self-hosted URL
+    },
+    plausible: {
+      domain: '', // Your domain
+      src: 'https://plausible.io/js/script.js',
+    },
+    google: {
+      measurementId: '', // G-XXXXXXXXXX
+    },
+  },
 };
