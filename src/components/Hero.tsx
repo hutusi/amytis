@@ -1,0 +1,83 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+interface HeroProps {
+  title: string;
+  subtitle: string;
+}
+
+export default function Hero({ title, subtitle }: HeroProps) {
+  const [isVisible, setIsVisible] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      if (scrollPosition > 200) {
+        setHasScrolled(true);
+      }
+      
+      // If we've scrolled past the hero significantly, collapse it so it doesn't show on scroll up
+      if (scrollPosition > 400 && isVisible) {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isVisible]);
+
+  if (!isVisible) {
+    return (
+      <div className="py-6 text-center border-b border-muted/10 animate-fade-in">
+        <button 
+          onClick={() => {
+            setIsVisible(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="text-xs font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors"
+        >
+          Show Intro ↓
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <header className="relative py-24 md:py-40 flex flex-col items-center justify-center text-center max-w-4xl mx-auto min-h-[60vh]">
+      <div className="mb-8 flex items-center justify-center animate-fade-in">
+         <span className="h-px w-12 bg-accent/30 mr-4"></span>
+         <span className="text-xs font-sans font-bold uppercase tracking-[0.3em] text-accent/80">Digital Garden</span>
+         <span className="h-px w-12 bg-accent/30 ml-4"></span>
+      </div>
+      
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-heading leading-[1.1] tracking-tight mb-10 text-balance animate-slide-up">
+        {title}
+      </h1>
+      
+      <p className="text-muted font-sans text-sm md:text-base max-w-xl mx-auto leading-relaxed opacity-80 animate-slide-up animation-delay-200">
+        {subtitle}
+      </p>
+
+      {/* Manual Close */}
+      <button 
+        onClick={() => setIsVisible(false)}
+        className="absolute top-4 right-4 text-muted/30 hover:text-accent transition-colors p-2"
+        aria-label="Collapse Hero"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-muted/30">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+        </svg>
+      </div>
+    </header>
+  );
+}

@@ -3,6 +3,7 @@ import { siteConfig } from '../../site.config';
 import PostCard from '@/components/PostCard';
 import Pagination from '@/components/Pagination';
 import Link from 'next/link';
+import Hero from '@/components/Hero';
 
 export default function Home() {
   const allPosts = getAllPosts();
@@ -18,22 +19,10 @@ export default function Home() {
 
   return (
     <div className="layout-container">
-      {/* Hero */}
-      <header className="py-20 md:py-32 flex flex-col items-center justify-center text-center max-w-4xl mx-auto">
-        <div className="mb-8 flex items-center justify-center animate-fade-in">
-           <span className="h-px w-12 bg-accent/30 mr-4"></span>
-           <span className="text-xs font-sans font-bold uppercase tracking-[0.3em] text-accent/80">Digital Garden</span>
-           <span className="h-px w-12 bg-accent/30 ml-4"></span>
-        </div>
-        
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-heading leading-[1.1] tracking-tight mb-10 text-balance">
-          {siteConfig.description}
-        </h1>
-        
-        <p className="text-muted font-sans text-sm md:text-base max-w-xl mx-auto leading-relaxed opacity-80">
-          A space for cultivating ideas, sharing technical knowledge, and exploring the art of software engineering.
-        </p>
-      </header>
+      <Hero 
+        title={siteConfig.hero.title} 
+        subtitle={siteConfig.hero.subtitle} 
+      />
 
       {/* Series Section (if any) */}
       {seriesNames.length > 0 && (

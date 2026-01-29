@@ -16,6 +16,10 @@ export const siteConfig = {
   includeDateInUrl: false,
   showFuturePosts: false,
   toc: true,
+  hero: {
+    title: "Cultivating Digital Knowledge",
+    subtitle: "A minimalist digital garden for growing thoughts and sharing knowledge.",
+  },
   analytics: {
     provider: null, // 'umami' | 'plausible' | 'google' | null
     umami: {
