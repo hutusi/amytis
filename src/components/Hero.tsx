@@ -51,22 +51,16 @@ export default function Hero({ title, subtitle }: HeroProps) {
     return (
       <div 
         className={`sticky top-16 z-10 w-full cursor-pointer border-b border-muted/10 bg-background/80 backdrop-blur transition-all duration-500 ease-in-out hover:bg-muted/5 ${
-          showTrigger ? 'opacity-100 translate-y-0 py-3' : 'opacity-0 -translate-y-full pointer-events-none py-0 border-none'
+          showTrigger ? 'opacity-100 translate-y-0 py-4' : 'opacity-0 -translate-y-full pointer-events-none py-0 border-none'
         }`}
         onClick={handleExpand}
       >
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between overflow-hidden">
-          <span className="font-serif text-sm font-medium text-heading truncate pr-4">
-            {title}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted group-hover:text-accent transition-colors shrink-0">
-              Show Intro
-            </span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-muted">
-              <path d="M7 13l5 5 5-5"/>
-            </svg>
-          </div>
+        <div className="text-center">
+          <button 
+            className="text-xs font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors"
+          >
+            Show Intro ↓
+          </button>
         </div>
       </div>
     );
