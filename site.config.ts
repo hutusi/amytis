@@ -21,6 +21,10 @@ export const siteConfig = {
     title: "Cultivating Digital Knowledge",
     subtitle: "A minimalist digital garden for growing thoughts and sharing knowledge.",
   },
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'zh'],
+  },
   analytics: {
     provider: null, // 'umami' | 'plausible' | 'google' | null
     umami: {

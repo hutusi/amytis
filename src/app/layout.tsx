@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import "./globals.css";
 
 const inter = localFont({
@@ -65,14 +66,16 @@ export default function RootLayout({
         data-palette={siteConfig.themeColor}
       >
         <ThemeProvider>
-          <div className="selection:bg-accent/20 selection:text-accent dark:selection:bg-accent/30 dark:selection:text-accent min-h-screen flex flex-col">
-            <Navbar />
-            <main className="pt-16 flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <Analytics />
+          <LanguageProvider>
+            <div className="selection:bg-accent/20 selection:text-accent dark:selection:bg-accent/30 dark:selection:text-accent min-h-screen flex flex-col">
+              <Navbar />
+              <main className="pt-16 flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </div>
+            <Analytics />
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

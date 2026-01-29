@@ -1,7 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { siteConfig } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
 import Search from '@/components/Search';
+import LanguageSwitch from '@/components/LanguageSwitch';
+import { useLanguage } from '@/components/LanguageProvider';
 
 /**
  * Global navigation bar.
@@ -9,10 +13,19 @@ import Search from '@/components/Search';
  * - Fixed position with backdrop blur.
  * - Configuration-driven menu items (from site.config.ts).
  * - Supports internal routes and external links (with icons).
- * - Integrated ThemeToggle.
+ * - Integrated ThemeToggle and LanguageSwitch.
  */
 export default function Navbar() {
+  const { t } = useLanguage();
   const navItems = [...siteConfig.nav].sort((a, b) => a.weight - b.weight);
+
+  const getLabel = (name: string) => {
+    const key = name.toLowerCase() as any;
+    // Check if translation exists, otherwise return original
+    // This assumes translation keys match the lowercase English names
+    const translated = t(key);
+    return translated !== key ? translated : name;
+  };
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 border-b border-muted/10 bg-background/80 backdrop-blur-md transition-all duration-300">
@@ -38,42 +51,43 @@ export default function Navbar() {
           <span>{siteConfig.title}</span>
         </Link>
         
-        <div className="flex items-center gap-6">
-          {navItems.map((item) => {
-            // Check if the item is explicitly marked as external in the config
-            const isExternal = 'external' in item && item.external;
-            const Component = isExternal ? 'a' : Link;
-            const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="hidden md:flex items-center gap-6">
+            {navItems.map((item) => {
+              const isExternal = 'external' in item && item.external;
+              const Component = isExternal ? 'a' : Link;
+              const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
-            return (
-              <Component
-                key={item.url}
-                href={item.url}
-                {...props}
-                className="text-sm font-sans font-medium text-foreground/80 hover:text-heading transition-colors duration-200 flex items-center gap-1"
-              >
-                {item.name}
-                {/* Render an external link icon for clarity */}
-                {isExternal && (
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="opacity-70"
-                  >
-                    <path d="M7 17l9.2-9.2M17 17V7H7" />
-                  </svg>
-                )}
-              </Component>
-            );
-          })}
-          <div className="w-px h-4 bg-muted/20 mx-1"></div>
+              return (
+                <Component
+                  key={item.url}
+                  href={item.url}
+                  {...props}
+                  className="text-sm font-sans font-medium text-foreground/80 hover:text-heading no-underline transition-colors duration-200 flex items-center gap-1"
+                >
+                  {getLabel(item.name)}
+                  {isExternal && (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="opacity-70"
+                    >
+                      <path d="M7 17l9.2-9.2M17 17V7H7" />
+                    </svg>
+                  )}
+                </Component>
+              );
+            })}
+          </div>
+          <div className="w-px h-4 bg-muted/20 mx-1 hidden md:block"></div>
           <Search />
+          <LanguageSwitch />
           <ThemeToggle />
         </div>
       </div>
