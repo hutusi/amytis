@@ -28,7 +28,7 @@ export default function Hero({ title, subtitle }: HeroProps) {
       }
 
       // Only show the trigger bar when near the top
-      setShowTrigger(scrollPosition < 100);
+      setShowTrigger(scrollPosition < 20);
     };
 
     window.addEventListener('scroll', handleScroll);
