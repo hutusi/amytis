@@ -62,9 +62,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
+        data-palette={siteConfig.themeColor}
       >
         <ThemeProvider>
-          <div className="selection:bg-emerald-100 selection:text-emerald-900 dark:selection:bg-emerald-900 dark:selection:text-emerald-100 min-h-screen flex flex-col">
+          <div className="selection:bg-accent/20 selection:text-accent dark:selection:bg-accent/30 dark:selection:text-accent min-h-screen flex flex-col">
             <Navbar />
             <main className="pt-16 flex-grow">
               {children}

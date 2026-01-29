@@ -16,6 +16,7 @@ export const siteConfig = {
   includeDateInUrl: false,
   showFuturePosts: false,
   toc: true,
+  themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
   hero: {
     title: "Cultivating Digital Knowledge",
     subtitle: "A minimalist digital garden for growing thoughts and sharing knowledge.",
