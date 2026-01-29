@@ -19,13 +19,19 @@ export default function Home() {
   return (
     <div className="layout-container">
       {/* Hero */}
-      <header className="mb-24 flex flex-col items-center justify-center text-center">
-        <h1 className="text-6xl md:text-8xl font-serif font-bold text-heading tracking-tighter mb-6 relative">
-          <span className="relative z-10">{siteConfig.title}</span>
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-accent/20 rounded-full" />
-        </h1>
-        <p className="max-w-2xl text-xl md:text-2xl text-muted font-serif italic leading-relaxed">
+      <header className="py-20 md:py-32 flex flex-col items-center justify-center text-center max-w-4xl mx-auto">
+        <div className="mb-8 flex items-center justify-center animate-fade-in">
+           <span className="h-px w-12 bg-accent/30 mr-4"></span>
+           <span className="text-xs font-sans font-bold uppercase tracking-[0.3em] text-accent/80">Digital Garden</span>
+           <span className="h-px w-12 bg-accent/30 ml-4"></span>
+        </div>
+        
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-heading leading-[1.1] tracking-tight mb-10 text-balance">
           {siteConfig.description}
+        </h1>
+        
+        <p className="text-muted font-sans text-sm md:text-base max-w-xl mx-auto leading-relaxed opacity-80">
+          A space for cultivating ideas, sharing technical knowledge, and exploring the art of software engineering.
         </p>
       </header>
 
