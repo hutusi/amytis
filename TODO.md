@@ -9,7 +9,7 @@
   - [ ] **Navigation**: Add Previous/Next post links at the bottom of articles.
 
 - [ ] **Engagement**
-  - [ ] **Comments**: Integrate Giscus (GitHub Discussions) for comments.
+  - [x] **Comments**: Integrate Giscus (GitHub Discussions) for comments.
 
 ## 🔮 Future Enhancements
 

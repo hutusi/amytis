@@ -4,6 +4,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
+import Comments from '@/components/Comments';
 import { siteConfig } from '../../site.config';
 
 interface PostLayoutProps {
@@ -96,6 +97,8 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
 
           <RelatedPosts posts={relatedPosts || []} />
+          
+          <Comments slug={post.slug} />
         </article>
 
         {showToc && <TableOfContents headings={post.headings} />}

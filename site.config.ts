@@ -34,4 +34,16 @@ export const siteConfig = {
       measurementId: '', // G-XXXXXXXXXX
     },
   },
+  comments: {
+    provider: null, // 'giscus' | 'disqus' | null
+    giscus: {
+      repo: 'vercel/next.js', // username/repo
+      repoId: '',
+      category: 'General',
+      categoryId: '',
+    },
+    disqus: {
+      shortname: '',
+    },
+  },
 };
