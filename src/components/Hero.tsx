@@ -9,7 +9,8 @@ interface HeroProps {
 
 export default function Hero({ title, subtitle }: HeroProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [showTrigger, setShowTrigger] = useState(true);
+  const [showTrigger, setShowTrigger] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
     // Check local storage on mount
@@ -21,20 +22,29 @@ export default function Hero({ title, subtitle }: HeroProps) {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       
+      // Mark as scrolled if user moves down
+      if (scrollPosition > 100) {
+        setHasScrolled(true);
+      }
+
       // If we've scrolled past the hero significantly, collapse it so it doesn't show on scroll up
       if (scrollPosition > 400 && isVisible) {
         setIsVisible(false);
         localStorage.setItem('amytis-hero-visible', 'false');
       }
 
-      // Only show the trigger bar when near the top
-      setShowTrigger(scrollPosition < 20);
+      // Show trigger ONLY if we have previously scrolled down and are now back at the top
+      if (hasScrolled && scrollPosition < 20) {
+        setShowTrigger(true);
+      } else {
+        setShowTrigger(false);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
+    // Do NOT run handleScroll() immediately to preserve initial state
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isVisible]);
+  }, [isVisible, hasScrolled]); // Add hasScrolled dependency
 
   const handleExpand = () => {
     setIsVisible(true);
