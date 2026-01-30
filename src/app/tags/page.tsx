@@ -11,10 +11,10 @@ export default function TagsPage() {
   const sortedTags = Object.keys(tags).sort((a, b) => tags[b] - tags[a]);
 
   return (
-    <div className="layout-container">
-      <header className="mb-20 text-center max-w-2xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-6">Tags</h1>
-        <p className="text-lg text-muted font-serif italic">
+    <div className="layout-main">
+      <header className="page-header">
+        <h1 className="page-title">Tags</h1>
+        <p className="page-subtitle">
           Explore the topics cultivated in this garden.
         </p>
       </header>

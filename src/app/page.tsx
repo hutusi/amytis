@@ -24,7 +24,7 @@ export default function Home() {
         subtitle={siteConfig.hero.subtitle} 
       />
 
-      <div className="layout-container pt-0 md:pt-0 pb-12 md:pb-16">
+      <div className="layout-main pt-0 md:pt-0">
         {/* Series Section (if any) */}
         {seriesNames.length > 0 && (
           <section className="mb-24">
@@ -41,11 +41,10 @@ export default function Home() {
                 const title = seriesData?.title || name;
                 const seriesUrl = `/series/${name.toLowerCase().replace(/ /g, '-')}`;
                 
-                return (
-                  <div key={name} className="group relative overflow-hidden rounded-2xl border border-muted/20 bg-muted/5 p-8 transition-all hover:border-accent/30">
-                    <div className="relative z-10">
-                      <span className="mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
-                        {seriesPosts.length} Articles
+                              return (
+                                <div key={name} className="card-base group">
+                                  <div className="relative z-10">
+                                    <span className="badge-accent">                        {seriesPosts.length} Articles
                       </span>
                       <h3 className="mb-4 font-serif text-3xl font-bold text-heading group-hover:text-accent transition-colors">
                         <Link href={seriesUrl} className="no-underline hover:underline transition-all">

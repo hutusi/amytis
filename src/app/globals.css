@@ -175,8 +175,32 @@ pre[class*="language-"] {
     @apply max-w-4xl mx-auto px-6 py-12 md:py-20;
   }
   
+  .layout-main {
+    @apply max-w-4xl mx-auto px-6 pt-12 md:pt-20 pb-12 md:pb-16;
+  }
+
   .navbar-container {
     @apply max-w-4xl mx-auto px-6 h-16 flex items-center justify-between;
+  }
+
+  .page-header {
+    @apply mb-24 text-center max-w-2xl mx-auto;
+  }
+
+  .page-title {
+    @apply text-4xl md:text-5xl font-serif font-bold text-heading mb-6;
+  }
+
+  .page-subtitle {
+    @apply text-lg text-muted font-serif italic leading-relaxed;
+  }
+
+  .card-base {
+    @apply relative overflow-hidden rounded-2xl border border-muted/20 bg-muted/5 p-8 transition-all hover:border-accent/30;
+  }
+
+  .badge-accent {
+    @apply mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent;
   }
 
   .scrollbar-hide-default {

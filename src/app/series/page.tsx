@@ -13,12 +13,12 @@ export default function SeriesIndexPage() {
   const seriesSlugs = Object.keys(allSeries).sort();
 
   return (
-    <div className="layout-container">
-      <header className="mb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-4">
+    <div className="layout-main">
+      <header className="page-header">
+        <h1 className="page-title">
           All Series
         </h1>
-        <p className="text-lg text-muted font-serif italic">
+        <p className="page-subtitle">
           Curated collections of knowledge.
         </p>
       </header>
@@ -32,8 +32,8 @@ export default function SeriesIndexPage() {
 
           return (
             <Link key={slug} href={`/series/${slug}`} className="group block no-underline">
-              <div className="h-full rounded-2xl border border-muted/20 bg-muted/5 p-8 transition-all hover:border-accent/30 hover:shadow-sm">
-                <span className="mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
+              <div className="card-base h-full group">
+                <span className="badge-accent">
                   {posts.length} Posts
                 </span>
                 <h2 className="mb-4 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors">

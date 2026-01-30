@@ -37,12 +37,12 @@ export default async function PaginatedPage({
   const posts = allPosts.slice(startIndex, endIndex);
 
   return (
-    <div className="layout-container pb-12 md:pb-16">
-      <header className="mb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-4">
+    <div className="layout-main">
+      <header className="page-header">
+        <h1 className="page-title">
           Latest Writing
         </h1>
-        <p className="text-lg text-muted font-serif italic">
+        <p className="page-subtitle">
           Page {currentPage} of {totalPages}
         </p>
       </header>

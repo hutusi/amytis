@@ -40,10 +40,10 @@ export default function ArchivePage() {
   const years = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a));
 
   return (
-    <div className="layout-container">
-      <header className="mb-24 text-center max-w-2xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-6">Archive</h1>
-        <p className="text-lg text-muted font-serif italic">
+    <div className="layout-main">
+      <header className="page-header">
+        <h1 className="page-title">Archive</h1>
+        <p className="page-subtitle">
           A chronological journey through the garden.
         </p>
       </header>

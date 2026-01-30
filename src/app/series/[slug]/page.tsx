@@ -47,16 +47,16 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const description = seriesData?.excerpt;
 
   return (
-    <div className="layout-container">
-      <header className="mb-16 text-center max-w-3xl mx-auto">
-        <span className="mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
+    <div className="layout-main">
+      <header className="page-header">
+        <span className="badge-accent">
           Series
         </span>
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-6">
+        <h1 className="page-title">
           {title}
         </h1>
         {description && (
-          <p className="text-xl text-muted font-serif italic leading-relaxed">
+          <p className="page-subtitle">
             {description}
           </p>
         )}

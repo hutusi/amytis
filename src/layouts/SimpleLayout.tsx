@@ -9,14 +9,14 @@ interface SimpleLayoutProps {
 
 export default function SimpleLayout({ post }: SimpleLayoutProps) {
   return (
-    <div className="layout-container">
+    <div className="layout-main">
       <article className="max-w-3xl mx-auto">
-        <header className="mb-24 text-center">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-6">
+        <header className="page-header">
+          <h1 className="page-title">
             {post.title}
           </h1>
           {post.excerpt && (
-            <p className="text-lg text-muted font-serif italic leading-relaxed">
+            <p className="page-subtitle">
               {post.excerpt}
             </p>
           )}
