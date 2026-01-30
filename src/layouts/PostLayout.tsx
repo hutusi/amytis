@@ -4,6 +4,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
+import SeriesSidebar from '@/components/SeriesSidebar';
 import Comments from '@/components/Comments';
 import { siteConfig } from '../../site.config';
 
@@ -15,9 +16,19 @@ interface PostLayoutProps {
 
 export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayoutProps) {
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
+  const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
+
+  let gridClass = 'grid grid-cols-1 gap-12 items-start';
+  if (showToc && hasSeries) {
+    gridClass = 'grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)_250px] gap-8 items-start';
+  } else if (showToc) {
+    gridClass = 'grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12 items-start';
+  } else if (hasSeries) {
+    gridClass = 'grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] gap-12 items-start';
+  }
 
   return (
-    <div className={`layout-container ${showToc ? 'lg:max-w-6xl' : ''}`}>
+    <div className={`layout-container ${showToc || hasSeries ? 'lg:max-w-[90rem]' : 'lg:max-w-6xl'}`}>
       <nav className="mb-12">
         <Link 
           href="/" 
@@ -28,7 +39,15 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
         </Link>
       </nav>
 
-      <div className={`grid grid-cols-1 ${showToc ? 'lg:grid-cols-[1fr_250px]' : ''} gap-12 items-start`}>
+      <div className={gridClass}>
+        {hasSeries && (
+          <SeriesSidebar 
+            seriesName={post.series!} 
+            posts={seriesPosts!} 
+            currentSlug={post.slug} 
+          />
+        )}
+
         <article className="min-w-0">
           <header className="mb-16 border-b border-muted/10 pb-12">
             {post.draft && (
@@ -90,8 +109,10 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
             )}
           </header>
 
-          {post.series && seriesPosts && (
-            <SeriesList seriesName={post.series} posts={seriesPosts} currentSlug={post.slug} />
+          {hasSeries && (
+            <div className="lg:hidden mb-12">
+              <SeriesList seriesName={post.series!} posts={seriesPosts!} currentSlug={post.slug} />
+            </div>
           )}
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
