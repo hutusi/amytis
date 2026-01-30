@@ -1,6 +1,6 @@
 import { getAllPosts } from '@/lib/markdown';
 import { siteConfig } from '../../../../site.config';
-import PostList from '@/components/PostList';
+import PostCard from '@/components/PostCard';
 import Pagination from '@/components/Pagination';
 import { notFound } from 'next/navigation';
 
@@ -38,17 +38,21 @@ export default async function PaginatedPage({
 
   return (
     <div className="layout-container">
-      <header className="mb-20 text-center">
-        <h1 className="text-5xl md:text-6xl font-serif font-bold text-heading tracking-tight mb-4">
-          {siteConfig.title}
+      <header className="mb-16 text-center">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-4">
+          Latest Writing
         </h1>
         <p className="text-lg text-muted font-serif italic">
-          {siteConfig.description}
+          Page {currentPage} of {totalPages}
         </p>
       </header>
 
       <main>
-        <PostList posts={posts} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map(post => (
+            <PostCard key={post.slug} post={post} />
+          ))}
+        </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} />
       </main>
     </div>
