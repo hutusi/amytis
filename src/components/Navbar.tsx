@@ -89,6 +89,13 @@ export default function Navbar({ seriesList = [] }: NavbarProps) {
                             {s.name}
                           </Link>
                         ))}
+                        <div className="h-px bg-muted/10 my-1"></div>
+                        <Link 
+                          href="/series" 
+                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline"
+                        >
+                          View All Series →
+                        </Link>
                       </div>
                     </div>
                   </div>

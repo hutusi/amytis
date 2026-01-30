@@ -61,7 +61,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const allSeries = getAllSeries();
-  const seriesList = Object.keys(allSeries).sort().map(slug => ({
+  const featuredSeries = siteConfig.series?.navbar;
+  
+  const seriesKeys = Object.keys(allSeries).sort();
+  const filteredKeys = featuredSeries 
+    ? seriesKeys.filter(slug => featuredSeries.includes(slug))
+    : seriesKeys.slice(0, 5);
+
+  const seriesList = filteredKeys.map(slug => ({
     name: allSeries[slug][0]?.series || slug,
     slug,
   }));

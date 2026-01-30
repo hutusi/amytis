@@ -17,6 +17,9 @@ export const siteConfig = {
     linkedin: "https://linkedin.com",
     email: "mailto:hello@example.com",
   },
+  series: {
+    navbar: ["advanced-markdown"], // Slugs of series to show in navbar
+  },
   pagination: {
     pageSize: 10,
   },
