@@ -19,7 +19,7 @@ export default function Navbar() {
   const { t } = useLanguage();
   const navItems = [...siteConfig.nav].sort((a, b) => a.weight - b.weight);
 
-  const getLabel = (name: string) => {
+  const getLabel = (name: string): string => {
     const key = name.toLowerCase() as any;
     // Check if translation exists, otherwise return original
     // This assumes translation keys match the lowercase English names
@@ -54,7 +54,7 @@ export default function Navbar() {
         <div className="flex items-center gap-4 md:gap-6">
           <div className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
-              const isExternal = 'external' in item && item.external;
+              const isExternal = !!('external' in item && item.external);
               const Component = isExternal ? 'a' : Link;
               const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
