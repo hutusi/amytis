@@ -38,7 +38,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
   const pages = getPages();
 
   return (
-    <nav className="flex justify-center items-center gap-2 mt-16 border-t border-muted/10 pt-12" aria-label="Pagination">
+    <nav className="flex justify-center items-center gap-2 mt-12 border-t border-muted/10 pt-8" aria-label="Pagination">
       {/* Previous */}
       {currentPage > 1 ? (
         <Link
