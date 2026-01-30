@@ -66,7 +66,7 @@ export default function ArchivePage() {
                 {/* Year Marker */}
                 <div className="relative">
                   <div className="sticky top-32 text-left md:text-right">
-                    <h2 className="text-6xl md:text-7xl font-serif font-bold text-muted/20 md:text-muted/30">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-muted/30">
                       {year}
                     </h2>
                     <span className="block text-xs font-bold uppercase tracking-widest text-muted mt-2 hidden md:block">
@@ -84,11 +84,11 @@ export default function ArchivePage() {
                         {/* Month Marker */}
                         <div className="absolute -left-[37px] md:-left-[53px] top-1.5 w-3 h-3 rounded-full bg-background border-2 border-muted/30"></div>
                         
-                        <h3 className="text-sm font-sans font-bold uppercase tracking-widest text-accent mb-8">
+                        <h3 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-8">
                           {month}
                         </h3>
                         
-                        <ul className="space-y-6">
+                        <ul className="space-y-8">
                           {monthPosts.map((post) => {
                             const dateObj = new Date(post.date);
                             const day = dateObj.getDate().toString().padStart(2, '0');
@@ -97,15 +97,15 @@ export default function ArchivePage() {
                               <li key={post.slug} className="group">
                                 <Link href={`/posts/${post.slug}`} className="block no-underline">
                                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6">
-                                    <span className="font-mono text-sm text-muted shrink-0 w-8">
+                                    <span className="font-mono text-base text-muted shrink-0 w-8">
                                       {day}
                                     </span>
                                     <div>
-                                      <h4 className="text-xl font-serif font-medium text-heading group-hover:text-accent transition-colors duration-200">
+                                      <h4 className="text-2xl font-serif font-medium text-heading group-hover:text-accent transition-colors duration-200">
                                         {post.title}
                                       </h4>
                                       {post.excerpt && (
-                                        <p className="mt-2 text-sm text-muted/80 line-clamp-2 leading-relaxed">
+                                        <p className="mt-2 text-base text-muted/80 line-clamp-2 leading-relaxed">
                                           {post.excerpt}
                                         </p>
                                       )}
