@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { siteConfig } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
 import Search from '@/components/Search';
-import LanguageSwitch from '@/components/LanguageSwitch';
 import { useLanguage } from '@/components/LanguageProvider';
 
 /**
@@ -87,7 +86,6 @@ export default function Navbar() {
           </div>
           <div className="w-px h-4 bg-muted/20 mx-1 hidden md:block"></div>
           <Search />
-          <LanguageSwitch />
           <ThemeToggle />
         </div>
       </div>
