@@ -8,7 +8,7 @@ export default function LanguageSwitch() {
   return (
     <button
       onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
-      className="p-2 rounded-md hover:bg-muted/20 transition-colors text-sm font-medium"
+      className="p-2 rounded-md hover:bg-muted/20 transition-colors text-xs font-medium"
       aria-label="Toggle Language"
     >
       {language === 'en' ? '中文' : 'EN'}
