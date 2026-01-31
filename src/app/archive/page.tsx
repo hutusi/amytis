@@ -103,7 +103,7 @@ export default function ArchivePage() {
                                       <span className="font-mono text-base text-muted shrink-0 w-8">
                                         {day}
                                       </span>
-                                      <h4 className="text-xl font-serif font-medium text-heading group-hover:text-accent transition-colors duration-200">
+                                      <h4 className="text-xl font-serif font-medium text-heading/80 group-hover:text-accent transition-colors duration-200">
                                         {post.title}
                                       </h4>
                                     </div>
