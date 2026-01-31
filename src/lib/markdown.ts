@@ -20,6 +20,8 @@ const PostSchema = z.object({
   layout: z.string().optional().default('post'),
   series: z.string().optional(),
   coverImage: z.string().optional(),
+  sort: z.enum(['date-desc', 'date-asc', 'manual']).optional().default('date-desc'),
+  posts: z.array(z.string()).optional(),
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
@@ -42,6 +44,8 @@ export interface PostData {
   layout?: string;
   series?: string;
   coverImage?: string;
+  sort?: 'date-desc' | 'date-asc' | 'manual';
+  posts?: string[];
   draft?: boolean;
   latex?: boolean;
   toc?: boolean;
@@ -53,7 +57,7 @@ export interface PostData {
 function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
   // Strip tags and special chars roughly for word count
-  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~[\\\]()]/g, "");
+  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~[\]()]/g, "");
   const wordCount = text.split(/\s+/).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return `${minutes} min read`;
@@ -62,7 +66,7 @@ function calculateReadingTime(content: string): string {
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^]]*\]\([^)]+\)/g, '');
+  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
   plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`[^`]*`/g, '');
@@ -139,6 +143,8 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     layout: data.layout,
     series: data.series || seriesName,
     coverImage,
+    sort: data.sort,
+    posts: data.posts,
     draft: data.draft,
     latex: data.latex,
     toc: data.toc,
@@ -488,10 +494,31 @@ export function getRelatedPosts(currentSlug: string, limit: number = 3): PostDat
 }
 
 export function getSeriesPosts(seriesName: string): PostData[] {
-  const allPosts = getAllPosts();
-  return allPosts
-    .filter(post => post.series === seriesName)
-    .sort((a, b) => (a.date > b.date ? 1 : -1)); // Chronological order (oldest first)
+  const seriesSlug = seriesName;
+  const seriesData = getSeriesData(seriesSlug);
+  
+  let posts: PostData[] = [];
+  
+  if (seriesData?.posts && seriesData.posts.length > 0) {
+      // Manual Selection: fetch by slug
+      posts = seriesData.posts
+        .map(slug => getPostBySlug(slug))
+        .filter((p): p is PostData => p !== null);
+  } else {
+      // Automatic: posts with series field matching this series
+      const allPosts = getAllPosts();
+      posts = allPosts.filter(p => p.series === seriesName);
+      
+      // Default Sort: date-desc (Newest first)
+      const sortOrder = seriesData?.sort || 'date-desc';
+      if (sortOrder === 'date-asc') {
+          posts.sort((a, b) => (a.date > b.date ? 1 : -1));
+      } else {
+          posts.sort((a, b) => (a.date < b.date ? 1 : -1));
+      }
+  }
+  
+  return posts;
 }
 
 export function getAllSeries(): Record<string, PostData[]> {
