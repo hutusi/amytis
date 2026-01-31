@@ -94,7 +94,7 @@ function processSeries() {
           const postIndexMdx = path.join(seriesPath, item.name, 'index.mdx');
           const postIndexMd = path.join(seriesPath, item.name, 'index.md');
           if (fs.existsSync(postIndexMdx) || fs.existsSync(postIndexMd)) {
-            targetSlug = item.name;
+            targetSlug = getSlugFromFilename(item.name);
             itemSrcPath = path.join(seriesPath, item.name); // Assets are siblings in the post folder
           }
         }

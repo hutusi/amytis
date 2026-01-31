@@ -217,12 +217,20 @@ export function getAllPosts(): PostData[] {
                  else if (fs.existsSync(postIndexMd)) postFullPath = postIndexMd;
                  
                  if (postFullPath) {
-                     // Post Slug is the folder name
-                     const sSlug = sItem.name;
+                     // Handle date prefix in folder name
+                     const sMatch = sItem.name.match(dateRegex);
+                     let sSlug = sItem.name;
+                     let sDate = undefined;
+                     
+                     if (sMatch) {
+                       sDate = sMatch[1];
+                       sSlug = siteConfig.includeDateInUrl ? sItem.name : sMatch[2];
+                     }
+
                      allPostsData.push(parseMarkdownFile(
                        postFullPath, 
                        sSlug, 
-                       undefined, 
+                       sDate, 
                        seriesSlug 
                      ));
                  }
