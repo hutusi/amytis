@@ -46,7 +46,7 @@ export default function PostCard({ post }: { post: PostData }) {
             />
           )}
         </div>
-        <div className="flex flex-1 flex-col p-6">
+        <div className="flex flex-1 flex-col p-5">
           <div className="mb-3 flex items-center gap-2 text-xs font-sans text-muted">
             <span className="font-mono text-accent">{post.date}</span>
             <span className="h-1 w-1 rounded-full bg-muted/30" />
