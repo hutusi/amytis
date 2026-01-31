@@ -8,6 +8,7 @@
     "build": "bun scripts/copy-assets.ts && next build && next-image-export-optimizer",
     "clean": "rm -rf .next out public/posts",
     "new": "bun scripts/new-post.ts",
+    "new-series": "bun scripts/new-series.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "bun test",
