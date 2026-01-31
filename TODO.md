@@ -51,7 +51,7 @@
 
 - [x] **Content & Architecture**
   - [x] **Series**: Robust support for grouping related posts (file-based & folder-based).
-  - [x] **Series**: Manual sorting and cross-referencing capabilities.
+  - [x] **Series**: Manual sorting, cross-referencing, and configurable order (`date-asc`, `date-desc`, `manual`).
   - [x] **Related Posts**: Auto-suggest relevant articles.
   - [x] **Cover Images**: Support local paths, external URLs, and generated text covers.
   - [x] **Analytics**: Privacy-friendly configuration (Umami/Plausible/Google).
