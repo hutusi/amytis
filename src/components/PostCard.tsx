@@ -52,7 +52,7 @@ export default function PostCard({ post }: { post: PostData }) {
             <span className="h-1 w-1 rounded-full bg-muted/30" />
             <span className="uppercase tracking-widest">{post.category}</span>
           </div>
-          <h3 className="mb-1 font-serif text-xl font-bold text-heading leading-tight transition-colors group-hover:text-accent">
+          <h3 className="mb-1 font-serif text-lg font-bold text-heading/80 transition-colors group-hover:text-accent">
             {post.title}
           </h3>
         </div>
