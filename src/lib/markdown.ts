@@ -524,19 +524,28 @@ export function getSeriesPosts(seriesName: string): PostData[] {
 export function getAllSeries(): Record<string, PostData[]> {
   const allPosts = getAllPosts();
   const series: Record<string, PostData[]> = {};
+  const seriesSet = new Set<string>();
 
+  // 1. Collect series from posts
   allPosts.forEach((post) => {
     if (post.series) {
-      if (!series[post.series]) {
-        series[post.series] = [];
-      }
-      series[post.series].push(post);
+      seriesSet.add(post.series);
     }
   });
 
-  // Sort posts within series
-  Object.keys(series).forEach(key => {
-    series[key].sort((a, b) => (a.date > b.date ? 1 : -1));
+  // 2. Collect series from folders (in case no posts are yet tagged but folder exists)
+  if (fs.existsSync(seriesDirectory)) {
+    const seriesFolders = fs.readdirSync(seriesDirectory, { withFileTypes: true });
+    seriesFolders.forEach(folder => {
+      if (folder.isDirectory()) {
+        seriesSet.add(folder.name);
+      }
+    });
+  }
+
+  // 3. Fetch posts for each series using the robust getSeriesPosts logic (handles sorting/manual)
+  seriesSet.forEach(slug => {
+    series[slug] = getSeriesPosts(slug);
   });
 
   return series;
