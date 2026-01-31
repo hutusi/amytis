@@ -21,6 +21,7 @@ if (fs.existsSync(seriesDir)) {
 }
 
 fs.mkdirSync(seriesDir, { recursive: true });
+fs.mkdirSync(path.join(seriesDir, 'images'));
 
 const date = new Date().toISOString().split('T')[0];
 
