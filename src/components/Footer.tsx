@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { siteConfig } from '../../site.config';
 import { useLanguage } from '@/components/LanguageProvider';
+import LanguageSwitch from './LanguageSwitch';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -92,10 +93,12 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-muted/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <span>{siteConfig.footerText}</span>
-          <div className="flex gap-6">
+          <div className="flex items-center gap-6">
+             <LanguageSwitch />
+             <span className="opacity-20">|</span>
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">Privacy</Link>
              <span className="opacity-20">|</span>
-             <a href="https://github.com/hutusi/amytis" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
+             <a href="https://github.com/vercel/next.js" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
                Built with Amytis
              </a>
           </div>
