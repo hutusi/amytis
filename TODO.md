@@ -25,12 +25,12 @@
 - [x] **Series Dropdown**: Fix positioning to prevent cutoff on small screens
 
 ### Polish & Enhancements
-- [ ] **Thumbnails**: Increase Latest Writing thumbnail size on mobile (`w-24 h-24`)
-- [ ] **Loading States**: Add skeleton loaders for images and cards
-- [ ] **Typography**: Standardize line heights across headings
-- [ ] **Hover Transitions**: Ensure all transitions have consistent duration (`duration-300`)
-- [ ] **Skip Navigation**: Add "Skip to main content" link for accessibility
-- [ ] **Image Alt Text**: Make alt text more descriptive (e.g., `{title} cover image`)
+- [x] **Thumbnails**: Increase Latest Writing thumbnail size on mobile (`w-24 h-24`)
+- [x] **Loading States**: Add skeleton loaders for images and cards
+- [x] **Typography**: Standardize line heights across headings
+- [x] **Hover Transitions**: Ensure all transitions have consistent duration (`duration-300`)
+- [x] **Skip Navigation**: Add "Skip to main content" link for accessibility
+- [x] **Image Alt Text**: Make alt text more descriptive (e.g., `{title} cover image`)
 
 ## 🌿 Digital Garden Features
 

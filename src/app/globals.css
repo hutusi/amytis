@@ -246,6 +246,37 @@ pre[class*="language-"] {
   .btn-secondary {
     @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-muted/30 text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
   }
+
+  /* Typography - Standardized heading styles */
+  .heading-1 {
+    @apply text-4xl md:text-5xl font-serif font-bold text-heading leading-tight;
+  }
+
+  .heading-2 {
+    @apply text-3xl md:text-4xl font-serif font-bold text-heading leading-tight;
+  }
+
+  .heading-3 {
+    @apply text-2xl md:text-3xl font-serif font-bold text-heading leading-snug;
+  }
+
+  .heading-4 {
+    @apply text-xl md:text-2xl font-serif font-bold text-heading leading-snug;
+  }
+
+  /* Consistent transition utility */
+  .transition-default {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Link with consistent hover */
+  .link-hover {
+    @apply text-foreground hover:text-accent transition-colors duration-300;
+  }
+
+  .link-accent {
+    @apply text-accent hover:text-accent-hover transition-colors duration-300;
+  }
 }
 
 /* Animations */
