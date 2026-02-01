@@ -73,7 +73,7 @@ export default function Home() {
                             {seriesPosts.length} Parts
                           </span>
                         </div>
-                        <h3 className="mb-3 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors">
+                        <h3 className="mb-3 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors line-clamp-2">
                           <Link href={seriesUrl} className="no-underline focus:outline-none focus:text-accent">
                             {title}
                           </Link>
