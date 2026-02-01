@@ -6,6 +6,7 @@ import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
 import SeriesSidebar from '@/components/SeriesSidebar';
 import Comments from '@/components/Comments';
+import Tag from '@/components/Tag';
 import { siteConfig } from '../../site.config';
 
 interface PostLayoutProps {
@@ -91,13 +92,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/tags/${tag.toLowerCase()}`}
-                    className="px-3 py-1 bg-muted/10 rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent no-underline transition-colors duration-200"
-                  >
-                    #{tag}
-                  </Link>
+                  <Tag key={tag} tag={tag} variant="default" />
                 ))}
               </div>
             )}

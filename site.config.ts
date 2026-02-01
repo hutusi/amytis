@@ -33,6 +33,16 @@ export const siteConfig = {
     title: "Cultivating Digital Knowledge",
     subtitle: "A minimalist digital garden for growing thoughts and sharing knowledge.",
   },
+  featured: {
+    series: {
+      scrollThreshold: 2,  // Enable scrolling when more than this number
+      maxItems: 6,
+    },
+    stories: {
+      scrollThreshold: 1,  // Enable scrolling when more than this number
+      maxItems: 5,
+    },
+  },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'zh'],

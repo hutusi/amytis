@@ -46,3 +46,6 @@ next-env.d.ts
 # image optimization
 /public/**/nextImageExportOptimizer/
 !/public/next-image-export-optimizer-hashes.json
+
+# claude
+/.claude/

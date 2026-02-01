@@ -5,6 +5,7 @@ excerpt: "Demonstrating support for standard .md files."
 category: "Meta"
 tags: ["markdown", "legacy"]
 author: "Old Timer"
+featured: true
 ---
 
 # Legacy Markdown Support

@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { getAllTags } from '@/lib/markdown';
+import Tag from '@/components/Tag';
 
 export const metadata = {
   title: 'Tags | Amytis',
@@ -22,18 +22,7 @@ export default function TagsPage() {
       <main>
         <div className="flex flex-wrap justify-center gap-3 md:gap-4">
           {sortedTags.map((tag) => (
-            <Link
-              key={tag}
-              href={`/tags/${tag}`}
-              className="group relative inline-flex items-center px-5 py-2.5 rounded-xl border border-muted/20 bg-muted/5 hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 transition-all duration-300 no-underline"
-            >
-              <span className="font-sans font-medium text-foreground group-hover:text-accent transition-colors text-sm md:text-base">
-                {tag}
-              </span>
-              <span className="ml-3 text-xs font-mono text-muted/60 group-hover:text-accent/60">
-                {tags[tag]}
-              </span>
-            </Link>
+            <Tag key={tag} tag={tag} count={tags[tag]} variant="large" showHash={false} />
           ))}
         </div>
       </main>

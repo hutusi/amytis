@@ -67,8 +67,8 @@ export default function ArchivePage() {
               <section key={year} className="relative grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16">
                 {/* Year Marker */}
                 <div className="relative">
-                  <div className="sticky top-32 text-left md:text-right">
-                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-muted/30">
+                  <div className="sticky top-24 lg:top-32 text-left md:text-right">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-muted/50">
                       {year}
                     </h2>
                     <span className="block text-xs font-bold uppercase tracking-widest text-muted mt-2 hidden md:block">
@@ -78,13 +78,13 @@ export default function ArchivePage() {
                 </div>
                 
                 {/* Content Timeline */}
-                <div className="relative border-l border-muted/10 pl-8 md:pl-12 space-y-16">
+                <div className="relative border-l-2 border-muted/20 pl-8 md:pl-12 space-y-16">
                   {months.map((month) => {
                     const monthPosts = groupedPosts[year][month];
                     return (
                       <div key={month} className="relative">
-                        {/* Month Marker */}
-                        <div className="absolute -left-[37px] md:-left-[53px] top-1.5 w-3 h-3 rounded-full bg-background border-2 border-muted/30"></div>
+                        {/* Month Marker - positioned relative to border */}
+                        <div className="absolute -left-[calc(2rem+5px)] md:-left-[calc(3rem+5px)] top-1.5 w-3 h-3 rounded-full bg-background border-2 border-accent/50"></div>
                         
                         <h3 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-8">
                           {month}

@@ -9,7 +9,7 @@
   --heading: #1c1917; /* Stone 900 */
   --accent: #059669; /* Emerald 600 */
   --accent-hover: #047857; /* Emerald 700 */
-  --muted: #a8a29e; /* Stone 400 */
+  --muted: #78716c; /* Stone 500 - Improved contrast */
   --code-fg: #1c1917; /* Stone 900 - High contrast neutral */
 }
 
@@ -19,7 +19,7 @@
   --heading: #fafaf9; /* Stone 50 */
   --accent: #34d399; /* Emerald 400 */
   --accent-hover: #10b981; /* Emerald 500 */
-  --muted: #a8a29e; /* Stone 400 */
+  --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
   --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
 }
 
@@ -210,7 +210,7 @@ pre[class*="language-"] {
   .scrollbar-hide-default::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Webkit */
   }
-  
+
   .scrollbar-hide-default:hover {
     scrollbar-width: thin;
   }
@@ -223,6 +223,125 @@ pre[class*="language-"] {
   }
   .scrollbar-hide-default:hover::-webkit-scrollbar-thumb {
     @apply bg-muted/30 rounded-full;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Webkit */
+  }
+
+  /* Focus ring for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-white font-medium transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-muted/30 text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Typography - Standardized heading styles */
+  .heading-1 {
+    @apply text-4xl md:text-5xl font-serif font-bold text-heading leading-tight;
+  }
+
+  .heading-2 {
+    @apply text-3xl md:text-4xl font-serif font-bold text-heading leading-tight;
+  }
+
+  .heading-3 {
+    @apply text-2xl md:text-3xl font-serif font-bold text-heading leading-snug;
+  }
+
+  .heading-4 {
+    @apply text-xl md:text-2xl font-serif font-bold text-heading leading-snug;
+  }
+
+  /* Consistent transition utility */
+  .transition-default {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Link with consistent hover */
+  .link-hover {
+    @apply text-foreground hover:text-accent transition-colors duration-300;
+  }
+
+  .link-accent {
+    @apply text-accent hover:text-accent-hover transition-colors duration-300;
+  }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out forwards;
+  }
+
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-fill-backwards {
+    animation-fill-mode: backwards;
   }
 }
 

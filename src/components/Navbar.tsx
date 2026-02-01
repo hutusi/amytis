@@ -78,8 +78,8 @@ export default function Navbar({ seriesList = [] }: NavbarProps) {
                         <path d="M6 9l6 6 6-6"/>
                       </svg>
                     </Link>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px]">
-                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1">
+                    <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
+                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
                         {seriesList.map(s => (
                           <Link 
                             key={s.slug} 

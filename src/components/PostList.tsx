@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
+import Tag from '@/components/Tag';
 
 interface PostListProps {
   posts: PostData[];
@@ -49,13 +50,7 @@ export default function PostList({ posts }: PostListProps) {
 
           <div className="flex items-center gap-2">
             {post.tags.slice(0, 3).map(tag => (
-              <Link 
-                key={tag} 
-                href={`/tags/${tag.toLowerCase()}`}
-                className="text-xs text-muted/60 font-sans italic hover:text-accent transition-colors duration-200"
-              >
-                #{tag}
-              </Link>
+              <Tag key={tag} tag={tag} variant="compact" />
             ))}
           </div>
         </li>
