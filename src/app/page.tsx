@@ -144,12 +144,12 @@ export default function Home() {
                           <span>•</span>
                           <span>{post.readingTime}</span>
                         </div>
-                        <h3 className="text-3xl md:text-4xl font-serif font-bold text-heading mb-6 leading-tight group-hover:text-accent transition-colors">
+                        <h3 className="text-2xl md:text-3xl font-serif font-bold text-heading mb-4 leading-snug group-hover:text-accent transition-colors line-clamp-2">
                           <Link href={`/posts/${post.slug}`} className="no-underline focus:outline-none focus:text-accent">
                             {post.title}
                           </Link>
                         </h3>
-                        <p className="text-muted text-lg leading-relaxed mb-8 line-clamp-3">
+                        <p className="text-muted text-base leading-relaxed mb-6 line-clamp-2">
                           {post.excerpt}
                         </p>
                         <div className="flex items-center gap-4 text-xs font-mono text-muted/80">
