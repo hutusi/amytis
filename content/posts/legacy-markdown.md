@@ -6,6 +6,7 @@ category: "Meta"
 tags: ["markdown", "legacy"]
 author: "Old Timer"
 featured: true
+coverImage: "text:Legacy Markdown"
 ---
 
 # Legacy Markdown Support

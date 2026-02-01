@@ -3,6 +3,8 @@ import { siteConfig } from '../../site.config';
 import Link from 'next/link';
 import Hero from '@/components/Hero';
 import HorizontalScroll from '@/components/HorizontalScroll';
+import CoverImage from '@/components/CoverImage';
+import Pagination from '@/components/Pagination';
 
 export default function Home() {
   const allPosts = getAllPosts();
@@ -57,9 +59,10 @@ export default function Home() {
                       }`}
                     >
                       <Link href={seriesUrl} className="relative h-56 w-full overflow-hidden bg-muted/10 block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
-                        <img
-                          src={seriesData?.coverImage || `https://images.unsplash.com/photo-1579783902614-a3fb39279c23?auto=format&fit=crop&w=800&q=80`}
-                          alt={`${title} series cover`}
+                        <CoverImage
+                          src={seriesData?.coverImage}
+                          title={title}
+                          slug={name}
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -127,9 +130,10 @@ export default function Home() {
                   >
                     <div className={`grid grid-cols-1 ${displayedFeatured.length > featuredConfig.stories.scrollThreshold ? 'md:grid-cols-1 lg:grid-cols-12' : 'md:grid-cols-12'} gap-8 items-center`}>
                       <Link href={`/posts/${post.slug}`} className={`${displayedFeatured.length > featuredConfig.stories.scrollThreshold ? 'lg:col-span-7' : 'md:col-span-7'} relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted/10 block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background`}>
-                        <img
-                          src={post.coverImage || `https://images.unsplash.com/photo-1493612276216-9c59019558f7?auto=format&fit=crop&w=800&q=80`}
-                          alt={`${post.title} cover image`}
+                        <CoverImage
+                          src={post.coverImage}
+                          title={post.title}
+                          slug={post.slug}
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -191,9 +195,10 @@ export default function Home() {
                   </div>
                 </div>
                 <Link href={`/posts/${post.slug}`} className="w-24 h-24 md:w-32 md:h-24 shrink-0 rounded-lg overflow-hidden bg-muted/10 block ml-4 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background">
-                  <img
-                    src={post.coverImage || `https://images.unsplash.com/photo-1493612276216-9c59019558f7?auto=format&fit=crop&w=800&q=80`}
-                    alt={`${post.title} thumbnail`}
+                  <CoverImage
+                    src={post.coverImage}
+                    title={post.title}
+                    slug={post.slug}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </Link>
@@ -203,9 +208,7 @@ export default function Home() {
           
           {totalPages > 1 && (
             <div className="mt-16 flex justify-center">
-               <Link href="/posts/page/2" className="btn-secondary">
-                 Older Posts →
-               </Link>
+               <Pagination currentPage={1} totalPages={totalPages} />
             </div>
           )}
         </section>
