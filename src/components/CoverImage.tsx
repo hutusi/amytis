@@ -10,11 +10,11 @@ const PLACEHOLDER_IMAGES = [
 
 // Inline classes to ensure they work without relying on globals in all contexts
 const gradients = [
-  'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white',
-  'bg-gradient-to-br from-amber-500 to-amber-700 text-white',
-  'bg-gradient-to-br from-rose-500 to-rose-700 text-white',
-  'bg-gradient-to-br from-sky-500 to-sky-700 text-white',
-  'bg-gradient-to-br from-violet-500 to-violet-700 text-white',
+  'bg-gradient-to-br from-stone-200 to-stone-300 dark:from-stone-800 dark:to-stone-900 text-stone-700 dark:text-stone-300',
+  'bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 text-zinc-700 dark:text-zinc-300',
+  'bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-900 text-neutral-700 dark:text-neutral-300',
+  'bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900 text-slate-700 dark:text-slate-300',
+  'bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300',
 ];
 
 interface CoverImageProps {
