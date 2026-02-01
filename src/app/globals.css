@@ -210,7 +210,7 @@ pre[class*="language-"] {
   .scrollbar-hide-default::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Webkit */
   }
-  
+
   .scrollbar-hide-default:hover {
     scrollbar-width: thin;
   }
@@ -223,6 +223,14 @@ pre[class*="language-"] {
   }
   .scrollbar-hide-default:hover::-webkit-scrollbar-thumb {
     @apply bg-muted/30 rounded-full;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Webkit */
   }
 }
 

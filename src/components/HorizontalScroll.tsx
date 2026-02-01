@@ -78,7 +78,7 @@ export default function HorizontalScroll({
       {/* Scrollable Container */}
       <div
         ref={scrollRef}
-        className={`overflow-x-auto scrollbar-hide-default scroll-smooth snap-x snap-mandatory ${className}`}
+        className={`overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory ${className}`}
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {children}
