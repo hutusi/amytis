@@ -72,25 +72,25 @@ export default function HorizontalScroll({
   return (
     <div
       ref={containerRef}
-      className="relative group/scroll"
+      className="relative group/scroll overflow-visible"
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="region"
       aria-label="Scrollable content"
     >
-      {/* Left Arrow */}
+      {/* Left Arrow - positioned outside content in margin area */}
       <button
         onClick={() => scroll('left')}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute -left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
           canScrollLeft
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
-            : 'text-muted/30 cursor-not-allowed'
+            : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollLeft}
         aria-label="Scroll left"
         tabIndex={canScrollLeft ? 0 : -1}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollLeft ? 'group-hover/scroll:-translate-x-0.5 transition-transform' : ''}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollLeft ? 'group-hover/scroll:-translate-x-0.5 transition-transform' : ''}>
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
@@ -104,19 +104,19 @@ export default function HorizontalScroll({
         {children}
       </div>
 
-      {/* Right Arrow */}
+      {/* Right Arrow - positioned outside content in margin area */}
       <button
         onClick={() => scroll('right')}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute -right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
           canScrollRight
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
-            : 'text-muted/30 cursor-not-allowed'
+            : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollRight}
         aria-label="Scroll right"
         tabIndex={canScrollRight ? 0 : -1}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollRight ? 'group-hover/scroll:translate-x-0.5 transition-transform' : ''}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollRight ? 'group-hover/scroll:translate-x-0.5 transition-transform' : ''}>
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
