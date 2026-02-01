@@ -81,7 +81,7 @@ export default function HorizontalScroll({
       {/* Left Arrow */}
       <button
         onClick={() => scroll('left')}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
           canScrollLeft
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed'
@@ -107,7 +107,7 @@ export default function HorizontalScroll({
       {/* Right Arrow */}
       <button
         onClick={() => scroll('right')}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 p-3 bg-background/90 backdrop-blur-sm border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
           canScrollRight
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed'
