@@ -82,7 +82,9 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
             );
           },
           // Ensure images are responsive and styled, using optimized image if dimensions exist
+          // In development mode, use unoptimized images since WebP versions don't exist yet
           img: (props: any) => {
+            const isDev = process.env.NODE_ENV === 'development';
             if (props.width && props.height) {
               return (
                 <ExportedImage
@@ -91,6 +93,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
                   width={props.width}
                   height={props.height}
                   className="max-w-full h-auto rounded-lg my-4"
+                  unoptimized={isDev}
                 />
               );
             }

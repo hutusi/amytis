@@ -22,6 +22,7 @@ bun test path/to/file.test.ts  # Run a single test file
 
 # Build
 bun run build              # Full production build (copies assets, builds Next.js, optimizes images)
+bun run build:dev          # Development build (no image optimization, faster)
 bun run clean              # Remove .next, out, public/posts directories
 
 # Content creation
