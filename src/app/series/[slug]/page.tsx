@@ -1,9 +1,10 @@
 import { getSeriesData, getSeriesPosts, getAllSeries } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
-import PostCard from '@/components/PostCard';
+import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
+import CoverImage from '@/components/CoverImage';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -56,37 +57,42 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="layout-main">
-      <header className="page-header">
+      <header className="mb-16">
+        {/* Cover image hero */}
         {coverImage && (
-          <div className="relative w-full h-64 md:h-96 mb-12 rounded-3xl overflow-hidden shadow-xl shadow-accent/5">
-            <img 
-              src={coverImage} 
-              alt={title} 
+          <div className="relative w-full h-56 md:h-72 mb-10 rounded-2xl overflow-hidden shadow-xl shadow-accent/5">
+            <CoverImage
+              src={coverImage}
+              title={title}
+              slug={slug}
               className="w-full h-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
           </div>
         )}
-        <span className="badge-accent">
-          Series
-        </span>
-        <h1 className="page-title">
-          {title}
-        </h1>
-        {description && (
-          <p className="page-subtitle">
-            {description}
-          </p>
-        )}
+
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="badge-accent mb-4">
+            Series • {allPosts.length} {allPosts.length === 1 ? 'Part' : 'Parts'}
+          </span>
+          <h1 className="page-title mb-4">
+            {title}
+          </h1>
+          {description && (
+            <p className="text-lg text-muted font-serif italic leading-relaxed">
+              {description}
+            </p>
+          )}
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {posts.map(post => (
-          <PostCard key={post.slug} post={post} />
-        ))}
-      </div>
+      {/* Series Catalog */}
+      <SeriesCatalog posts={posts} />
 
       {totalPages > 1 && (
-        <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
+        <div className="mt-12">
+          <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
+        </div>
       )}
     </div>
   );
