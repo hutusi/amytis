@@ -128,6 +128,7 @@ excerpt: "Series description"
 date: "2026-01-01"
 coverImage: "./images/cover.jpg"
 featured: true             # Show in featured series
+draft: true                # Hidden in production (default: false)
 sort: "date-asc"           # 'date-asc' | 'date-desc' | 'manual'
 posts: ["post-1", "post-2"] # Manual post ordering (optional)
 ---
@@ -136,11 +137,17 @@ posts: ["post-1", "post-2"] # Manual post ordering (optional)
 ## Key Components
 
 - `PostLayout` / `SimpleLayout` - Post page layouts with TOC, series sidebar, comments
-- `Hero` - Configurable homepage hero section
+- `Hero` - Configurable homepage hero section with collapsible intro
 - `HorizontalScroll` - Scrollable container with navigation arrows for featured content
+- `PostList` - Card-based post listing with thumbnails, metadata, excerpts, and tags
+- `SeriesCatalog` - Timeline-style series post listing with numbered entries and progress indicator
+- `SeriesSidebar` - Series navigation sidebar with progress bar and color-coded states
+- `SeriesList` - Mobile-optimized series navigation matching sidebar design
 - `Search` - Client-side fuzzy search (Cmd/Ctrl+K) using Fuse.js
-- `TableOfContents` - Sticky TOC extracted from H2-H3 headings
-- `SeriesSidebar` - Series navigation with current post indicator
+- `TableOfContents` - Sticky TOC with scroll tracking, reading progress, and back-to-top
+- `MarkdownRenderer` - MDX rendering with GFM, math, syntax highlighting, diagrams
+- `CoverImage` - Optimized image component with WebP support
 - `Comments` - Giscus or Disqus integration (theme-aware)
+- `Analytics` - Umami, Plausible, or Google Analytics integration
 - `LanguageSwitch` - i18n language selector
 - `ThemeToggle` - Light/dark mode toggle
