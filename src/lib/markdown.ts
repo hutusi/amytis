@@ -56,7 +56,7 @@ export interface PostData {
   headings: Heading[];
 }
 
-function calculateReadingTime(content: string): string {
+export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
   // Strip tags and special chars roughly for word count
   const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~[\]()]/g, "");
@@ -81,7 +81,7 @@ export function generateExcerpt(content: string): string {
   return plain.slice(0, 160).trim() + '...';
 }
 
-function getHeadings(content: string): Heading[] {
+export function getHeadings(content: string): Heading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
   const headings: Heading[] = [];
   const slugger = new GithubSlugger();

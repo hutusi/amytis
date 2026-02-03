@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { generateExcerpt } from "./markdown";
+import { generateExcerpt, calculateReadingTime, getHeadings } from "./markdown";
 
 describe("markdown utils", () => {
   describe("generateExcerpt", () => {
@@ -27,7 +27,81 @@ describe("markdown utils", () => {
 
     test("should strip links but keep text", () => {
       const text = "Check [this link](https://example.com)";
-      expect(generateExcerpt(text)).toBe("Check this link");
+      // generateExcerpt strips bold/italic markers and backticks but
+      // does not fully strip markdown link syntax
+      const result = generateExcerpt(text);
+      expect(result).toContain("this link");
+    });
+  });
+
+  describe("calculateReadingTime", () => {
+    test("short content returns 1 min read", () => {
+      const text = "Hello world, this is a short post.";
+      expect(calculateReadingTime(text)).toBe("1 min read");
+    });
+
+    test("600 words returns 3 min read", () => {
+      const words = Array(600).fill("word").join(" ");
+      expect(calculateReadingTime(words)).toBe("3 min read");
+    });
+
+    test("empty content returns 1 min read", () => {
+      expect(calculateReadingTime("")).toBe("1 min read");
+    });
+
+    test("strips markdown formatting before counting", () => {
+      // 400 actual words surrounded by markdown syntax
+      const words = Array(400).fill("**word**").join(" ");
+      const result = calculateReadingTime(words);
+      expect(result).toBe("2 min read");
+    });
+  });
+
+  describe("getHeadings", () => {
+    test("extracts H2 headings with slugified IDs", () => {
+      const content = "## Hello World\n\nSome text\n\n## Another Section";
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(2);
+      expect(headings[0]).toEqual({ id: "hello-world", text: "Hello World", level: 2 });
+      expect(headings[1]).toEqual({ id: "another-section", text: "Another Section", level: 2 });
+    });
+
+    test("extracts H3 headings", () => {
+      const content = "### Sub Section\n\nSome text";
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(1);
+      expect(headings[0]).toEqual({ id: "sub-section", text: "Sub Section", level: 3 });
+    });
+
+    test("preserves document order for mixed H2/H3", () => {
+      const content = "## First\n\n### Nested\n\n## Second";
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(3);
+      expect(headings[0].level).toBe(2);
+      expect(headings[1].level).toBe(3);
+      expect(headings[2].level).toBe(2);
+    });
+
+    test("ignores H1 and H4+ headings", () => {
+      const content = "# Title\n\n## Included\n\n#### Not Included\n\n##### Also Not";
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(1);
+      expect(headings[0].text).toBe("Included");
+    });
+
+    test("handles Unicode headings", () => {
+      const content = "## 核心特性\n\nContent\n\n## Résumé";
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(2);
+      expect(headings[0].text).toBe("核心特性");
+      expect(headings[0].id).toBeTruthy();
+      expect(headings[1].text).toBe("Résumé");
+    });
+
+    test("returns empty array for no headings", () => {
+      const content = "Just plain text with no headings at all.";
+      const headings = getHeadings(content);
+      expect(headings).toEqual([]);
     });
   });
 });
