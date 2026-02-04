@@ -26,7 +26,7 @@ export const siteConfig = {
     series: 1,
   },
   includeDateInUrl: false,
-  trailingSlash: false, // false = trim trailing slashes (default), true = add trailing slashes
+  // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
   showFuturePosts: false,
   toc: true,
   themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'

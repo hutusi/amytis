@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
-import { siteConfig } from "./site.config";
 
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  trailingSlash: siteConfig.trailingSlash ?? false,
+  // Set to false to trim trailing slashes, true to add them
+  // Keep in sync with site.config.ts trailingSlash if using both
+  trailingSlash: false,
   output: "export",
   images: {
     loader: "custom",

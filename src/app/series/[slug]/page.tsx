@@ -5,6 +5,7 @@ import Pagination from '@/components/Pagination';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import CoverImage from '@/components/CoverImage';
+import Link from 'next/link';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -54,6 +55,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const title = seriesData?.title || slug.charAt(0).toUpperCase() + slug.slice(1);
   const description = seriesData?.excerpt;
   const coverImage = seriesData?.coverImage;
+  const authors = seriesData?.authors || [];
 
   return (
     <div className="layout-main">
@@ -81,6 +83,22 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
           {description && (
             <p className="text-lg text-muted font-serif italic leading-relaxed">
               {description}
+            </p>
+          )}
+          {authors.length > 0 && (
+            <p className="mt-4 text-sm text-muted">
+              <span className="mr-1">By</span>
+              {authors.map((author, index) => (
+                <span key={author}>
+                  <Link
+                    href={`/authors/${encodeURIComponent(author)}`}
+                    className="text-foreground hover:text-accent no-underline transition-colors duration-200"
+                  >
+                    {author}
+                  </Link>
+                  {index < authors.length - 1 && <span className="mr-1">,</span>}
+                </span>
+              ))}
             </p>
           )}
         </div>
