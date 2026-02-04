@@ -26,6 +26,7 @@ export const siteConfig = {
     series: 1,
   },
   includeDateInUrl: false,
+  trailingSlash: false, // false = trim trailing slashes (default), true = add trailing slashes
   showFuturePosts: false,
   toc: true,
   themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
