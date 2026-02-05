@@ -9,6 +9,11 @@ const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
 const seriesDirectory = path.join(process.cwd(), 'content', 'series');
 
+const ExternalLinkSchema = z.object({
+  name: z.string(),
+  url: z.string().url(),
+});
+
 const PostSchema = z.object({
   title: z.string(),
   date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
@@ -26,12 +31,18 @@ const PostSchema = z.object({
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
+  externalLinks: z.array(ExternalLinkSchema).optional().default([]),
 });
 
 export interface Heading {
   id: string;
   text: string;
   level: number;
+}
+
+export interface ExternalLink {
+  name: string;
+  url: string;
 }
 
 export interface PostData {
@@ -51,6 +62,7 @@ export interface PostData {
   draft?: boolean;
   latex?: boolean;
   toc?: boolean;
+  externalLinks?: ExternalLink[];
   readingTime: string;
   content: string;
   headings: Heading[];
@@ -151,6 +163,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     draft: data.draft,
     latex: data.latex,
     toc: data.toc,
+    externalLinks: data.externalLinks,
     readingTime,
     content: contentWithoutH1,
     headings,

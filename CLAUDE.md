@@ -116,6 +116,11 @@ coverImage: "./images/cover.jpg"  # Local or external URL
 latex: true                # Enable KaTeX math
 toc: false                 # Hide table of contents
 layout: "simple"           # Use simple layout (default: "post")
+externalLinks:             # Links to external discussions
+  - name: "Hacker News"
+    url: "https://news.ycombinator.com/item?id=12345"
+  - name: "V2EX"
+    url: "https://v2ex.com/t/123456"
 ---
 ```
 
@@ -136,7 +141,7 @@ posts: ["post-1", "post-2"] # Manual post ordering (optional)
 
 ## Key Components
 
-- `PostLayout` / `SimpleLayout` - Post page layouts with TOC, series sidebar, comments
+- `PostLayout` / `SimpleLayout` - Post page layouts with TOC, series sidebar, external links, comments
 - `Hero` - Configurable homepage hero section with collapsible intro
 - `HorizontalScroll` - Scrollable container with navigation arrows for featured content
 - `PostList` - Card-based post listing with thumbnails, metadata, excerpts, and tags

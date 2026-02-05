@@ -6,6 +6,7 @@ import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
 import SeriesSidebar from '@/components/SeriesSidebar';
 import Comments from '@/components/Comments';
+import ExternalLinks from '@/components/ExternalLinks';
 import Tag from '@/components/Tag';
 import { siteConfig } from '../../site.config';
 
@@ -105,6 +106,10 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
           )}
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+
+          {post.externalLinks && post.externalLinks.length > 0 && (
+            <ExternalLinks links={post.externalLinks} />
+          )}
 
           <RelatedPosts posts={relatedPosts || []} />
           
