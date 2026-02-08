@@ -55,7 +55,19 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const title = seriesData?.title || slug.charAt(0).toUpperCase() + slug.slice(1);
   const description = seriesData?.excerpt;
   const coverImage = seriesData?.coverImage;
-  const authors = seriesData?.authors || [];
+  // Use configured series authors, or aggregate top authors from posts
+  let authors = seriesData?.authors || [];
+  if (authors.length === 0 && allPosts.length > 0) {
+    const counts = new Map<string, number>();
+    for (const post of allPosts) {
+      for (const author of post.authors) {
+        counts.set(author, (counts.get(author) || 0) + 1);
+      }
+    }
+    authors = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+  }
 
   return (
     <div className="layout-main">
