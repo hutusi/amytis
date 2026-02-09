@@ -12,12 +12,13 @@ import { siteConfig } from '../../../../site.config';
 export async function generateStaticParams() {
   const posts = getAllPosts();
   return posts.map((post) => ({
-    slug: post.slug,
+    slug: encodeURIComponent(post.slug),
   }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const post = getPostBySlug(slug);
 
   if (!post) {
@@ -61,7 +62,8 @@ export default async function PostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const post = getPostBySlug(slug);
 
   if (!post) {

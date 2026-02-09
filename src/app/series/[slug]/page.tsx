@@ -12,12 +12,13 @@ const PAGE_SIZE = siteConfig.pagination.series;
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
   return Object.keys(allSeries).map((slug) => ({
-    slug,
+    slug: encodeURIComponent(slug),
   }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const seriesData = getSeriesData(slug);
   
   if (!seriesData) {
@@ -39,7 +40,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const seriesData = getSeriesData(slug);
   const allPosts = getSeriesPosts(slug);
 

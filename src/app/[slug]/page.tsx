@@ -9,7 +9,7 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 export async function generateStaticParams() {
   const pages = getAllPages();
   return pages.map((page) => ({
-    slug: page.slug,
+    slug: encodeURIComponent(page.slug),
   }));
 }
 
@@ -18,7 +18,8 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const page = getPageBySlug(slug);
 
   if (!page) {

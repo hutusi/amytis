@@ -18,7 +18,7 @@ export async function generateStaticParams() {
     const totalPages = Math.ceil(posts.length / PAGE_SIZE);
     if (totalPages > 1) {
         for (let i = 2; i <= totalPages; i++) {
-            params.push({ slug, page: i.toString() });
+            params.push({ slug: encodeURIComponent(slug), page: i.toString() });
         }
     }
   });
@@ -28,7 +28,8 @@ export async function generateStaticParams() {
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; page: string }> }): Promise<Metadata> {
-  const { slug, page } = await params;
+  const { slug: rawSlug, page } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const seriesData = getSeriesData(slug);
   const title = seriesData?.title || slug;
   return {
@@ -37,7 +38,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string; page: string }> }) {
-  const { slug, page: pageStr } = await params;
+  const { slug: rawSlug, page: pageStr } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const page = parseInt(pageStr);
   const seriesData = getSeriesData(slug);
   const allPosts = getSeriesPosts(slug);

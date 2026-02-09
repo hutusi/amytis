@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 export async function generateStaticParams() {
   const authors = getAllAuthors();
   return Object.keys(authors).map((author) => ({
-    author: author,
+    author: encodeURIComponent(author),
   }));
 }
 
