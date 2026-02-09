@@ -1,13 +1,5 @@
 import React from 'react';
 
-const PLACEHOLDER_IMAGES = [
-  "https://images.unsplash.com/photo-1549887534-1541e9326642?auto=format&fit=crop&w=800&q=80", // Abstract Paint
-  "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=800&q=80", // Colorful Paint
-  "https://images.unsplash.com/photo-1579783902614-a3fb39279c23?auto=format&fit=crop&w=800&q=80", // Museum Art
-  "https://images.unsplash.com/photo-1501472312651-726efe1188c1?auto=format&fit=crop&w=800&q=80", // Cloud/Sky
-  "https://images.unsplash.com/photo-1605806616949-1e87b487bc2a?auto=format&fit=crop&w=800&q=80", // Flower/Oil
-];
-
 // Each palette defines a gradient background and text color for light/dark modes
 const palettes = [
   // Warm amber
@@ -37,6 +29,25 @@ const accentColors = [
   'bg-teal-400/60 dark:bg-teal-400/40',
 ];
 
+// Shorten a long title to a concise label for the cover
+function shortenTitle(text: string): string {
+  // Already short enough — use as-is
+  if (text.length <= 12) return text;
+
+  // CJK characters: take first 4 chars
+  const cjk = /[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f]/;
+  if (cjk.test(text)) {
+    return text.slice(0, 4);
+  }
+
+  // Latin text: take up to first 2 words
+  const words = text.split(/\s+/);
+  if (words.length >= 2 && words.slice(0, 2).join(' ').length <= 20) {
+    return words.slice(0, 2).join(' ');
+  }
+  return words[0];
+}
+
 interface CoverImageProps {
   title: string;
   slug: string;
@@ -45,16 +56,13 @@ interface CoverImageProps {
 }
 
 export default function CoverImage({ title, slug, src, className = "h-full w-full object-cover" }: CoverImageProps) {
-  const imageIndex = slug.length % PLACEHOLDER_IMAGES.length;
-  // If src is provided (even if empty string provided by parent?), use it. 
-  // If src is undefined/null/empty, fallback to placeholder.
-  // BUT we need to handle "text:" case properly.
-  const imageUrl = src || PLACEHOLDER_IMAGES[imageIndex];
-  
-  const isTextCover = imageUrl.startsWith('text:');
-  const coverText = isTextCover 
-    ? (imageUrl.replace('text:', '').trim() || title) 
-    : '';
+  // Use text-based cover when no src or explicit "text:" prefix
+  const isTextCover = !src || src.startsWith('text:');
+  const coverText = !src
+    ? shortenTitle(title)
+    : src.startsWith('text:')
+      ? (src.replace('text:', '').trim() || shortenTitle(title))
+      : '';
     
   const paletteIndex = slug.length % palettes.length;
   const paletteClass = palettes[paletteIndex];
@@ -74,7 +82,7 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
 
   return (
     <img 
-      src={imageUrl} 
+      src={src}
       alt={title} 
       className={className}
       loading="lazy"
