@@ -9,7 +9,7 @@
     "build:dev": "bun scripts/copy-assets.ts && next build",
     "clean": "rm -rf .next out public/posts",
     "new": "bun scripts/new-post.ts",
-    "new-weekly": "bun scripts/new-series.ts --md --folder --prefix weekly",
+    "new-weekly": "bun scripts/new-post.ts --md --folder --prefix weekly",
     "new-series": "bun scripts/new-series.ts",
     "new-from-pdf": "bun scripts/new-from-pdf.ts",
     "new-from-images": "bun scripts/new-from-images.ts",

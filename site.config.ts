@@ -41,7 +41,7 @@ export const siteConfig = {
     },
     stories: {
       scrollThreshold: 1,  // Enable scrolling when more than this number
-      maxItems: 5,
+      maxItems: 4,
     },
   },
   i18n: {
