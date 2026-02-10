@@ -1,13 +1,24 @@
 import { getAllAuthors, getPostsByAuthor } from '@/lib/markdown';
-import PostList from '@/components/PostList';
-import Link from 'next/link';
+import PostCard from '@/components/PostCard';
+import Tag from '@/components/Tag';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
+import { siteConfig } from '../../../../site.config';
 
 export async function generateStaticParams() {
   const authors = getAllAuthors();
   return Object.keys(authors).map((author) => ({
     author: encodeURIComponent(author),
   }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ author: string }> }): Promise<Metadata> {
+  const { author } = await params;
+  const decodedAuthor = decodeURIComponent(author);
+  return {
+    title: `${decodedAuthor} - Author | ${siteConfig.title}`,
+    description: `Posts written by ${decodedAuthor}.`,
+  };
 }
 
 export default async function AuthorPage({
@@ -23,30 +34,70 @@ export default async function AuthorPage({
     notFound();
   }
 
+  // Collect unique tags and categories from this author's posts
+  const tags = new Map<string, number>();
+  const categories = new Set<string>();
+  for (const post of posts) {
+    categories.add(post.category);
+    for (const tag of post.tags) {
+      tags.set(tag, (tags.get(tag) || 0) + 1);
+    }
+  }
+  const topTags = [...tags.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name]) => name);
+
+  // Date range
+  const dates = posts.map(p => p.date).sort();
+  const firstDate = dates[0];
+  const lastDate = dates[dates.length - 1];
+
+  // Author initial for avatar
+  const initial = decodedAuthor.charAt(0).toUpperCase();
+
   return (
     <div className="layout-container">
-      <nav className="mb-16">
-        <Link 
-          href="/" 
-          className="text-muted hover:text-accent transition-colors duration-200 font-sans text-sm flex items-center gap-1 group"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform">←</span>
-          <span>Home</span>
-        </Link>
-      </nav>
+      <header className="mb-20 text-center">
+        {/* Author avatar */}
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 border-2 border-accent/20">
+          <span className="text-3xl font-serif font-bold text-accent">
+            {initial}
+          </span>
+        </div>
 
-      <header className="mb-16">
-        <h1 className="text-4xl font-serif font-bold text-heading mb-4">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-4">
           {decodedAuthor}
         </h1>
-        <p className="text-lg text-muted font-serif italic">
-          {posts.length} {posts.length === 1 ? 'entry' : 'entries'} written by this author.
-        </p>
+
+        {/* Stats */}
+        <div className="flex items-center justify-center gap-4 text-sm text-muted font-mono">
+          <span>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
+          <span className="h-1 w-1 rounded-full bg-muted/30" />
+          <span>{categories.size} {categories.size === 1 ? 'category' : 'categories'}</span>
+          {firstDate !== lastDate && (
+            <>
+              <span className="h-1 w-1 rounded-full bg-muted/30" />
+              <span>{firstDate} — {lastDate}</span>
+            </>
+          )}
+        </div>
+
+        {/* Top tags */}
+        {topTags.length > 0 && (
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
+            {topTags.map(tag => (
+              <Tag key={tag} tag={tag} variant="default" />
+            ))}
+          </div>
+        )}
       </header>
 
-      <main>
-        <PostList posts={posts} />
-      </main>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {posts.map(post => (
+          <PostCard key={post.slug} post={post} />
+        ))}
+      </div>
     </div>
   );
 }
