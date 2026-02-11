@@ -5,7 +5,9 @@ category: "Engineering"
 tags: ["code", "typescript"]
 ---
 
-Amytis provides beautiful syntax highlighting for dozens of programming languages.
+Amytis provides beautiful syntax highlighting for dozens of programming languages. Here are a few examples within the series context.
+
+> For a comprehensive showcase covering 11+ languages, see the standalone [Syntax Highlighting Showcase](/posts/syntax-highlighting-showcase) post.
 
 ## TypeScript
 
@@ -18,6 +20,93 @@ interface Post {
 
 function getFeatured(posts: Post[]): Post[] {
   return posts.filter(p => p.featured);
+}
+```
+
+## Python
+
+```python
+from pathlib import Path
+from dataclasses import dataclass
+
+@dataclass
+class Post:
+    title: str
+    slug: str
+    featured: bool = False
+
+    @property
+    def url(self) -> str:
+        return f"/posts/{self.slug}"
+
+def load_posts(directory: Path) -> list[Post]:
+    return [
+        Post(title=f.stem.replace("-", " ").title(), slug=f.stem)
+        for f in directory.glob("*.md")
+    ]
+```
+
+## Rust
+
+```rust
+use std::fs;
+
+struct Post {
+    title: String,
+    slug: String,
+    featured: bool,
+}
+
+fn load_posts(dir: &str) -> Vec<Post> {
+    fs::read_dir(dir)
+        .expect("Failed to read directory")
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            let slug = path.file_stem()?.to_str()?.to_string();
+            Some(Post {
+                title: slug.replace('-', " "),
+                slug,
+                featured: false,
+            })
+        })
+        .collect()
+}
+```
+
+## Go
+
+```go
+package blog
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+type Post struct {
+	Title    string
+	Slug     string
+	Featured bool
+}
+
+func LoadPosts(dir string) ([]Post, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var posts []Post
+	for _, e := range entries {
+		if filepath.Ext(e.Name()) == ".md" {
+			slug := strings.TrimSuffix(e.Name(), ".md")
+			posts = append(posts, Post{
+				Title: strings.ReplaceAll(slug, "-", " "),
+				Slug:  slug,
+			})
+		}
+	}
+	return posts, nil
 }
 ```
 

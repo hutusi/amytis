@@ -7,8 +7,60 @@ coverImage: "text:Part 1"
 
 # Getting Started
 
-Next.js 15 brings powerful new features to the table. In this part, we explore the foundation.
+Next.js 15 brings powerful new features to the table. In this part, we explore the foundation: the App Router, Bun as a package manager, and static export for deployment.
 
-- Bun integration
-- App Router by default
-- Static Export optimization
+## Setting Up with Bun
+
+Bun is a fast JavaScript runtime and package manager that pairs well with Next.js 15. Creating a new project takes a single command:
+
+```bash
+bunx create-next-app@latest my-app
+cd my-app
+bun dev
+```
+
+Bun's install speed is noticeably faster than npm or yarn, and its built-in bundler means fewer dependencies in your toolchain.
+
+## The App Router
+
+Next.js 15 uses the App Router by default, replacing the legacy Pages Router. The key difference is that **every component is a Server Component** unless you explicitly opt in to client-side rendering with `"use client"`.
+
+```typescript
+// app/page.tsx — This is a Server Component by default
+export default function HomePage() {
+  return (
+    <main>
+      <h1>Welcome to Next.js 15</h1>
+      <p>This component renders on the server.</p>
+    </main>
+  );
+}
+```
+
+Server Components unlock several benefits:
+
+- **Smaller client bundles** — Server-only code never ships to the browser
+- **Direct data access** — Query databases or read files without an API layer
+- **Streaming** — The server can send HTML progressively as components render
+
+## Static Export
+
+For sites that don't need a running server (blogs, documentation, landing pages), Next.js supports full static export:
+
+```typescript
+// next.config.ts
+const nextConfig = {
+  output: 'export',
+  images: {
+    unoptimized: true,
+  },
+};
+
+export default nextConfig;
+```
+
+Running `bun run build` with this configuration generates a `out/` directory containing plain HTML, CSS, and JavaScript files. You can deploy this to any static hosting service — GitHub Pages, Netlify, Cloudflare Pages, or an S3 bucket.
+
+## What's Next
+
+In [Part 2](/series/nextjs-deep-dive), we'll explore the file-based routing system in depth: dynamic routes, route groups, layouts, and how Next.js turns your folder structure into a fully-featured application.

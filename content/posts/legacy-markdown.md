@@ -21,9 +21,9 @@ Migration from other systems (Jekyll, Hugo) often involves thousands of `.md` fi
 
 Footnote test[^test].
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+One of the main benefits of `.md` support is seamless migration. If you're moving from Jekyll, Hugo, or another static site generator, your existing posts can be dropped into the `content/posts/` directory without any changes. Frontmatter fields like `title`, `date`, and `tags` are parsed identically for both formats.
 
-Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?
+The key difference is that `.mdx` files allow embedding React components directly in your content, while `.md` files stick to standard Markdown. For most blog posts, standard Markdown is more than sufficient — and keeping your content in `.md` means it stays portable across any Markdown-compatible system.
 
 ### Code Block Test
 

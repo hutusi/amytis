@@ -12,7 +12,7 @@ describe("Integration: Series", () => {
     const series = getAllSeries();
     expect(Object.keys(series).length).toBeGreaterThan(0);
     expect(series).toHaveProperty("nextjs-deep-dive");
-    expect(series).toHaveProperty("algorithm-adventures");
+    expect(series).toHaveProperty("digital-garden");
   });
 
   test("getSeriesData returns metadata with correct fields", () => {
@@ -44,17 +44,17 @@ describe("Integration: Series", () => {
     });
   });
 
-  test("getSeriesPosts returns posts sorted by date for date-asc series", () => {
-    const seriesData = getSeriesData("algorithm-adventures");
-    expect(seriesData?.sort).toBe("date-asc");
+  test("getSeriesPosts returns posts in manual order for digital-garden series", () => {
+    const seriesData = getSeriesData("digital-garden");
+    expect(seriesData?.sort).toBe("manual");
 
-    const posts = getSeriesPosts("algorithm-adventures");
-    // If there are at least 2 posts, verify ascending date order
-    if (posts.length >= 2) {
-      for (let i = 1; i < posts.length; i++) {
-        expect(posts[i].date >= posts[i - 1].date).toBe(true);
-      }
-    }
+    const posts = getSeriesPosts("digital-garden");
+    expect(posts.length).toBeGreaterThan(0);
+
+    const manualSlugs = seriesData!.posts!;
+    posts.forEach((post, i) => {
+      expect(post.slug).toBe(manualSlugs[i]);
+    });
   });
 
   test("getSeriesPosts returns empty array for nonexistent series", () => {
