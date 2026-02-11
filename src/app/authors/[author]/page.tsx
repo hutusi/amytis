@@ -4,6 +4,10 @@ import Tag from '@/components/Tag';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
+import { translations, Language } from '@/i18n/translations';
+
+const t = (key: keyof typeof translations.en) =>
+  translations[siteConfig.i18n.defaultLocale as Language]?.[key] || translations.en[key];
 
 export async function generateStaticParams() {
   const authors = getAllAuthors();
@@ -15,9 +19,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ author: string }> }): Promise<Metadata> {
   const { author } = await params;
   const decodedAuthor = decodeURIComponent(author);
+  const posts = getPostsByAuthor(decodedAuthor);
   return {
-    title: `${decodedAuthor} - Author | ${siteConfig.title}`,
-    description: `Posts written by ${decodedAuthor}.`,
+    title: `${decodedAuthor} | ${siteConfig.title}`,
+    description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${decodedAuthor}.`,
   };
 }
 
@@ -48,10 +53,10 @@ export default async function AuthorPage({
     .slice(0, 8)
     .map(([name]) => name);
 
-  // Date range
+  // Year range
   const dates = posts.map(p => p.date).sort();
-  const firstDate = dates[0];
-  const lastDate = dates[dates.length - 1];
+  const firstYear = new Date(dates[0]).getFullYear();
+  const lastYear = new Date(dates[dates.length - 1]).getFullYear();
 
   // Author initial for avatar
   const initial = decodedAuthor.charAt(0).toUpperCase();
@@ -72,13 +77,13 @@ export default async function AuthorPage({
 
         {/* Stats */}
         <div className="flex items-center justify-center gap-4 text-sm text-muted font-mono">
-          <span>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
+          <span>{posts.length} {t('posts').toLowerCase()}</span>
           <span className="h-1 w-1 rounded-full bg-muted/30" />
-          <span>{categories.size} {categories.size === 1 ? 'category' : 'categories'}</span>
-          {firstDate !== lastDate && (
+          <span>{categories.size} {t('categories').toLowerCase()}</span>
+          {firstYear !== lastYear && (
             <>
               <span className="h-1 w-1 rounded-full bg-muted/30" />
-              <span>{firstDate} — {lastDate}</span>
+              <span>{firstYear} — {lastYear}</span>
             </>
           )}
         </div>
