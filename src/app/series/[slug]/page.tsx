@@ -6,6 +6,10 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
+import { translations, Language } from '@/i18n/translations';
+
+const t = (key: keyof typeof translations.en) =>
+  translations[siteConfig.i18n.defaultLocale as Language]?.[key] || translations.en[key];
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -26,15 +30,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const posts = getSeriesPosts(slug);
     if (posts.length > 0) {
         return {
-            title: `${slug} - Series | ${siteConfig.title}`,
-            description: `A collection of ${posts.length} posts about ${slug}.`,
+            title: `${slug} - ${t('series')} | ${siteConfig.title}`,
+            description: `${posts.length} ${t('posts').toLowerCase()} - ${slug}.`,
         }
     }
     return { title: 'Series Not Found' };
   }
 
   return {
-    title: `${seriesData.title} - Series | ${siteConfig.title}`,
+    title: `${seriesData.title} - ${t('series')} | ${siteConfig.title}`,
     description: seriesData.excerpt,
   };
 }
@@ -94,7 +98,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
         <div className="text-center max-w-2xl mx-auto">
           <span className="badge-accent mb-4">
-            Series • {allPosts.length} {allPosts.length === 1 ? 'Part' : 'Parts'}
+            {t('series')} • {allPosts.length} {t('parts')}
           </span>
           <h1 className="page-title mb-4">
             {title}
@@ -106,7 +110,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
           )}
           {authors.length > 0 && (
             <p className="mt-4 text-sm text-muted">
-              <span className="mr-1">By</span>
+              <span className="mr-1">{t('written_by')}</span>
               {authors.map((author, index) => (
                 <span key={author}>
                   <Link
