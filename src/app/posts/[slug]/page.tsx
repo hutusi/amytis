@@ -5,23 +5,45 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 
+function safeDecodeParam(param: string): string {
+  try {
+    return decodeURIComponent(param);
+  } catch {
+    return param;
+  }
+}
+
+function resolvePostFromParam(rawSlug: string) {
+  const decoded = safeDecodeParam(rawSlug);
+  return (
+    getPostBySlug(decoded) ||
+    getPostBySlug(rawSlug) ||
+    getPostBySlug(decoded.normalize('NFC')) ||
+    getPostBySlug(decoded.normalize('NFD'))
+  );
+}
+
 /**
  * Generates the static paths for all blog posts at build time.
  * This ensures fast page loads and SEO optimization.
  */
 export async function generateStaticParams() {
   const posts = getAllPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  const slugs = new Set<string>();
+
+  for (const post of posts) {
+    slugs.add(post.slug);
+    slugs.add(encodeURIComponent(post.slug));
+  }
+
+  return [...slugs].map((slug) => ({ slug }));
 }
 
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
-  const post = getPostBySlug(slug);
+  const post = resolvePostFromParam(rawSlug);
 
   if (!post) {
     return {
@@ -67,8 +89,8 @@ export default async function PostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
-  const post = getPostBySlug(slug);
+  const slug = safeDecodeParam(rawSlug);
+  const post = resolvePostFromParam(rawSlug);
 
   if (!post) {
     notFound();
