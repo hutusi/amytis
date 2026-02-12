@@ -110,7 +110,10 @@ export default function ArchivePage() {
                                           {post.title}
                                         </h4>
                                         {post.series && (
-                                          <span className="text-[10px] font-sans font-medium uppercase tracking-wider text-accent/60 border border-accent/20 rounded px-1.5 py-0.5 shrink-0 leading-none">
+                                          <span
+                                            title={post.series}
+                                            className="text-[10px] font-sans font-medium uppercase tracking-wider text-accent/60 border border-accent/20 rounded px-1.5 py-0.5 shrink-0 leading-none max-w-[10ch] truncate inline-block align-baseline"
+                                          >
                                             {post.series}
                                           </span>
                                         )}
