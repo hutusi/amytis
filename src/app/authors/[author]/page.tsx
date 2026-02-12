@@ -1,4 +1,4 @@
-import { getAllAuthors, getPostsByAuthor } from '@/lib/markdown';
+import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/markdown';
 import PostCard from '@/components/PostCard';
 import Tag from '@/components/Tag';
 import { notFound } from 'next/navigation';
@@ -8,20 +8,34 @@ import { t } from '@/lib/i18n';
 
 export async function generateStaticParams() {
   const authors = getAllAuthors();
-  return Object.keys(authors).map((author) => ({
-    author: encodeURIComponent(author),
-  }));
+  const params = new Set<string>();
+
+  // Generate slug-based routes and keep legacy name-based routes for compatibility.
+  for (const authorName of Object.keys(authors)) {
+    params.add(getAuthorSlug(authorName));
+    params.add(authorName);
+  }
+
+  return [...params].map((author) => ({ author }));
 }
 
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ author: string }> }): Promise<Metadata> {
-  const { author } = await params;
-  const decodedAuthor = decodeURIComponent(author);
-  const posts = getPostsByAuthor(decodedAuthor);
+  const { author: rawAuthor } = await params;
+  const decodedAuthorParam = decodeURIComponent(rawAuthor);
+  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+
+  if (!resolvedAuthor) {
+    return {
+      title: `Author Not Found | ${siteConfig.title}`,
+    };
+  }
+
+  const posts = getPostsByAuthor(resolvedAuthor);
   return {
-    title: `${decodedAuthor} | ${siteConfig.title}`,
-    description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${decodedAuthor}.`,
+    title: `${resolvedAuthor} | ${siteConfig.title}`,
+    description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${resolvedAuthor}.`,
   };
 }
 
@@ -30,9 +44,15 @@ export default async function AuthorPage({
 }: {
   params: Promise<{ author: string }>;
 }) {
-  const { author } = await params;
-  const decodedAuthor = decodeURIComponent(author);
-  const posts = getPostsByAuthor(decodedAuthor);
+  const { author: rawAuthor } = await params;
+  const decodedAuthorParam = decodeURIComponent(rawAuthor);
+  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+
+  if (!resolvedAuthor) {
+    notFound();
+  }
+
+  const posts = getPostsByAuthor(resolvedAuthor);
 
   if (posts.length === 0) {
     notFound();
@@ -58,7 +78,7 @@ export default async function AuthorPage({
   const lastYear = new Date(dates[dates.length - 1]).getFullYear();
 
   // Author initial for avatar
-  const initial = decodedAuthor.charAt(0).toUpperCase();
+  const initial = resolvedAuthor.charAt(0).toUpperCase();
 
   return (
     <div className="layout-container">
@@ -71,7 +91,7 @@ export default async function AuthorPage({
         </div>
 
         <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading mb-4">
-          {decodedAuthor}
+          {resolvedAuthor}
         </h1>
 
         {/* Stats */}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { generateExcerpt, calculateReadingTime, getHeadings } from "./markdown";
+import { generateExcerpt, calculateReadingTime, getHeadings, getAuthorSlug } from "./markdown";
 
 describe("markdown utils", () => {
   describe("generateExcerpt", () => {
@@ -102,6 +102,14 @@ describe("markdown utils", () => {
       const content = "Just plain text with no headings at all.";
       const headings = getHeadings(content);
       expect(headings).toEqual([]);
+    });
+  });
+
+  describe("getAuthorSlug", () => {
+    test("creates stable, URL-safe slugs for author names", () => {
+      expect(getAuthorSlug("Amytis Team")).toBe("amytis-team");
+      expect(getAuthorSlug("[author]")).toBe("author");
+      expect(getAuthorSlug(" John Hu ")).toBe("john-hu");
     });
   });
 });

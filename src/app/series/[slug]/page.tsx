@@ -1,4 +1,4 @@
-import { getSeriesData, getSeriesPosts, getAllSeries, getSeriesAuthors } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, getAllSeries, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
@@ -113,7 +113,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
               {authors.map((author, index) => (
                 <span key={author}>
                   <Link
-                    href={`/authors/${encodeURIComponent(author)}`}
+                    href={`/authors/${getAuthorSlug(author)}`}
                     className="text-foreground hover:text-accent no-underline transition-colors duration-200"
                   >
                     {author}

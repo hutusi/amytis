@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PostData } from '@/lib/markdown';
+import { getAuthorSlug, PostData } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedPosts from '@/components/RelatedPosts';
@@ -74,7 +74,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
                 {post.authors.map((author, index) => (
                   <span key={author} className="flex items-center">
                     <Link 
-                      href={`/authors/${encodeURIComponent(author)}`}
+                      href={`/authors/${getAuthorSlug(author)}`}
                       className="text-foreground hover:text-accent no-underline transition-colors duration-200"
                     >
                       {author}

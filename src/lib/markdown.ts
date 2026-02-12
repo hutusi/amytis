@@ -499,6 +499,11 @@ export function getPostsByAuthor(author: string): PostData[] {
   );
 }
 
+export function getAuthorSlug(author: string): string {
+  const slugger = new GithubSlugger();
+  return slugger.slug(author.trim());
+}
+
 export function getAllAuthors(): Record<string, number> {
   const allPosts = getAllPosts();
   const authors: Record<string, number> = {};
@@ -514,6 +519,19 @@ export function getAllAuthors(): Record<string, number> {
   });
 
   return authors;
+}
+
+export function resolveAuthorParam(authorParam: string): string | null {
+  const allAuthors = Object.keys(getAllAuthors());
+  const normalizedParam = authorParam.trim().toLowerCase();
+
+  // Backward compatibility for name-based URLs (/authors/Amytis%20Team).
+  const exactMatch = allAuthors.find((author) => author.toLowerCase() === normalizedParam);
+  if (exactMatch) return exactMatch;
+
+  // Preferred slug-based URLs (/authors/amytis-team).
+  const slugMatch = allAuthors.find((author) => getAuthorSlug(author) === normalizedParam);
+  return slugMatch || null;
 }
 
 export function getRelatedPosts(currentSlug: string, limit: number = 3): PostData[] {
