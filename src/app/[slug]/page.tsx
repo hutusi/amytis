@@ -5,6 +5,11 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
+import { TranslationKey } from '@/i18n/translations';
+
+const pageTranslationKeys: Record<string, { titleKey: TranslationKey; subtitleKey: TranslationKey }> = {
+  about: { titleKey: 'about_title', subtitleKey: 'about_subtitle' },
+};
 
 /**
  * Generates the static paths for all top-level pages at build time.
@@ -53,5 +58,6 @@ export default async function Page({
     return <PostLayout post={page} />;
   }
 
-  return <SimpleLayout post={page} />;
+  const keys = pageTranslationKeys[slug];
+  return <SimpleLayout post={page} titleKey={keys?.titleKey} subtitleKey={keys?.subtitleKey} />;
 }

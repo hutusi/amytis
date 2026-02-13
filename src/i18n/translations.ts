@@ -39,6 +39,8 @@ export const translations = {
     tags_subtitle_one: "1 topic cultivated in this garden.",
     tag_posts_found: "{count} posts found.",
     tag_posts_found_one: "1 post found.",
+    about_title: "About Amytis",
+    about_subtitle: "Learn more about the philosophy and technology behind this digital garden.",
   },
   zh: {
     home: "首页",
@@ -80,6 +82,8 @@ export const translations = {
     tags_subtitle_one: "花园中培育了 1 个主题。",
     tag_posts_found: "找到 {count} 篇文章。",
     tag_posts_found_one: "找到 1 篇文章。",
+    about_title: "关于 Amytis",
+    about_subtitle: "了解这座数字花园背后的理念与技术。",
   },
 };
 
