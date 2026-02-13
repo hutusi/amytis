@@ -41,6 +41,7 @@ if (series) {
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
+    fs.mkdirSync(path.join(dirPath, 'images'), { recursive: true });
     targetPath = path.join(dirPath, `index${ext}`);
   } else {
     targetPath = path.join(seriesDir, `${prefixedSlug}${ext}`);
@@ -51,6 +52,7 @@ if (series) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
+  fs.mkdirSync(path.join(dirPath, 'images'), { recursive: true });
   targetPath = path.join(dirPath, `index${ext}`);
 } else {
   const filename = `${date}-${prefixedSlug}${ext}`;

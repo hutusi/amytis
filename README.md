@@ -89,6 +89,7 @@ bun run new "Title" --folder                      # Create as folder with index.
 bun run new "Title" --prefix weekly               # Create with prefix (e.g., weekly-title)
 bun run new "Title" --template custom             # Use custom template from templates/
 bun run new "Title" --md                          # Create as .md instead of .mdx
+bun run new "Title" --series my-series            # Create post in a series directory
 bun run new-series "Series Name"                  # Create new series with cover image placeholder
 bun run new-from-pdf doc.pdf                      # Create post from PDF (converts pages to images)
 bun run new-from-pdf doc.pdf --title "My Doc"     # With custom title

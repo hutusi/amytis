@@ -34,6 +34,9 @@ bun run new "My Post" --template custom
 
 # Create as .md instead of .mdx
 bun run new "My Post" --md
+
+# Create a post inside a series directory
+bun run new "Getting Started" --series my-series
 ```
 
 Or create files manually:
