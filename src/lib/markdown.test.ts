@@ -55,6 +55,18 @@ describe("markdown utils", () => {
       const result = calculateReadingTime(words);
       expect(result).toBe("2 min read");
     });
+
+    test("counts Chinese characters for reading time", () => {
+      const han = "中".repeat(600);
+      expect(calculateReadingTime(han)).toBe("2 min read");
+    });
+
+    test("combines Latin words and Chinese characters", () => {
+      const latinWords = Array(200).fill("word").join(" ");
+      const han = "中".repeat(300);
+      const mixed = `${latinWords} ${han}`;
+      expect(calculateReadingTime(mixed)).toBe("2 min read");
+    });
   });
 
   describe("getHeadings", () => {

@@ -70,10 +70,22 @@ export interface PostData {
 
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
-  // Strip tags and special chars roughly for word count
-  const text = content.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*`~[\]()]/g, "");
-  const wordCount = text.split(/\s+/).length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  const hanCharsPerMinute = 300;
+
+  // Strip tags and common markdown syntax before counting.
+  const text = content
+    .replace(/<\/?[^>]+(>|$)/g, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`]*`/g, "")
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[#*_~>\-[\]()]/g, " ");
+
+  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
+  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
+
+  const estimatedMinutes = (latinWordCount / wordsPerMinute) + (hanCharCount / hanCharsPerMinute);
+  const minutes = Math.max(1, Math.ceil(estimatedMinutes));
   return `${minutes} min read`;
 }
 
