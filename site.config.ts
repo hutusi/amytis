@@ -16,7 +16,7 @@ export const siteConfig = {
     email: "mailto:huziyong@gmail.com",
   },
   series: {
-    navbar: ["digital-garden", "markdown-showcase"], // Slugs of series to show in navbar
+    navbar: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"], // Slugs of series to show in navbar
   },
   archive: {
     showAuthors: true,

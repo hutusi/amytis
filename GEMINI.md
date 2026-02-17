@@ -41,7 +41,7 @@ bun test
   - `authors/`: Posts filtered by individual authors.
   - `search.json/`: Static search index generator.
 - `src/lib/`: Core logic and utilities.
-  - `markdown.ts`: Advanced parsing for posts/series, sorting, and metadata inheritance.
+  - `markdown.ts`: Advanced parsing for posts/series, sorting, reading time calculation (multilingual), and metadata inheritance.
 - `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, etc.).
 - `content/`: Source Markdown/MDX content.
 - `scripts/`: CLI tools for content management and asset processing.
@@ -57,12 +57,13 @@ bun test
   - Metadata inheritance: Posts can inherit attributes (like authors) from series index files.
 - **Featured Content**: Mark posts or series as `featured` to display them in prominent homepage sections with horizontal scrolling.
 - **Cover Images**: Support for local paths, external URLs, and dynamic desaturated gradients (`text:Label`).
+- **External Links**: Posts can include a list of curated external resources in frontmatter.
 
 ### Refined UX & Design
 - **Homepage**: Elegant layout with "Curated Series" and "Featured Stories" sections using horizontal scroll triggers.
 - **Navigation**: Command+K fuzzy search, sticky TOC with progress tracking, and Series Catalog sidebars.
 - **Theming**: Four built-in palettes (`default`, `blue`, `rose`, `amber`) with high-contrast Dark Mode support.
-- **i18n**: Multi-language infrastructure (en, zh) with footer language switcher.
+- **i18n**: Multi-language infrastructure (en, zh) with footer language switcher. `site.config.ts` supports localized strings.
 
 ### Build Pipeline
 - **Asset Mapping**: `scripts/copy-assets.ts` mirrors content assets to the public folder, handling relative path resolution for both flat and nested structures.
@@ -76,3 +77,5 @@ bun test
 - Unified simple page layouts (About, Tags, Archive) for visual consistency.
 - Resolved text-rendering cover image display issues using stable utility classes.
 - Added pagination to the main posts list and individual series pages.
+- Implemented sophisticated reading time calculation for mixed Latin and CJK text.
+- Enhanced author management with metadata inheritance and slug-based routing.
