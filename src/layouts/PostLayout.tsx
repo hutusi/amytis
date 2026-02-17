@@ -8,6 +8,7 @@ import SeriesSidebar from '@/components/SeriesSidebar';
 import Comments from '@/components/Comments';
 import ExternalLinks from '@/components/ExternalLinks';
 import Tag from '@/components/Tag';
+import ReadingProgressBar from '@/components/ReadingProgressBar';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
 
@@ -32,6 +33,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
   return (
     <div className={`layout-container ${useWideLayout ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
+      <ReadingProgressBar />
       <div className={gridClass}>
         {/* Left Column: Series Sidebar or Spacer */}
         {useWideLayout && (
