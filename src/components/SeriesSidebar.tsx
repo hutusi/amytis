@@ -3,16 +3,18 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
+import { useLanguage } from './LanguageProvider';
 
 interface SeriesSidebarProps {
-  seriesName: string;
+  seriesSlug: string;
+  seriesTitle: string;
   posts: PostData[];
   currentSlug: string;
 }
 
-export default function SeriesSidebar({ seriesName, posts, currentSlug }: SeriesSidebarProps) {
+export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentSlug }: SeriesSidebarProps) {
+  const { t } = useLanguage();
   const currentIndex = posts.findIndex(p => p.slug === currentSlug);
-  const seriesSlug = seriesName.toLowerCase().replace(/ /g, '-');
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -41,10 +43,10 @@ export default function SeriesSidebar({ seriesName, posts, currentSlug }: Series
           className="group block no-underline"
         >
           <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-2 block">
-            Series
+            {t('series')}
           </span>
           <h3 className="font-serif font-bold text-heading text-lg leading-snug group-hover:text-accent transition-colors">
-            {seriesName}
+            {seriesTitle}
           </h3>
         </Link>
 
@@ -105,11 +107,6 @@ export default function SeriesSidebar({ seriesName, posts, currentSlug }: Series
                     }`}>
                       {post.title}
                     </span>
-                    {post.readingTime && (
-                      <span className="text-[10px] font-mono text-muted/60 mt-0.5 block">
-                        {post.readingTime}
-                      </span>
-                    )}
                   </div>
                 </Link>
               </li>
@@ -124,7 +121,7 @@ export default function SeriesSidebar({ seriesName, posts, currentSlug }: Series
           href={`/series/${seriesSlug}`}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
         >
-          View full series
+          {t('view_full_series')}
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>

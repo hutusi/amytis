@@ -1,17 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
+import { useLanguage } from './LanguageProvider';
 
 interface SeriesListProps {
-  seriesName: string;
+  seriesSlug: string;
+  seriesTitle: string;
   posts: PostData[];
   currentSlug: string;
 }
 
-export default function SeriesList({ seriesName, posts, currentSlug }: SeriesListProps) {
+export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug }: SeriesListProps) {
+  const { t } = useLanguage();
+
   if (!posts || posts.length === 0) return null;
 
   const currentIndex = posts.findIndex(p => p.slug === currentSlug);
-  const seriesSlug = seriesName.toLowerCase().replace(/ /g, '-');
 
   return (
     <div className="p-5 bg-muted/5 rounded-xl border border-muted/20">
@@ -22,11 +27,11 @@ export default function SeriesList({ seriesName, posts, currentSlug }: SeriesLis
           className="group flex items-center gap-2 no-underline"
         >
           <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
-            Series
+            {t('series')}
           </span>
           <span className="text-[10px] text-muted">•</span>
           <span className="text-sm font-serif font-bold text-heading group-hover:text-accent transition-colors">
-            {seriesName}
+            {seriesTitle}
           </span>
         </Link>
         <span className="text-xs font-mono text-muted bg-muted/10 px-2 py-0.5 rounded-full">
@@ -91,7 +96,7 @@ export default function SeriesList({ seriesName, posts, currentSlug }: SeriesLis
           href={`/series/${seriesSlug}`}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
         >
-          View full series
+          {t('view_full_series')}
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>

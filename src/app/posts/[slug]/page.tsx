@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, PostData } from '@/lib/markdown';
+import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, PostData } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -106,11 +106,14 @@ export default async function PostPage({
 
   const relatedPosts = getRelatedPosts(slug);
   let seriesPosts: PostData[] = [];
-  
+  let seriesTitle: string | undefined;
+
   if (post.series) {
     seriesPosts = getSeriesPosts(post.series);
+    const seriesData = getSeriesData(post.series);
+    seriesTitle = seriesData?.title;
   }
 
   // Default to standard post layout
-  return <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} />;
+  return <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} />;
 }

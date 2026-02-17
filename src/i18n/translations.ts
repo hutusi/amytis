@@ -42,6 +42,7 @@ export const translations = {
     about_title: "About Amytis",
     about_subtitle: "Learn more about the philosophy and technology behind this digital garden.",
     view_all_posts: "View All {count} Posts",
+    view_full_series: "View full series",
   },
   zh: {
     home: "首页",
@@ -86,6 +87,7 @@ export const translations = {
     about_title: "关于 Amytis",
     about_subtitle: "了解这座数字花园背后的理念与技术。",
     view_all_posts: "查看全部 {count} 篇文章",
+    view_full_series: "查看完整系列",
   },
 };
 

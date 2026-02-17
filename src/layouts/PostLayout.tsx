@@ -15,9 +15,10 @@ interface PostLayoutProps {
   post: PostData;
   relatedPosts?: PostData[];
   seriesPosts?: PostData[];
+  seriesTitle?: string;
 }
 
-export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayoutProps) {
+export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle }: PostLayoutProps) {
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
 
@@ -35,10 +36,11 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
         {/* Left Column: Series Sidebar or Spacer */}
         {useWideLayout && (
           hasSeries ? (
-            <SeriesSidebar 
-              seriesName={post.series!} 
-              posts={seriesPosts!} 
-              currentSlug={post.slug} 
+            <SeriesSidebar
+              seriesSlug={post.series!}
+              seriesTitle={seriesTitle || post.series!}
+              posts={seriesPosts!}
+              currentSlug={post.slug}
             />
           ) : (
             <div className="hidden lg:block w-64" aria-hidden="true" />
@@ -102,7 +104,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts }: PostLayo
 
           {hasSeries && (
             <div className="lg:hidden mb-12">
-              <SeriesList seriesName={post.series!} posts={seriesPosts!} currentSlug={post.slug} />
+              <SeriesList seriesSlug={post.series!} seriesTitle={seriesTitle || post.series!} posts={seriesPosts!} currentSlug={post.slug} />
             </div>
           )}
 
