@@ -34,7 +34,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
   return (
     <aside
       ref={sidebarRef}
-      className="hidden lg:block sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto w-64 pr-4 scrollbar-hide"
+      className="hidden lg:block sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto w-56 pr-4 scrollbar-hide"
     >
       {/* Series Header */}
       <div className="mb-6 pb-4 border-b border-muted/10">

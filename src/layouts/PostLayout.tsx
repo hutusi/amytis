@@ -26,12 +26,12 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   // This keeps the main content centered in the same way for all posts.
   const useWideLayout = showToc || hasSeries;
   
-  const gridClass = useWideLayout 
-    ? 'grid grid-cols-1 lg:grid-cols-[250px_minmax(0,1fr)_250px] gap-8 items-start'
-    : 'max-w-4xl mx-auto';
+  const gridClass = useWideLayout
+    ? 'grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_220px] gap-8 items-start'
+    : 'max-w-6xl mx-auto';
 
   return (
-    <div className={`layout-container ${useWideLayout ? 'lg:max-w-[90rem]' : 'lg:max-w-4xl'}`}>
+    <div className={`layout-container ${useWideLayout ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
       <div className={gridClass}>
         {/* Left Column: Series Sidebar or Spacer */}
         {useWideLayout && (
@@ -43,7 +43,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
               currentSlug={post.slug}
             />
           ) : (
-            <div className="hidden lg:block w-64" aria-hidden="true" />
+            <div className="hidden lg:block w-56" aria-hidden="true" />
           )
         )}
 

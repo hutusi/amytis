@@ -84,7 +84,7 @@ export default function Hero({ tagline, title, subtitle }: HeroProps) {
   }
 
   return (
-    <header className="relative py-24 md:py-40 flex flex-col items-center justify-center text-center max-w-4xl mx-auto min-h-[60vh] px-6">
+    <header className="relative py-24 md:py-40 flex flex-col items-center justify-center text-center max-w-6xl mx-auto min-h-[60vh] px-6">
       <div className="mb-8 flex items-center justify-center animate-fade-in">
          <span className="h-px w-12 bg-accent/30 mr-4"></span>
          <span className="text-xs font-sans font-bold uppercase tracking-[0.3em] text-accent/80">{resolvedTagline}</span>

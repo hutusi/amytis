@@ -172,15 +172,15 @@ pre[class*="language-"] {
 
 @layer components {
   .layout-container {
-    @apply max-w-4xl mx-auto px-6 py-12 md:py-20;
+    @apply max-w-6xl mx-auto px-6 py-12 md:py-20;
   }
-  
+
   .layout-main {
-    @apply max-w-4xl mx-auto px-6 pt-12 md:pt-20 pb-12 md:pb-16;
+    @apply max-w-6xl mx-auto px-6 pt-12 md:pt-20 pb-12 md:pb-16;
   }
 
   .navbar-container {
-    @apply max-w-4xl mx-auto px-6 h-16 flex items-center justify-between;
+    @apply max-w-6xl mx-auto px-6 h-16 flex items-center justify-between;
   }
 
   .page-header {

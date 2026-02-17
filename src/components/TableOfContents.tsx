@@ -70,7 +70,7 @@ export default function TableOfContents({ headings }: { headings: Heading[] }) {
 
   return (
     <nav
-      className="hidden lg:block sticky top-28 self-start w-64 pl-6 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide"
+      className="hidden lg:block sticky top-28 self-start w-56 pl-6 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide"
       aria-label="Table of contents"
     >
       {/* Header with progress */}
