@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 
@@ -12,9 +13,25 @@ interface SeriesSidebarProps {
 export default function SeriesSidebar({ seriesName, posts, currentSlug }: SeriesSidebarProps) {
   const currentIndex = posts.findIndex(p => p.slug === currentSlug);
   const seriesSlug = seriesName.toLowerCase().replace(/ /g, '-');
+  const currentItemRef = useRef<HTMLLIElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (currentItemRef.current && sidebarRef.current) {
+      const sidebar = sidebarRef.current;
+      const item = currentItemRef.current;
+      const itemTop = item.offsetTop;
+      const itemHeight = item.offsetHeight;
+      const sidebarHeight = sidebar.clientHeight;
+
+      // Scroll so the current item is roughly centered in the sidebar
+      sidebar.scrollTop = itemTop - sidebarHeight / 2 + itemHeight / 2;
+    }
+  }, [currentSlug]);
 
   return (
     <aside
+      ref={sidebarRef}
       className="hidden lg:block sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto w-64 pr-4 scrollbar-hide"
     >
       {/* Series Header */}
@@ -56,7 +73,7 @@ export default function SeriesSidebar({ seriesName, posts, currentSlug }: Series
             const isPast = index < currentIndex;
 
             return (
-              <li key={post.slug} className="relative">
+              <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
                 <Link
                   href={`/posts/${post.slug}`}
                   className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
