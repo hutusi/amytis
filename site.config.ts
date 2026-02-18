@@ -5,6 +5,7 @@ export const siteConfig = {
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
   nav: [
     { name: "Home", url: "/", weight: 1 },
+    { name: "Flow", url: "/flows", weight: 1.1 },
     { name: "Books", url: "/books", weight: 1.3 },
     { name: "Series", url: "/series", weight: 1.5 },
     { name: "Archive", url: "/archive", weight: 2 },
@@ -28,6 +29,7 @@ export const siteConfig = {
   pagination: {
     posts: 5,
     series: 1,
+    flows: 20,
   },
   includeDateInUrl: false,
   // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
@@ -42,6 +44,9 @@ export const siteConfig = {
   about: {
     title: { en: "About Amytis", zh: "关于 Amytis" },
     subtitle: { en: "Learn more about the philosophy and technology behind this digital garden.", zh: "了解这座数字花园背后的理念与技术。" },
+  },
+  flows: {
+    recentCount: 5,
   },
   featured: {
     series: {

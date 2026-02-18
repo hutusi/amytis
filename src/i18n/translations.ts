@@ -54,6 +54,11 @@ export const translations = {
     start_reading: "Start Reading",
     all_books: "All Books",
     selected_books: "Selected Books",
+    flow: "Flow",
+    recent_notes: "Recent Notes",
+    all_flows: "All Notes",
+    no_flows: "No notes yet.",
+    flow_subtitle: "{count} daily notes.",
   },
   zh: {
     home: "首页",
@@ -110,6 +115,11 @@ export const translations = {
     start_reading: "开始阅读",
     all_books: "所有书籍",
     selected_books: "精选书籍",
+    flow: "随笔",
+    recent_notes: "近期随笔",
+    all_flows: "全部随笔",
+    no_flows: "暂无随笔。",
+    flow_subtitle: "共 {count} 条随笔。",
   },
 };
 

@@ -9,6 +9,7 @@ const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
 const seriesDirectory = path.join(process.cwd(), 'content', 'series');
 const booksDirectory = path.join(process.cwd(), 'content', 'books');
+const flowsDirectory = path.join(process.cwd(), 'content', 'flows');
 
 const ExternalLinkSchema = z.object({
   name: z.string(),
@@ -887,4 +888,128 @@ export function getBooksByAuthor(author: string): BookData[] {
   return getAllBooks().filter(book =>
     book.authors.some(a => a.toLowerCase() === author.toLowerCase())
   );
+}
+
+// ─── Flows (Daily Notes) ────────────────────────────────────────────────────
+
+const FlowSchema = z.object({
+  title: z.string(),
+  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
+  tags: z.array(z.string()).optional().default([]),
+  draft: z.boolean().optional().default(false),
+});
+
+export interface FlowData {
+  slug: string;
+  date: string;
+  title: string;
+  tags: string[];
+  draft: boolean;
+  content: string;
+  excerpt: string;
+  headings: Heading[];
+}
+
+function parseFlowFile(fullPath: string, slug: string): FlowData {
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const { data: rawData, content } = matter(fileContents);
+
+  const parsed = FlowSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.error(`Invalid flow frontmatter in ${fullPath}:`, parsed.error.format());
+    throw new Error(`Invalid flow frontmatter in ${fullPath}`);
+  }
+  const data = parsed.data;
+
+  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const date = data.date || slug; // slug is the date string from filename
+  const excerpt = generateExcerpt(contentWithoutH1);
+  const headings = getHeadings(content);
+
+  return {
+    slug,
+    date,
+    title: data.title,
+    tags: data.tags,
+    draft: data.draft,
+    content: contentWithoutH1,
+    excerpt,
+    headings,
+  };
+}
+
+export function getAllFlows(): FlowData[] {
+  if (!fs.existsSync(flowsDirectory)) return [];
+
+  const items = fs.readdirSync(flowsDirectory, { withFileTypes: true });
+  const flows: FlowData[] = [];
+  const dateRegex = /^(\d{4}-\d{2}-\d{2})/;
+
+  for (const item of items) {
+    let fullPath = '';
+    const rawName = item.name.replace(/\.mdx?$/, '');
+    const match = rawName.match(dateRegex);
+    if (!match) continue; // Skip files without date-based names
+
+    const slug = match[1]; // Always use the date as slug
+
+    if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx'))) {
+      fullPath = path.join(flowsDirectory, item.name);
+    } else if (item.isDirectory()) {
+      const indexMdx = path.join(flowsDirectory, item.name, 'index.mdx');
+      const indexMd = path.join(flowsDirectory, item.name, 'index.md');
+      if (fs.existsSync(indexMdx)) fullPath = indexMdx;
+      else if (fs.existsSync(indexMd)) fullPath = indexMd;
+      else continue;
+    } else {
+      continue;
+    }
+
+    flows.push(parseFlowFile(fullPath, slug));
+  }
+
+  return flows
+    .filter(flow => {
+      if (process.env.NODE_ENV === 'production' && flow.draft) return false;
+      if (!siteConfig.showFuturePosts) {
+        const flowDate = new Date(flow.date);
+        const now = new Date();
+        if (flowDate > now) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+export function getFlowBySlug(slug: string): FlowData | null {
+  if (!fs.existsSync(flowsDirectory)) return null;
+
+  // Try flat file first
+  const mdxPath = path.join(flowsDirectory, `${slug}.mdx`);
+  const mdPath = path.join(flowsDirectory, `${slug}.md`);
+  if (fs.existsSync(mdxPath)) return parseFlowFile(mdxPath, slug);
+  if (fs.existsSync(mdPath)) return parseFlowFile(mdPath, slug);
+
+  // Try folder
+  const indexMdx = path.join(flowsDirectory, slug, 'index.mdx');
+  const indexMd = path.join(flowsDirectory, slug, 'index.md');
+  if (fs.existsSync(indexMdx)) return parseFlowFile(indexMdx, slug);
+  if (fs.existsSync(indexMd)) return parseFlowFile(indexMd, slug);
+
+  return null;
+}
+
+export function getAdjacentFlows(slug: string): { prev: FlowData | null; next: FlowData | null } {
+  const allFlows = getAllFlows(); // sorted newest-first
+  const index = allFlows.findIndex(f => f.slug === slug);
+  if (index === -1) return { prev: null, next: null };
+
+  return {
+    prev: index < allFlows.length - 1 ? allFlows[index + 1] : null, // older
+    next: index > 0 ? allFlows[index - 1] : null, // newer
+  };
+}
+
+export function getRecentFlows(limit: number = 5): FlowData[] {
+  return getAllFlows().slice(0, limit);
 }

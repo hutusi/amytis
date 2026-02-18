@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts, getAllPages, getAllBooks } from '@/lib/markdown';
+import { getAllPosts, getAllPages, getAllBooks, getAllFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 
 export const dynamic = 'force-static';
@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const pages = getAllPages();
   const books = getAllBooks();
+  const flows = getAllFlows();
   const baseUrl = siteConfig.baseUrl;
 
   const postUrls = posts.map((post) => ({
@@ -40,6 +41,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ]);
 
+  const flowUrls = flows.map((flow) => ({
+    url: `${baseUrl}/flows/${flow.slug}`,
+    lastModified: flow.date,
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -68,5 +76,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...pageUrls,
     ...postUrls,
     ...bookUrls,
+    {
+      url: `${baseUrl}/flows`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    ...flowUrls,
   ];
 }

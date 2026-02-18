@@ -5,8 +5,10 @@ import { siteConfig } from '../site.config';
 const srcDir = path.join(process.cwd(), 'content', 'posts');
 const seriesSrcDir = path.join(process.cwd(), 'content', 'series');
 const booksSrcDir = path.join(process.cwd(), 'content', 'books');
+const flowsSrcDir = path.join(process.cwd(), 'content', 'flows');
 const destDir = path.join(process.cwd(), 'public', 'posts');
 const booksDestDir = path.join(process.cwd(), 'public', 'books');
+const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
@@ -170,8 +172,25 @@ function processBooks() {
   });
 }
 
+function processFlows() {
+  if (!fs.existsSync(flowsSrcDir)) return;
+
+  const entries = fs.readdirSync(flowsSrcDir, { withFileTypes: true });
+
+  entries.forEach((entry) => {
+    if (entry.isDirectory()) {
+      const srcFlowDir = path.join(flowsSrcDir, entry.name);
+      const destFlowDir = path.join(flowsDestDir, entry.name);
+
+      console.log(`Processing Flow: ${entry.name}`);
+      copyRecursive(srcFlowDir, destFlowDir);
+    }
+  });
+}
+
 console.log('Copying assets...');
 processPosts();
 processSeries();
 processBooks();
+processFlows();
 console.log('Assets copied successfully.');
