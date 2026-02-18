@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { getAuthorSlug, PostData } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import TableOfContents from '@/components/TableOfContents';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
-import SeriesSidebar from '@/components/SeriesSidebar';
+import PostSidebar from '@/components/PostSidebar';
 import Comments from '@/components/Comments';
 import ExternalLinks from '@/components/ExternalLinks';
 import Tag from '@/components/Tag';
@@ -22,34 +21,27 @@ interface PostLayoutProps {
 export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle }: PostLayoutProps) {
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
-
-  // Use a consistent 3-column grid layout if there's a sidebar (series) or TOC
-  // This keeps the main content centered in the same way for all posts.
-  const useWideLayout = showToc || hasSeries;
-  
-  const gridClass = useWideLayout
-    ? 'grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_220px] gap-8 items-start'
-    : 'max-w-6xl mx-auto';
+  const showSidebar = showToc || hasSeries;
 
   return (
-    <div className={`layout-container ${useWideLayout ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
+    <div className={`layout-container ${showSidebar ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
       <ReadingProgressBar />
-      <div className={gridClass}>
-        {/* Left Column: Series Sidebar or Spacer */}
-        {useWideLayout && (
-          hasSeries ? (
-            <SeriesSidebar
-              seriesSlug={post.series!}
-              seriesTitle={seriesTitle || post.series!}
-              posts={seriesPosts!}
-              currentSlug={post.slug}
-            />
-          ) : (
-            <div className="hidden lg:block w-56" aria-hidden="true" />
-          )
+      <div className={showSidebar
+        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+        : 'max-w-6xl mx-auto'
+      }>
+        {/* Left sidebar: series nav + page TOC */}
+        {showSidebar && (
+          <PostSidebar
+            seriesSlug={hasSeries ? post.series : undefined}
+            seriesTitle={hasSeries ? (seriesTitle || post.series) : undefined}
+            posts={hasSeries ? seriesPosts : undefined}
+            currentSlug={post.slug}
+            headings={showToc ? post.headings : []}
+          />
         )}
 
-        <article className="min-w-0">
+        <article className="min-w-0 max-w-3xl">
           <header className="mb-16 border-b border-muted/10 pb-12">
             {post.draft && (
               <div className="mb-4">
@@ -77,7 +69,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
               <div className="flex items-center gap-1">
                 {post.authors.map((author, index) => (
                   <span key={author} className="flex items-center">
-                    <Link 
+                    <Link
                       href={`/authors/${getAuthorSlug(author)}`}
                       className="text-foreground hover:text-accent no-underline transition-colors duration-200"
                     >
@@ -117,11 +109,9 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           )}
 
           <RelatedPosts posts={relatedPosts || []} />
-          
+
           <Comments slug={post.slug} />
         </article>
-
-        {showToc && <TableOfContents headings={post.headings} />}
       </div>
     </div>
   );
