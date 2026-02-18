@@ -1,8 +1,9 @@
-import { getAllPosts, getAllSeries, getSeriesData, getFeaturedPosts } from '@/lib/markdown';
+import { getAllPosts, getAllSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
 import CuratedSeriesSection, { SeriesItem } from '@/components/CuratedSeriesSection';
 import FeaturedStoriesSection, { FeaturedPost } from '@/components/FeaturedStoriesSection';
+import SelectedBooksSection, { BookItem } from '@/components/SelectedBooksSection';
 import LatestWritingSection from '@/components/LatestWritingSection';
 import { Metadata } from 'next';
 import { resolveLocale } from '@/lib/i18n';
@@ -22,6 +23,7 @@ export default function Home() {
   const allPosts = getAllPosts();
   const allSeries = getAllSeries();
   const featuredPosts = getFeaturedPosts();
+  const featuredBooks = getFeaturedBooks();
 
   const pageSize = siteConfig.pagination.posts;
   const posts = allPosts.slice(0, pageSize);
@@ -43,6 +45,17 @@ export default function Home() {
       topPosts: seriesPosts.slice(0, 3).map(p => ({ slug: p.slug, title: p.title })),
     };
   });
+
+  // Prepare serializable books data
+  const bookItems: BookItem[] = featuredBooks.map(b => ({
+    slug: b.slug,
+    title: b.title,
+    excerpt: b.excerpt,
+    coverImage: b.coverImage,
+    authors: b.authors,
+    chapterCount: b.chapters.length,
+    firstChapter: b.chapters[0]?.file,
+  }));
 
   // Prepare serializable featured posts data
   const featuredItems: FeaturedPost[] = featuredPosts.map(p => ({
@@ -69,6 +82,8 @@ export default function Home() {
           maxItems={featuredConfig.series.maxItems}
           scrollThreshold={featuredConfig.series.scrollThreshold}
         />
+
+        <SelectedBooksSection books={bookItems} />
 
         <FeaturedStoriesSection
           allFeatured={featuredItems}

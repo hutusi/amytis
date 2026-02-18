@@ -53,6 +53,7 @@ export const translations = {
     chapters_count: "Chapters",
     start_reading: "Start Reading",
     all_books: "All Books",
+    selected_books: "Selected Books",
   },
   zh: {
     home: "首页",
@@ -108,6 +109,7 @@ export const translations = {
     chapters_count: "章节",
     start_reading: "开始阅读",
     all_books: "所有书籍",
+    selected_books: "精选书籍",
   },
 };
 

@@ -882,3 +882,9 @@ export function getAllBooks(): BookData[] {
 export function getFeaturedBooks(): BookData[] {
   return getAllBooks().filter(book => book.featured);
 }
+
+export function getBooksByAuthor(author: string): BookData[] {
+  return getAllBooks().filter(book =>
+    book.authors.some(a => a.toLowerCase() === author.toLowerCase())
+  );
+}

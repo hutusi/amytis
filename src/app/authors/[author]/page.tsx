@@ -1,4 +1,4 @@
-import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam, getSeriesData, getSeriesPosts } from '@/lib/markdown';
+import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam, getSeriesData, getSeriesPosts, getBooksByAuthor } from '@/lib/markdown';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
 import CoverImage from '@/components/CoverImage';
@@ -89,6 +89,9 @@ export default async function AuthorPage({
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
 
+  // Collect books the author wrote
+  const authorBooks = getBooksByAuthor(resolvedAuthor);
+
   // Author initial for avatar
   const initial = resolvedAuthor.charAt(0).toUpperCase();
 
@@ -111,6 +114,7 @@ export default async function AuthorPage({
           postCount={posts.length}
           seriesCount={authorSeries.length}
           categoryCount={categories.size}
+          bookCount={authorBooks.length}
         />
 
         {/* Top tags */}
@@ -122,6 +126,42 @@ export default async function AuthorPage({
           </div>
         )}
       </header>
+
+      {/* Books */}
+      {authorBooks.length > 0 && (
+        <section className="mb-16">
+          <h2 className="text-2xl font-serif font-bold text-heading mb-8"><TranslatedText translationKey="books" /></h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {authorBooks.map(book => (
+              <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
+                <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
+                  <div className="relative h-40 w-full overflow-hidden bg-muted/10">
+                    <CoverImage
+                      src={book.coverImage}
+                      title={book.title}
+                      slug={book.slug}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <span className="badge-accent mb-3 inline-block">
+                      {book.chapters.length} {t('chapters_count')}
+                    </span>
+                    <h3 className="mb-2 font-serif text-xl font-bold text-heading group-hover:text-accent transition-colors">
+                      {book.title}
+                    </h3>
+                    {book.excerpt && (
+                      <p className="text-sm text-muted font-serif italic leading-relaxed line-clamp-2">
+                        {book.excerpt}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Series contributions */}
       {authorSeries.length > 0 && (
