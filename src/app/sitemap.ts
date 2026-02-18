@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts, getAllPages } from '@/lib/markdown';
+import { getAllPosts, getAllPages, getAllBooks } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 
 export const dynamic = 'force-static';
@@ -7,6 +7,7 @@ export const dynamic = 'force-static';
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const pages = getAllPages();
+  const books = getAllBooks();
   const baseUrl = siteConfig.baseUrl;
 
   const postUrls = posts.map((post) => ({
@@ -23,6 +24,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'yearly' as const,
     priority: 0.8,
   }));
+
+  const bookUrls = books.flatMap((book) => [
+    {
+      url: `${baseUrl}/books/${book.slug}`,
+      lastModified: book.date,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    ...book.chapters.map((ch) => ({
+      url: `${baseUrl}/books/${book.slug}/${ch.file}`,
+      lastModified: book.date,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+  ]);
 
   return [
     {
@@ -43,7 +59,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/books`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
     ...pageUrls,
     ...postUrls,
+    ...bookUrls,
   ];
 }

@@ -4,7 +4,9 @@ import { siteConfig } from '../site.config';
 
 const srcDir = path.join(process.cwd(), 'content', 'posts');
 const seriesSrcDir = path.join(process.cwd(), 'content', 'series');
+const booksSrcDir = path.join(process.cwd(), 'content', 'books');
 const destDir = path.join(process.cwd(), 'public', 'posts');
+const booksDestDir = path.join(process.cwd(), 'public', 'books');
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
@@ -152,7 +154,24 @@ function processSeries() {
   });
 }
 
+function processBooks() {
+  if (!fs.existsSync(booksSrcDir)) return;
+
+  const entries = fs.readdirSync(booksSrcDir, { withFileTypes: true });
+
+  entries.forEach((entry) => {
+    if (entry.isDirectory()) {
+      const srcBookDir = path.join(booksSrcDir, entry.name);
+      const destBookDir = path.join(booksDestDir, entry.name);
+
+      console.log(`Processing Book: ${entry.name}`);
+      copyRecursive(srcBookDir, destBookDir);
+    }
+  });
+}
+
 console.log('Copying assets...');
 processPosts();
 processSeries();
+processBooks();
 console.log('Assets copied successfully.');

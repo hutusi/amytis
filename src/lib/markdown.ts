@@ -8,6 +8,7 @@ import { z } from 'zod';
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
 const seriesDirectory = path.join(process.cwd(), 'content', 'series');
+const booksDirectory = path.join(process.cwd(), 'content', 'books');
 
 const ExternalLinkSchema = z.object({
   name: z.string(),
@@ -665,4 +666,219 @@ export function getSeriesData(slug: string): PostData | null {
   else return null;
 
   return parseMarkdownFile(fullPath, slug, undefined, slug);
+}
+
+// ─── Books ──────────────────────────────────────────────────────────────────
+
+export interface BookChapterEntry {
+  title: string;
+  file: string;
+  part?: string;
+}
+
+export interface BookTocPart {
+  part: string;
+  chapters: { title: string; file: string }[];
+}
+export type BookTocItem = BookTocPart | { title: string; file: string };
+
+export interface BookData {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  date: string;
+  coverImage?: string;
+  featured: boolean;
+  draft: boolean;
+  authors: string[];
+  content: string;
+  toc: BookTocItem[];
+  chapters: BookChapterEntry[];
+}
+
+export interface BookChapterData {
+  title: string;
+  slug: string;
+  bookSlug: string;
+  content: string;
+  headings: Heading[];
+  excerpt?: string;
+  latex: boolean;
+  readingTime: string;
+  prevChapter: { title: string; file: string } | null;
+  nextChapter: { title: string; file: string } | null;
+}
+
+const BookChapterRefSchema = z.object({
+  title: z.string(),
+  file: z.string(),
+});
+
+const BookTocItemSchema: z.ZodType<BookTocItem> = z.union([
+  z.object({
+    part: z.string(),
+    chapters: z.array(BookChapterRefSchema),
+  }),
+  BookChapterRefSchema,
+]);
+
+const BookSchema = z.object({
+  title: z.string(),
+  excerpt: z.string().optional(),
+  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]),
+  coverImage: z.string().optional(),
+  featured: z.boolean().optional().default(false),
+  draft: z.boolean().optional().default(false),
+  authors: z.array(z.string()).optional().default([]),
+  chapters: z.array(BookTocItemSchema),
+});
+
+const BookChapterSchema = z.object({
+  title: z.string(),
+  excerpt: z.string().optional(),
+  draft: z.boolean().optional().default(false),
+  latex: z.boolean().optional().default(false),
+});
+
+function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
+  const result: BookChapterEntry[] = [];
+  for (const item of toc) {
+    if ('part' in item) {
+      for (const ch of item.chapters) {
+        result.push({ title: ch.title, file: ch.file, part: item.part });
+      }
+    } else {
+      result.push({ title: item.title, file: item.file });
+    }
+  }
+  return result;
+}
+
+export function getBookData(slug: string): BookData | null {
+  if (!fs.existsSync(booksDirectory)) return null;
+  const bookDir = path.join(booksDirectory, slug);
+  if (!fs.existsSync(bookDir)) return null;
+
+  const indexPathMdx = path.join(bookDir, 'index.mdx');
+  const indexPathMd = path.join(bookDir, 'index.md');
+  let fullPath = '';
+  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
+  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
+  else return null;
+
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const { data: rawData, content } = matter(fileContents);
+
+  const parsed = BookSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.error(`Invalid book frontmatter in ${fullPath}:`, parsed.error.format());
+    return null;
+  }
+  const data = parsed.data;
+
+  // Warn about missing chapter files
+  const chapters = flattenBookChapters(data.chapters);
+  for (const ch of chapters) {
+    const chMdx = path.join(bookDir, `${ch.file}.mdx`);
+    const chMd = path.join(bookDir, `${ch.file}.md`);
+    if (!fs.existsSync(chMdx) && !fs.existsSync(chMd)) {
+      console.warn(`Book "${slug}": chapter file "${ch.file}" not found`);
+    }
+  }
+
+  let coverImage = data.coverImage;
+  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
+    const cleanPath = coverImage.replace(/^\.\//, '');
+    coverImage = `/books/${slug}/${cleanPath}`;
+  }
+
+  let authors = data.authors;
+  if (authors.length === 0) {
+    authors = ['Amytis'];
+  }
+
+  return {
+    title: data.title,
+    slug,
+    excerpt: data.excerpt,
+    date: data.date,
+    coverImage,
+    featured: data.featured,
+    draft: data.draft,
+    authors,
+    content: content.trim(),
+    toc: data.chapters,
+    chapters,
+  };
+}
+
+export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapterData | null {
+  const book = getBookData(bookSlug);
+  if (!book) return null;
+
+  const bookDir = path.join(booksDirectory, bookSlug);
+  const chMdx = path.join(bookDir, `${chapterSlug}.mdx`);
+  const chMd = path.join(bookDir, `${chapterSlug}.md`);
+  let fullPath = '';
+  if (fs.existsSync(chMdx)) fullPath = chMdx;
+  else if (fs.existsSync(chMd)) fullPath = chMd;
+  else return null;
+
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const { data: rawData, content } = matter(fileContents);
+
+  const parsed = BookChapterSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.error(`Invalid chapter frontmatter in ${fullPath}:`, parsed.error.format());
+    return null;
+  }
+  const data = parsed.data;
+
+  if (process.env.NODE_ENV === 'production' && data.draft) {
+    return null;
+  }
+
+  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const headings = getHeadings(content);
+  const readingTime = calculateReadingTime(contentWithoutH1);
+  const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+
+  // Find prev/next
+  const chapterIndex = book.chapters.findIndex(ch => ch.file === chapterSlug);
+  const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
+  const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
+
+  return {
+    title: data.title,
+    slug: chapterSlug,
+    bookSlug,
+    content: contentWithoutH1,
+    headings,
+    excerpt,
+    latex: data.latex,
+    readingTime,
+    prevChapter: prevChapter ? { title: prevChapter.title, file: prevChapter.file } : null,
+    nextChapter: nextChapter ? { title: nextChapter.title, file: nextChapter.file } : null,
+  };
+}
+
+export function getAllBooks(): BookData[] {
+  if (!fs.existsSync(booksDirectory)) return [];
+
+  const entries = fs.readdirSync(booksDirectory, { withFileTypes: true });
+  const books: BookData[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const book = getBookData(entry.name);
+    if (!book) continue;
+    if (process.env.NODE_ENV === 'production' && book.draft) continue;
+    books.push(book);
+  }
+
+  return books.sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+export function getFeaturedBooks(): BookData[] {
+  return getAllBooks().filter(book => book.featured);
 }

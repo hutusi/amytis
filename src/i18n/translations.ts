@@ -47,6 +47,12 @@ export const translations = {
     next: "Next",
     hide: "Hide",
     all_posts: "All posts",
+    books: "Books",
+    book: "Book",
+    chapter: "Chapter",
+    chapters_count: "Chapters",
+    start_reading: "Start Reading",
+    all_books: "All Books",
   },
   zh: {
     home: "首页",
@@ -96,6 +102,12 @@ export const translations = {
     next: "下一篇",
     hide: "收起",
     all_posts: "全部文章",
+    books: "书籍",
+    book: "书籍",
+    chapter: "章节",
+    chapters_count: "章节",
+    start_reading: "开始阅读",
+    all_books: "所有书籍",
   },
 };
 

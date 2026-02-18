@@ -6,7 +6,7 @@ import Analytics from "@/components/Analytics";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { getAllSeries } from "@/lib/markdown";
+import { getAllSeries, getAllBooks } from "@/lib/markdown";
 import { resolveLocale } from "@/lib/i18n";
 import "./globals.css";
 
@@ -74,6 +74,15 @@ export default function RootLayout({
     slug,
   }));
 
+  // Build books list for navbar
+  const allBooks = getAllBooks();
+  const featuredBookSlugs = siteConfig.books?.navbar;
+  const booksList = featuredBookSlugs && featuredBookSlugs.length > 0
+    ? allBooks
+        .filter(book => featuredBookSlugs.includes(book.slug))
+        .map(book => ({ name: book.title, slug: book.slug }))
+    : allBooks.map(book => ({ name: book.title, slug: book.slug }));
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -90,7 +99,7 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <div className="selection:bg-accent/20 selection:text-accent dark:selection:bg-accent/30 dark:selection:text-accent min-h-screen flex flex-col">
-              <Navbar seriesList={seriesList} />
+              <Navbar seriesList={seriesList} booksList={booksList} />
               <main id="main-content" className="pt-16 flex-grow">
                 {children}
               </main>

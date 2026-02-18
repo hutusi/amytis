@@ -5,6 +5,7 @@ export const siteConfig = {
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
   nav: [
     { name: "Home", url: "/", weight: 1 },
+    { name: "Books", url: "/books", weight: 1.3 },
     { name: "Series", url: "/series", weight: 1.5 },
     { name: "Archive", url: "/archive", weight: 2 },
     { name: "Tags", url: "/tags", weight: 3 },
@@ -17,6 +18,9 @@ export const siteConfig = {
   },
   series: {
     navbar: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"], // Slugs of series to show in navbar
+  },
+  books: {
+    navbar: [] as string[], // Slugs of books to show in navbar dropdown
   },
   archive: {
     showAuthors: true,

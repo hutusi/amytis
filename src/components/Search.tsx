@@ -120,7 +120,7 @@ export default function Search() {
                 {results.map((post) => (
                   <li key={post.slug}>
                     <Link
-                      href={`/posts/${post.slug}`}
+                      href={post.slug.startsWith('books/') ? `/${post.slug}` : `/posts/${post.slug}`}
                       onClick={() => setIsOpen(false)}
                       className="block px-4 py-3 hover:bg-muted/5 transition-colors"
                     >

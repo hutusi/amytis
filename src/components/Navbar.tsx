@@ -9,16 +9,17 @@ import Search from '@/components/Search';
 import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
 
-interface SeriesItem {
+interface NavItem {
   name: string;
   slug: string;
 }
 
 interface NavbarProps {
-  seriesList?: SeriesItem[];
+  seriesList?: NavItem[];
+  booksList?: NavItem[];
 }
 
-export default function Navbar({ seriesList = [] }: NavbarProps) {
+export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, language } = useLanguage();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -78,6 +79,42 @@ export default function Navbar({ seriesList = [] }: NavbarProps) {
               const isExternal = !!('external' in item && item.external);
               const Component = isExternal ? 'a' : Link;
               const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
+
+              if (item.name === 'Books' && booksList.length > 0) {
+                return (
+                  <div key={item.url} className="relative group">
+                    <Link
+                      href={item.url}
+                      className="text-sm font-sans font-medium text-foreground/80 hover:text-heading no-underline transition-colors duration-200 flex items-center gap-1 py-4"
+                    >
+                      {getLabel(item.name)}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </Link>
+                    <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
+                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                        {booksList.map(b => (
+                          <Link
+                            key={b.slug}
+                            href={`/books/${b.slug}`}
+                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline whitespace-nowrap"
+                          >
+                            {b.name}
+                          </Link>
+                        ))}
+                        <div className="h-px bg-muted/10 my-1"></div>
+                        <Link
+                          href="/books"
+                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline"
+                        >
+                          {t('all_books')} →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
 
               if (item.name === 'Series' && seriesList.length > 0) {
                 return (
