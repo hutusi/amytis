@@ -64,6 +64,10 @@ bun run new-from-images ./photos
 bun run new-from-images ./photos --title "Gallery" --sort date --no-copy
 ```
 
+### Content Tools
+
+- **Draft Preview:** `bun run series-draft` lists all draft posts and series with their current status.
+
 ### Frontmatter
 
 **Posts:**
@@ -83,6 +87,9 @@ coverImage: "./images/cover.jpg"
 latex: true                # Enable math equations ($...$)
 toc: true                  # Show table of contents
 layout: "post"             # "post" (default) or "simple"
+externalLinks:             # Optional curated resources
+  - name: "Source"
+    url: "https://..."
 ---
 
 Your content here...
@@ -139,3 +146,5 @@ bun run clean              # Clean build artifacts (.next, out, public/posts)
 - Use TypeScript for all new files.
 - Components go in `src/components/`, utilities in `src/lib/`.
 - Use Tailwind CSS utility classes; theme colors via CSS variables (`text-accent`, `bg-muted/10`, etc.).
+- **Localization:** Use `TranslatedText` component or `t()` helper for localized UI strings. Ensure `site.config.ts` handles localized objects where appropriate.
+- **Author Pages:** Authors are now slug-based (`/authors/amytis-team`). Use `getAuthorSlug()` utility when linking to authors.

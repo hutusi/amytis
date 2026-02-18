@@ -4,7 +4,7 @@ Amytis is a static site generator built with **Next.js 16 (App Router)**, design
 
 ## Core Stack
 
-- **Framework:** Next.js 16 (App Router) with React 19
+- **Framework:** Next.js 16.1.1 (App Router) with React 19
 - **Runtime:** Bun
 - **Styling:** Tailwind CSS v4 with CSS variables for theming
 - **Content:** Local `.md`/`.mdx` files parsed at build time
@@ -20,6 +20,7 @@ Amytis is a static site generator built with **Next.js 16 (App Router)**, design
    - **Lists:** `getAllPosts()` returns sorted post metadata for listing pages.
    - **Single Post:** `getPostBySlug(slug)` reads a specific file with full content.
    - **Series:** `getSeriesPosts(slug)` fetches posts for a series (supports manual ordering or automatic collection). `getAllSeries()` returns all series with their posts.
+   - **Authors:** `getPostsByAuthor(author)` fetches posts for a specific author. Metadata inheritance allows posts to inherit authors from series if omitted.
    - **Relationships:** `getRelatedPosts()` finds related content by tag/category matching.
    - **Static Generation:** `generateStaticParams` is implemented in dynamic routes (`[slug]`, `[page]`, `[tag]`, `[author]`) to pre-render all pages at build time.
 
@@ -42,7 +43,7 @@ src/app/
     page.tsx                        # Tag cloud
     [tag]/page.tsx                  # Posts by tag
   authors/
-    [author]/page.tsx               # Posts by author
+    [author]/page.tsx               # Posts by author (supports slug-based routes)
   archive/
     page.tsx                        # Chronological archive
   [slug]/page.tsx                   # Static pages (about, etc.)
@@ -52,7 +53,7 @@ src/app/
 
 ### Layout Components
 - **`Navbar`** - Config-driven navigation with series dropdown, search trigger, theme toggle, and language switch.
-- **`Footer`** - Social links, copyright, site metadata.
+- **`Footer`** - Social links, copyright, site metadata, and language switch.
 - **`Hero`** - Homepage hero with collapsible intro (persisted via localStorage).
 
 ### Content Display
@@ -70,14 +71,14 @@ src/app/
   - `rehype-raw` - Raw HTML support
   - `rehype-slug` - Heading IDs for TOC
   - Custom image metadata injection for optimization
-- **`CodeBlock`** - Syntax-highlighted code blocks via `react-syntax-highlighter`.
+- **`CodeBlock`** - Syntax-highlighted code blocks via `react-syntax-highlighter` with copy button support.
 - **`Mermaid`** - Client-side Mermaid diagram rendering.
-- **`CoverImage`** - Optimized image component using `next-image-export-optimizer`.
+- **`CoverImage`** - Optimized image component using `next-image-export-optimizer` with dynamic desaturated gradients.
 
 ### Navigation & Discovery
 - **`TableOfContents`** - Sticky TOC with scroll-based active heading tracking, reading progress percentage/bar, and back-to-top button.
 - **`Search`** - Client-side fuzzy search modal (Cmd/Ctrl+K) using Fuse.js. Loads a pre-built `/search.json` index.
-- **`Pagination`** - Previous/Next page navigation.
+- **`Pagination`** - Previous/Next page navigation with numeric page links and ellipses support.
 - **`RelatedPosts`** - Tag/category-based related content suggestions.
 
 ### Integrations
@@ -102,6 +103,7 @@ Key functions:
 | `getRelatedPosts(slug)` | `PostData[]` | Related posts by tag/category |
 | `getAllTags()` | `string[]` | All unique tags |
 | `getAllAuthors()` | `string[]` | All unique authors |
+| `calculateReadingTime(content)` | `string` | Estimated reading time, handling mixed Latin and CJK text |
 
 ## Theming
 

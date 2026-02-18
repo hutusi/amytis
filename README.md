@@ -1,6 +1,6 @@
 # Amytis
 
-**Amytis** is a minimalist, elegant digital garden built with Next.js 16, React 19, and Tailwind CSS v4. It is designed for cultivating thoughts, sharing knowledge, and growing ideas with a focus on typography and readability.
+**Amytis** is a high-performance, elegant digital garden built with Next.js 16, React 19, and Tailwind CSS v4. It is designed for cultivating thoughts, sharing knowledge, and growing ideas with a focus on typography and readability.
 
 [**Live Demo**](https://amytis.vercel.app/)
 
@@ -10,7 +10,7 @@
 
 - **Digital Garden Philosophy:** Non-linear navigation through tags, series, authors, and chronological archives.
 - **Fuzzy Search:** Instant, client-side search across all posts (Cmd/Ctrl+K) powered by Fuse.js.
-- **Series Support:** Multi-part content organization with manual or automatic ordering, cover images, and progress tracking.
+- **Series Support:** Multi-part content organization with manual or automatic ordering, cover images, and sidebars.
 - **Rich MDX Content:**
   - GitHub Flavored Markdown (tables, task lists, strikethrough).
   - Syntax-highlighted code blocks.
@@ -31,13 +31,12 @@
   - Draft support for both posts and series.
 - **Performance & SEO:**
   - Fully static export with optimized WebP images.
-  - Development build mode without image optimization for faster iteration.
   - Native sitemap and RSS feed generation.
-  - Estimated reading time for every article.
+  - Multilingual reading time estimate (supports Latin and CJK).
 - **Integrations:**
   - Analytics: Umami, Plausible, or Google Analytics.
   - Comments: Giscus (GitHub Discussions) or Disqus.
-  - Internationalization: multi-language support (en, zh).
+  - Internationalization: multi-language support (en, zh) with localized `site.config.ts`.
 - **Content CLI Tools:** Create posts, series, and import from PDFs or image folders.
 - **Modern Stack:** Next.js 16, React 19, Tailwind CSS v4, TypeScript 5, Bun.
 
@@ -106,15 +105,15 @@ All site settings are managed in `site.config.ts`:
 
 ```typescript
 export const siteConfig = {
-  // Basic metadata
-  title: "Amytis",
-  description: "A minimalist digital garden...",
+  // Basic metadata (localized)
+  title: { en: "Amytis", zh: "Amytis" },
+  description: { en: "A minimalist digital garden...", zh: "一个极简的数字花园..." },
   baseUrl: "https://example.com",
-  footerText: "...",
+  footerText: { en: "...", zh: "..." },
 
   // Navigation menu (sorted by weight)
   nav: [
-    { name: "Garden", url: "/", weight: 1 },
+    { name: "Home", url: "/", weight: 1 },
     { name: "Series", url: "/series", weight: 1.5 },
     { name: "Archive", url: "/archive", weight: 2 },
     { name: "Tags", url: "/tags", weight: 3 },
@@ -147,22 +146,11 @@ export const siteConfig = {
   // Appearance
   themeColor: 'default',       // 'default' | 'blue' | 'rose' | 'amber'
 
-  // Homepage hero section
+  // Homepage hero section (localized)
   hero: {
-    title: "Cultivating Digital Knowledge",
-    subtitle: "A minimalist digital garden...",
-  },
-
-  // Featured content on homepage (horizontal scrolling)
-  featured: {
-    series: {
-      scrollThreshold: 2,      // Enable scrolling when more than N items
-      maxItems: 6,             // Maximum series shown
-    },
-    stories: {
-      scrollThreshold: 1,
-      maxItems: 5,
-    },
+    tagline: { en: "...", zh: "..." },
+    title: { en: "...", zh: "..." },
+    subtitle: { en: "...", zh: "..." },
   },
 
   // Internationalization
@@ -216,6 +204,9 @@ coverImage: "./images/cover.jpg"  # Local path or external URL
 latex: true                       # Enable KaTeX math rendering (default: false)
 toc: false                        # Hide table of contents (default: true)
 layout: "simple"                  # Use simple layout (default: "post")
+externalLinks:                    # Optional curated resources
+  - name: "Source"
+    url: "https://..."
 ---
 ```
 
@@ -275,7 +266,6 @@ amytis/
     lib/
       markdown.ts       # Data access layer (content parsing)
   site.config.ts        # Site configuration
-  CLAUDE.md             # AI pair programming guidance
 ```
 
 ### Key Components
@@ -291,10 +281,9 @@ amytis/
 | `Search` | Fuzzy search modal (Cmd/Ctrl+K) using Fuse.js |
 | `MarkdownRenderer` | Content rendering with GFM, math, syntax highlighting, diagrams |
 | `Comments` | Giscus or Disqus integration (theme-aware) |
-| `Analytics` | Umami, Plausible, or Google Analytics |
-| `CoverImage` | Optimized image component with WebP support |
-| `ThemeToggle` | Light/dark mode toggle |
-| `LanguageSwitch` | i18n language selector |
+| `CoverImage` | Optimized image component with WebP support and dynamic gradients |
+| `AuthorStats` | Visual statistics for author contribution |
+| `TranslatedText` | Helper for rendering localized strings from site config |
 
 ### Route Structure
 
@@ -306,22 +295,9 @@ amytis/
 | `/series` | All series overview |
 | `/series/[slug]` | Single series with post catalog |
 | `/tags`, `/tags/[tag]` | Tag cloud and filtered post listing |
-| `/authors/[author]` | Posts filtered by author |
+| `/authors/[author]` | Posts filtered by author with stats and series contributions |
 | `/archive` | Chronological listing grouped by year/month |
 | `/[slug]` | Static pages (about, etc.) |
-
-## Theming
-
-Amytis supports four color palettes, configured via `themeColor` in `site.config.ts`:
-
-| Palette | Light Accent | Dark Accent |
-|---------|-------------|-------------|
-| `default` | Emerald (#059669) | Emerald (#34d399) |
-| `blue` | Blue (#2563eb) | Blue (#60a5fa) |
-| `rose` | Rose (#e11d48) | Rose (#fb7185) |
-| `amber` | Amber (#d97706) | Amber (#fbbf24) |
-
-Each palette defines CSS variables for `--accent`, `--background`, `--foreground`, `--heading`, `--muted`, and more. Light/dark mode is handled by `next-themes` with automatic system detection.
 
 ## Documentation
 
