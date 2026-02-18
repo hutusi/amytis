@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { BookTocItem, BookChapterEntry } from '@/lib/markdown';
+import { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 
 interface BookSidebarProps {
@@ -11,20 +11,21 @@ interface BookSidebarProps {
   toc: BookTocItem[];
   chapters: BookChapterEntry[];
   currentChapter: string;
+  headings?: Heading[];
 }
 
-export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, currentChapter }: BookSidebarProps) {
+export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, currentChapter, headings = [] }: BookSidebarProps) {
   const { t } = useLanguage();
   const currentIndex = chapters.findIndex(ch => ch.file === currentChapter);
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
+  const [activeHeadingId, setActiveHeadingId] = useState<string>('');
 
   // Track which parts are collapsed
   const [collapsedParts, setCollapsedParts] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const item of toc) {
       if ('part' in item) {
-        // Auto-open the part containing the current chapter
         const containsCurrent = item.chapters.some(ch => ch.file === currentChapter);
         initial[item.part] = !containsCurrent;
       }
@@ -34,6 +35,50 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
 
   const togglePart = (part: string) => {
     setCollapsedParts(prev => ({ ...prev, [part]: !prev[part] }));
+  };
+
+  // Scroll tracking for page headings
+  const handleScroll = useCallback(() => {
+    if (headings.length === 0) return;
+
+    const headingElements = headings
+      .map(h => document.getElementById(h.id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (headingElements.length === 0) return;
+
+    const scrollPosition = window.scrollY + 100;
+    let current = headingElements[0];
+    for (const el of headingElements) {
+      if (el.offsetTop <= scrollPosition) {
+        current = el;
+      } else {
+        break;
+      }
+    }
+
+    if (current) {
+      setActiveHeadingId(current.id);
+    }
+  }, [headings]);
+
+  useEffect(() => {
+    if (headings.length === 0) return;
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll, headings.length]);
+
+  // Smooth scroll to heading
+  const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+      history.pushState(null, '', `#${id}`);
+    }
   };
 
   useEffect(() => {
@@ -56,7 +101,64 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     }
   }, [currentChapter, toc]);
 
+  // Render the inline headings sub-list for the current chapter
+  const renderHeadings = () => {
+    if (headings.length === 0) return null;
+
+    return (
+      <ul className="mt-1 mb-1 ml-3 space-y-0.5 border-l border-muted/10">
+        {headings.map(heading => {
+          const isActive = heading.id === activeHeadingId;
+          const isH3 = heading.level === 3;
+
+          return (
+            <li key={heading.id}>
+              <a
+                href={`#${heading.id}`}
+                onClick={(e) => scrollToHeading(e, heading.id)}
+                className={`block py-1 text-xs leading-snug no-underline transition-colors duration-200 ${
+                  isH3 ? 'pl-5' : 'pl-3'
+                } ${
+                  isActive
+                    ? 'text-accent font-medium border-l-2 border-accent -ml-px'
+                    : 'text-muted/60 hover:text-foreground/80'
+                }`}
+              >
+                {heading.text}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   let globalIndex = 0;
+
+  // Helper to render a chapter link + inline headings if current
+  const renderChapterItem = (ch: { title: string; file: string }, idx: number) => {
+    const isCurrent = ch.file === currentChapter;
+    const isPast = idx < currentIndex;
+
+    return (
+      <li key={ch.file} ref={isCurrent ? currentItemRef : undefined}>
+        <Link
+          href={`/books/${bookSlug}/${ch.file}`}
+          className={`block py-2 px-3 rounded-lg text-sm no-underline transition-all duration-200 ${
+            isCurrent
+              ? 'bg-accent/10 text-accent font-semibold border-l-2 border-accent'
+              : isPast
+                ? 'text-foreground/70 hover:text-foreground hover:bg-muted/5'
+                : 'text-muted hover:text-foreground hover:bg-muted/5'
+          }`}
+          aria-current={isCurrent ? 'page' : undefined}
+        >
+          {ch.title}
+        </Link>
+        {isCurrent && renderHeadings()}
+      </li>
+    );
+  };
 
   return (
     <aside
@@ -117,57 +219,15 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
 
                   {!isCollapsed && (
                     <ul className="space-y-0.5 mt-1 mb-3 animate-slide-down">
-                      {partChapters.map((ch, chIdx) => {
-                        const idx = startIndex + chIdx;
-                        const isCurrent = ch.file === currentChapter;
-                        const isPast = idx < currentIndex;
-
-                        return (
-                          <li key={ch.file} ref={isCurrent ? currentItemRef : undefined}>
-                            <Link
-                              href={`/books/${bookSlug}/${ch.file}`}
-                              className={`block py-2 px-3 rounded-lg text-sm no-underline transition-all duration-200 ${
-                                isCurrent
-                                  ? 'bg-accent/10 text-accent font-semibold border-l-2 border-accent'
-                                  : isPast
-                                    ? 'text-foreground/70 hover:text-foreground hover:bg-muted/5'
-                                    : 'text-muted hover:text-foreground hover:bg-muted/5'
-                              }`}
-                              aria-current={isCurrent ? 'page' : undefined}
-                            >
-                              {ch.title}
-                            </Link>
-                          </li>
-                        );
-                      })}
+                      {partChapters.map((ch, chIdx) => renderChapterItem(ch, startIndex + chIdx))}
                     </ul>
                   )}
                 </li>
               );
             } else {
-              // Standalone chapter (no part)
               const idx = globalIndex;
               globalIndex += 1;
-              const isCurrent = item.file === currentChapter;
-              const isPast = idx < currentIndex;
-
-              return (
-                <li key={item.file} ref={isCurrent ? currentItemRef : undefined}>
-                  <Link
-                    href={`/books/${bookSlug}/${item.file}`}
-                    className={`block py-2 px-3 rounded-lg text-sm no-underline transition-all duration-200 ${
-                      isCurrent
-                        ? 'bg-accent/10 text-accent font-semibold border-l-2 border-accent'
-                        : isPast
-                          ? 'text-foreground/70 hover:text-foreground hover:bg-muted/5'
-                          : 'text-muted hover:text-foreground hover:bg-muted/5'
-                    }`}
-                    aria-current={isCurrent ? 'page' : undefined}
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-              );
+              return renderChapterItem(item, idx);
             }
           })}
         </ul>

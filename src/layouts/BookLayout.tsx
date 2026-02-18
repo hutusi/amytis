@@ -23,6 +23,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
           toc={book.toc}
           chapters={book.chapters}
           currentChapter={chapter.slug}
+          headings={chapter.headings}
         />
 
         {/* Main content */}
