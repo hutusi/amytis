@@ -17,6 +17,7 @@ interface BookSidebarProps {
 export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, currentChapter, headings = [] }: BookSidebarProps) {
   const { t } = useLanguage();
   const currentIndex = chapters.findIndex(ch => ch.file === currentChapter);
+  const [headingsCollapsed, setHeadingsCollapsed] = useState(false);
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
@@ -106,30 +107,46 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     if (headings.length === 0) return null;
 
     return (
-      <ul className="mt-1 mb-1 ml-3 space-y-0.5 border-l border-muted/10">
-        {headings.map(heading => {
-          const isActive = heading.id === activeHeadingId;
-          const isH3 = heading.level === 3;
+      <div className="mt-1.5 mb-1 ml-3">
+        <button
+          onClick={() => setHeadingsCollapsed(prev => !prev)}
+          className="flex items-center gap-1.5 text-[11px] font-sans font-medium uppercase tracking-wider text-muted hover:text-foreground transition-colors mb-1.5 pl-3"
+        >
+          <svg
+            className={`w-3 h-3 flex-shrink-0 transition-transform duration-200 ${headingsCollapsed ? '' : 'rotate-180'}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+          {t('on_this_page')}
+        </button>
+        {!headingsCollapsed && (
+          <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
+            {headings.map(heading => {
+              const isActive = heading.id === activeHeadingId;
+              const isH3 = heading.level === 3;
 
-          return (
-            <li key={heading.id}>
-              <a
-                href={`#${heading.id}`}
-                onClick={(e) => scrollToHeading(e, heading.id)}
-                className={`block py-1 text-xs leading-snug no-underline transition-colors duration-200 ${
-                  isH3 ? 'pl-5' : 'pl-3'
-                } ${
-                  isActive
-                    ? 'text-accent font-medium border-l-2 border-accent -ml-px'
-                    : 'text-muted/60 hover:text-foreground/80'
-                }`}
-              >
-                {heading.text}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
+              return (
+                <li key={heading.id}>
+                  <a
+                    href={`#${heading.id}`}
+                    onClick={(e) => scrollToHeading(e, heading.id)}
+                    className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
+                      isH3 ? 'pl-6' : 'pl-3'
+                    } ${
+                      isActive
+                        ? 'text-accent font-medium border-l-2 border-accent -ml-px'
+                        : 'text-foreground/70 hover:text-foreground'
+                    }`}
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     );
   };
 
