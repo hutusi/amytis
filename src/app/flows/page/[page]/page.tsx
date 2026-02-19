@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 
 export default async function FlowsPaginatedPage({ params }: { params: Promise<{ page: string }> }) {
   const { page: pageStr } = await params;
-  const page = parseInt(pageStr);
+  const page = parseInt(pageStr, 10);
   const allFlows = getAllFlows();
   const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
 

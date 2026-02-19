@@ -24,7 +24,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  const entrySet = new Set(entryDates);
+  const entrySet = useMemo(() => new Set(entryDates), [entryDates]);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -68,9 +68,12 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
     }
   }
 
-  const days: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) days.push(null);
-  for (let d = 1; d <= daysInMonth; d++) days.push(d);
+  const days = useMemo(() => {
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    return cells;
+  }, [firstDay, daysInMonth]);
 
   return (
     <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)]">

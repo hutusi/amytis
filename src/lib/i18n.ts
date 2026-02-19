@@ -11,7 +11,7 @@ export const t = (key: keyof typeof translations.en) =>
 export const tWith = (key: keyof typeof translations.en, params: Record<string, string | number>) => {
   let result = t(key);
   Object.entries(params).forEach(([k, v]) => {
-    result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+    result = result.split(`{${k}}`).join(String(v));
   });
   return result;
 };
