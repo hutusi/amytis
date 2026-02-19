@@ -23,8 +23,11 @@ export default function Hero({ tagline, title, subtitle }: HeroProps) {
   useEffect(() => {
     const saved = localStorage.getItem('amytis-hero-visible');
     const visible = saved !== 'false';
-    setIsVisible(visible);
-    visibleRef.current = visible;
+    // Use requestAnimationFrame to avoid cascading render lint error
+    requestAnimationFrame(() => {
+      setIsVisible(visible);
+      visibleRef.current = visible;
+    });
   }, []);
 
   // Auto-collapse on scroll or navigation away

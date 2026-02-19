@@ -22,15 +22,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Only access localStorage and browser language after component is mounted (client-side)
     const savedLang = localStorage.getItem('amytis-language') as Language;
-    if (savedLang && translations[savedLang]) {
-      setLanguageState(savedLang);
-    } else {
-      const browserLang = navigator.language.split('-')[0] as Language;
-      if (translations[browserLang]) {
-        setLanguageState(browserLang);
+    
+    // Use requestAnimationFrame to avoid cascading render lint error
+    requestAnimationFrame(() => {
+      if (savedLang && translations[savedLang]) {
+        setLanguageState(savedLang);
+      } else {
+        const browserLang = navigator.language.split('-')[0] as Language;
+        if (translations[browserLang]) {
+          setLanguageState(browserLang);
+        }
       }
-    }
-    setIsHydrated(true);
+      setIsHydrated(true);
+    });
   }, []);
 
   const setLanguage = (lang: Language) => {
