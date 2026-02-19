@@ -40,6 +40,9 @@ bun run new-from-images ./photos      # Create post from image folder
 bun run new-from-images ./photos --title "My Gallery"  # With custom title
 bun run new-from-images ./photos --sort date           # Sort by date (default: name)
 bun run new-from-images ./photos --no-copy             # Reference images instead of copying
+bun run new-flow                    # Create today's flow note (.md)
+bun run new-flow "My Title"         # Create flow with custom title
+bun run new-flow --mdx              # Use .mdx format instead
 ```
 
 ## Architecture
