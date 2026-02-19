@@ -74,6 +74,14 @@ bun run new-flow --mdx              # Use .mdx format instead
 - `/tags/[tag]` - Posts filtered by tag
 - `/authors/[author]` - Posts filtered by author
 - `/archive` - Chronological listing grouped by year/month
+- `/books` - All books overview
+- `/books/[slug]` - Single book with chapter listing
+- `/books/[slug]/[chapter]` - Individual chapter page
+- `/flows` - Flow notes listing (paginated)
+- `/flows/page/[page]` - Paginated flow listing
+- `/flows/[year]` - Flows filtered by year
+- `/flows/[year]/[month]` - Flows filtered by month
+- `/flows/[year]/[month]/[day]` - Single flow detail page
 - `/[slug]` - Static pages (about, etc.)
 
 ### Content Structure
@@ -83,6 +91,10 @@ bun run new-flow --mdx              # Use .mdx format instead
 - **Nested folder**: `content/posts/my-post/index.mdx` (allows co-located images in `./images/`)
 
 **Series** live in `content/series/[slug]/index.mdx` with optional `images/` folder for cover images.
+
+**Books** live in `content/books/[slug]/` with `index.mdx` for metadata and separate `.mdx` files per chapter. The `index.mdx` frontmatter defines chapter ordering with an optional parts structure.
+
+**Flows** (daily notes) live in `content/flows/YYYY/MM/DD.md` (or `.mdx`). Each flow has a date, title, excerpt, tags, and markdown content.
 
 Date-prefixed filenames (`2026-01-01-my-post.mdx`) extract dates automatically.
 
@@ -143,6 +155,29 @@ posts: ["post-1", "post-2"] # Manual post ordering (optional)
 ---
 ```
 
+### Books (`content/books/[slug]/index.mdx`)
+
+```yaml
+---
+title: "Book Title"
+excerpt: "Book description"
+date: "2026-01-01"
+coverImage: "text:DG"           # Cover image or text placeholder
+featured: true                  # Show in featured books
+draft: false
+authors: ["Author Name"]
+chapters:
+  - part: "Part I: Getting Started"    # Optional part grouping
+    chapters:
+      - title: "Chapter Title"
+        file: "chapter-file"           # Maps to chapter-file.mdx in same directory
+  - part: "Part II: Advanced"
+    chapters:
+      - title: "Another Chapter"
+        file: "another-chapter"
+---
+```
+
 ## Key Components
 
 - `PostLayout` / `SimpleLayout` - Post page layouts with TOC, series sidebar, external links, comments
@@ -158,5 +193,8 @@ posts: ["post-1", "post-2"] # Manual post ordering (optional)
 - `CoverImage` - Optimized image component with WebP support
 - `Comments` - Giscus or Disqus integration (theme-aware)
 - `Analytics` - Umami, Plausible, or Google Analytics integration
+- `FlowContent` - Client wrapper for flow pages with tag filtering state management
+- `FlowCalendarSidebar` - Calendar sidebar with date navigation, browse panel, and clickable tag filters
+- `FlowTimelineEntry` - Individual flow entry in timeline list
 - `LanguageSwitch` - i18n language selector
 - `ThemeToggle` - Light/dark mode toggle
