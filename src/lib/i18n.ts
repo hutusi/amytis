@@ -8,6 +8,14 @@ import { siteConfig } from '../../site.config';
 export const t = (key: keyof typeof translations.en) =>
   translations[siteConfig.i18n.defaultLocale as Language]?.[key] || translations.en[key];
 
+export const tWith = (key: keyof typeof translations.en, params: Record<string, string | number>) => {
+  let result = t(key);
+  Object.entries(params).forEach(([k, v]) => {
+    result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+  });
+  return result;
+};
+
 /**
  * Resolve a locale-aware config value given an explicit language.
  * Shared by both server-side resolveLocale() and client-side components.

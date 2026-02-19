@@ -59,6 +59,8 @@ export const translations = {
     all_flows: "All Notes",
     no_flows: "No notes yet.",
     flow_subtitle: "{count} daily notes.",
+    flows_in_year: "Notes in {year}",
+    flows_in_month: "Notes in {month}",
   },
   zh: {
     home: "首页",
@@ -120,6 +122,8 @@ export const translations = {
     all_flows: "全部随笔",
     no_flows: "暂无随笔。",
     flow_subtitle: "共 {count} 条随笔。",
+    flows_in_year: "{year} 年随笔",
+    flows_in_month: "{month} 随笔",
   },
 };
 

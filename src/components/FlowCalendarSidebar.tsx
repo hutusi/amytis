@@ -95,7 +95,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
               return (
                 <Link
                   key={dateStr}
-                  href={`/flows/${dateStr}`}
+                  href={`/flows/${viewYear}/${String(viewMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`}
                   className={`${baseClasses} bg-accent text-white font-bold no-underline`}
                 >
                   {day}
@@ -107,7 +107,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
               return (
                 <Link
                   key={dateStr}
-                  href={`/flows/${dateStr}`}
+                  href={`/flows/${viewYear}/${String(viewMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`}
                   className={`${baseClasses} text-foreground hover:bg-accent/10 font-medium no-underline ${isToday ? 'ring-1 ring-accent' : ''}`}
                 >
                   {day}

@@ -490,16 +490,20 @@ export function getPostsByTag(tag: string): PostData[] {
 
 export function getAllTags(): Record<string, number> {
   const allPosts = getAllPosts();
+  const allFlows = getAllFlows();
   const tags: Record<string, number> = {};
 
   allPosts.forEach((post) => {
     post.tags.forEach((tag) => {
       const normalizedTag = tag.toLowerCase();
-      if (tags[normalizedTag]) {
-        tags[normalizedTag] += 1;
-      } else {
-        tags[normalizedTag] = 1;
-      }
+      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
+    });
+  });
+
+  allFlows.forEach((flow) => {
+    flow.tags.forEach((tag) => {
+      const normalizedTag = tag.toLowerCase();
+      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
     });
   });
 
@@ -922,7 +926,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   const data = parsed.data;
 
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
-  const date = data.date || slug; // slug is the date string from filename
+  const date = data.date || slug.replace(/\//g, '-'); // slug is YYYY/MM/DD, convert to YYYY-MM-DD
   const excerpt = generateExcerpt(contentWithoutH1);
   const headings = getHeadings(content);
 
@@ -941,31 +945,45 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
 export function getAllFlows(): FlowData[] {
   if (!fs.existsSync(flowsDirectory)) return [];
 
-  const items = fs.readdirSync(flowsDirectory, { withFileTypes: true });
   const flows: FlowData[] = [];
-  const dateRegex = /^(\d{4}-\d{2}-\d{2})/;
 
-  for (const item of items) {
-    let fullPath = '';
-    const rawName = item.name.replace(/\.mdx?$/, '');
-    const match = rawName.match(dateRegex);
-    if (!match) continue; // Skip files without date-based names
+  // Walk content/flows/YYYY/MM/ structure
+  const yearDirs = fs.readdirSync(flowsDirectory, { withFileTypes: true });
+  for (const yearEntry of yearDirs) {
+    if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
+    const yearPath = path.join(flowsDirectory, yearEntry.name);
 
-    const slug = match[1]; // Always use the date as slug
+    const monthDirs = fs.readdirSync(yearPath, { withFileTypes: true });
+    for (const monthEntry of monthDirs) {
+      if (!monthEntry.isDirectory() || !/^\d{2}$/.test(monthEntry.name)) continue;
+      const monthPath = path.join(yearPath, monthEntry.name);
 
-    if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx'))) {
-      fullPath = path.join(flowsDirectory, item.name);
-    } else if (item.isDirectory()) {
-      const indexMdx = path.join(flowsDirectory, item.name, 'index.mdx');
-      const indexMd = path.join(flowsDirectory, item.name, 'index.md');
-      if (fs.existsSync(indexMdx)) fullPath = indexMdx;
-      else if (fs.existsSync(indexMd)) fullPath = indexMd;
-      else continue;
-    } else {
-      continue;
+      const dayItems = fs.readdirSync(monthPath, { withFileTypes: true });
+      for (const dayItem of dayItems) {
+        const rawName = dayItem.name.replace(/\.mdx?$/, '');
+        if (!/^\d{2}$/.test(rawName)) continue;
+
+        const year = yearEntry.name;
+        const month = monthEntry.name;
+        const day = rawName;
+        const slug = `${year}/${month}/${day}`;
+        let fullPath = '';
+
+        if (dayItem.isFile() && (dayItem.name.endsWith('.md') || dayItem.name.endsWith('.mdx'))) {
+          fullPath = path.join(monthPath, dayItem.name);
+        } else if (dayItem.isDirectory()) {
+          const indexMdx = path.join(monthPath, dayItem.name, 'index.mdx');
+          const indexMd = path.join(monthPath, dayItem.name, 'index.md');
+          if (fs.existsSync(indexMdx)) fullPath = indexMdx;
+          else if (fs.existsSync(indexMd)) fullPath = indexMd;
+          else continue;
+        } else {
+          continue;
+        }
+
+        flows.push(parseFlowFile(fullPath, slug));
+      }
     }
-
-    flows.push(parseFlowFile(fullPath, slug));
   }
 
   return flows
@@ -984,19 +1002,41 @@ export function getAllFlows(): FlowData[] {
 export function getFlowBySlug(slug: string): FlowData | null {
   if (!fs.existsSync(flowsDirectory)) return null;
 
-  // Try flat file first
-  const mdxPath = path.join(flowsDirectory, `${slug}.mdx`);
-  const mdPath = path.join(flowsDirectory, `${slug}.md`);
+  // slug format: "YYYY/MM/DD"
+  const parts = slug.split('/');
+  if (parts.length !== 3) return null;
+  const [year, month, day] = parts;
+
+  const basePath = path.join(flowsDirectory, year, month);
+  if (!fs.existsSync(basePath)) return null;
+
+  // Try flat file
+  const mdxPath = path.join(basePath, `${day}.mdx`);
+  const mdPath = path.join(basePath, `${day}.md`);
   if (fs.existsSync(mdxPath)) return parseFlowFile(mdxPath, slug);
   if (fs.existsSync(mdPath)) return parseFlowFile(mdPath, slug);
 
   // Try folder
-  const indexMdx = path.join(flowsDirectory, slug, 'index.mdx');
-  const indexMd = path.join(flowsDirectory, slug, 'index.md');
+  const indexMdx = path.join(basePath, day, 'index.mdx');
+  const indexMd = path.join(basePath, day, 'index.md');
   if (fs.existsSync(indexMdx)) return parseFlowFile(indexMdx, slug);
   if (fs.existsSync(indexMd)) return parseFlowFile(indexMd, slug);
 
   return null;
+}
+
+export function getFlowsByYear(year: string): FlowData[] {
+  return getAllFlows().filter(f => f.slug.startsWith(`${year}/`));
+}
+
+export function getFlowsByMonth(year: string, month: string): FlowData[] {
+  return getAllFlows().filter(f => f.slug.startsWith(`${year}/${month}/`));
+}
+
+export function getFlowsByTag(tag: string): FlowData[] {
+  return getAllFlows().filter(f =>
+    f.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase())
+  );
 }
 
 export function getAdjacentFlows(slug: string): { prev: FlowData | null; next: FlowData | null } {

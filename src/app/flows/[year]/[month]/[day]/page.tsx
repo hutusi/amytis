@@ -1,5 +1,5 @@
 import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/markdown';
-import { siteConfig } from '../../../../site.config';
+import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { resolveLocale } from '@/lib/i18n';
@@ -10,14 +10,17 @@ import Link from 'next/link';
 
 export function generateStaticParams() {
   const allFlows = getAllFlows();
-  return allFlows.map(flow => ({ date: flow.slug }));
+  return allFlows.map(flow => {
+    const [year, month, day] = flow.slug.split('/');
+    return { year, month, day };
+  });
 }
 
 export const dynamicParams = false;
 
-export async function generateMetadata({ params }: { params: Promise<{ date: string }> }): Promise<Metadata> {
-  const { date } = await params;
-  const flow = getFlowBySlug(date);
+export async function generateMetadata({ params }: { params: Promise<{ year: string; month: string; day: string }> }): Promise<Metadata> {
+  const { year, month, day } = await params;
+  const flow = getFlowBySlug(`${year}/${month}/${day}`);
   if (!flow) return { title: 'Not Found' };
   return {
     title: `${flow.title} | ${resolveLocale(siteConfig.title)}`,
@@ -25,9 +28,10 @@ export async function generateMetadata({ params }: { params: Promise<{ date: str
   };
 }
 
-export default async function FlowPage({ params }: { params: Promise<{ date: string }> }) {
-  const { date } = await params;
-  const flow = getFlowBySlug(date);
+export default async function FlowPage({ params }: { params: Promise<{ year: string; month: string; day: string }> }) {
+  const { year, month, day } = await params;
+  const slug = `${year}/${month}/${day}`;
+  const flow = getFlowBySlug(slug);
   if (!flow) notFound();
 
   const allFlows = getAllFlows();

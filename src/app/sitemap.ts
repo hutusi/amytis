@@ -48,6 +48,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.5,
   }));
 
+  // Year and month listing URLs
+  const flowYears = new Set<string>();
+  const flowMonths = new Set<string>();
+  flows.forEach(flow => {
+    const [year, month] = flow.slug.split('/');
+    flowYears.add(year);
+    flowMonths.add(`${year}/${month}`);
+  });
+
+  const flowYearUrls = Array.from(flowYears).map(year => ({
+    url: `${baseUrl}/flows/${year}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  const flowMonthUrls = Array.from(flowMonths).map(ym => ({
+    url: `${baseUrl}/flows/${ym}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -82,6 +105,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily' as const,
       priority: 0.8,
     },
+    ...flowYearUrls,
+    ...flowMonthUrls,
     ...flowUrls,
   ];
 }

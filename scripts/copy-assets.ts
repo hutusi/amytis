@@ -175,17 +175,32 @@ function processBooks() {
 function processFlows() {
   if (!fs.existsSync(flowsSrcDir)) return;
 
-  const entries = fs.readdirSync(flowsSrcDir, { withFileTypes: true });
+  // Walk content/flows/YYYY/MM/ structure for folder-based flows with co-located assets
+  const yearDirs = fs.readdirSync(flowsSrcDir, { withFileTypes: true });
+  for (const yearEntry of yearDirs) {
+    if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
+    const yearPath = path.join(flowsSrcDir, yearEntry.name);
 
-  entries.forEach((entry) => {
-    if (entry.isDirectory()) {
-      const srcFlowDir = path.join(flowsSrcDir, entry.name);
-      const destFlowDir = path.join(flowsDestDir, entry.name);
+    const monthDirs = fs.readdirSync(yearPath, { withFileTypes: true });
+    for (const monthEntry of monthDirs) {
+      if (!monthEntry.isDirectory() || !/^\d{2}$/.test(monthEntry.name)) continue;
+      const monthPath = path.join(yearPath, monthEntry.name);
 
-      console.log(`Processing Flow: ${entry.name}`);
-      copyRecursive(srcFlowDir, destFlowDir);
+      const dayItems = fs.readdirSync(monthPath, { withFileTypes: true });
+      for (const dayItem of dayItems) {
+        // Only process folder-based flows (DD/ directories with index.mdx)
+        if (!dayItem.isDirectory()) continue;
+        const rawName = dayItem.name;
+        if (!/^\d{2}$/.test(rawName)) continue;
+
+        const srcFlowDir = path.join(monthPath, rawName);
+        const destFlowDir = path.join(flowsDestDir, yearEntry.name, monthEntry.name, rawName);
+
+        console.log(`Processing Flow: ${yearEntry.name}/${monthEntry.name}/${rawName}`);
+        copyRecursive(srcFlowDir, destFlowDir);
+      }
     }
-  });
+  }
 }
 
 console.log('Copying assets...');
