@@ -17,14 +17,15 @@ export default function Hero({ tagline, title, subtitle }: HeroProps) {
   const resolvedTagline = resolveLocaleValue(tagline, language);
   const resolvedTitle = resolveLocaleValue(title, language);
   const resolvedSubtitle = resolveLocaleValue(subtitle, language);
-  const [isVisible, setIsVisible] = useState<boolean | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('amytis-hero-visible');
-      return saved !== 'false';
-    }
-    return null;
-  });
-  const visibleRef = useRef(isVisible ?? false);
+  const [isVisible, setIsVisible] = useState<boolean | null>(null);
+  const visibleRef = useRef(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('amytis-hero-visible');
+    const visible = saved !== 'false';
+    setIsVisible(visible);
+    visibleRef.current = visible;
+  }, []);
 
   // Auto-collapse on scroll or navigation away
   useEffect(() => {
