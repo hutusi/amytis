@@ -28,6 +28,10 @@
 
 ## ✅ Completed
 
+- [x] **Content Types**
+  - [x] **Flows**: Stream-style daily notes or micro-blogging.
+  - [x] **Books**: Structured long-form content with chapters.
+
 - [x] **Engagement**
   - [x] **Comments**: Integrate Giscus (GitHub Discussions) for comments.
 
@@ -51,7 +55,7 @@
 
 - [x] **Content & Architecture**
   - [x] **Series**: Robust support for grouping related posts (file-based & folder-based).
-  - [x] **Series**: Manual sorting, cross-referencing, and configurable order (`date-asc`, `date-desc`, `manual`).
+  - [x] **Series**: Manual sorting, cross-referencing, and configurable order.
   - [x] **Related Posts**: Auto-suggest relevant articles.
   - [x] **Cover Images**: Support local paths, external URLs, and generated text covers.
   - [x] **Analytics**: Privacy-friendly configuration (Umami/Plausible/Google).
@@ -65,16 +69,8 @@
   - [x] `bun run new-series` script for scaffolding series.
 
 - [x] **UI Polish & Refinements**
-  - [x] **Animations**: Define missing animation classes (`animate-fade-in`, `animate-slide-up`, `animation-delay-*`) in `globals.css`
-  - [x] **Color Contrast**: Improve `--muted` color contrast ratio for WCAG compliance
-  - [x] **Focus States**: Add visible focus rings to all interactive elements
-  - [x] **Section Spacing**: Standardize homepage section margins
-  - [x] **Responsive Grids**: Use `lg:` breakpoints consistently for sidebar layouts
-  - [x] **Archive Timeline**: Replace magic number positioning with proper CSS utilities
-  - [x] **Footer Layout**: Refine grid for better tablet display
-  - [x] **HorizontalScroll**: Add improved navigation visibility
-  - [x] **Series Dropdown**: Fix positioning to prevent cutoff on small screens
-  - [x] **Thumbnails**: Increase Latest Writing thumbnail size on mobile
-  - [x] **Loading States**: Add skeleton loaders for images and cards
-  - [x] **Typography**: Standardize line heights across headings
-  - [x] **Skip Navigation**: Add "Skip to main content" link for accessibility
+  - [x] **Animations**: Define missing animation classes.
+  - [x] **Color Contrast**: Improve accessibility.
+  - [x] **Responsive Grids**: Improve mobile/tablet layouts.
+  - [x] **Archive Timeline**: Refine CSS.
+  - [x] **Loading States**: Add skeleton loaders.

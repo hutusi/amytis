@@ -13,15 +13,16 @@ Amytis is a static site generator built with **Next.js 16 (App Router)**, design
 
 ## Data Flow
 
-1. **Source:** Content lives in `content/posts/`, `content/series/`, and `content/books/`.
+1. **Source:** Content lives in `content/posts/`, `content/series/`, `content/books/`, and `content/flows/`.
 2. **Parsing:** `src/lib/markdown.ts` reads the file system using Node.js `fs`. It uses `gray-matter` to parse frontmatter, `zod` to validate the schema, and `image-size` to extract image dimensions.
 3. **Filtering:** Draft content (`draft: true`) is excluded in production. Future-dated posts are hidden unless `showFuturePosts` is enabled.
 4. **Rendering:**
-   - **Lists:** `getAllPosts()` / `getAllBooks()` returns sorted metadata for listing pages.
+   - **Lists:** `getAllPosts()` / `getAllBooks()` / `getAllFlows()` returns sorted metadata for listing pages.
    - **Single Post/Book:** `getPostBySlug(slug)` / `getBookData(slug)` reads a specific file with full content.
    - **Series:** `getSeriesPosts(slug)` fetches posts for a series.
    - **Book Chapters:** `getBookChapter(bookSlug, chapterSlug)` fetches individual chapter content.
-   - **Static Generation:** `generateStaticParams` is implemented in dynamic routes (`[slug]`, `[page]`, `[tag]`, `[author]`) to pre-render all pages at build time.
+   - **Flows:** `getFlowBySlug(slug)` fetches individual flow entries.
+   - **Static Generation:** `generateStaticParams` is implemented in dynamic routes (`[slug]`, `[page]`, `[tag]`, `[author]`, `[year]`) to pre-render all pages at build time.
 
 ## Route Structure
 
@@ -39,6 +40,9 @@ src/app/
     page.tsx                        # All books overview
     [slug]/page.tsx                 # Book landing page
     [slug]/[chapter]/page.tsx       # Individual book chapter
+  flows/
+    page.tsx                        # Flows stream/listing
+    [year]/[month]/[day]/page.tsx   # Individual flow entry (optional if modal/stream used)
   tags/
     page.tsx                        # Tag cloud
     [tag]/page.tsx                  # Posts by tag
@@ -55,10 +59,11 @@ src/app/
 - **`Navbar`** - Config-driven navigation with series dropdown, search trigger, theme toggle, and language switch.
 - **`Footer`** - Social links, copyright, site metadata, and language switch.
 - **`Hero`** - Homepage hero with collapsible intro.
-- **`BookLayout`** - Dedicated layout for book chapters with sidebar navigation (`BookSidebar`) and mobile menu (`BookMobileNav`).
+- **`BookLayout`** - Dedicated layout for book chapters with sidebar navigation.
 
 ### Content Display
 - **`PostList`** - Card-based post listing.
+- **`FlowContent`** - Stream-based display for daily notes with timeline grouping.
 - **`SeriesCatalog`** - Timeline-style post listing for series.
 - **`PostCard`** - Individual post preview card.
 - **`CoverImage`** - Optimized image component using `next-image-export-optimizer` with dynamic desaturated gradients.
@@ -79,11 +84,10 @@ src/app/
 | Function | Returns | Purpose |
 |----------|---------|---------|
 | `getAllPosts()` | `PostData[]` | All posts, filtered and sorted |
+| `getAllFlows()` | `FlowData[]` | All daily notes, sorted by date |
 | `getAllBooks()` | `BookData[]` | All books metadata |
 | `getBookData(slug)` | `BookData \| null` | Single book metadata & TOC |
-| `getBookChapter(...)` | `BookChapterData` | Single chapter content |
 | `getSeriesPosts(slug)` | `PostData[]` | Posts in a series |
-| `getAllAuthors()` | `string[]` | All unique authors |
 | `calculateReadingTime(content)` | `string` | Estimated reading time (multilingual) |
 
 ## Theming
@@ -92,6 +96,6 @@ Theming is handled by `next-themes` and Tailwind CSS v4. `src/app/globals.css` d
 
 ## Build Pipeline
 
-1. **`scripts/copy-assets.ts`** - Copies images from content directories (`posts/`, `series/`, `books/`) to `public/posts/` for static hosting.
+1. **`scripts/copy-assets.ts`** - Copies images from content directories (`posts/`, `series/`, `books/`, `flows/`) to `public/posts/` for static hosting.
 2. **`next build`** - Next.js static export to `out/`.
 3. **`next-image-export-optimizer`** - Generates optimized WebP variants.
