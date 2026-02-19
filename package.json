@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "bun scripts/copy-assets.ts && next build && next-image-export-optimizer",
     "build:dev": "bun scripts/copy-assets.ts && next build",
-    "validate": "bun run lint && bun run test && bun run build",
+    "validate": "bun run lint && bun run test && bun run build:dev",
     "clean": "rm -rf .next out public/posts public/books public/flows",
     "new": "bun scripts/new-post.ts",
     "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
