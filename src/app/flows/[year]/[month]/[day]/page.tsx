@@ -1,11 +1,10 @@
-import { getAllFlows, getFlowBySlug, getAdjacentFlows, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import Tag from '@/components/Tag';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -36,7 +35,6 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
-  const tags = getFlowTags();
   const { prev, next } = getAdjacentFlows(flow.slug);
 
   return (
@@ -59,20 +57,13 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
       </nav>
 
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} tags={tags} />
+        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} />
 
         <article className="flex-1 min-w-0">
           {/* Header */}
           <header className="mb-8">
             <time className="text-sm font-mono text-accent">{flow.date}</time>
             <h1 className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading">{flow.title}</h1>
-            {flow.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {flow.tags.map(tag => (
-                  <Tag key={tag} tag={tag} />
-                ))}
-              </div>
-            )}
           </header>
 
           {/* Content */}
