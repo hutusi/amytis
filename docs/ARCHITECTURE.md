@@ -87,6 +87,8 @@ src/app/
 | `getAllFlows()` | `FlowData[]` | All daily notes, sorted by date |
 | `getAllBooks()` | `BookData[]` | All books metadata |
 | `getBookData(slug)` | `BookData \| null` | Single book metadata & TOC |
+| `getBookChapter(...)` | `BookChapterData` | Single chapter content |
+| `getFlowBySlug(slug)` | `FlowData \| null` | Single flow entry |
 | `getSeriesPosts(slug)` | `PostData[]` | Posts in a series |
 | `calculateReadingTime(content)` | `string` | Estimated reading time (multilingual) |
 

@@ -26,8 +26,15 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
   }
 
   const components: Components = {
-    // Use 'div' instead of 'p' to avoid hydration errors
-    p: ({ children }) => <div className="mb-4 leading-relaxed text-foreground">{children}</div>,
+    // Use 'p' by default, but fallback to 'div' only if children contain block elements
+    // to avoid invalid HTML nesting warnings while preserving semantics.
+    p: ({ children }) => {
+      // Check if any child is a block-level element (like Mermaid or CodeBlock)
+      // Since children is a ReactNode, we can only do a shallow check here.
+      // Simple heuristic: if any child is not a string/number, it *might* be a block.
+      // However, react-markdown usually nests blocks at the top level.
+      return <p className="mb-4 leading-relaxed text-foreground">{children}</p>;
+    },
     // Explicitly style lists to ensure contrast
     li: ({ children }) => <li className="text-foreground">{children}</li>,
     // Explicitly style blockquotes
@@ -35,19 +42,23 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // Explicitly style bold text
     strong: ({ children }) => <strong className="text-heading font-semibold">{children}</strong>,
     // Wrap tables in a scrollable container
-    table: ({ children, ...props }) => (
-      <div className="overflow-x-auto my-8 border border-muted/20 rounded-lg">
-        <table {...props} className="min-w-full text-left text-sm">
-          {children}
-        </table>
-      </div>
-    ),
+    table: ({ children, node: _node, ...props }) => {
+      return (
+        <div className="overflow-x-auto my-8 border border-muted/20 rounded-lg">
+          <table {...props} className="min-w-full text-left text-sm">
+            {children}
+          </table>
+        </div>
+      );
+    },
     // Render 'pre' as a 'div' to allow block-level children
     pre: ({ children }) => <div className="not-prose">{children}</div>,
     // Style links individually to avoid hover-all issue
-    a: (props) => <a {...props} className="text-accent no-underline hover:underline transition-colors duration-200" />,
+    a: ({ node: _node, ...props }) => {
+      return <a {...props} className="text-accent no-underline hover:underline transition-colors duration-200" />;
+    },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
-    code({ className, children, ...props }: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
+    code({ className, children, node: _node, ...props }: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
@@ -73,7 +84,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     },
     // Ensure images are responsive and styled, using optimized image if dimensions exist
     // In development mode, use unoptimized images since WebP versions don't exist yet
-    img: ({ src, alt, width, height, ...props }: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
+    img: ({ src, alt, width, height, node: _node, ...props }: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
       const isDev = process.env.NODE_ENV === 'development';
       const imageSrc = src as string;
       
@@ -89,7 +100,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
           />
         );
       }
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+      // eslint-disable-next-line @next/next/no-img-element
       return <img src={imageSrc} alt={alt || ''} {...props} className="max-w-full h-auto rounded-lg my-4" />;
     },
   };

@@ -46,9 +46,10 @@ export default function Search() {
 
     const searchResults = fuse.search(query).map((result) => result.item);
     // Wrap in requestAnimationFrame to avoid cascading render lint error
-    requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       setResults(searchResults.slice(0, 5)); // Limit to 5 results
     });
+    return () => cancelAnimationFrame(rafId);
   }, [query, posts]);
 
   // Handle keyboard shortcuts

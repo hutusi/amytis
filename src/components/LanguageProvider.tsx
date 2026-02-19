@@ -24,7 +24,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const savedLang = localStorage.getItem('amytis-language') as Language;
     
     // Use requestAnimationFrame to avoid cascading render lint error
-    requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       if (savedLang && translations[savedLang]) {
         setLanguageState(savedLang);
       } else {
@@ -35,6 +35,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
       setIsHydrated(true);
     });
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   const setLanguage = (lang: Language) => {

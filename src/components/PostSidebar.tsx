@@ -51,13 +51,13 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
     if (headings.length === 0) return;
     
     // Use requestAnimationFrame to avoid cascading render lint error on mount
-    const initialCheck = () => {
-      handleScroll();
-    };
-    requestAnimationFrame(initialCheck);
+    const rafId = requestAnimationFrame(handleScroll);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [handleScroll, headings.length]);
 
   const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {

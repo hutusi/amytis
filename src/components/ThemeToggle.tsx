@@ -12,9 +12,10 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     // Use requestAnimationFrame to avoid cascading render lint error
-    requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       setMounted(true);
     });
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   if (!mounted) {

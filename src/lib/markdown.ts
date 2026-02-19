@@ -465,7 +465,7 @@ export function getPageBySlug(slug: string): PostData | null {
     }
 
     return parseMarkdownFile(fullPath, slug);
-  } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+  } catch {
     return null;
   }
 }

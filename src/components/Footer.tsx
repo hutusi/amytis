@@ -45,7 +45,8 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               {[...siteConfig.nav].sort((a, b) => a.weight - b.weight).map((item) => {
                 const key = item.name.toLowerCase() as TranslationKey;
-                const label = t(key) !== key ? t(key) : item.name;
+                const translated = t(key);
+                const label = translated !== key ? translated : item.name;
                 return (
                   <li key={item.url}>
                     <Link href={item.url} className="text-foreground/80 hover:text-accent transition-colors no-underline">
