@@ -1,7 +1,9 @@
 # Amytis Project Context
 
 ## Project Overview
-**Amytis** is a high-performance, elegant digital garden and blog engine built with **Next.js 16 (App Router)**, **React 19**, and **Tailwind CSS v4**. It is designed for cultivating thoughts and sharing knowledge with a focus on typography, readability, and flexible content organization.
+**Amytis** (@hutusi/amytis) is a high-performance, elegant digital garden and blog engine built with **Next.js 16 (App Router)**, **React 19**, and **Tailwind CSS v4**. It is designed for cultivating thoughts and sharing knowledge with a focus on typography, readability, and flexible content organization.
+
+The package is officially published to both **npm** and **GitHub Packages** with automated **Trusted Publishing** (OIDC).
 
 ### Main Technologies
 - **Framework**: Next.js 16 (App Router)
