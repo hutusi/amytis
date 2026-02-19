@@ -2,6 +2,24 @@ import { getAllPosts, getAllBooks, getBookChapter, getAllFlows } from '@/lib/mar
 
 export const dynamic = 'force-static';
 
+/** Strip markdown/MDX syntax to plain text for full-content indexing. */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, ' ')           // fenced code blocks
+    .replace(/`[^`\n]+`/g, ' ')                // inline code
+    .replace(/!\[.*?\]\(.*?\)/g, '')            // images
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')   // links → text
+    .replace(/<[^>]+>/g, ' ')                   // HTML/JSX/MDX tags
+    .replace(/^#{1,6}\s+/gm, '')               // heading markers
+    .replace(/\*{1,2}([^*\n]+)\*{1,2}/g, '$1') // bold/italic (*)
+    .replace(/_{1,2}([^_\n]+)_{1,2}/g, '$1')   // bold/italic (_)
+    .replace(/^\s*[-*+>]\s+/gm, '')             // lists + blockquotes
+    .replace(/^\s*\d+\.\s+/gm, '')              // ordered lists
+    .replace(/\s+/g, ' ')                       // normalize whitespace
+    .trim()
+    .slice(0, 2000);                             // cap for index size
+}
+
 export async function GET() {
   const posts = getAllPosts();
 
@@ -12,6 +30,7 @@ export async function GET() {
     excerpt: post.excerpt,
     category: post.category,
     tags: post.tags,
+    content: stripMarkdown(post.content),
   }));
 
   // Add book chapters to search index
@@ -27,6 +46,7 @@ export async function GET() {
           excerpt: chapter.excerpt || '',
           category: 'Book',
           tags: [],
+          content: stripMarkdown(chapter.content),
         });
       }
     }
@@ -42,6 +62,7 @@ export async function GET() {
       excerpt: flow.excerpt,
       category: 'Flow',
       tags: flow.tags,
+      content: stripMarkdown(flow.content),
     });
   }
 
