@@ -1,4 +1,4 @@
-import { getAllFlows } from '@/lib/markdown';
+import { getAllFlows, getFlowTags } from '@/lib/markdown';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -39,6 +39,7 @@ export default async function FlowsPaginatedPage({ params }: { params: Promise<{
   if (page > totalPages) notFound();
 
   const entryDates = allFlows.map(f => f.date);
+  const tags = getFlowTags();
 
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
@@ -54,7 +55,7 @@ export default async function FlowsPaginatedPage({ params }: { params: Promise<{
       />
 
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} />
+        <FlowCalendarSidebar entryDates={entryDates} tags={tags} />
 
         <div className="flex-1 min-w-0">
           <div className="space-y-0">

@@ -488,6 +488,18 @@ export function getPostsByTag(tag: string): PostData[] {
   );
 }
 
+export function getFlowTags(): Record<string, number> {
+  const allFlows = getAllFlows();
+  const tags: Record<string, number> = {};
+  allFlows.forEach((flow) => {
+    flow.tags.forEach((tag) => {
+      const normalizedTag = tag.toLowerCase();
+      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
+    });
+  });
+  return tags;
+}
+
 export function getAllTags(): Record<string, number> {
   const allPosts = getAllPosts();
   const allFlows = getAllFlows();

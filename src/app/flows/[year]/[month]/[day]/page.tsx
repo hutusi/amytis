@@ -1,4 +1,4 @@
-import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/markdown';
+import { getAllFlows, getFlowBySlug, getAdjacentFlows, getFlowTags } from '@/lib/markdown';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -36,6 +36,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
+  const tags = getFlowTags();
   const { prev, next } = getAdjacentFlows(flow.slug);
 
   return (
@@ -58,7 +59,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
       </nav>
 
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} />
+        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} tags={tags} />
 
         <article className="flex-1 min-w-0">
           {/* Header */}

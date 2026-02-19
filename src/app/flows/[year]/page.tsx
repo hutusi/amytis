@@ -1,4 +1,4 @@
-import { getAllFlows, getFlowsByYear } from '@/lib/markdown';
+import { getAllFlows, getFlowsByYear, getFlowTags } from '@/lib/markdown';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -30,6 +30,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
 
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
+  const tags = getFlowTags();
 
   // Build month counts for this year
   const monthCounts: Record<string, number> = {};
@@ -72,7 +73,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
       </div>
 
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={`${year}-01-01`} />
+        <FlowCalendarSidebar entryDates={entryDates} currentDate={`${year}-01-01`} tags={tags} />
 
         <div className="flex-1 min-w-0">
           {flows.length === 0 ? (

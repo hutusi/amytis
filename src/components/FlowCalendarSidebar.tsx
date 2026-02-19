@@ -3,15 +3,17 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
+import Tag from '@/components/Tag';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
   currentDate?: string;
+  tags?: Record<string, number>;
 }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCalendarSidebarProps) {
+export default function FlowCalendarSidebar({ entryDates, currentDate, tags }: FlowCalendarSidebarProps) {
   const { t } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
@@ -212,6 +214,20 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
             </div>
           )}
         </div>
+
+        {/* Tags */}
+        {tags && Object.keys(tags).length > 0 && (
+          <div className="mt-3 pt-3 border-t border-muted/20">
+            <div className="text-xs font-medium text-muted mb-2">{t('tags')}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(tags)
+                .sort((a, b) => b[1] - a[1])
+                .map(([tag]) => (
+                  <Tag key={tag} tag={tag} variant="default" />
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
