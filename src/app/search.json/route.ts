@@ -1,4 +1,4 @@
-import { getAllPosts, getAllBooks, getBookChapter } from '@/lib/markdown';
+import { getAllPosts, getAllBooks, getBookChapter, getAllFlows } from '@/lib/markdown';
 
 export const dynamic = 'force-static';
 
@@ -30,6 +30,19 @@ export async function GET() {
         });
       }
     }
+  }
+
+  // Add flows to search index
+  const flows = getAllFlows();
+  for (const flow of flows) {
+    searchIndex.push({
+      title: flow.title,
+      slug: `flows/${flow.slug}`,
+      date: flow.date,
+      excerpt: flow.excerpt,
+      category: 'Flow',
+      tags: flow.tags,
+    });
   }
 
   return Response.json(searchIndex);

@@ -5,6 +5,7 @@ import { TranslationKey } from '@/i18n/translations';
 
 interface PageHeaderProps {
   titleKey: TranslationKey;
+  titleParams?: Record<string, string | number>;
   subtitleKey: TranslationKey;
   subtitleOneKey?: TranslationKey;
   subtitleParams?: Record<string, string | number>;
@@ -14,6 +15,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({
   titleKey,
+  titleParams,
   subtitleKey,
   subtitleOneKey,
   subtitleParams,
@@ -22,6 +24,7 @@ export default function PageHeader({
 }: PageHeaderProps) {
   const { t, tWith } = useLanguage();
 
+  const title = titleParams ? tWith(titleKey, titleParams) : t(titleKey);
   const effectiveKey = subtitleOneKey && count === 1 ? subtitleOneKey : subtitleKey;
   const subtitle = subtitleParams
     ? tWith(effectiveKey, subtitleParams)
@@ -29,7 +32,7 @@ export default function PageHeader({
 
   return (
     <header className={`page-header ${className || ''}`}>
-      <h1 className="page-title">{t(titleKey)}</h1>
+      <h1 className="page-title">{title}</h1>
       <p className="page-subtitle">{subtitle}</p>
     </header>
   );

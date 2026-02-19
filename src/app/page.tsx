@@ -1,10 +1,11 @@
-import { getAllPosts, getAllSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks } from '@/lib/markdown';
+import { getAllPosts, getAllSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
 import CuratedSeriesSection, { SeriesItem } from '@/components/CuratedSeriesSection';
 import FeaturedStoriesSection, { FeaturedPost } from '@/components/FeaturedStoriesSection';
 import SelectedBooksSection, { BookItem } from '@/components/SelectedBooksSection';
 import LatestWritingSection from '@/components/LatestWritingSection';
+import RecentNotesSection, { RecentNoteItem } from '@/components/RecentNotesSection';
 import { Metadata } from 'next';
 import { resolveLocale } from '@/lib/i18n';
 
@@ -24,6 +25,7 @@ export default function Home() {
   const allSeries = getAllSeries();
   const featuredPosts = getFeaturedPosts();
   const featuredBooks = getFeaturedBooks();
+  const recentFlows = getRecentFlows(siteConfig.flows?.recentCount ?? 5);
 
   const pageSize = siteConfig.pagination.posts;
   const posts = allPosts.slice(0, pageSize);
@@ -55,6 +57,14 @@ export default function Home() {
     authors: b.authors,
     chapterCount: b.chapters.length,
     firstChapter: b.chapters[0]?.file,
+  }));
+
+  // Prepare serializable flow data
+  const recentNoteItems: RecentNoteItem[] = recentFlows.map(f => ({
+    slug: f.slug,
+    date: f.date,
+    title: f.title,
+    excerpt: f.excerpt,
   }));
 
   // Prepare serializable featured posts data
@@ -92,6 +102,8 @@ export default function Home() {
         />
 
         <LatestWritingSection posts={posts} totalCount={allPosts.length} />
+
+        <RecentNotesSection notes={recentNoteItems} />
       </div>
     </div>
   );

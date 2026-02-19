@@ -5,8 +5,10 @@ import { siteConfig } from '../site.config';
 const srcDir = path.join(process.cwd(), 'content', 'posts');
 const seriesSrcDir = path.join(process.cwd(), 'content', 'series');
 const booksSrcDir = path.join(process.cwd(), 'content', 'books');
+const flowsSrcDir = path.join(process.cwd(), 'content', 'flows');
 const destDir = path.join(process.cwd(), 'public', 'posts');
 const booksDestDir = path.join(process.cwd(), 'public', 'books');
+const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
@@ -170,8 +172,40 @@ function processBooks() {
   });
 }
 
+function processFlows() {
+  if (!fs.existsSync(flowsSrcDir)) return;
+
+  // Walk content/flows/YYYY/MM/ structure for folder-based flows with co-located assets
+  const yearDirs = fs.readdirSync(flowsSrcDir, { withFileTypes: true });
+  for (const yearEntry of yearDirs) {
+    if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
+    const yearPath = path.join(flowsSrcDir, yearEntry.name);
+
+    const monthDirs = fs.readdirSync(yearPath, { withFileTypes: true });
+    for (const monthEntry of monthDirs) {
+      if (!monthEntry.isDirectory() || !/^\d{2}$/.test(monthEntry.name)) continue;
+      const monthPath = path.join(yearPath, monthEntry.name);
+
+      const dayItems = fs.readdirSync(monthPath, { withFileTypes: true });
+      for (const dayItem of dayItems) {
+        // Only process folder-based flows (DD/ directories with index.mdx)
+        if (!dayItem.isDirectory()) continue;
+        const rawName = dayItem.name;
+        if (!/^\d{2}$/.test(rawName)) continue;
+
+        const srcFlowDir = path.join(monthPath, rawName);
+        const destFlowDir = path.join(flowsDestDir, yearEntry.name, monthEntry.name, rawName);
+
+        console.log(`Processing Flow: ${yearEntry.name}/${monthEntry.name}/${rawName}`);
+        copyRecursive(srcFlowDir, destFlowDir);
+      }
+    }
+  }
+}
+
 console.log('Copying assets...');
 processPosts();
 processSeries();
 processBooks();
+processFlows();
 console.log('Assets copied successfully.');

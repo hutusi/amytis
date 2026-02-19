@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts, getAllPages, getAllBooks } from '@/lib/markdown';
+import { getAllPosts, getAllPages, getAllBooks, getAllFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 
 export const dynamic = 'force-static';
@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const pages = getAllPages();
   const books = getAllBooks();
+  const flows = getAllFlows();
   const baseUrl = siteConfig.baseUrl;
 
   const postUrls = posts.map((post) => ({
@@ -40,6 +41,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ]);
 
+  const flowUrls = flows.map((flow) => ({
+    url: `${baseUrl}/flows/${flow.slug}`,
+    lastModified: flow.date,
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }));
+
+  // Year and month listing URLs
+  const flowYears = new Set<string>();
+  const flowMonths = new Set<string>();
+  flows.forEach(flow => {
+    const [year, month] = flow.slug.split('/');
+    flowYears.add(year);
+    flowMonths.add(`${year}/${month}`);
+  });
+
+  const flowYearUrls = Array.from(flowYears).map(year => ({
+    url: `${baseUrl}/flows/${year}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  const flowMonthUrls = Array.from(flowMonths).map(ym => ({
+    url: `${baseUrl}/flows/${ym}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -68,5 +99,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...pageUrls,
     ...postUrls,
     ...bookUrls,
+    {
+      url: `${baseUrl}/flows`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    ...flowYearUrls,
+    ...flowMonthUrls,
+    ...flowUrls,
   ];
 }
