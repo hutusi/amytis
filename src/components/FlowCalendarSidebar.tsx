@@ -215,20 +215,21 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags }: F
           )}
         </div>
 
-        {/* Tags */}
-        {tags && Object.keys(tags).length > 0 && (
-          <div className="mt-3 pt-3 border-t border-muted/20">
-            <div className="text-xs font-medium text-muted mb-2">{t('tags')}</div>
-            <div className="flex flex-wrap gap-1.5">
-              {Object.entries(tags)
-                .sort((a, b) => b[1] - a[1])
-                .map(([tag]) => (
-                  <Tag key={tag} tag={tag} variant="default" />
-                ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Tags */}
+      {tags && Object.keys(tags).length > 0 && (
+        <div className="mt-3 border border-muted/20 rounded-lg p-4">
+          <div className="text-xs font-medium text-muted mb-2">{t('tags')}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(tags)
+              .sort((a, b) => b[1] - a[1])
+              .map(([tag]) => (
+                <Tag key={tag} tag={tag} variant="default" />
+              ))}
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
