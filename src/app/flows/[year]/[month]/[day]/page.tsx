@@ -51,10 +51,10 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
         </Link>
         <span className="text-muted/40">›</span>
         <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline">
-          {new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(siteConfig.i18n.defaultLocale, { month: 'long' })}
+          {month}
         </Link>
         <span className="text-muted/40">›</span>
-        <span className="text-foreground">{flow.title}</span>
+        <span className="text-foreground">{day}</span>
       </nav>
 
       <div className="flex gap-10">

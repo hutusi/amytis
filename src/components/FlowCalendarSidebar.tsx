@@ -11,15 +11,8 @@ interface FlowCalendarSidebarProps {
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-const LOCALE_MAP: Record<string, string> = { en: 'en-US', zh: 'zh-CN' };
-
-function getMonthName(month: number, lang: string) {
-  const locale = LOCALE_MAP[lang] || 'en-US';
-  return new Date(2000, month, 1).toLocaleDateString(locale, { month: 'long' });
-}
-
 export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCalendarSidebarProps) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
@@ -33,8 +26,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const locale = LOCALE_MAP[language] || 'en-US';
-  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString(locale, {
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
   });
@@ -208,7 +200,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
                                 isCurrentMonth ? 'text-accent font-medium' : 'text-muted'
                               }`}
                             >
-                              <span>{getMonthName(m - 1, language)}</span>
+                              <span>{String(m).padStart(2, '0')}</span>
                               <span className="text-[10px]">{months[m]}</span>
                             </Link>
                           );
