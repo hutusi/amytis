@@ -7,6 +7,9 @@ on:
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for Trusted Publishing
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,9 +24,9 @@ jobs:
       - run: bun install --frozen-lockfile
       
       - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No NODE_AUTH_TOKEN needed for Trusted Publishing!
+        # --provenance proves that the package was built in this GitHub Action
+        run: npm publish --provenance --access public
 
   publish-github:
     runs-on: ubuntu-latest
