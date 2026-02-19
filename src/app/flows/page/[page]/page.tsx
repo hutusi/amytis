@@ -4,9 +4,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
-import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
-import FlowTimelineEntry from '@/components/FlowTimelineEntry';
-import Pagination from '@/components/Pagination';
+import FlowContent from '@/components/FlowContent';
 
 const PAGE_SIZE = siteConfig.pagination.flows;
 
@@ -54,28 +52,12 @@ export default async function FlowsPaginatedPage({ params }: { params: Promise<{
         className="mb-12"
       />
 
-      <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} tags={tags} />
-
-        <div className="flex-1 min-w-0">
-          <div className="space-y-0">
-            {flows.map(flow => (
-              <FlowTimelineEntry
-                key={flow.slug}
-                date={flow.date}
-                title={flow.title}
-                excerpt={flow.excerpt}
-                tags={flow.tags}
-                slug={flow.slug}
-              />
-            ))}
-          </div>
-
-          <div className="mt-12">
-            <Pagination currentPage={page} totalPages={totalPages} basePath="/flows" />
-          </div>
-        </div>
-      </div>
+      <FlowContent
+        flows={flows}
+        entryDates={entryDates}
+        tags={tags}
+        pagination={{ currentPage: page, totalPages, basePath: '/flows' }}
+      />
     </div>
   );
 }

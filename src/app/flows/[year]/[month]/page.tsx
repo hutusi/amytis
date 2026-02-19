@@ -5,8 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
-import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
-import FlowTimelineEntry from '@/components/FlowTimelineEntry';
+import FlowContent from '@/components/FlowContent';
 
 export function generateStaticParams() {
   const allFlows = getAllFlows();
@@ -62,28 +61,12 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
         <span className="text-foreground">{month}</span>
       </nav>
 
-      <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={`${year}-${month}-01`} tags={tags} />
-
-        <div className="flex-1 min-w-0">
-          {flows.length === 0 ? (
-            <p className="text-muted">{t('no_flows')}</p>
-          ) : (
-            <div className="space-y-0">
-              {flows.map(flow => (
-                <FlowTimelineEntry
-                  key={flow.slug}
-                  date={flow.date}
-                  title={flow.title}
-                  excerpt={flow.excerpt}
-                  tags={flow.tags}
-                  slug={flow.slug}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <FlowContent
+        flows={flows}
+        entryDates={entryDates}
+        tags={tags}
+        currentDate={`${year}-${month}-01`}
+      />
     </div>
   );
 }

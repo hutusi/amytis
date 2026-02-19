@@ -62,6 +62,7 @@ export const translations = {
     flows_in_year: "Notes in {year}",
     flows_in_month: "Notes in {month}",
     browse: "Browse",
+    clear: "Clear",
   },
   zh: {
     home: "首页",
@@ -126,6 +127,7 @@ export const translations = {
     flows_in_year: "{year} 年随笔",
     flows_in_month: "{month} 随笔",
     browse: "浏览",
+    clear: "清除",
   },
 };
 

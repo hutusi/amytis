@@ -3,17 +3,18 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
-import Tag from '@/components/Tag';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
   currentDate?: string;
   tags?: Record<string, number>;
+  selectedTag?: string | null;
+  onTagSelect?: (tag: string) => void;
 }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export default function FlowCalendarSidebar({ entryDates, currentDate, tags }: FlowCalendarSidebarProps) {
+export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect }: FlowCalendarSidebarProps) {
   const { t } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
@@ -225,7 +226,17 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags }: F
             {Object.entries(tags)
               .sort((a, b) => b[1] - a[1])
               .map(([tag]) => (
-                <Tag key={tag} tag={tag} variant="default" />
+                <button
+                  key={tag}
+                  onClick={() => onTagSelect?.(tag)}
+                  className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                    selectedTag === tag
+                      ? 'bg-accent text-white border-accent'
+                      : 'border-muted/20 text-muted hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  {tag}
+                </button>
               ))}
           </div>
         </div>
