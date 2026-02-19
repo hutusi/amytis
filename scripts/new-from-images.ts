@@ -105,7 +105,6 @@ for (const file of imageFiles) {
   } else {
     // Use absolute path from project root
     const absoluteSrcPath = path.resolve(srcPath);
-    const projectRoot = process.cwd();
     const relativePath = path.relative(dirPath, absoluteSrcPath);
     images.push({ filename: file, relativePath });
     console.log(`  Referenced: ${file}`);

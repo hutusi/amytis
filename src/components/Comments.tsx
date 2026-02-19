@@ -15,7 +15,7 @@ export default function Comments({ slug }: { slug: string }) {
       <div className="mt-16 pt-12 border-t border-muted/20">
         <Giscus
           id="comments"
-          repo={giscus.repo as any}
+          repo={giscus.repo as `${string}/${string}`}
           repoId={giscus.repoId}
           category={giscus.category}
           categoryId={giscus.categoryId}

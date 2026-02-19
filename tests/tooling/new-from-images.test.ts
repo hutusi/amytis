@@ -1,4 +1,4 @@
-import { describe, test, expect, afterAll, beforeAll } from "bun:test";
+import { describe, test, expect, afterAll } from "bun:test";
 import { spawnSync } from "bun";
 import fs from "fs";
 import path from "path";

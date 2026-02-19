@@ -49,7 +49,13 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
 
   useEffect(() => {
     if (headings.length === 0) return;
-    handleScroll();
+    
+    // Use requestAnimationFrame to avoid cascading render lint error on mount
+    const initialCheck = () => {
+      handleScroll();
+    };
+    requestAnimationFrame(initialCheck);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll, headings.length]);

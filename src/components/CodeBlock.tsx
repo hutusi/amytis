@@ -54,7 +54,7 @@ SyntaxHighlighter.registerLanguage('svg', markup);
 interface CodeBlockProps {
   language: string;
   children: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function CodeBlock({ language, children, ...props }: CodeBlockProps) {

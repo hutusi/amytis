@@ -2,14 +2,16 @@ import { visit } from 'unist-util-visit';
 import sizeOf from 'image-size';
 import path from 'path';
 import fs from 'fs';
+import { Node } from 'unist';
+import { Element } from 'hast';
 
 interface Options {
   slug?: string;
 }
 
 export default function rehypeImageMetadata(options: Options) {
-  return (tree: any) => {
-    visit(tree, 'element', (node: any) => {
+  return (tree: Node) => {
+    visit(tree, 'element', (node: Element) => {
       if (node.tagName === 'img' && node.properties && typeof node.properties.src === 'string') {
         const src = node.properties.src as string;
         
@@ -44,7 +46,7 @@ export default function rehypeImageMetadata(options: Options) {
               node.properties.src = publicPath;
             }
           }
-        } catch (e) {
+        } catch (e) { // eslint-disable-line @typescript-eslint/no-unused-vars
           // Silently fail
         }
       }

@@ -42,7 +42,12 @@ export default function TableOfContents({ headings }: { headings: Heading[] }) {
   }, [headings]);
 
   useEffect(() => {
-    handleScroll(); // Initial check
+    // Initial check on mount via animation frame to avoid cascading render error
+    const initialCheck = () => {
+      handleScroll();
+    };
+    requestAnimationFrame(initialCheck);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);

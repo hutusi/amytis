@@ -62,8 +62,9 @@ try {
     images.push(filename);
     console.log(`  Generated: ${filename}`);
   }
-} catch (error: any) {
-  console.error(`Error converting PDF: ${error.message}`);
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error(`Error converting PDF: ${errorMessage}`);
   fs.rmSync(dirPath, { recursive: true });
   process.exit(1);
 }

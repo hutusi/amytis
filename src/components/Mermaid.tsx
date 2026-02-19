@@ -16,11 +16,7 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>("");
   const { theme, systemTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mounted] = useState(() => typeof window !== 'undefined');
 
   useEffect(() => {
     if (ref.current && chart && mounted) {

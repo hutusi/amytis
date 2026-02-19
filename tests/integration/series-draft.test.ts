@@ -39,7 +39,7 @@ describe("Integration: Series Draft Support", () => {
     // In production, draft=false should NOT be filtered
     expect("production" === "production" && draftFalse.draft).toBe(false);
     // In production, draft undefined should NOT be filtered
-    expect("production" === "production" && (draftUndefined as any).draft).toBeFalsy();
+    expect("production" === "production" && (draftUndefined as { draft?: boolean }).draft).toBeFalsy();
     // In test/dev, nothing should be filtered regardless of draft value
     expect("test" === "production" && draftTrue.draft).toBe(false);
   });

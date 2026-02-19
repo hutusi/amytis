@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { siteConfig } from '../../site.config';
 import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
+import { TranslationKey } from '@/i18n/translations';
 import LanguageSwitch from './LanguageSwitch';
 
 export default function Footer() {
@@ -43,7 +44,7 @@ export default function Footer() {
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('explore')}</h4>
             <ul className="space-y-3 text-sm">
               {[...siteConfig.nav].sort((a, b) => a.weight - b.weight).map((item) => {
-                const key = item.name.toLowerCase() as any;
+                const key = item.name.toLowerCase() as TranslationKey;
                 const label = t(key) !== key ? t(key) : item.name;
                 return (
                   <li key={item.url}>

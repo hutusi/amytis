@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { siteConfig } from '../../site.config';
 import { translations, Language, TranslationKey } from '../i18n/translations';
 
@@ -14,22 +14,20 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(siteConfig.i18n.defaultLocale as Language);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem('amytis-language') as Language;
-    if (savedLang && translations[savedLang]) {
-      setLanguageState(savedLang);
-    } else {
-      // Detect browser language and match against supported locales
+  const [language, setLanguageState] = useState<Language>(() => {
+    // Initial state from localStorage or default
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('amytis-language') as Language;
+      if (savedLang && translations[savedLang]) {
+        return savedLang;
+      }
       const browserLang = navigator.language.split('-')[0] as Language;
       if (translations[browserLang]) {
-        setLanguageState(browserLang);
+        return browserLang;
       }
     }
-    setMounted(true);
-  }, []);
+    return siteConfig.i18n.defaultLocale as Language;
+  });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

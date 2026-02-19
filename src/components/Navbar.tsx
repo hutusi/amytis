@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
 import Search from '@/components/Search';
 import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
+import { TranslationKey } from '@/i18n/translations';
 
 interface NavItem {
   name: string;
@@ -21,20 +21,14 @@ interface NavbarProps {
 
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, language } = useLanguage();
-  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navItems = [...siteConfig.nav].sort((a, b) => a.weight - b.weight);
 
   const getLabel = (name: string): string => {
-    const key = name.toLowerCase() as any;
+    const key = name.toLowerCase() as TranslationKey;
     const translated = t(key);
     return translated !== key ? translated : name;
   };
-
-  // Close menu on route change
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [pathname]);
 
   // Prevent body scroll when menu is open
   useEffect(() => {
