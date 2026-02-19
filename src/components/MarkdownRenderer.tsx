@@ -47,12 +47,14 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // Style links individually to avoid hover-all issue
     a: (props) => <a {...props} className="text-accent no-underline hover:underline transition-colors duration-200" />,
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
-    code({ inline, className, children, ...props }: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
+    code({ className, children, ...props }: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
       
-      if (!inline && (match || isMultiLine)) {
+      // In react-markdown v10, 'inline' prop is removed. 
+      // We use className presence (e.g. language-js) or newline presence to detect code blocks.
+      if (match || isMultiLine) {
         if (language === 'mermaid') {
           return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
@@ -73,10 +75,12 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // In development mode, use unoptimized images since WebP versions don't exist yet
     img: ({ src, alt, width, height, ...props }: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
       const isDev = process.env.NODE_ENV === 'development';
+      const imageSrc = src as string;
+      
       if (width && height) {
         return (
           <ExportedImage
-            src={src || ''}
+            src={imageSrc || ''}
             alt={alt || ''}
             width={Number(width)}
             height={Number(height)}
@@ -86,7 +90,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
         );
       }
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      return <img src={src} alt={alt || ''} {...props} className="max-w-full h-auto rounded-lg my-4" />;
+      return <img src={imageSrc} alt={alt || ''} {...props} className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
 
