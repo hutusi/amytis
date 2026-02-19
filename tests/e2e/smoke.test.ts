@@ -9,7 +9,7 @@ describe("E2E: Smoke Test", () => {
       expect(response.status).toBe(200);
       const text = await response.text();
       expect(text).toContain("Amytis");
-    } catch (_e) {
+    } catch {
       console.warn("Skipping E2E test: Server not running at " + BASE_URL);
     }
   });

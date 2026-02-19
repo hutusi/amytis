@@ -85,6 +85,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
           />
         );
       }
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       return <img src={src} alt={alt || ''} {...props} className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
