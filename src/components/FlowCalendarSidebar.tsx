@@ -11,13 +11,15 @@ interface FlowCalendarSidebarProps {
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const LOCALE_MAP: Record<string, string> = { en: 'en-US', zh: 'zh-CN' };
+
+function getMonthName(month: number, lang: string) {
+  const locale = LOCALE_MAP[lang] || 'en-US';
+  return new Date(2000, month, 1).toLocaleDateString(locale, { month: 'long' });
+}
 
 export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCalendarSidebarProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
@@ -31,8 +33,11 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const monthName = MONTH_NAMES[viewMonth];
-  const monthPad = String(viewMonth + 1).padStart(2, '0');
+  const locale = LOCALE_MAP[language] || 'en-US';
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString(locale, {
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Build year/month tree from entryDates for browse panel
   const yearMonthTree = useMemo(() => {
@@ -84,15 +89,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          <span className="text-sm font-medium text-heading">
-            <Link href={`/flows/${viewYear}/${monthPad}`} className="hover:text-accent hover:underline no-underline text-heading">
-              {monthName}
-            </Link>
-            {' '}
-            <Link href={`/flows/${viewYear}`} className="hover:text-accent hover:underline no-underline text-heading">
-              {viewYear}
-            </Link>
-          </span>
+          <span className="text-sm font-medium text-heading">{monthLabel}</span>
           <button
             onClick={nextMonth}
             className="p-1 text-muted hover:text-accent transition-colors"
@@ -211,7 +208,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
                                 isCurrentMonth ? 'text-accent font-medium' : 'text-muted'
                               }`}
                             >
-                              <span>{MONTH_NAMES[m - 1]}</span>
+                              <span>{getMonthName(m - 1, language)}</span>
                               <span className="text-[10px]">{months[m]}</span>
                             </Link>
                           );

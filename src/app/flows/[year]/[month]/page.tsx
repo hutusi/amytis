@@ -59,7 +59,7 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
         </Link>
         <span className="text-muted/40">›</span>
         <span className="text-foreground">
-          {new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' })}
+          {new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(siteConfig.i18n.defaultLocale, { month: 'long' })}
         </span>
       </nav>
 

@@ -2,7 +2,7 @@ import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Tag from '@/components/Tag';
@@ -40,6 +40,23 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
   return (
     <div className="layout-main">
+      {/* Breadcrumb navigation */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted mb-6">
+        <Link href="/flows" className="hover:text-accent no-underline">
+          {t('all_flows')}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
+          {year}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline">
+          {new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(siteConfig.i18n.defaultLocale, { month: 'long' })}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <span className="text-foreground">{flow.title}</span>
+      </nav>
+
       <div className="flex gap-10">
         <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} />
 
