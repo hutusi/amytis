@@ -9,10 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+      
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-          registry-url: 'https://registry.npmjs.org'
       
       - run: bun install --frozen-lockfile
       
@@ -28,11 +32,15 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@hutusi'
+      
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@hutusi'
       
       - run: bun install --frozen-lockfile
       
