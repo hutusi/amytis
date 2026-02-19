@@ -2,6 +2,7 @@ import { getAllFlows, getFlowsByYear } from '@/lib/markdown';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
@@ -30,6 +31,19 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
 
+  // Build month counts for this year
+  const monthCounts: Record<string, number> = {};
+  for (const flow of flows) {
+    const month = flow.date.split('-')[1];
+    monthCounts[month] = (monthCounts[month] || 0) + 1;
+  }
+  const sortedMonths = Object.keys(monthCounts).sort();
+
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   return (
     <div className="layout-main">
       <PageHeader
@@ -38,6 +52,24 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         subtitleKey="flow_subtitle"
         subtitleParams={{ count: flows.length }}
       />
+
+      {/* Month navigation pills */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <Link href="/flows" className="text-sm text-muted hover:text-accent no-underline">
+          ← {t('all_flows')}
+        </Link>
+        <span className="text-muted/30">|</span>
+        {sortedMonths.map(m => (
+          <Link
+            key={m}
+            href={`/flows/${year}/${m}`}
+            className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border border-muted/20 text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
+          >
+            {monthNames[parseInt(m, 10) - 1]}
+            <span className="text-muted text-[10px]">({monthCounts[m]})</span>
+          </Link>
+        ))}
+      </div>
 
       <div className="flex gap-10">
         <FlowCalendarSidebar entryDates={entryDates} currentDate={`${year}-01-01`} />

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
@@ -10,10 +11,17 @@ interface FlowCalendarSidebarProps {
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCalendarSidebarProps) {
+  const { t } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
+  const [showBrowse, setShowBrowse] = useState(false);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -23,10 +31,24 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const monthName = MONTH_NAMES[viewMonth];
+  const monthPad = String(viewMonth + 1).padStart(2, '0');
+
+  // Build year/month tree from entryDates for browse panel
+  const yearMonthTree = useMemo(() => {
+    const tree: Record<number, Record<number, number>> = {};
+    for (const dateStr of entryDates) {
+      const [y, m] = dateStr.split('-').map(Number);
+      if (!tree[y]) tree[y] = {};
+      tree[y][m] = (tree[y][m] || 0) + 1;
+    }
+    return tree;
+  }, [entryDates]);
+
+  const sortedYears = useMemo(
+    () => Object.keys(yearMonthTree).map(Number).sort((a, b) => b - a),
+    [yearMonthTree]
+  );
 
   function prevMonth() {
     if (viewMonth === 0) {
@@ -62,7 +84,15 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          <span className="text-sm font-medium text-heading">{monthLabel}</span>
+          <span className="text-sm font-medium text-heading">
+            <Link href={`/flows/${viewYear}/${monthPad}`} className="hover:text-accent hover:underline no-underline text-heading">
+              {monthName}
+            </Link>
+            {' '}
+            <Link href={`/flows/${viewYear}`} className="hover:text-accent hover:underline no-underline text-heading">
+              {viewYear}
+            </Link>
+          </span>
           <button
             onClick={nextMonth}
             className="p-1 text-muted hover:text-accent transition-colors"
@@ -125,6 +155,73 @@ export default function FlowCalendarSidebar({ entryDates, currentDate }: FlowCal
               </div>
             );
           })}
+        </div>
+
+        {/* Browse toggle */}
+        <div className="mt-3 pt-3 border-t border-muted/20">
+          <button
+            onClick={() => setShowBrowse(!showBrowse)}
+            className="flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors w-full"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform ${showBrowse ? 'rotate-90' : ''}`}
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            {t('browse')}
+          </button>
+
+          {showBrowse && (
+            <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+              {sortedYears.map(year => {
+                const months = yearMonthTree[year];
+                const yearTotal = Object.values(months).reduce((a, b) => a + b, 0);
+                const isCurrentYear = year === viewYear;
+
+                return (
+                  <div key={year}>
+                    <Link
+                      href={`/flows/${year}`}
+                      className={`flex items-center justify-between text-xs no-underline px-1 py-0.5 rounded hover:bg-accent/10 ${
+                        isCurrentYear ? 'text-accent font-medium' : 'text-foreground'
+                      }`}
+                    >
+                      <span>{year}</span>
+                      <span className="text-muted text-[10px]">{yearTotal}</span>
+                    </Link>
+                    <div className="ml-3 mt-0.5 space-y-0.5">
+                      {Object.keys(months)
+                        .map(Number)
+                        .sort((a, b) => a - b)
+                        .map(m => {
+                          const isCurrentMonth = isCurrentYear && m - 1 === viewMonth;
+                          return (
+                            <Link
+                              key={m}
+                              href={`/flows/${year}/${String(m).padStart(2, '0')}`}
+                              className={`flex items-center justify-between text-xs no-underline px-1 py-0.5 rounded hover:bg-accent/10 ${
+                                isCurrentMonth ? 'text-accent font-medium' : 'text-muted'
+                              }`}
+                            >
+                              <span>{MONTH_NAMES[m - 1]}</span>
+                              <span className="text-[10px]">{months[m]}</span>
+                            </Link>
+                          );
+                        })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </aside>

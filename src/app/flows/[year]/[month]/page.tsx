@@ -2,6 +2,7 @@ import { getAllFlows, getFlowsByMonth } from '@/lib/markdown';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
@@ -46,6 +47,21 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
         subtitleKey="flow_subtitle"
         subtitleParams={{ count: flows.length }}
       />
+
+      {/* Breadcrumb navigation */}
+      <nav className="flex items-center gap-1.5 text-sm text-muted mb-6">
+        <Link href="/flows" className="hover:text-accent no-underline">
+          {t('all_flows')}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
+          {year}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <span className="text-foreground">
+          {new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' })}
+        </span>
+      </nav>
 
       <div className="flex gap-10">
         <FlowCalendarSidebar entryDates={entryDates} currentDate={`${year}-${month}-01`} />
