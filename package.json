@@ -1,7 +1,16 @@
 {
-  "name": "amytis",
+  "name": "@hutusi/amytis",
   "version": "1.5.0",
-  "private": true,
+  "description": "A high-performance digital garden and blog engine with Next.js 16 and Tailwind CSS v4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hutusi/amytis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hutusi/amytis/issues"
+  },
+  "homepage": "https://github.com/hutusi/amytis#readme",
+  "private": false,
   "packageManager": "bun@1.3.4",
   "scripts": {
     "dev": "next dev",
