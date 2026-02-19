@@ -42,10 +42,12 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // Explicitly style bold text
     strong: ({ children }) => <strong className="text-heading font-semibold">{children}</strong>,
     // Wrap tables in a scrollable container
-    table: ({ children, node: _node, ...props }) => {
+    table: (props) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { children, node: _node, ...rest } = props as React.TableHTMLAttributes<HTMLTableElement> & ExtraProps;
       return (
         <div className="overflow-x-auto my-8 border border-muted/20 rounded-lg">
-          <table {...props} className="min-w-full text-left text-sm">
+          <table {...rest} className="min-w-full text-left text-sm">
             {children}
           </table>
         </div>
@@ -54,11 +56,15 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // Render 'pre' as a 'div' to allow block-level children
     pre: ({ children }) => <div className="not-prose">{children}</div>,
     // Style links individually to avoid hover-all issue
-    a: ({ node: _node, ...props }) => {
-      return <a {...props} className="text-accent no-underline hover:underline transition-colors duration-200" />;
+    a: (props) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { node: _node, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      return <a {...rest} className="text-accent no-underline hover:underline transition-colors duration-200" />;
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
-    code({ className, children, node: _node, ...props }: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
+    code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { className, children, node: _node, ...rest } = props;
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
@@ -70,21 +76,23 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
           return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
         return (
-          <CodeBlock language={language} {...props}>
+          <CodeBlock language={language} {...rest}>
             {String(children).replace(/\n$/, '')}
           </CodeBlock>
         );
       }
 
       return (
-        <code className={className} {...props}>
+        <code className={className} {...rest}>
           {children}
         </code>
       );
     },
     // Ensure images are responsive and styled, using optimized image if dimensions exist
     // In development mode, use unoptimized images since WebP versions don't exist yet
-    img: ({ src, alt, width, height, node: _node, ...props }: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
+    img: (props: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { src, alt, width, height, node: _node, ...rest } = props;
       const isDev = process.env.NODE_ENV === 'development';
       const imageSrc = src as string;
       
@@ -101,7 +109,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
         );
       }
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={imageSrc} alt={alt || ''} {...props} className="max-w-full h-auto rounded-lg my-4" />;
+      return <img src={imageSrc} alt={alt || ''} {...rest} className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
 
