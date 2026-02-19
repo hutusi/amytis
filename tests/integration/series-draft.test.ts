@@ -28,19 +28,19 @@ describe("Integration: Series Draft Support", () => {
     }
   });
 
-  test("draft boolean logic evaluates correctly", () => {
-    // Verify the filtering logic: (NODE_ENV === 'production' && seriesData?.draft)
-    const draftTrue = { draft: true };
-    const draftFalse = { draft: false };
-    const draftUndefined = {};
-
-    // In production, draft=true should be filtered
-    expect("production" === "production" && draftTrue.draft).toBe(true);
-    // In production, draft=false should NOT be filtered
-    expect("production" === "production" && draftFalse.draft).toBe(false);
-    // In production, draft undefined should NOT be filtered
-    expect("production" === "production" && (draftUndefined as any).draft).toBeFalsy();
-    // In test/dev, nothing should be filtered regardless of draft value
-    expect("test" === "production" && draftTrue.draft).toBe(false);
+  test("draft series are excluded in production mode", () => {
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      const allSeries = getAllSeries();
+      
+      // Verify that every series returned has draft: false (or undefined which defaults to false)
+      Object.keys(allSeries).forEach(slug => {
+        const seriesData = getSeriesData(slug);
+        expect(seriesData?.draft).not.toBe(true);
+      });
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
   });
 });

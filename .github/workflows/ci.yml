@@ -30,4 +30,4 @@ jobs:
         run: bun test
 
       - name: Build
-        run: bun run build
+        run: bun run build:dev

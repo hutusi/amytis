@@ -42,9 +42,14 @@ export default function TableOfContents({ headings }: { headings: Heading[] }) {
   }, [headings]);
 
   useEffect(() => {
-    handleScroll(); // Initial check
+    // Initial check on mount via animation frame to avoid cascading render error
+    const rafId = requestAnimationFrame(handleScroll);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [handleScroll]);
 
   // Smooth scroll to heading

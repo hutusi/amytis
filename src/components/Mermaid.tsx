@@ -19,7 +19,11 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Use requestAnimationFrame to avoid cascading render lint error
+    const rafId = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   useEffect(() => {

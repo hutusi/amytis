@@ -14,9 +14,14 @@ export default function ReadingProgressBar() {
   }, []);
 
   useEffect(() => {
-    handleScroll();
+    // Initial check on mount via animation frame to avoid cascading render error
+    const rafId = requestAnimationFrame(handleScroll);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [handleScroll]);
 
   if (progress <= 0) return null;

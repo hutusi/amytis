@@ -1,4 +1,5 @@
 import React from 'react';
+import ExportedImage from 'next-image-export-optimizer';
 
 // Each palette defines a gradient background and text color for light/dark modes
 const palettes = [
@@ -81,11 +82,12 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
   }
 
   return (
-    <img 
+    <ExportedImage 
       src={src}
       alt={title} 
       className={className}
-      loading="lazy"
+      fill
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
   );
 }

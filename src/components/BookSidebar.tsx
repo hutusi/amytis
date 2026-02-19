@@ -150,11 +150,23 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     );
   };
 
-  let globalIndex = 0;
+  // Pre-calculate chapter global indices to avoid reassignment during render
+  const chapterIndices = new Map<string, number>();
+  let currentGlobalIdx = 0;
+  toc.forEach((item) => {
+    if ('part' in item) {
+      item.chapters.forEach(ch => {
+        chapterIndices.set(ch.file, currentGlobalIdx++);
+      });
+    } else {
+      chapterIndices.set(item.file, currentGlobalIdx++);
+    }
+  });
 
   // Helper to render a chapter link + inline headings if current
-  const renderChapterItem = (ch: { title: string; file: string }, idx: number) => {
+  const renderChapterItem = (ch: { title: string; file: string }) => {
     const isCurrent = ch.file === currentChapter;
+    const idx = chapterIndices.get(ch.file) ?? 0;
     const isPast = idx < currentIndex;
 
     return (
@@ -214,8 +226,6 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
             if ('part' in item) {
               const isCollapsed = collapsedParts[item.part];
               const partChapters = item.chapters;
-              const startIndex = globalIndex;
-              globalIndex += partChapters.length;
 
               return (
                 <li key={`part-${tocIdx}`}>
@@ -236,15 +246,13 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
 
                   {!isCollapsed && (
                     <ul className="space-y-0.5 mt-1 mb-3 animate-slide-down">
-                      {partChapters.map((ch, chIdx) => renderChapterItem(ch, startIndex + chIdx))}
+                      {partChapters.map((ch) => renderChapterItem(ch))}
                     </ul>
                   )}
                 </li>
               );
             } else {
-              const idx = globalIndex;
-              globalIndex += 1;
-              return renderChapterItem(item, idx);
+              return renderChapterItem(item);
             }
           })}
         </ul>

@@ -6,6 +6,7 @@ import { translations, Language, TranslationKey } from '../i18n/translations';
 
 interface LanguageContextType {
   language: Language;
+  isHydrated: boolean;
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKey) => string;
   tWith: (key: TranslationKey, params: Record<string, string | number>) => string;
@@ -14,21 +15,27 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  // Always initialize with site default to match server-side rendering
   const [language, setLanguageState] = useState<Language>(siteConfig.i18n.defaultLocale as Language);
-  const [mounted, setMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    // Only access localStorage and browser language after component is mounted (client-side)
     const savedLang = localStorage.getItem('amytis-language') as Language;
-    if (savedLang && translations[savedLang]) {
-      setLanguageState(savedLang);
-    } else {
-      // Detect browser language and match against supported locales
-      const browserLang = navigator.language.split('-')[0] as Language;
-      if (translations[browserLang]) {
-        setLanguageState(browserLang);
+    
+    // Use requestAnimationFrame to avoid cascading render lint error
+    const rafId = requestAnimationFrame(() => {
+      if (savedLang && translations[savedLang]) {
+        setLanguageState(savedLang);
+      } else {
+        const browserLang = navigator.language.split('-')[0] as Language;
+        if (translations[browserLang]) {
+          setLanguageState(browserLang);
+        }
       }
-    }
-    setMounted(true);
+      setIsHydrated(true);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -36,12 +43,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('amytis-language', lang);
   };
 
+  /**
+   * Translates a key. 
+   * Returns the default locale translation if not hydrated to prevent hydration mismatch.
+   */
   const t = (key: TranslationKey) => {
-    return translations[language][key] || key;
+    const activeLang = isHydrated ? language : (siteConfig.i18n.defaultLocale as Language);
+    return translations[activeLang][key] || key;
   };
 
+  /**
+   * Translates a key with parameters.
+   */
   const tWith = (key: TranslationKey, params: Record<string, string | number>) => {
-    let result = translations[language][key] || key;
+    const activeLang = isHydrated ? language : (siteConfig.i18n.defaultLocale as Language);
+    let result = translations[activeLang][key] || key;
     for (const [name, value] of Object.entries(params)) {
       result = result.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
     }
@@ -49,7 +65,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, tWith }}>
+    <LanguageContext.Provider value={{ language, isHydrated, setLanguage, t, tWith }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -1,4 +1,4 @@
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
 import remarkGfm from 'remark-gfm';
@@ -8,6 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import ExportedImage from 'next-image-export-optimizer';
+import { PluggableList } from 'unified';
 
 interface MarkdownRendererProps {
   content: string;
@@ -16,13 +17,101 @@ interface MarkdownRendererProps {
 }
 
 export default function MarkdownRenderer({ content, latex = false, slug }: MarkdownRendererProps) {
-  const remarkPlugins: any[] = [remarkGfm];
-  const rehypePlugins: any[] = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
+  const remarkPlugins: PluggableList = [remarkGfm];
+  const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
 
   if (latex) {
     remarkPlugins.push(remarkMath);
     rehypePlugins.push(rehypeKatex);
   }
+
+  const components: Components = {
+    // Use 'p' by default, but fallback to 'div' only if children contain block elements
+    // to avoid invalid HTML nesting warnings while preserving semantics.
+    p: ({ children }) => {
+      // Check if any child is a block-level element (like Mermaid or CodeBlock)
+      // Since children is a ReactNode, we can only do a shallow check here.
+      // Simple heuristic: if any child is not a string/number, it *might* be a block.
+      // However, react-markdown usually nests blocks at the top level.
+      return <p className="mb-4 leading-relaxed text-foreground">{children}</p>;
+    },
+    // Explicitly style lists to ensure contrast
+    li: ({ children }) => <li className="text-foreground">{children}</li>,
+    // Explicitly style blockquotes
+    blockquote: ({ children }) => <blockquote className="text-foreground border-l-accent italic">{children}</blockquote>,
+    // Explicitly style bold text
+    strong: ({ children }) => <strong className="text-heading font-semibold">{children}</strong>,
+    // Wrap tables in a scrollable container
+    table: (props) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { children, node: _node, ...rest } = props as React.TableHTMLAttributes<HTMLTableElement> & ExtraProps;
+      return (
+        <div className="overflow-x-auto my-8 border border-muted/20 rounded-lg">
+          <table {...rest} className="min-w-full text-left text-sm">
+            {children}
+          </table>
+        </div>
+      );
+    },
+    // Render 'pre' as a 'div' to allow block-level children
+    pre: ({ children }) => <div className="not-prose">{children}</div>,
+    // Style links individually to avoid hover-all issue
+    a: (props) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { node: _node, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      return <a {...rest} className="text-accent no-underline hover:underline transition-colors duration-200" />;
+    },
+    // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
+    code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { className, children, node: _node, ...rest } = props;
+      const match = /language-(\w+)/.exec(className || '');
+      const language = match ? match[1] : '';
+      const isMultiLine = String(children).includes('\n');
+      
+      // In react-markdown v10, 'inline' prop is removed. 
+      // We use className presence (e.g. language-js) or newline presence to detect code blocks.
+      if (match || isMultiLine) {
+        if (language === 'mermaid') {
+          return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+        }
+        return (
+          <CodeBlock language={language} {...rest}>
+            {String(children).replace(/\n$/, '')}
+          </CodeBlock>
+        );
+      }
+
+      return (
+        <code className={className} {...rest}>
+          {children}
+        </code>
+      );
+    },
+    // Ensure images are responsive and styled, using optimized image if dimensions exist
+    // In development mode, use unoptimized images since WebP versions don't exist yet
+    img: (props: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { src, alt, width, height, node: _node, ...rest } = props;
+      const isDev = process.env.NODE_ENV === 'development';
+      const imageSrc = src as string;
+      
+      if (width && height) {
+        return (
+          <ExportedImage
+            src={imageSrc || ''}
+            alt={alt || ''}
+            width={Number(width)}
+            height={Number(height)}
+            className="max-w-full h-auto rounded-lg my-4"
+            unoptimized={isDev}
+          />
+        );
+      }
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={imageSrc} alt={alt || ''} {...rest} className="max-w-full h-auto rounded-lg my-4" />;
+    },
+  };
 
   return (
     <div className="prose prose-lg max-w-none text-foreground
@@ -37,69 +126,7 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        components={{
-          // Use 'div' instead of 'p' to avoid hydration errors
-          p: ({ children }) => <div className="mb-4 leading-relaxed text-foreground">{children}</div>,
-          // Explicitly style lists to ensure contrast
-          li: ({ children }) => <li className="text-foreground">{children}</li>,
-          // Explicitly style blockquotes
-          blockquote: ({ children }) => <blockquote className="text-foreground border-l-accent italic">{children}</blockquote>,
-          // Explicitly style bold text
-          strong: ({ children }) => <strong className="text-heading font-semibold">{children}</strong>,
-          // Wrap tables in a scrollable container
-          table: ({ children, ...props }) => (
-            <div className="overflow-x-auto my-8 border border-muted/20 rounded-lg">
-              <table {...props} className="min-w-full text-left text-sm">
-                {children}
-              </table>
-            </div>
-          ),
-          // Render 'pre' as a 'div' to allow block-level children
-          pre: ({ children }) => <div className="not-prose">{children}</div>,
-          // Style links individually to avoid hover-all issue
-          a: (props) => <a {...props} className="text-accent no-underline hover:underline transition-colors duration-200" />,
-          // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
-          code({ node, inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || '');
-            const language = match ? match[1] : '';
-            const isMultiLine = String(children).includes('\n');
-            
-            if (!inline && (match || isMultiLine)) {
-              if (language === 'mermaid') {
-                return <Mermaid chart={String(children).replace(/\n$/, '')} />;
-              }
-              return (
-                <CodeBlock language={language} {...props}>
-                  {String(children).replace(/\n$/, '')}
-                </CodeBlock>
-              );
-            }
-
-            return (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          },
-          // Ensure images are responsive and styled, using optimized image if dimensions exist
-          // In development mode, use unoptimized images since WebP versions don't exist yet
-          img: (props: any) => {
-            const isDev = process.env.NODE_ENV === 'development';
-            if (props.width && props.height) {
-              return (
-                <ExportedImage
-                  src={props.src}
-                  alt={props.alt || ''}
-                  width={props.width}
-                  height={props.height}
-                  className="max-w-full h-auto rounded-lg my-4"
-                  unoptimized={isDev}
-                />
-              );
-            }
-            return <img {...props} className="max-w-full h-auto rounded-lg my-4" />;
-          },
-        }}
+        components={components}
       >
         {content}
       </ReactMarkdown>

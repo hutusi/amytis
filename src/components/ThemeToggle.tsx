@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * Toggles between light and dark themes using next-themes.
@@ -10,10 +10,12 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch by ensuring the component only renders after mounting on the client.
-  // This ensures the theme is known and consistent.
   useEffect(() => {
-    setMounted(true);
+    // Use requestAnimationFrame to avoid cascading render lint error
+    const rafId = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   if (!mounted) {

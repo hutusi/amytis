@@ -8,11 +8,12 @@
 
 ## Features
 
-- **Digital Garden Philosophy:** Non-linear navigation through tags, series, authors, books, and chronological archives.
+- **Digital Garden Philosophy:** Non-linear navigation through tags, series, authors, books, flows, and chronological archives.
 - **Fuzzy Search:** Instant, client-side search across all posts (Cmd/Ctrl+K) powered by Fuse.js.
 - **Structured Content:**
   - **Series:** Multi-part content organization with manual or automatic ordering.
   - **Books:** Long-form content with explicit chapters, parts, and a dedicated reading interface.
+  - **Flows:** Stream-style daily notes or micro-blogging for quick thoughts.
 - **Rich MDX Content:**
   - GitHub Flavored Markdown (tables, task lists, strikethrough).
   - Syntax-highlighted code blocks.
@@ -30,7 +31,7 @@
   - Flat files (`post.mdx`) or nested folders (`post/index.mdx`).
   - Co-located assets: keep images inside post folders (`./images/`).
   - Date-prefixed filenames: `2026-01-01-my-post.mdx`.
-  - Draft support for posts, series, and books.
+  - Draft support for posts, series, books, and flows.
 - **Performance & SEO:**
   - Fully static export with optimized WebP images.
   - Native sitemap and RSS feed generation.
@@ -110,12 +111,16 @@ export const siteConfig = {
   // ...
   nav: [
     { name: "Home", url: "/", weight: 1 },
+    { name: "Flow", url: "/flows", weight: 1.1 }, // Add Flows to nav
     { name: "Series", url: "/series", weight: 1.5 },
-    { name: "Books", url: "/books", weight: 1.7 }, // Add books to nav
+    { name: "Books", url: "/books", weight: 1.7 },
     { name: "Archive", url: "/archive", weight: 2 },
     // ...
   ],
   // ...
+  flows: {
+    recentCount: 5,
+  },
 };
 ```
 
@@ -125,6 +130,10 @@ export const siteConfig = {
 
 Create `.md` or `.mdx` files in `content/posts/`.
 
+### Flows
+
+Create daily notes in `content/flows/YYYY/MM/DD.mdx` or `content/flows/YYYY/MM/DD/index.mdx`.
+
 ### Series
 
 Create a directory in `content/series/` with an `index.mdx`.
@@ -132,35 +141,6 @@ Create a directory in `content/series/` with an `index.mdx`.
 ### Books
 
 Books are for long-form, structured content. Create a directory in `content/books/`.
-
-**Structure:**
-```
-content/books/my-book/
-  index.mdx          # Book metadata & TOC
-  chapter-1.mdx
-  chapter-2.mdx
-```
-
-**Book Metadata (`index.mdx`):**
-```yaml
----
-title: "The Digital Garden Handbook"
-excerpt: "A comprehensive guide..."
-date: "2026-01-15"
-coverImage: "./images/cover.jpg"
-featured: true
-authors: ["Amytis"]
-chapters:
-  - part: "Part I: Getting Started"
-    chapters:
-      - title: "Introduction"
-        file: "introduction"  # Matches introduction.mdx filename
-      - title: "Setup"
-        file: "setup"
-  - title: "Conclusion"       # Standalone chapter without a part
-    file: "conclusion"
----
-```
 
 ## Project Structure
 
@@ -170,11 +150,13 @@ amytis/
     posts/              # Blog posts
     series/             # Series collections
     books/              # Long-form books
+    flows/              # Daily notes (YYYY/MM/DD)
     about.mdx           # Static pages
   public/               # Static assets
   src/
     app/                # Next.js App Router pages
       books/            # Book routes
+      flows/            # Flow routes
     components/         # React components
     lib/
       markdown.ts       # Data access layer

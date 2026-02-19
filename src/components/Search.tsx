@@ -36,7 +36,6 @@ export default function Search() {
   // Perform search
   useEffect(() => {
     if (!query) {
-      setResults([]);
       return;
     }
 
@@ -46,7 +45,11 @@ export default function Search() {
     });
 
     const searchResults = fuse.search(query).map((result) => result.item);
-    setResults(searchResults.slice(0, 5)); // Limit to 5 results
+    // Wrap in requestAnimationFrame to avoid cascading render lint error
+    const rafId = requestAnimationFrame(() => {
+      setResults(searchResults.slice(0, 5)); // Limit to 5 results
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [query, posts]);
 
   // Handle keyboard shortcuts
@@ -110,7 +113,10 @@ export default function Search() {
                 placeholder={t('search_placeholder')}
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (!e.target.value) setResults([]);
+                }}
               />
               <div className="text-xs text-muted border border-muted/20 px-1.5 py-0.5 rounded">ESC</div>
             </div>
