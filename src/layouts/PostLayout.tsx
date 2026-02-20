@@ -123,11 +123,11 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
           <AuthorCard authors={post.authors} />
 
-          <RelatedPosts posts={relatedPosts || []} />
-
           <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} />
 
           <Comments slug={post.slug} />
+
+          <RelatedPosts posts={relatedPosts || []} />
         </article>
       </div>
     </div>
