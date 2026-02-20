@@ -92,7 +92,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
               const Component = isExternal ? 'a' : Link;
               const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
-              if (item.name === 'Books' && booksList.length > 0) {
+              if (item.url === '/books' && booksList.length > 0) {
                 return (
                   <div key={item.url} className="relative group">
                     <Link
@@ -128,7 +128,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                 );
               }
 
-              if (item.name === 'Series' && seriesList.length > 0) {
+              if (item.url === '/series' && seriesList.length > 0) {
                 return (
                   <div key={item.url} className="relative group">
                     <Link

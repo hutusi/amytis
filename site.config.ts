@@ -6,8 +6,8 @@ export const siteConfig = {
   nav: [
     { name: "Flow", url: "/flows", weight: 1 },
     { name: "Posts", url: "/posts", weight: 2 },
-    { name: "Series", url: "/series", weight: 3 },
-    { name: "Books", url: "/books", weight: 4 },
+    { name: "Series", url: "/series", weight: 3, dropdown: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"] },
+    { name: "Books", url: "/books", weight: 4, dropdown: [] as string[] },
     { name: "About", url: "/about", weight: 5 },
   ],
   footer: {
@@ -22,12 +22,6 @@ export const siteConfig = {
     github: "https://github.com/hutusi/amytis",
     twitter: "https://twitter.com/hutusi",
     email: "mailto:huziyong@gmail.com",
-  },
-  series: {
-    navbar: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"], // Slugs of series to show in navbar
-  },
-  books: {
-    navbar: [] as string[], // Slugs of books to show in navbar dropdown
   },
   archive: {
     showAuthors: true,

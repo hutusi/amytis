@@ -64,12 +64,13 @@ export default function RootLayout({
   const features = siteConfig.features;
 
   // Build series list for navbar (only when series feature is enabled)
-  const featuredSeries = siteConfig.series?.navbar;
+  const seriesNavItem = siteConfig.nav.find(item => item.url === '/series');
+  const featuredSeries = (seriesNavItem as { dropdown?: string[] } | undefined)?.dropdown;
   let seriesList: { name: string; slug: string }[] = [];
   if (features?.series?.enabled !== false) {
     const allSeries = getAllSeries();
     const seriesKeys = Object.keys(allSeries).sort();
-    const filteredKeys = featuredSeries
+    const filteredKeys = featuredSeries && featuredSeries.length > 0
       ? seriesKeys.filter(slug => featuredSeries.includes(slug))
       : seriesKeys.slice(0, 5);
     seriesList = filteredKeys.map(slug => ({
@@ -79,10 +80,11 @@ export default function RootLayout({
   }
 
   // Build books list for navbar (only when books feature is enabled)
+  const booksNavItem = siteConfig.nav.find(item => item.url === '/books');
+  const featuredBookSlugs = (booksNavItem as { dropdown?: string[] } | undefined)?.dropdown;
   let booksList: { name: string; slug: string }[] = [];
   if (features?.books?.enabled !== false) {
     const allBooks = getAllBooks();
-    const featuredBookSlugs = siteConfig.books?.navbar;
     booksList = featuredBookSlugs && featuredBookSlugs.length > 0
       ? allBooks
           .filter(book => featuredBookSlugs.includes(book.slug))
