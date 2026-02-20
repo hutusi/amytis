@@ -68,7 +68,7 @@ export interface PostData {
   readingTime: string;
   content: string;
   headings: Heading[];
-  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string }>;
+  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
 }
 
 export function calculateReadingTime(content: string): string {
@@ -458,7 +458,7 @@ export function getPostBySlug(slug: string): PostData | null {
  * Load the content and frontmatter of a locale variant file, e.g. about.zh.mdx.
  * Returns null when the file does not exist or cannot be parsed.
  */
-function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string } | null {
+function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string; headings?: Heading[] } | null {
   for (const ext of ['.mdx', '.md']) {
     const filePath = path.join(pagesDirectory, `${slug}.${locale}${ext}`);
     if (fs.existsSync(filePath)) {
@@ -469,6 +469,7 @@ function loadLocaleContent(slug: string, locale: string): { content: string; tit
           content: body,
           title: typeof data.title === 'string' ? data.title : undefined,
           excerpt: typeof data.excerpt === 'string' ? data.excerpt : undefined,
+          headings: getHeadings(body),
         };
       } catch {
         return null;

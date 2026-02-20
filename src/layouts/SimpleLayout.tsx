@@ -16,6 +16,13 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
   const defaultLocale = siteConfig.i18n.defaultLocale;
   const localeEntries = Object.entries(post.contentLocales ?? {});
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings?.length > 0;
+  const localeHeadings = post.contentLocales
+    ? Object.fromEntries(
+        Object.entries(post.contentLocales)
+          .filter(([, data]) => data.headings && data.headings.length > 0)
+          .map(([locale, data]) => [locale, data.headings!])
+      )
+    : undefined;
 
   const articleContent = (
     <>
@@ -47,7 +54,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
     <div className="layout-main">
       {showToc ? (
         <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
-          <PostSidebar currentSlug={post.slug} headings={post.headings} />
+          <PostSidebar currentSlug={post.slug} headings={post.headings} localeHeadings={localeHeadings} />
           <article className="min-w-0 max-w-3xl">
             {articleContent}
           </article>

@@ -12,6 +12,7 @@ interface PostSidebarProps {
   posts?: PostData[];
   currentSlug: string;
   headings: Heading[];
+  localeHeadings?: Record<string, Heading[]>;
 }
 
 function getVisibleIndices(total: number, current: number): (number | 'ellipsis')[] {
@@ -27,8 +28,9 @@ function getVisibleIndices(total: number, current: number): (number | 'ellipsis'
   return result;
 }
 
-export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings }: PostSidebarProps) {
-  const { t } = useLanguage();
+export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings }: PostSidebarProps) {
+  const { t, language } = useLanguage();
+  const activeHeadings = localeHeadings?.[language] ?? headings;
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
   const currentIndex = hasSeries ? posts!.findIndex(p => p.slug === currentSlug) : -1;
   // Chronological position (ascending date) for progress — independent of display sort order
@@ -46,9 +48,9 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
 
   // Derive active heading from shared scroll position
   useEffect(() => {
-    if (headings.length === 0) return;
+    if (activeHeadings.length === 0) return;
 
-    const headingElements = headings
+    const headingElements = activeHeadings
       .map(h => document.getElementById(h.id))
       .filter(Boolean) as HTMLElement[];
 
@@ -68,7 +70,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       if (current) setActiveHeadingId(current.id);
     });
     return () => cancelAnimationFrame(rafId);
-  }, [scrollY, headings]);
+  }, [scrollY, activeHeadings]);
 
   const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -99,7 +101,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin"
     >
       {/* TOC — always at top */}
-      {headings.length > 0 && (
+      {activeHeadings.length > 0 && (
         <nav
           aria-label="Table of contents"
           className={`mb-6 ${hasSeries ? 'pb-4 border-b border-muted/10' : ''}`}
@@ -124,7 +126,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
 
           {!tocCollapsed && (
             <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
-              {headings.map(heading => {
+              {activeHeadings.map(heading => {
                 const isActive = heading.id === activeHeadingId;
                 const isH3 = heading.level === 3;
 
