@@ -89,7 +89,7 @@ export default function RootLayout({
       ? allBooks
           .filter(book => featuredBookSlugs.includes(book.slug))
           .map(book => ({ name: book.title, slug: book.slug }))
-      : allBooks.map(book => ({ name: book.title, slug: book.slug }));
+      : allBooks.slice(0, 5).map(book => ({ name: book.title, slug: book.slug }));
   }
 
   return (

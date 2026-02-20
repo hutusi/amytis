@@ -33,12 +33,11 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   const activeHeadings = localeHeadings?.[language] ?? headings;
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
   const currentIndex = hasSeries ? posts!.findIndex(p => p.slug === currentSlug) : -1;
-  // Chronological position (ascending date) for progress — independent of display sort order
-  const progressIndex = hasSeries
-    ? [...posts!]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .findIndex(p => p.slug === currentSlug)
-    : currentIndex;
+  // Chronological sort (ascending date) — used for both progress counter and isPast styling
+  const sortedPosts = hasSeries
+    ? [...posts!].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    : null;
+  const progressIndex = hasSeries ? sortedPosts!.findIndex(p => p.slug === currentSlug) : -1;
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
@@ -163,7 +162,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                 {t('series')}
               </span>
               <span className="text-[10px] font-mono text-muted/60">
-                {progressIndex + 1} / {posts!.length}
+                {progressIndex >= 0 ? progressIndex + 1 : '?'} / {posts!.length}
               </span>
             </div>
             <div className="flex items-start justify-between gap-2">
@@ -202,7 +201,8 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                     }
                     const post = posts![item];
                     const isCurrent = post.slug === currentSlug;
-                    const isPast = item < currentIndex;
+                    const chronoIndex = sortedPosts ? sortedPosts.findIndex(p => p.slug === post.slug) : item;
+                    const isPast = chronoIndex < progressIndex;
 
                     return (
                       <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
