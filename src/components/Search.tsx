@@ -13,7 +13,7 @@ interface DisplayResult {
   title: string;
   excerpt: string; // contains <mark> tags from Pagefind
   date: string;
-  type: ContentType;
+  type: Exclude<ContentType, 'All'>;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
