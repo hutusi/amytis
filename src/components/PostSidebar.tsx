@@ -98,9 +98,62 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       ref={sidebarRef}
       className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin"
     >
-      {/* Series section */}
+      {/* TOC — always at top */}
+      {headings.length > 0 && (
+        <nav
+          aria-label="Table of contents"
+          className={`mb-6 ${hasSeries ? 'pb-4 border-b border-muted/10' : ''}`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted">
+              {t('on_this_page')}
+            </span>
+            <button
+              onClick={() => setTocCollapsed(prev => !prev)}
+              className="text-muted hover:text-foreground transition-colors"
+              aria-label={tocCollapsed ? 'Expand table of contents' : 'Collapse table of contents'}
+            >
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${tocCollapsed ? '' : 'rotate-180'}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {!tocCollapsed && (
+            <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
+              {headings.map(heading => {
+                const isActive = heading.id === activeHeadingId;
+                const isH3 = heading.level === 3;
+
+                return (
+                  <li key={heading.id}>
+                    <a
+                      href={`#${heading.id}`}
+                      onClick={(e) => scrollToHeading(e, heading.id)}
+                      className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
+                        isH3 ? 'pl-6' : 'pl-3'
+                      } ${
+                        isActive
+                          ? 'text-accent font-medium border-l-2 border-accent -ml-px'
+                          : 'text-foreground/70 hover:text-foreground'
+                      }`}
+                    >
+                      {heading.text}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </nav>
+      )}
+
+      {/* Series section — below TOC */}
       {hasSeries && (
-        <div className={`mb-6 ${headings.length > 0 ? 'pb-4 border-b border-muted/10' : ''}`}>
+        <div>
           {/* Header — always visible */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
@@ -198,53 +251,6 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
             </>
           )}
         </div>
-      )}
-
-      {/* Page TOC */}
-      {headings.length > 0 && (
-        <nav aria-label="Table of contents">
-          <button
-            onClick={() => setTocCollapsed(prev => !prev)}
-            className="w-full flex items-center justify-between gap-2 mb-3"
-          >
-            <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted">
-              {t('on_this_page')}
-            </h2>
-            <svg
-              className={`w-3.5 h-3.5 text-muted flex-shrink-0 transition-transform duration-200 ${tocCollapsed ? '' : 'rotate-180'}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {!tocCollapsed && (
-            <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
-              {headings.map(heading => {
-                const isActive = heading.id === activeHeadingId;
-                const isH3 = heading.level === 3;
-
-                return (
-                  <li key={heading.id}>
-                    <a
-                      href={`#${heading.id}`}
-                      onClick={(e) => scrollToHeading(e, heading.id)}
-                      className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
-                        isH3 ? 'pl-6' : 'pl-3'
-                      } ${
-                        isActive
-                          ? 'text-accent font-medium border-l-2 border-accent -ml-px'
-                          : 'text-foreground/70 hover:text-foreground'
-                      }`}
-                    >
-                      {heading.text}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </nav>
       )}
     </aside>
   );
