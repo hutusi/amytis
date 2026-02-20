@@ -65,7 +65,7 @@ export default function ArchivePage() {
         subtitleParams={{ count: totalPosts, years: years.length }}
       />
 
-      <main className="max-w-4xl mx-auto">
+      <main>
         {/* Year-jump navigation */}
         {years.length > 1 && (
           <nav aria-label="Jump to year" className="flex flex-wrap gap-x-4 gap-y-2 mb-12">
