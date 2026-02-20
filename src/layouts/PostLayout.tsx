@@ -28,7 +28,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   const showSidebar = showToc || hasSeries;
 
   return (
-    <div className={`layout-container ${showSidebar ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
+    <div className="layout-container">
       <ReadingProgressBar />
       <div className={showSidebar
         ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
@@ -45,7 +45,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           />
         )}
 
-        <article className="min-w-0 max-w-3xl">
+        <article className="min-w-0 max-w-3xl mx-auto">
           <header className="mb-16 border-b border-muted/10 pb-12">
             {post.draft && (
               <div className="mb-4">
