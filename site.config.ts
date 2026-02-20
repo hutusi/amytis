@@ -41,9 +41,15 @@ export const siteConfig = {
     title: { en: "Cultivating Digital Knowledge", zh: "培育数字知识" },
     subtitle: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
   },
-  about: {
-    title: { en: "About Amytis", zh: "关于 Amytis" },
-    subtitle: { en: "Learn more about the philosophy and technology behind this digital garden.", zh: "了解这座数字花园背后的理念与技术。" },
+  pages: {
+    about: {
+      title: { en: "About Amytis", zh: "关于 Amytis" },
+      subtitle: { en: "Learn more about the philosophy and technology behind this digital garden.", zh: "了解这座数字花园背后的理念与技术。" },
+    },
+    links: {
+      title: { en: "Links", zh: "链接" },
+      subtitle: { en: "A curated collection of resources, tools, and friends on the web.", zh: "精选资源、工具与友情链接。" },
+    },
   },
   flows: {
     recentCount: 5,

@@ -1,5 +1,5 @@
 import { PostData } from '@/lib/markdown';
-import MarkdownRenderer from '@/components/MarkdownRenderer';
+import LocalizedMarkdown from '@/components/LocalizedMarkdown';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
 import { TranslationKey } from '@/i18n/translations';
 
@@ -24,7 +24,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey, titleOverrid
           subtitleOverride={subtitleOverride}
         />
 
-        <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+        <LocalizedMarkdown content={post.content} contentLocales={post.contentLocales} latex={post.latex} slug={post.slug} />
       </article>
     </div>
   );
