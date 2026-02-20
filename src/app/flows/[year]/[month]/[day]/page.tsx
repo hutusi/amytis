@@ -62,7 +62,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
         <article className="flex-1 min-w-0">
           {/* Header */}
           <header className="mb-8">
-            <time className="text-sm font-mono text-accent">{flow.date}</time>
+            <time className="text-sm font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
             <h1 className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading">{flow.title}</h1>
           </header>
 

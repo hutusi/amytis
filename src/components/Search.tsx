@@ -71,7 +71,7 @@ function persistRecentSearch(query: string, current: string[]): string[] {
 interface PagefindFragment {
   url: string;
   excerpt: string; // contains <mark> tags
-  meta: { title?: string; image?: string };
+  meta: { title?: string; image?: string; date?: string };
   word_count: number;
 }
 
@@ -87,7 +87,6 @@ async function loadPagefind(): Promise<PagefindAPI | null> {
   if (pagefindCache) return pagefindCache;
   if (pagefindUnavailable) return null;
   try {
-    // eslint-disable-next-line no-new-func
     const load = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
     const pf = await load('/pagefind/pagefind.js');
     await pf.init();
@@ -163,7 +162,7 @@ export default function Search() {
             url: f.url,
             title: cleanTitle(f.meta.title ?? ''),
             excerpt: f.excerpt,
-            date: getDateFromUrl(f.url),
+            date: f.meta.date ?? getDateFromUrl(f.url),
             type: getResultType(f.url),
           }))
         );
@@ -241,6 +240,12 @@ export default function Search() {
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Number keys 1–4 switch type tabs when results are visible
+    if (allResults.length > 0 && ['1', '2', '3', '4'].includes(e.key)) {
+      const visibleTypes = CONTENT_TYPES.filter((ct) => ct === 'All' || typeCounts[ct] > 0);
+      const target = visibleTypes[parseInt(e.key, 10) - 1];
+      if (target) { e.preventDefault(); setActiveType(target); setActiveIndex(-1); return; }
+    }
     if (displayedResults.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -252,6 +257,21 @@ export default function Search() {
       e.preventDefault();
       router.push(displayedResults[activeIndex].url);
       handleNavigate(query);
+    }
+  }
+
+  function handleModalKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'Tab') return;
+    const focusable = searchRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   }
 
@@ -278,8 +298,20 @@ export default function Search() {
           {/* Modal: full-height on mobile, auto-height on desktop */}
           <div
             ref={searchRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search"
+            onKeyDown={handleModalKeyDown}
             className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-muted/20 rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
+            {/* Screen-reader live region for result counts */}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {debouncedQuery && !isFetching && (
+                displayedResults.length > 0
+                  ? `${totalFilteredCount} result${totalFilteredCount === 1 ? '' : 's'} for ${debouncedQuery}`
+                  : `No results for ${debouncedQuery}`
+              )}
+            </div>
             {/* Input row */}
             <div className="flex items-center px-4 py-3 border-b border-muted/10 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted mr-3 shrink-0"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -287,6 +319,8 @@ export default function Search() {
                 ref={inputRef}
                 type="text"
                 placeholder={t('search_placeholder')}
+                aria-label="Search"
+                aria-autocomplete="list"
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -313,10 +347,12 @@ export default function Search() {
 
             {/* Type filter tabs — visible when results exist */}
             {allResults.length > 0 && (
-              <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-muted/10 shrink-0">
-                {CONTENT_TYPES.filter((type) => type === 'All' || typeCounts[type] > 0).map((type) => (
+              <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-muted/10 shrink-0" role="tablist" aria-label="Filter by type">
+                {CONTENT_TYPES.filter((type) => type === 'All' || typeCounts[type] > 0).map((type, i) => (
                   <button
                     key={type}
+                    role="tab"
+                    aria-selected={activeType === type}
                     onClick={() => { setActiveType(type); setActiveIndex(-1); }}
                     className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
                       activeType === type
@@ -326,6 +362,7 @@ export default function Search() {
                   >
                     {type === 'All' ? t('search_all') : type}
                     <span className="ml-1 text-[10px] opacity-60">{typeCounts[type]}</span>
+                    <span className="hidden sm:inline ml-1 text-[9px] opacity-30">{i + 1}</span>
                   </button>
                 ))}
               </div>

@@ -55,7 +55,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
                 {post.category}
               </span>
               <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <time className="font-mono">{post.date}</time>
+              <time className="font-mono" data-pagefind-meta="date[content]">{post.date}</time>
               <span className="w-1 h-1 rounded-full bg-muted/30" />
               <span className="font-mono">{post.readingTime}</span>
             </div>
