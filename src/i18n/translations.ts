@@ -65,6 +65,10 @@ export const translations = {
     clear: "Clear",
     search_all: "All",
     recent_searches: "Recent",
+    search_tips: "Tips",
+    search_tip_phrase: "match a full sentence",
+    search_tip_and: "AND search (default)",
+    search_tip_exclude: "exclude a term",
   },
   zh: {
     home: "首页",
@@ -132,6 +136,10 @@ export const translations = {
     clear: "清除",
     search_all: "全部",
     recent_searches: "最近",
+    search_tips: "搜索技巧",
+    search_tip_phrase: "精确匹配短语",
+    search_tip_and: "与搜索（默认）",
+    search_tip_exclude: "排除关键词",
   },
 };
 
