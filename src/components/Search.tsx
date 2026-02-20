@@ -178,9 +178,9 @@ export default function Search() {
   }, [debouncedQuery]);
 
   // Filtered results for the active type tab
-  const displayedResults = useMemo(() => {
+  const { displayedResults, totalFilteredCount } = useMemo(() => {
     const filtered = activeType === 'All' ? allResults : allResults.filter((r) => r.type === activeType);
-    return filtered.slice(0, MAX_RESULTS);
+    return { displayedResults: filtered.slice(0, MAX_RESULTS), totalFilteredCount: filtered.length };
   }, [allResults, activeType]);
 
   // Count per type for tab badges
@@ -215,6 +215,13 @@ export default function Search() {
       setActiveType('All');
       setIsFetching(false);
     }
+  }, [isOpen]);
+
+  // Body scroll lock while modal is open
+  useEffect(() => {
+    if (isOpen) document.body.classList.add('overflow-hidden');
+    else document.body.classList.remove('overflow-hidden');
+    return () => document.body.classList.remove('overflow-hidden');
   }, [isOpen]);
 
   // Click outside to close (desktop — modal is full-screen on mobile)
@@ -285,8 +292,15 @@ export default function Search() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}
               />
-              {/* ESC hint — desktop only */}
-              <div className="hidden sm:block text-xs text-muted border border-muted/20 px-1.5 py-0.5 rounded ml-2">ESC</div>
+              {/* Spinner — visible while fetching */}
+              {isFetching && (
+                <svg className="animate-spin shrink-0 ml-2 text-muted" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              )}
+              {/* ESC hint — desktop only, hidden while fetching */}
+              {!isFetching && <div className="hidden sm:block text-xs text-muted border border-muted/20 px-1.5 py-0.5 rounded ml-2">ESC</div>}
               {/* Close button — mobile only */}
               <button
                 onClick={() => setIsOpen(false)}
@@ -353,6 +367,13 @@ export default function Search() {
                     </li>
                   ))}
                 </ul>
+              )}
+
+              {/* Result count when capped */}
+              {displayedResults.length > 0 && totalFilteredCount > MAX_RESULTS && (
+                <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-muted/10 text-center">
+                  Showing {displayedResults.length} of {totalFilteredCount} results
+                </div>
               )}
 
               {/* No results */}
