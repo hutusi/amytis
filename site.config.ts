@@ -68,12 +68,12 @@ export const siteConfig = {
   },
   homepage: {
     sections: [
-      { id: 'hero',           enabled: true, weight: 1 },
-      { id: 'series',         enabled: true, weight: 2, maxItems: 6, scrollThreshold: 2 },
-      { id: 'books',          enabled: true, weight: 3 },
-      { id: 'featured-posts', enabled: true, weight: 4, maxItems: 4, scrollThreshold: 1 },
-      { id: 'latest-posts',   enabled: true, weight: 5 },
-      { id: 'recent-flows',   enabled: true, weight: 6 },
+      { id: 'hero',            enabled: true, weight: 1 },
+      { id: 'featured-series', enabled: true, weight: 2, maxItems: 6, scrollThreshold: 2 },
+      { id: 'featured-books',  enabled: true, weight: 3, maxItems: 4, scrollThreshold: 2 },
+      { id: 'featured-posts',  enabled: true, weight: 4, maxItems: 4, scrollThreshold: 1 },
+      { id: 'latest-posts',    enabled: true, weight: 5, maxItems: 5 },
+      { id: 'recent-flows',    enabled: true, weight: 6, maxItems: 5 },
     ],
   },
   i18n: {

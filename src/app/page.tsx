@@ -1,4 +1,4 @@
-import { getAllPosts, getAllSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
+import { getAllPosts, getFeaturedSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
 import CuratedSeriesSection, { SeriesItem } from '@/components/CuratedSeriesSection';
@@ -38,21 +38,24 @@ export default function Home() {
 
   const has = (id: string) => sections.some(s => s.id === id);
 
+  // Derive per-section maxItems upfront for data loading
+  const recentFlowsMax = sections.find(s => s.id === 'recent-flows')?.maxItems ?? siteConfig.flows?.recentCount ?? 5;
+  const latestPostsMax = sections.find(s => s.id === 'latest-posts')?.maxItems ?? siteConfig.pagination.posts;
+
   // Load data only for sections that are both enabled on homepage and globally
-  const allSeries = has('series') && features?.series?.enabled !== false ? getAllSeries() : {};
-  const featuredBooks = has('books') && features?.books?.enabled !== false ? getFeaturedBooks() : [];
+  const allSeries = has('featured-series') && features?.series?.enabled !== false ? getFeaturedSeries() : {};
+  const featuredBooks = has('featured-books') && features?.books?.enabled !== false ? getFeaturedBooks() : [];
   const recentFlows = has('recent-flows') && features?.flows?.enabled !== false
-    ? getRecentFlows(siteConfig.flows?.recentCount ?? 5)
+    ? getRecentFlows(recentFlowsMax)
     : [];
   const needsPosts = has('featured-posts') || has('latest-posts');
   const allPosts = needsPosts && features?.posts?.enabled !== false ? getAllPosts() : [];
   const featuredPosts = has('featured-posts') && features?.posts?.enabled !== false ? getFeaturedPosts() : [];
 
-  const pageSize = siteConfig.pagination.posts;
-  const posts = allPosts.slice(0, pageSize);
+  const posts = allPosts.slice(0, latestPostsMax);
 
   // Prepare serializable data for client components
-  const seriesItems: SeriesItem[] = has('series') && features?.series?.enabled !== false
+  const seriesItems: SeriesItem[] = has('featured-series') && features?.series?.enabled !== false
     ? Object.keys(allSeries).map(name => {
         const seriesPosts = allSeries[name];
         const slug = name.toLowerCase().replace(/ /g, '-');
@@ -69,7 +72,7 @@ export default function Home() {
       })
     : [];
 
-  const bookItems: BookItem[] = has('books') && features?.books?.enabled !== false
+  const bookItems: BookItem[] = has('featured-books') && features?.books?.enabled !== false
     ? featuredBooks.map(b => ({
         slug: b.slug,
         title: b.title,
@@ -104,19 +107,26 @@ export default function Home() {
 
   const renderSection = (section: HomepageSection) => {
     switch (section.id) {
-      case 'series':
+      case 'featured-series':
         if (features?.series?.enabled === false) return null;
         return (
           <CuratedSeriesSection
-            key="series"
+            key="featured-series"
             allSeries={seriesItems}
             maxItems={section.maxItems ?? 6}
             scrollThreshold={section.scrollThreshold ?? 2}
           />
         );
-      case 'books':
+      case 'featured-books':
         if (features?.books?.enabled === false) return null;
-        return <SelectedBooksSection key="books" books={bookItems} />;
+        return (
+          <SelectedBooksSection
+            key="featured-books"
+            books={bookItems}
+            maxItems={section.maxItems ?? 4}
+            scrollThreshold={section.scrollThreshold ?? 2}
+          />
+        );
       case 'featured-posts':
         if (features?.posts?.enabled === false) return null;
         return (
