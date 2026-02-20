@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { getAllPosts, PostData } from '@/lib/markdown';
+import { getAllPosts, getSeriesData, PostData } from '@/lib/markdown';
 import { siteConfig } from '../../../site.config';
-import { resolveLocale } from '@/lib/i18n';
+import { resolveLocale, t } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 
 export const metadata = {
@@ -47,6 +47,14 @@ export default function ArchivePage() {
   const years = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a));
   const totalPosts = posts.length;
 
+  // Build series slug → title map (one lookup per unique series)
+  const seriesSlugs = [...new Set(posts.filter(p => p.series).map(p => p.series!))];
+  const seriesTitleMap: Record<string, string> = {};
+  for (const slug of seriesSlugs) {
+    const data = getSeriesData(slug);
+    if (data) seriesTitleMap[slug] = data.title;
+  }
+
   return (
     <div className="layout-main">
       <PageHeader
@@ -58,6 +66,21 @@ export default function ArchivePage() {
       />
 
       <main className="max-w-4xl mx-auto">
+        {/* Year-jump navigation */}
+        {years.length > 1 && (
+          <nav aria-label="Jump to year" className="flex flex-wrap gap-x-4 gap-y-2 mb-12">
+            {years.map(year => (
+              <a
+                key={year}
+                href={`#${year}`}
+                className="text-sm font-mono text-muted hover:text-accent transition-colors no-underline"
+              >
+                {year}
+              </a>
+            ))}
+          </nav>
+        )}
+
         <div className="space-y-24">
           {years.map((year) => {
             // Sort months within the year in descending order (December -> January)
@@ -67,7 +90,7 @@ export default function ArchivePage() {
             const yearTotal = months.reduce((total, month) => total + groupedPosts[year][month].length, 0);
 
             return (
-              <section key={year} className="relative grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16">
+              <section key={year} id={year} className="relative grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16">
                 {/* Year Marker */}
                 <div className="relative">
                   <div className="sticky top-24 lg:top-32 text-left md:text-right">
@@ -75,7 +98,7 @@ export default function ArchivePage() {
                       {year}
                     </h2>
                     <span className="block text-xs font-bold uppercase tracking-widest text-muted mt-2">
-                      {yearTotal} Posts
+                      {yearTotal} {t('posts')}
                     </span>
                   </div>
                 </div>
@@ -91,7 +114,9 @@ export default function ArchivePage() {
                         
                         <h3 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-8">
                           {getMonthName(Number(month))}
-                          <span className="ml-2 text-xs font-normal text-muted/60">({monthPosts.length})</span>
+                          <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-muted/10 rounded px-1.5 py-0.5 align-middle leading-none">
+                            {monthPosts.length}
+                          </span>
                         </h3>
                         
                         <ul className="space-y-6">
@@ -113,10 +138,10 @@ export default function ArchivePage() {
                                         </h4>
                                         {post.series && (
                                           <span
-                                            title={post.series}
-                                            className="text-[10px] font-sans font-medium uppercase tracking-wider text-accent/60 border border-accent/20 rounded px-1.5 py-0.5 shrink-0 leading-none max-w-[10ch] truncate inline-block align-baseline"
+                                            title={seriesTitleMap[post.series] ?? post.series}
+                                            className="text-[10px] font-sans font-medium uppercase tracking-wider text-accent/60 border border-accent/20 rounded px-1.5 py-0.5 shrink-0 leading-none max-w-[14ch] truncate inline-block align-baseline"
                                           >
-                                            {post.series}
+                                            {seriesTitleMap[post.series] ?? post.series}
                                           </span>
                                         )}
                                       </div>
