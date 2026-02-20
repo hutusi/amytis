@@ -31,12 +31,17 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   const { t } = useLanguage();
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
   const currentIndex = hasSeries ? posts!.findIndex(p => p.slug === currentSlug) : -1;
+  // Chronological position (ascending date) for progress — independent of display sort order
+  const progressIndex = hasSeries
+    ? [...posts!]
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .findIndex(p => p.slug === currentSlug)
+    : currentIndex;
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const [tocCollapsed, setTocCollapsed] = useState(false);
-  // Collapse series list by default when TOC is also present, so TOC is immediately visible
-  const [seriesCollapsed, setSeriesCollapsed] = useState(hasSeries && headings.length > 0);
+  const [seriesCollapsed, setSeriesCollapsed] = useState(false);
   const scrollY = useScrollY();
 
   // Derive active heading from shared scroll position
@@ -97,40 +102,34 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       {hasSeries && (
         <div className={`mb-6 ${headings.length > 0 ? 'pb-4 border-b border-muted/10' : ''}`}>
           {/* Header — always visible */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <Link href={`/series/${seriesSlug}`} className="group block no-underline flex-1 min-w-0">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-1 block">
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
                 {t('series')}
               </span>
-              <h3 className="font-serif font-bold text-heading text-base leading-snug group-hover:text-accent transition-colors">
-                {seriesTitle}
-              </h3>
-            </Link>
-            <button
-              onClick={() => setSeriesCollapsed(prev => !prev)}
-              className="flex-shrink-0 mt-5 text-muted hover:text-foreground transition-colors"
-              aria-label={seriesCollapsed ? 'Expand series' : 'Collapse series'}
-            >
-              <svg
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${seriesCollapsed ? '' : 'rotate-180'}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Progress bar — always visible */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1 h-1 bg-muted/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-accent/60 rounded-full transition-all duration-500"
-                style={{ width: `${((currentIndex + 1) / posts!.length) * 100}%` }}
-              />
+              <span className="text-[10px] font-mono text-muted/60">
+                {progressIndex + 1} / {posts!.length}
+              </span>
             </div>
-            <span className="text-xs font-mono text-muted whitespace-nowrap">
-              {currentIndex + 1}/{posts!.length}
-            </span>
+            <div className="flex items-start justify-between gap-2">
+              <Link href={`/series/${seriesSlug}`} className="group block no-underline flex-1 min-w-0">
+                <h3 className="font-serif font-bold text-heading text-base leading-snug group-hover:text-accent transition-colors">
+                  {seriesTitle}
+                </h3>
+              </Link>
+              <button
+                onClick={() => setSeriesCollapsed(prev => !prev)}
+                className="flex-shrink-0 mt-0.5 text-muted hover:text-foreground transition-colors"
+                aria-label={seriesCollapsed ? 'Expand series' : 'Collapse series'}
+              >
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${seriesCollapsed ? '' : 'rotate-180'}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Collapsible: post list + footer link */}
