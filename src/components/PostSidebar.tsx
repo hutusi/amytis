@@ -191,8 +191,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
           {!seriesCollapsed && (
             <>
               <nav aria-label="Series navigation" className="mb-4 animate-slide-down">
-                <ul className="space-y-1 relative">
-                  <div className="absolute left-[11px] top-3 bottom-3 w-px bg-muted/15" />
+                <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-muted/15">
                   {getVisibleIndices(posts!.length, currentIndex).map((item, i) => {
                     if (item === 'ellipsis') {
                       return (

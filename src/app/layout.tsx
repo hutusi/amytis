@@ -93,7 +93,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={siteConfig.i18n.defaultLocale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
         data-palette={siteConfig.themeColor}

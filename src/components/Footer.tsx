@@ -92,8 +92,8 @@ export default function Footer() {
              <LanguageSwitch />
              <span className="opacity-20">|</span>
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
-             {siteConfig.footer?.builtWith?.show !== false && (() => {
-               const cfg = siteConfig.footer.builtWith!;
+             {siteConfig.footer?.builtWith?.show && (() => {
+               const cfg = siteConfig.footer.builtWith;
                const label = cfg.text ? resolveLocaleValue(cfg.text, language) : t('built_with');
                return (
                  <>

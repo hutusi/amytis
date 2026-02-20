@@ -485,7 +485,7 @@ function loadLocaleContent(slug: string, locale: string): { content: string; tit
 function attachContentLocales(page: PostData, slug: string): PostData {
   const defaultLocale = siteConfig.i18n.defaultLocale;
   const otherLocales = siteConfig.i18n.locales.filter(l => l !== defaultLocale);
-  const contentLocales: Record<string, { content: string; title?: string; excerpt?: string }> = {};
+  const contentLocales: NonNullable<PostData['contentLocales']> = {};
   for (const locale of otherLocales) {
     const localeData = loadLocaleContent(slug, locale);
     if (localeData !== null) contentLocales[locale] = localeData;
