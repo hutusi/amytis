@@ -1,7 +1,9 @@
 import { PostData } from '@/lib/markdown';
-import LocalizedMarkdown from '@/components/LocalizedMarkdown';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
+import LocaleSwitch from '@/components/LocaleSwitch';
 import { TranslationKey } from '@/i18n/translations';
+import { siteConfig } from '../../site.config';
 
 interface SimpleLayoutProps {
   post: PostData;
@@ -10,6 +12,9 @@ interface SimpleLayoutProps {
 }
 
 export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayoutProps) {
+  const defaultLocale = siteConfig.i18n.defaultLocale;
+  const localeEntries = Object.entries(post.contentLocales ?? {});
+
   return (
     <div className="layout-main">
       <article className="max-w-3xl mx-auto">
@@ -21,7 +26,20 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
           contentLocales={post.contentLocales}
         />
 
-        <LocalizedMarkdown content={post.content} contentLocales={post.contentLocales} latex={post.latex} slug={post.slug} />
+        {localeEntries.length > 0 ? (
+          <LocaleSwitch>
+            <div data-locale={defaultLocale}>
+              <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+            </div>
+            {localeEntries.map(([locale, data]) => (
+              <div key={locale} data-locale={locale} style={{ display: 'none' }}>
+                <MarkdownRenderer content={data.content} latex={post.latex} slug={post.slug} />
+              </div>
+            ))}
+          </LocaleSwitch>
+        ) : (
+          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+        )}
       </article>
     </div>
   );
