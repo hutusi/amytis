@@ -9,7 +9,7 @@
 ## Features
 
 - **Digital Garden Philosophy:** Non-linear navigation through tags, series, authors, books, flows, and chronological archives.
-- **Fuzzy Search:** Instant, client-side search across all posts (Cmd/Ctrl+K) powered by Fuse.js.
+- **Full-text Search:** Fast, static client-side search across all content (Cmd/Ctrl+K) powered by Pagefind.
 - **Structured Content:**
   - **Series:** Multi-part content organization with manual or automatic ordering.
   - **Books:** Long-form content with explicit chapters, parts, and a dedicated reading interface.

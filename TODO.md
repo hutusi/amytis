@@ -18,7 +18,6 @@
 
 - [ ] **Performance & App**
   - [ ] **PWA**: Add `manifest.json` and service workers for offline support.
-  - [ ] **Search Optimization**: Optimize search index for large gardens (e.g. content segmentation).
 
 - [ ] **Visuals**
   - [ ] **Dynamic OG Images**: Generate custom social cards with post title using `@vercel/og` (Satori).
@@ -27,6 +26,9 @@
   - [ ] **Interactive Mode**: Use prompts to select series, tags, and layouts when creating new posts.
 
 ## ✅ Completed
+
+- [x] **Search**
+  - [x] **Pagefind**: Full-text client-side search with static indexing.
 
 - [x] **Content Types**
   - [x] **Flows**: Stream-style daily notes or micro-blogging.

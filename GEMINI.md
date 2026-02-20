@@ -10,7 +10,7 @@ The package is officially published to both **npm** and **GitHub Packages** with
 - **Runtime/Package Manager**: [Bun](https://bun.sh/)
 - **Styling**: Tailwind CSS v4 with CSS-variable based themes and `@tailwindcss/typography`.
 - **Content**: Local MDX/Markdown files with Zod-validated frontmatter.
-- **Search**: Client-side fuzzy search using `Fuse.js`.
+- **Search**: Static full-text search using `Pagefind`.
 - **Diagrams**: Native support for `Mermaid` diagrams.
 - **Math**: LaTeX support via `rehype-katex`.
 
@@ -25,7 +25,7 @@ bun dev
 ```bash
 bun run build
 ```
-Generates a fully optimized static site in the `out/` directory.
+Generates a fully optimized static site in the `out/` directory with Pagefind search index.
 
 ### Linting & Testing
 ```bash
@@ -39,10 +39,10 @@ bun test
   - `posts/`: Paginated post listing and individual post routes.
   - `flows/`: Stream-style daily notes or micro-blogging (`[year]/[month]/[day]`).
   - `series/`: Series overview and individual series catalog pages with pagination support.
+  - `books/`: Books overview and individual book/chapter pages (`[slug]/[chapter]`).
   - `archive/`: Timeline-based chronological archive grouped by year and month.
   - `tags/`: Popularity-sorted tag cloud and filtered listings.
   - `authors/`: Posts filtered by individual authors.
-  - `search.json/`: Static search index generator.
 - `src/lib/`: Core logic and utilities.
   - `markdown.ts`: Advanced parsing for posts/series/flows, sorting, reading time calculation (multilingual), and metadata inheritance.
 - `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, etc.).
@@ -72,6 +72,7 @@ bun test
 ### Build Pipeline
 - **Asset Mapping**: `scripts/copy-assets.ts` mirrors content assets to the public folder, handling relative path resolution for both flat and nested structures.
 - **Image Optimization**: Fully integrated with `next-image-export-optimizer` for optimized WebP delivery in static exports.
+- **Search Indexing**: `Pagefind` runs after build to generate a static search index from the output directory.
 
 ## Recent Updates
 - Added **Flows** feature: a stream for daily notes and micro-blogging.
