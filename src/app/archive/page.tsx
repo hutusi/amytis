@@ -66,19 +66,22 @@ export default function ArchivePage() {
       />
 
       <main>
-        {/* Year-jump navigation */}
+        {/* Year-jump navigation — mirrors content grid to align with timeline column */}
         {years.length > 1 && (
-          <nav aria-label="Jump to year" className="flex flex-wrap gap-x-4 gap-y-2 mb-12">
-            {years.map(year => (
-              <a
-                key={year}
-                href={`#${year}`}
-                className="text-sm font-mono text-muted hover:text-accent transition-colors no-underline"
-              >
-                {year}
-              </a>
-            ))}
-          </nav>
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16 mb-16">
+            <div />
+            <nav aria-label="Jump to year" className="flex flex-wrap items-center gap-2">
+              {years.map(year => (
+                <a
+                  key={year}
+                  href={`#${year}`}
+                  className="text-xs font-mono text-muted hover:text-accent border border-muted/20 hover:border-accent/40 rounded px-3 py-1 transition-all duration-200 no-underline"
+                >
+                  {year}
+                </a>
+              ))}
+            </nav>
+          </div>
         )}
 
         <div className="space-y-24">
