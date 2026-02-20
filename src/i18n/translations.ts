@@ -72,9 +72,9 @@ export const translations = {
     search_type_flow: "Flow",
     search_type_book: "Book",
     search_tips: "Tips",
-    search_tip_phrase: "match a full sentence",
-    search_tip_and: "AND search (default)",
-    search_tip_exclude: "exclude a term",
+    search_tip_phrase: "Quoted string for exact matching (\" \" = Exact match)",
+    search_tip_and: "Use spaces to combine keywords (Space = AND)",
+    search_tip_exclude: "Exclude a term (- = Exclude)",
   },
   zh: {
     home: "首页",
@@ -149,9 +149,9 @@ export const translations = {
     search_type_flow: "随笔",
     search_type_book: "书籍",
     search_tips: "搜索技巧",
-    search_tip_phrase: "精确匹配短语",
-    search_tip_and: "与搜索（默认）",
-    search_tip_exclude: "排除关键词",
+    search_tip_phrase: "加引号精确匹配短语（\" \" 表示精确匹配）",
+    search_tip_and: "使用空格组合关键词（空格表示 AND）",
+    search_tip_exclude: "排除关键词（- 表示排除）",
   },
 };
 
