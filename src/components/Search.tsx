@@ -3,65 +3,27 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Fuse from 'fuse.js';
 import { useLanguage } from '@/components/LanguageProvider';
-
-interface SearchResult {
-  title: string;
-  slug: string;
-  date: string;
-  excerpt: string;
-  category: string;
-  tags: string[];
-  content?: string;
-}
-
-type FuseMatch = {
-  key?: string;
-  indices: ReadonlyArray<[number, number]>;
-  value?: string;
-};
-
-type FuseResult = {
-  item: SearchResult;
-  matches?: FuseMatch[];
-};
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type ContentType = 'All' | 'Post' | 'Flow' | 'Book';
+
+interface DisplayResult {
+  url: string;
+  title: string;
+  excerpt: string; // contains <mark> tags from Pagefind
+  date: string;
+  type: ContentType;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CONTENT_TYPES: ContentType[] = ['All', 'Post', 'Flow', 'Book'];
 const RECENT_KEY = 'amytis-recent-searches';
 const MAX_RECENT = 5;
 const MAX_RESULTS = 8;
+const FETCH_RESULTS = 24; // fetch more so type filter always has enough
 const DEBOUNCE_MS = 150;
-
-function getResultHref(slug: string): string {
-  if (slug.startsWith('books/') || slug.startsWith('flows/')) return `/${slug}`;
-  return `/posts/${slug}`;
-}
-
-function getResultType(slug: string): ContentType {
-  if (slug.startsWith('flows/')) return 'Flow';
-  if (slug.startsWith('books/')) return 'Book';
-  return 'Post';
-}
-
-function highlightText(text: string, indices: ReadonlyArray<[number, number]> | undefined): React.ReactNode {
-  if (!indices || indices.length === 0) return text;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  for (const [start, end] of indices) {
-    if (start > lastIndex) parts.push(text.slice(lastIndex, start));
-    parts.push(
-      <mark key={start} className="bg-transparent text-accent font-semibold not-italic">
-        {text.slice(start, end + 1)}
-      </mark>
-    );
-    lastIndex = end + 1;
-  }
-  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
-  return <>{parts}</>;
-}
 
 const TYPE_STYLES: Record<string, string> = {
   Flow: 'border-accent/30 text-accent',
@@ -69,12 +31,29 @@ const TYPE_STYLES: Record<string, string> = {
   Post: 'border-muted/30 text-muted',
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getResultType(url: string): ContentType {
+  if (url.includes('/flows/')) return 'Flow';
+  if (url.includes('/books/')) return 'Book';
+  return 'Post';
+}
+
+/** Extract YYYY-MM-DD from a flow URL like /flows/2026/01/15/ */
+function getDateFromUrl(url: string): string {
+  const m = url.match(/\/flows\/(\d{4})\/(\d{2})\/(\d{2})\//);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+}
+
+/** Strip the " | Site Name" suffix that Pagefind picks up from <title> */
+function cleanTitle(raw: string): string {
+  const i = raw.lastIndexOf(' | ');
+  return i >= 0 ? raw.slice(0, i) : raw;
+}
+
 function loadRecentSearches(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+  catch { return []; }
 }
 
 function persistRecentSearch(query: string, current: string[]): string[] {
@@ -83,46 +62,83 @@ function persistRecentSearch(query: string, current: string[]): string[] {
   return updated;
 }
 
+// ─── Pagefind loader ──────────────────────────────────────────────────────────
+//
+// We use `new Function` to create a runtime-only dynamic import so that
+// neither webpack nor Turbopack tries to bundle /pagefind/pagefind.js at
+// compile time (the file only exists after `pagefind --site out` runs).
+
+interface PagefindFragment {
+  url: string;
+  excerpt: string; // contains <mark> tags
+  meta: { title?: string; image?: string };
+  word_count: number;
+}
+
+interface PagefindAPI {
+  init: () => Promise<void>;
+  search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
+}
+
+let pagefindCache: PagefindAPI | null = null;
+let pagefindUnavailable = false;
+
+async function loadPagefind(): Promise<PagefindAPI | null> {
+  if (pagefindCache) return pagefindCache;
+  if (pagefindUnavailable) return null;
+  try {
+    // eslint-disable-next-line no-new-func
+    const load = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
+    const pf = await load('/pagefind/pagefind.js');
+    await pf.init();
+    pagefindCache = pf;
+    return pf;
+  } catch {
+    pagefindUnavailable = true;
+    return null;
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function Search() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [allResults, setAllResults] = useState<FuseResult[]>([]);
-  const [posts, setPosts] = useState<SearchResult[]>([]);
+  const [allResults, setAllResults] = useState<DisplayResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeType, setActiveType] = useState<ContentType>('All');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
-  // True while the user has typed but the debounce hasn't fired yet
-  const isSearching = query.length > 0 && query !== debouncedQuery;
+  // True while debounce is pending — suppress "no results" flash
+  const isTyping = query.length > 0 && query !== debouncedQuery;
 
-  // Load recent searches once on mount
+  // Load recent searches on mount
   useEffect(() => {
     setRecentSearches(loadRecentSearches());
   }, []);
 
-  // Load search index (lazy, once)
+  // Pre-load Pagefind when the modal first opens
   useEffect(() => {
-    if (isOpen && posts.length === 0) {
-      fetch('/search.json')
-        .then((res) => res.json())
-        .then((data) => setPosts(data))
-        .catch((err) => console.error('Failed to load search index', err));
+    if (isOpen) {
+      loadPagefind().then((pf) => { if (!pf) setIsUnavailable(true); });
     }
-  }, [isOpen, posts.length]);
+  }, [isOpen]);
 
-  // Debounce the raw query by DEBOUNCE_MS
+  // Debounce query
   useEffect(() => {
     if (!query) { setDebouncedQuery(''); return; }
     const timer = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Perform search against the debounced query
+  // Run Pagefind search on debounced query
   useEffect(() => {
     if (!debouncedQuery) {
       setAllResults([]);
@@ -131,40 +147,50 @@ export default function Search() {
       return;
     }
 
-    const fuse = new Fuse(posts, {
-      keys: [
-        { name: 'title', weight: 2 },
-        { name: 'excerpt', weight: 1 },
-        { name: 'tags', weight: 1 },
-        { name: 'category', weight: 0.5 },
-        { name: 'content', weight: 0.3 },
-      ],
-      threshold: 0.3,
-      includeMatches: true,
+    let cancelled = false;
+    setIsFetching(true);
+
+    loadPagefind().then(async (pf) => {
+      if (!pf || cancelled) { setIsFetching(false); return; }
+      try {
+        const search = await pf.search(debouncedQuery);
+        const fragments = await Promise.all(
+          search.results.slice(0, FETCH_RESULTS).map((r) => r.data())
+        );
+        if (cancelled) return;
+        setAllResults(
+          fragments.map((f: PagefindFragment) => ({
+            url: f.url,
+            title: cleanTitle(f.meta.title ?? ''),
+            excerpt: f.excerpt,
+            date: getDateFromUrl(f.url),
+            type: getResultType(f.url),
+          }))
+        );
+        setActiveIndex(-1);
+        setActiveType('All');
+      } finally {
+        if (!cancelled) setIsFetching(false);
+      }
     });
 
-    const rafId = requestAnimationFrame(() => {
-      setAllResults(fuse.search(debouncedQuery).slice(0, MAX_RESULTS) as FuseResult[]);
-      setActiveIndex(-1);
-      setActiveType('All');
-    });
-    return () => cancelAnimationFrame(rafId);
-  }, [debouncedQuery, posts]);
+    return () => { cancelled = true; };
+  }, [debouncedQuery]);
 
-  // Results filtered by active type tab
+  // Filtered results for the active type tab
   const displayedResults = useMemo(() => {
-    if (activeType === 'All') return allResults;
-    return allResults.filter((r) => getResultType(r.item.slug) === activeType);
+    const filtered = activeType === 'All' ? allResults : allResults.filter((r) => r.type === activeType);
+    return filtered.slice(0, MAX_RESULTS);
   }, [allResults, activeType]);
 
-  // Count per type for tab labels
+  // Count per type for tab badges
   const typeCounts = useMemo(() => {
     const counts: Record<ContentType, number> = { All: allResults.length, Post: 0, Flow: 0, Book: 0 };
-    for (const r of allResults) counts[getResultType(r.item.slug)]++;
+    for (const r of allResults) counts[r.type]++;
     return counts;
   }, [allResults]);
 
-  // Global keyboard shortcut (Cmd/Ctrl+K)
+  // Global Cmd/Ctrl+K + Escape shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -187,13 +213,14 @@ export default function Search() {
       setAllResults([]);
       setActiveIndex(-1);
       setActiveType('All');
+      setIsFetching(false);
     }
   }, [isOpen]);
 
-  // Click outside to close (effective on desktop; modal is full-screen on mobile)
+  // Click outside to close (desktop — modal is full-screen on mobile)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -202,9 +229,7 @@ export default function Search() {
   }, [isOpen]);
 
   function handleNavigate(q: string) {
-    if (q.trim()) {
-      setRecentSearches((prev) => persistRecentSearch(q.trim(), prev));
-    }
+    if (q.trim()) setRecentSearches((prev) => persistRecentSearch(q.trim(), prev));
     setIsOpen(false);
   }
 
@@ -218,7 +243,7 @@ export default function Search() {
       setActiveIndex((i) => Math.max(i - 1, -1));
     } else if (e.key === 'Enter' && activeIndex >= 0) {
       e.preventDefault();
-      router.push(getResultHref(displayedResults[activeIndex].item.slug));
+      router.push(displayedResults[activeIndex].url);
       handleNavigate(query);
     }
   }
@@ -227,6 +252,8 @@ export default function Search() {
     setRecentSearches([]);
     try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
   }
+
+  const showNoResults = !isTyping && !isFetching && debouncedQuery && displayedResults.length === 0;
 
   return (
     <>
@@ -270,7 +297,7 @@ export default function Search() {
               </button>
             </div>
 
-            {/* Type filter tabs — only when results exist */}
+            {/* Type filter tabs — visible when results exist */}
             {allResults.length > 0 && (
               <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-muted/10 shrink-0">
                 {CONTENT_TYPES.filter((type) => type === 'All' || typeCounts[type] > 0).map((type) => (
@@ -290,55 +317,65 @@ export default function Search() {
               </div>
             )}
 
-            {/* Scrollable body — fills remaining height on mobile, capped on desktop */}
+            {/* Scrollable body: flex-1 on mobile, capped at 60vh on desktop */}
             <div className="flex-1 sm:flex-none overflow-y-auto min-h-0 sm:max-h-[60vh]">
-              {/* Results list */}
+
+              {/* Results */}
               {displayedResults.length > 0 && (
                 <ul className="py-2">
-                  {displayedResults.map(({ item: post, matches }, index) => {
-                    const titleMatch = matches?.find((m) => m.key === 'title');
-                    const excerptMatch = matches?.find((m) => m.key === 'excerpt');
-                    const type = getResultType(post.slug);
-                    const isActive = index === activeIndex;
-
-                    return (
-                      <li key={post.slug}>
-                        <Link
-                          href={getResultHref(post.slug)}
-                          onClick={() => handleNavigate(query)}
-                          onMouseEnter={() => setActiveIndex(index)}
-                          className={`block px-4 py-3 transition-colors ${isActive ? 'bg-muted/10' : 'hover:bg-muted/5'}`}
-                        >
-                          <div className="flex items-baseline justify-between gap-2">
-                            <div className="text-sm font-serif font-bold text-heading truncate">
-                              {highlightText(post.title, titleMatch?.indices)}
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] font-mono text-muted/60">{post.date}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[type]}`}>
-                                {type}
-                              </span>
-                            </div>
+                  {displayedResults.map((result, index) => (
+                    <li key={result.url}>
+                      <Link
+                        href={result.url}
+                        onClick={() => handleNavigate(query)}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        className={`block px-4 py-3 transition-colors ${index === activeIndex ? 'bg-muted/10' : 'hover:bg-muted/5'}`}
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div className="text-sm font-serif font-bold text-heading truncate">
+                            {result.title}
                           </div>
-                          <div className="text-xs text-muted mt-1 line-clamp-1">
-                            {highlightText(post.excerpt, excerptMatch?.indices)}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {result.date && (
+                              <span className="text-[10px] font-mono text-muted/60">{result.date}</span>
+                            )}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[result.type]}`}>
+                              {result.type}
+                            </span>
                           </div>
-                        </Link>
-                      </li>
-                    );
-                  })}
+                        </div>
+                        {/* Pagefind excerpts already include <mark> highlight tags */}
+                        <div
+                          className="text-xs text-muted mt-1 line-clamp-2 [&_mark]:bg-transparent [&_mark]:text-accent [&_mark]:font-semibold [&_mark]:not-italic"
+                          dangerouslySetInnerHTML={{ __html: result.excerpt }}
+                        />
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               )}
 
-              {/* No results — shown only after debounce has settled to avoid flash */}
-              {!isSearching && debouncedQuery && displayedResults.length === 0 && (
-                <div className="p-8 text-center text-muted text-sm">
-                  {t('no_results')}
+              {/* No results */}
+              {showNoResults && (
+                <div className="p-8 text-center text-muted text-sm">{t('no_results')}</div>
+              )}
+
+              {/* Pagefind not yet built (dev without running build:dev) */}
+              {isUnavailable && !query && (
+                <div className="p-8 text-center text-muted text-sm space-y-1">
+                  <p>Search index not found.</p>
+                  <p>
+                    Run{' '}
+                    <code className="text-xs bg-muted/10 px-1 py-0.5 rounded">
+                      bun run build:dev
+                    </code>{' '}
+                    to generate it.
+                  </p>
                 </div>
               )}
 
-              {/* Recent searches — shown when input is empty */}
-              {!query && recentSearches.length > 0 && (
+              {/* Recent searches — shown when input is empty and pagefind is available */}
+              {!query && !isUnavailable && recentSearches.length > 0 && (
                 <div className="py-2">
                   <div className="flex items-center justify-between px-4 py-1">
                     <span className="text-[10px] font-medium text-muted uppercase tracking-wider">
