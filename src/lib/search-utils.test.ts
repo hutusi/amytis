@@ -123,6 +123,10 @@ describe('stripMarkdown', () => {
     expect(stripMarkdown('__bold__ and _italic_ text')).toBe('bold and italic text');
   });
 
+  test('strips GFM strikethrough markers', () => {
+    expect(stripMarkdown('~~deleted~~ and ~~removed~~')).toBe('deleted and removed');
+  });
+
   test('strips unordered list markers', () => {
     expect(stripMarkdown('- item one\n- item two')).toBe('item one item two');
   });

@@ -30,6 +30,7 @@ export function stripMarkdown(text: string): string {
     .replace(/^#{1,6}\s+/gm, '')               // heading markers
     .replace(/\*{1,2}([^*\n]+)\*{1,2}/g, '$1') // bold/italic (*)
     .replace(/_{1,2}([^_\n]+)_{1,2}/g, '$1')   // bold/italic (_)
+    .replace(/~~([^~\n]+)~~/g, '$1')            // strikethrough
     .replace(/^\s*[-*+>]\s+/gm, '')             // lists + blockquotes
     .replace(/^\s*\d+\.\s+/gm, '')              // ordered lists
     .replace(/\s+/g, ' ')                       // normalize whitespace

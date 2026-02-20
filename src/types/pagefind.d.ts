@@ -16,11 +16,15 @@ declare module '/pagefind/pagefind.js' {
     meta: {
       title?: string;
       image?: string;
+      /** Any custom data-pagefind-meta keys defined in the site */
+      [key: string]: string | undefined;
     };
     word_count: number;
   }
 
   export interface PagefindSearchResult {
+    /** Unique result ID, e.g. "en_6fceec9" */
+    id: string;
     /** Load the full result data (lazy, returns only the matching page chunk) */
     data: () => Promise<PagefindSearchFragment>;
   }

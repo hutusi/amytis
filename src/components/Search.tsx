@@ -59,7 +59,7 @@ function persistRecentSearch(query: string, current: string[]): string[] {
 interface PagefindFragment {
   url: string;
   excerpt: string; // contains <mark> tags
-  meta: { title?: string; image?: string; date?: string };
+  meta: { title?: string; image?: string; date?: string; [key: string]: string | undefined };
   word_count: number;
 }
 
@@ -229,7 +229,7 @@ export default function Search() {
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     // Number keys 1–4 switch type tabs when results are visible
-    if (allResults.length > 0 && ['1', '2', '3', '4'].includes(e.key)) {
+    if (allResults.length > 0 && e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
       const visibleTypes = CONTENT_TYPES.filter((ct) => ct === 'All' || typeCounts[ct] > 0);
       const target = visibleTypes[parseInt(e.key, 10) - 1];
       if (target) { e.preventDefault(); setActiveType(target); setActiveIndex(-1); return; }
@@ -296,8 +296,8 @@ export default function Search() {
             <div aria-live="polite" aria-atomic="true" className="sr-only">
               {debouncedQuery && !isFetching && (
                 displayedResults.length > 0
-                  ? `${totalFilteredCount} result${totalFilteredCount === 1 ? '' : 's'} for ${debouncedQuery}`
-                  : `No results for ${debouncedQuery}`
+                  ? tWith('search_results_found', { total: totalFilteredCount, query: debouncedQuery })
+                  : tWith('search_no_results_for', { query: debouncedQuery })
               )}
             </div>
             {/* Input row */}
@@ -350,7 +350,7 @@ export default function Search() {
                   >
                     {type === 'All' ? t('search_all') : t(TYPE_LABEL_KEYS[type])}
                     <span className="ml-1 text-[10px] opacity-60">{typeCounts[type]}</span>
-                    <span className="hidden sm:inline ml-1 text-[9px] opacity-30">{i + 1}</span>
+                    <span className="hidden sm:inline ml-1 text-[9px] opacity-30">⌥{i + 1}</span>
                   </button>
                 ))}
               </div>

@@ -192,8 +192,7 @@ server {
 
     # Cache Pagefind search index (regenerated on each build, so short TTL is fine)
     location /pagefind/ {
-        expires 1h;
-        add_header Cache-Control "public";
+        add_header Cache-Control "public, max-age=3600";
     }
 
     # trailingSlash is true, so pages are slug/index.html
