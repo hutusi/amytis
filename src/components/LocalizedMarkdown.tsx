@@ -5,7 +5,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 
 interface LocalizedMarkdownProps {
   content: string;
-  contentLocales?: Record<string, string>;
+  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string }>;
   latex?: boolean;
   slug?: string;
 }
@@ -16,6 +16,6 @@ interface LocalizedMarkdownProps {
  */
 export default function LocalizedMarkdown({ content, contentLocales, latex, slug }: LocalizedMarkdownProps) {
   const { language } = useLanguage();
-  const body = contentLocales?.[language] ?? content;
+  const body = contentLocales?.[language]?.content ?? content;
   return <MarkdownRenderer content={body} latex={latex} slug={slug} />;
 }

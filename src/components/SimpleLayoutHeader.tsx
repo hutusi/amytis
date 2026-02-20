@@ -2,30 +2,21 @@
 
 import { useLanguage } from './LanguageProvider';
 import { TranslationKey } from '@/i18n/translations';
-import { resolveLocaleValue } from '@/lib/i18n';
 
 interface SimpleLayoutHeaderProps {
   title: string;
   excerpt?: string;
   titleKey?: TranslationKey;
   subtitleKey?: TranslationKey;
-  titleOverride?: string | Record<string, string>;
-  subtitleOverride?: string | Record<string, string>;
+  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string }>;
 }
 
-export default function SimpleLayoutHeader({ title, excerpt, titleKey, subtitleKey, titleOverride, subtitleOverride }: SimpleLayoutHeaderProps) {
+export default function SimpleLayoutHeader({ title, excerpt, titleKey, subtitleKey, contentLocales }: SimpleLayoutHeaderProps) {
   const { t, language } = useLanguage();
 
-  const displayTitle = titleOverride
-    ? resolveLocaleValue(titleOverride, language)
-    : titleKey
-      ? t(titleKey)
-      : title;
-  const displaySubtitle = subtitleOverride
-    ? resolveLocaleValue(subtitleOverride, language)
-    : subtitleKey
-      ? t(subtitleKey)
-      : excerpt;
+  const localeData = contentLocales?.[language];
+  const displayTitle = localeData?.title ?? (titleKey ? t(titleKey) : title);
+  const displaySubtitle = localeData?.excerpt ?? (subtitleKey ? t(subtitleKey) : excerpt);
 
   return (
     <header className="page-header">

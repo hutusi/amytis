@@ -68,7 +68,7 @@ export interface PostData {
   readingTime: string;
   content: string;
   headings: Heading[];
-  contentLocales?: Record<string, string>;
+  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string }>;
 }
 
 export function calculateReadingTime(content: string): string {
@@ -455,16 +455,21 @@ export function getPostBySlug(slug: string): PostData | null {
 }
 
 /**
- * Load the body content (H1-stripped) of a locale variant file, e.g. about.zh.mdx.
+ * Load the content and frontmatter of a locale variant file, e.g. about.zh.mdx.
  * Returns null when the file does not exist or cannot be parsed.
  */
-function loadLocaleContent(slug: string, locale: string): string | null {
+function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string } | null {
   for (const ext of ['.mdx', '.md']) {
     const filePath = path.join(pagesDirectory, `${slug}.${locale}${ext}`);
     if (fs.existsSync(filePath)) {
       try {
-        const { content } = matter(fs.readFileSync(filePath, 'utf8'));
-        return content.replace(/^\s*#\s+[^\n]+/, '').trim();
+        const { data, content } = matter(fs.readFileSync(filePath, 'utf8'));
+        const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+        return {
+          content: body,
+          title: typeof data.title === 'string' ? data.title : undefined,
+          excerpt: typeof data.excerpt === 'string' ? data.excerpt : undefined,
+        };
       } catch {
         return null;
       }
@@ -479,10 +484,10 @@ function loadLocaleContent(slug: string, locale: string): string | null {
 function attachContentLocales(page: PostData, slug: string): PostData {
   const defaultLocale = siteConfig.i18n.defaultLocale;
   const otherLocales = siteConfig.i18n.locales.filter(l => l !== defaultLocale);
-  const contentLocales: Record<string, string> = {};
+  const contentLocales: Record<string, { content: string; title?: string; excerpt?: string }> = {};
   for (const locale of otherLocales) {
-    const localeContent = loadLocaleContent(slug, locale);
-    if (localeContent !== null) contentLocales[locale] = localeContent;
+    const localeData = loadLocaleContent(slug, locale);
+    if (localeData !== null) contentLocales[locale] = localeData;
   }
   return Object.keys(contentLocales).length > 0 ? { ...page, contentLocales } : page;
 }

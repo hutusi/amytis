@@ -7,11 +7,9 @@ interface SimpleLayoutProps {
   post: PostData;
   titleKey?: TranslationKey;
   subtitleKey?: TranslationKey;
-  titleOverride?: string | Record<string, string>;
-  subtitleOverride?: string | Record<string, string>;
 }
 
-export default function SimpleLayout({ post, titleKey, subtitleKey, titleOverride, subtitleOverride }: SimpleLayoutProps) {
+export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayoutProps) {
   return (
     <div className="layout-main">
       <article className="max-w-3xl mx-auto">
@@ -20,8 +18,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey, titleOverrid
           excerpt={post.excerpt}
           titleKey={titleKey}
           subtitleKey={subtitleKey}
-          titleOverride={titleOverride}
-          subtitleOverride={subtitleOverride}
+          contentLocales={post.contentLocales}
         />
 
         <LocalizedMarkdown content={post.content} contentLocales={post.contentLocales} latex={post.latex} slug={post.slug} />
