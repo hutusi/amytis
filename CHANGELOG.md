@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-20
+
+### Added
+- **Search Engine Upgrade**: Migrated from Fuse.js to **Pagefind** for high-performance, static full-text search with extremely low client-side overhead.
+- **Enhanced Search UI**:
+  - Full-content search with context highlighting and excerpts.
+  - Type-based filtering tabs (All, Post, Flow, Book).
+  - Recent searches history persisted in local storage.
+  - Interactive search tips panel with syntax hints.
+  - Advanced keyboard navigation (Tab-based focus trap, arrow keys, Alt+number shortcuts).
+  - Debounced input and visual loading states.
+  - Full-screen responsive layout for mobile devices.
+- **Search Utilities**: New unit-tested utility library for processing search results and metadata.
+- **Project Documentation**: Added a comprehensive `CHANGELOG.md` documenting the project's evolution from 1.0.0.
+
+### Changed
+- **Documentation Overhaul**: Streamlined `TODO.md` roadmap and updated `GEMINI.md` and `ARCHITECTURE.md` to reflect the new search architecture.
+- **i18n**: Fully localized search interface supporting both English and Chinese.
+
+### Fixed
+- **Hydration**: Suppressed body-level hydration warnings caused by browser extensions.
+- **Search Precision**: Improved title cleaning and date extraction for search results.
+
 ## [1.5.6] - 2026-02-19
 
 ### Added
