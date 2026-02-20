@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostData, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import { useScrollY } from '@/hooks/useScrollY';
 
 interface PostSidebarProps {
   seriesSlug?: string;
@@ -34,9 +35,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   const sidebarRef = useRef<HTMLElement>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const [tocCollapsed, setTocCollapsed] = useState(false);
+  const scrollY = useScrollY();
 
-  // Scroll tracking for page headings
-  const handleScroll = useCallback(() => {
+  // Derive active heading from shared scroll position
+  useEffect(() => {
     if (headings.length === 0) return;
 
     const headingElements = headings
@@ -45,7 +47,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
 
     if (headingElements.length === 0) return;
 
-    const scrollPosition = window.scrollY + 100;
+    const scrollPosition = scrollY + 100;
     let current = headingElements[0];
     for (const el of headingElements) {
       if (el.offsetTop <= scrollPosition) {
@@ -55,23 +57,11 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       }
     }
 
-    if (current) {
-      setActiveHeadingId(current.id);
-    }
-  }, [headings]);
-
-  useEffect(() => {
-    if (headings.length === 0) return;
-    
-    // Use requestAnimationFrame to avoid cascading render lint error on mount
-    const rafId = requestAnimationFrame(handleScroll);
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll, headings.length]);
+    const rafId = requestAnimationFrame(() => {
+      if (current) setActiveHeadingId(current.id);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [scrollY, headings]);
 
   const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
