@@ -43,7 +43,7 @@ export default function Footer() {
           <div>
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('explore')}</h4>
             <ul className="space-y-3 text-sm">
-              {[...siteConfig.nav].sort((a, b) => a.weight - b.weight).map((item) => {
+              {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
                 const key = item.name.toLowerCase() as TranslationKey;
                 const translated = t(key);
                 const label = translated !== key ? translated : item.name;

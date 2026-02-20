@@ -4,14 +4,20 @@ export const siteConfig = {
   baseUrl: "https://example.com", // Replace with your actual domain
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
   nav: [
-    { name: "Home", url: "/", weight: 1 },
-    { name: "Flow", url: "/flows", weight: 1.1 },
-    { name: "Books", url: "/books", weight: 1.3 },
-    { name: "Series", url: "/series", weight: 1.5 },
-    { name: "Archive", url: "/archive", weight: 2 },
-    { name: "Tags", url: "/tags", weight: 3 },
-    { name: "About", url: "/about", weight: 4 },
+    { name: "Flow", url: "/flows", weight: 1 },
+    { name: "Posts", url: "/posts", weight: 2 },
+    { name: "Series", url: "/series", weight: 3 },
+    { name: "Books", url: "/books", weight: 4 },
+    { name: "About", url: "/about", weight: 5 },
   ],
+  footer: {
+    explore: [
+      { name: "Archive", url: "/archive", weight: 1 },
+      { name: "Tags", url: "/tags", weight: 2 },
+      { name: "Links", url: "/links", weight: 3 },
+      { name: "About", url: "/about", weight: 4 },
+    ],
+  },
   social: {
     github: "https://github.com/hutusi/amytis",
     twitter: "https://twitter.com/hutusi",

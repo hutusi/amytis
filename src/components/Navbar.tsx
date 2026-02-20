@@ -21,6 +21,7 @@ interface NavbarProps {
 
 // Map from nav URL to feature key
 const FEATURE_URLS: Partial<Record<string, keyof typeof siteConfig.features>> = {
+  '/posts': 'posts',
   '/flows': 'flows',
   '/series': 'series',
   '/books': 'books',
