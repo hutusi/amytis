@@ -4,9 +4,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
+import { type ContentType, getResultType, getDateFromUrl, cleanTitle } from '@/lib/search-utils';
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-type ContentType = 'All' | 'Post' | 'Flow' | 'Book';
 
 interface DisplayResult {
   url: string;
@@ -32,24 +31,6 @@ const TYPE_STYLES: Record<string, string> = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getResultType(url: string): ContentType {
-  if (url.includes('/flows/')) return 'Flow';
-  if (url.includes('/books/')) return 'Book';
-  return 'Post';
-}
-
-/** Extract YYYY-MM-DD from a flow URL like /flows/2026/01/15/ */
-function getDateFromUrl(url: string): string {
-  const m = url.match(/\/flows\/(\d{4})\/(\d{2})\/(\d{2})\//);
-  return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
-}
-
-/** Strip the " | Site Name" suffix that Pagefind picks up from <title> */
-function cleanTitle(raw: string): string {
-  const i = raw.lastIndexOf(' | ');
-  return i >= 0 ? raw.slice(0, i) : raw;
-}
 
 function loadRecentSearches(): string[] {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
