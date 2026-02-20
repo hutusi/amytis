@@ -8,6 +8,8 @@ import Comments from '@/components/Comments';
 import ExternalLinks from '@/components/ExternalLinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
+import PostNavigation from '@/components/PostNavigation';
+import AuthorCard from '@/components/AuthorCard';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
 
@@ -16,9 +18,11 @@ interface PostLayoutProps {
   relatedPosts?: PostData[];
   seriesPosts?: PostData[];
   seriesTitle?: string;
+  prevPost?: PostData | null;
+  nextPost?: PostData | null;
 }
 
-export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle }: PostLayoutProps) {
+export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost }: PostLayoutProps) {
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
   const showSidebar = showToc || hasSeries;
@@ -104,11 +108,24 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
 
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-12 pt-8 border-t border-muted/10 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
+              {post.tags.map((tag) => (
+                <Tag key={tag} tag={tag} variant="default" />
+              ))}
+            </div>
+          )}
+
           {post.externalLinks && post.externalLinks.length > 0 && (
             <ExternalLinks links={post.externalLinks} />
           )}
 
+          <AuthorCard authors={post.authors} />
+
           <RelatedPosts posts={relatedPosts || []} />
+
+          <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} />
 
           <Comments slug={post.slug} />
         </article>

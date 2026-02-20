@@ -13,6 +13,19 @@ interface PostSidebarProps {
   headings: Heading[];
 }
 
+function getVisibleIndices(total: number, current: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+  const result: (number | 'ellipsis')[] = [];
+  result.push(0);
+  const windowStart = Math.max(1, current - 2);
+  const windowEnd = Math.min(total - 2, current + 2);
+  if (windowStart > 1) result.push('ellipsis');
+  for (let i = windowStart; i <= windowEnd; i++) result.push(i);
+  if (windowEnd < total - 2) result.push('ellipsis');
+  result.push(total - 1);
+  return result;
+}
+
 export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings }: PostSidebarProps) {
   const { t } = useLanguage();
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
@@ -119,9 +132,17 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
           <nav aria-label="Series navigation" className="mb-6">
             <ul className="space-y-1 relative">
               <div className="absolute left-[11px] top-3 bottom-3 w-px bg-muted/15" />
-              {posts!.map((post, index) => {
+              {getVisibleIndices(posts!.length, currentIndex).map((item, i) => {
+                if (item === 'ellipsis') {
+                  return (
+                    <li key={`ellipsis-${i}`} className="flex items-center py-1 pl-3">
+                      <span className="text-xs font-mono text-muted/40 tracking-widest">···</span>
+                    </li>
+                  );
+                }
+                const post = posts![item];
                 const isCurrent = post.slug === currentSlug;
-                const isPast = index < currentIndex;
+                const isPast = item < currentIndex;
 
                 return (
                   <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
@@ -139,7 +160,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                             ? 'bg-accent/20 text-accent'
                             : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
                       }`}>
-                        {String(index + 1).padStart(2, '0')}
+                        {String(item + 1).padStart(2, '0')}
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
                         <span className={`block text-sm leading-snug transition-colors ${

@@ -90,6 +90,10 @@ export const siteConfig = {
       measurementId: '', // G-XXXXXXXXXX
     },
   },
+  authors: {
+    // Map display name (as used in post frontmatter) to author profile
+    // "Author Name": { bio: "Short bio shown in author card below each post." },
+  } as Record<string, { bio?: string }>,
   comments: {
     provider: 'giscus', // 'giscus' | 'disqus' | null
     giscus: {

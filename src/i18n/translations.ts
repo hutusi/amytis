@@ -78,6 +78,7 @@ export const translations = {
     search_tip_phrase: "Quoted string for exact matching (\" \" = Exact match)",
     search_tip_and: "Use spaces to combine keywords (Space = AND)",
     search_tip_exclude: "Exclude a term (- = Exclude)",
+    discuss_post: "Discuss this post",
   },
   zh: {
     home: "首页",
@@ -158,6 +159,7 @@ export const translations = {
     search_tip_phrase: "加引号精确匹配短语（\" \" 表示精确匹配）",
     search_tip_and: "使用空格组合关键词（空格表示 AND）",
     search_tip_exclude: "排除关键词（- 表示排除）",
+    discuss_post: "讨论这篇文章",
   },
 };
 

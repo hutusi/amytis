@@ -704,6 +704,16 @@ export function getFeaturedPosts(): PostData[] {
   return allPosts.filter(post => post.featured);
 }
 
+export function getAdjacentPosts(slug: string): { prev: PostData | null; next: PostData | null } {
+  const allPosts = getAllPosts(); // sorted desc by date (newest first)
+  const index = allPosts.findIndex(p => p.slug === slug);
+  if (index === -1) return { prev: null, next: null };
+  return {
+    prev: index < allPosts.length - 1 ? allPosts[index + 1] : null, // older post
+    next: index > 0 ? allPosts[index - 1] : null,                   // newer post
+  };
+}
+
 export function getFeaturedSeries(): Record<string, PostData[]> {
   const allSeries = getAllSeries();
   const featuredSeries: Record<string, PostData[]> = {};
