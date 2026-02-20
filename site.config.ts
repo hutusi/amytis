@@ -17,6 +17,11 @@ export const siteConfig = {
       { name: "Links", url: "/links", weight: 3 },
       { name: "About", url: "/about", weight: 4 },
     ],
+    builtWith: {
+      show: true,
+      url: "https://github.com/hutusi/amytis",
+      text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
+    },
   },
   social: {
     github: "https://github.com/hutusi/amytis",

@@ -92,10 +92,18 @@ export default function Footer() {
              <LanguageSwitch />
              <span className="opacity-20">|</span>
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
-             <span className="opacity-20">|</span>
-             <a href="https://github.com/hutusi/amytis" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
-               Built with Amytis
-             </a>
+             {siteConfig.footer?.builtWith?.show !== false && (() => {
+               const cfg = siteConfig.footer.builtWith!;
+               const label = cfg.text ? resolveLocaleValue(cfg.text, language) : t('built_with');
+               return (
+                 <>
+                   <span className="opacity-20">|</span>
+                   <a href={cfg.url ?? 'https://github.com/hutusi/amytis'} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
+                     {label}
+                   </a>
+                 </>
+               );
+             })()}
           </div>
         </div>
       </div>
