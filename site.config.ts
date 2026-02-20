@@ -48,6 +48,24 @@ export const siteConfig = {
   flows: {
     recentCount: 5,
   },
+  features: {
+    posts: {
+      enabled: true,
+      name: { en: "Posts", zh: "文章" },
+    },
+    series: {
+      enabled: true,
+      name: { en: "Series", zh: "系列" },
+    },
+    books: {
+      enabled: true,
+      name: { en: "Books", zh: "书籍" },
+    },
+    flows: {
+      enabled: true,
+      name: { en: "Flow", zh: "随笔" },
+    },
+  },
   featured: {
     series: {
       scrollThreshold: 2,  // Enable scrolling when more than this number

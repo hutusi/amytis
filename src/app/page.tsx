@@ -21,62 +21,74 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  const allPosts = getAllPosts();
-  const allSeries = getAllSeries();
-  const featuredPosts = getFeaturedPosts();
-  const featuredBooks = getFeaturedBooks();
-  const recentFlows = getRecentFlows(siteConfig.flows?.recentCount ?? 5);
+  const features = siteConfig.features;
+  const featuredConfig = siteConfig.featured || { series: { scrollThreshold: 2, maxItems: 6 }, stories: { scrollThreshold: 1, maxItems: 5 } };
+
+  // Load data only for enabled features
+  const allSeries = features?.series?.enabled !== false ? getAllSeries() : {};
+  const featuredBooks = features?.books?.enabled !== false ? getFeaturedBooks() : [];
+  const recentFlows = features?.flows?.enabled !== false
+    ? getRecentFlows(siteConfig.flows?.recentCount ?? 5)
+    : [];
+  const allPosts = features?.posts?.enabled !== false ? getAllPosts() : [];
+  const featuredPosts = features?.posts?.enabled !== false ? getFeaturedPosts() : [];
 
   const pageSize = siteConfig.pagination.posts;
   const posts = allPosts.slice(0, pageSize);
 
-  const featuredConfig = siteConfig.featured || { series: { scrollThreshold: 2, maxItems: 6 }, stories: { scrollThreshold: 1, maxItems: 5 } };
-
   // Prepare serializable series data for the client component
-  const seriesItems: SeriesItem[] = Object.keys(allSeries).map(name => {
-    const seriesPosts = allSeries[name];
-    const slug = name.toLowerCase().replace(/ /g, '-');
-    const seriesData = getSeriesData(slug);
-    return {
-      name,
-      title: seriesData?.title || name,
-      excerpt: seriesData?.excerpt || "A growing collection of related thoughts.",
-      coverImage: seriesData?.coverImage,
-      url: `/series/${slug}`,
-      postCount: seriesPosts.length,
-      topPosts: seriesPosts.slice(0, 3).map(p => ({ slug: p.slug, title: p.title })),
-    };
-  });
+  const seriesItems: SeriesItem[] = features?.series?.enabled !== false
+    ? Object.keys(allSeries).map(name => {
+        const seriesPosts = allSeries[name];
+        const slug = name.toLowerCase().replace(/ /g, '-');
+        const seriesData = getSeriesData(slug);
+        return {
+          name,
+          title: seriesData?.title || name,
+          excerpt: seriesData?.excerpt || "A growing collection of related thoughts.",
+          coverImage: seriesData?.coverImage,
+          url: `/series/${slug}`,
+          postCount: seriesPosts.length,
+          topPosts: seriesPosts.slice(0, 3).map(p => ({ slug: p.slug, title: p.title })),
+        };
+      })
+    : [];
 
   // Prepare serializable books data
-  const bookItems: BookItem[] = featuredBooks.map(b => ({
-    slug: b.slug,
-    title: b.title,
-    excerpt: b.excerpt,
-    coverImage: b.coverImage,
-    authors: b.authors,
-    chapterCount: b.chapters.length,
-    firstChapter: b.chapters[0]?.file,
-  }));
+  const bookItems: BookItem[] = features?.books?.enabled !== false
+    ? featuredBooks.map(b => ({
+        slug: b.slug,
+        title: b.title,
+        excerpt: b.excerpt,
+        coverImage: b.coverImage,
+        authors: b.authors,
+        chapterCount: b.chapters.length,
+        firstChapter: b.chapters[0]?.file,
+      }))
+    : [];
 
   // Prepare serializable flow data
-  const recentNoteItems: RecentNoteItem[] = recentFlows.map(f => ({
-    slug: f.slug,
-    date: f.date,
-    title: f.title,
-    excerpt: f.excerpt,
-  }));
+  const recentNoteItems: RecentNoteItem[] = features?.flows?.enabled !== false
+    ? recentFlows.map(f => ({
+        slug: f.slug,
+        date: f.date,
+        title: f.title,
+        excerpt: f.excerpt,
+      }))
+    : [];
 
   // Prepare serializable featured posts data
-  const featuredItems: FeaturedPost[] = featuredPosts.map(p => ({
-    slug: p.slug,
-    title: p.title,
-    excerpt: p.excerpt,
-    date: p.date,
-    category: p.category,
-    readingTime: p.readingTime,
-    coverImage: p.coverImage,
-  }));
+  const featuredItems: FeaturedPost[] = features?.posts?.enabled !== false
+    ? featuredPosts.map(p => ({
+        slug: p.slug,
+        title: p.title,
+        excerpt: p.excerpt,
+        date: p.date,
+        category: p.category,
+        readingTime: p.readingTime,
+        coverImage: p.coverImage,
+      }))
+    : [];
 
   return (
     <div>
@@ -87,23 +99,33 @@ export default function Home() {
       />
 
       <div className="layout-main pt-0 md:pt-0">
-        <CuratedSeriesSection
-          allSeries={seriesItems}
-          maxItems={featuredConfig.series.maxItems}
-          scrollThreshold={featuredConfig.series.scrollThreshold}
-        />
+        {features?.series?.enabled !== false && (
+          <CuratedSeriesSection
+            allSeries={seriesItems}
+            maxItems={featuredConfig.series.maxItems}
+            scrollThreshold={featuredConfig.series.scrollThreshold}
+          />
+        )}
 
-        <SelectedBooksSection books={bookItems} />
+        {features?.books?.enabled !== false && (
+          <SelectedBooksSection books={bookItems} />
+        )}
 
-        <FeaturedStoriesSection
-          allFeatured={featuredItems}
-          maxItems={featuredConfig.stories.maxItems}
-          scrollThreshold={featuredConfig.stories.scrollThreshold}
-        />
+        {features?.posts?.enabled !== false && (
+          <>
+            <FeaturedStoriesSection
+              allFeatured={featuredItems}
+              maxItems={featuredConfig.stories.maxItems}
+              scrollThreshold={featuredConfig.stories.scrollThreshold}
+            />
 
-        <LatestWritingSection posts={posts} totalCount={allPosts.length} />
+            <LatestWritingSection posts={posts} totalCount={allPosts.length} />
+          </>
+        )}
 
-        <RecentNotesSection notes={recentNoteItems} />
+        {features?.flows?.enabled !== false && (
+          <RecentNotesSection notes={recentNoteItems} />
+        )}
       </div>
     </div>
   );

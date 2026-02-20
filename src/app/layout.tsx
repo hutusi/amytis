@@ -61,27 +61,34 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const allSeries = getAllSeries();
+  const features = siteConfig.features;
+
+  // Build series list for navbar (only when series feature is enabled)
   const featuredSeries = siteConfig.series?.navbar;
-  
-  const seriesKeys = Object.keys(allSeries).sort();
-  const filteredKeys = featuredSeries 
-    ? seriesKeys.filter(slug => featuredSeries.includes(slug))
-    : seriesKeys.slice(0, 5);
+  let seriesList: { name: string; slug: string }[] = [];
+  if (features?.series?.enabled !== false) {
+    const allSeries = getAllSeries();
+    const seriesKeys = Object.keys(allSeries).sort();
+    const filteredKeys = featuredSeries
+      ? seriesKeys.filter(slug => featuredSeries.includes(slug))
+      : seriesKeys.slice(0, 5);
+    seriesList = filteredKeys.map(slug => ({
+      name: allSeries[slug][0]?.series || slug,
+      slug,
+    }));
+  }
 
-  const seriesList = filteredKeys.map(slug => ({
-    name: allSeries[slug][0]?.series || slug,
-    slug,
-  }));
-
-  // Build books list for navbar
-  const allBooks = getAllBooks();
-  const featuredBookSlugs = siteConfig.books?.navbar;
-  const booksList = featuredBookSlugs && featuredBookSlugs.length > 0
-    ? allBooks
-        .filter(book => featuredBookSlugs.includes(book.slug))
-        .map(book => ({ name: book.title, slug: book.slug }))
-    : allBooks.map(book => ({ name: book.title, slug: book.slug }));
+  // Build books list for navbar (only when books feature is enabled)
+  let booksList: { name: string; slug: string }[] = [];
+  if (features?.books?.enabled !== false) {
+    const allBooks = getAllBooks();
+    const featuredBookSlugs = siteConfig.books?.navbar;
+    booksList = featuredBookSlugs && featuredBookSlugs.length > 0
+      ? allBooks
+          .filter(book => featuredBookSlugs.includes(book.slug))
+          .map(book => ({ name: book.title, slug: book.slug }))
+      : allBooks.map(book => ({ name: book.title, slug: book.slug }));
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>

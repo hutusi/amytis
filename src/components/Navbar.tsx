@@ -19,12 +19,29 @@ interface NavbarProps {
   booksList?: NavItem[];
 }
 
+// Map from nav URL to feature key
+const FEATURE_URLS: Partial<Record<string, keyof typeof siteConfig.features>> = {
+  '/flows': 'flows',
+  '/series': 'series',
+  '/books': 'books',
+};
+
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, language } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navItems = [...siteConfig.nav].sort((a, b) => a.weight - b.weight);
+  const navItems = [...siteConfig.nav]
+    .filter(item => {
+      const featureKey = FEATURE_URLS[item.url];
+      if (!featureKey) return true; // not a feature-gated item, always show
+      return siteConfig.features?.[featureKey]?.enabled !== false;
+    })
+    .sort((a, b) => a.weight - b.weight);
 
-  const getLabel = (name: string): string => {
+  const getLabel = (name: string, url: string): string => {
+    const featureKey = FEATURE_URLS[url];
+    if (featureKey && siteConfig.features?.[featureKey]?.name) {
+      return resolveLocaleValue(siteConfig.features[featureKey].name, language);
+    }
     const key = name.toLowerCase() as TranslationKey;
     const translated = t(key);
     return translated !== key ? translated : name;
@@ -81,7 +98,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       href={item.url}
                       className="text-sm font-sans font-medium text-foreground/80 hover:text-heading no-underline transition-colors duration-200 flex items-center gap-1 py-4"
                     >
-                      {getLabel(item.name)}
+                      {getLabel(item.name, item.url)}
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
                         <path d="M6 9l6 6 6-6"/>
                       </svg>
@@ -117,7 +134,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       href={item.url}
                       className="text-sm font-sans font-medium text-foreground/80 hover:text-heading no-underline transition-colors duration-200 flex items-center gap-1 py-4"
                     >
-                      {getLabel(item.name)}
+                      {getLabel(item.name, item.url)}
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
                         <path d="M6 9l6 6 6-6"/>
                       </svg>
@@ -153,7 +170,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                   {...props}
                   className="text-sm font-sans font-medium text-foreground/80 hover:text-heading no-underline transition-colors duration-200 flex items-center gap-1"
                 >
-                  {getLabel(item.name)}
+                  {getLabel(item.name, item.url)}
                   {isExternal && (
                     <svg
                       width="12"
@@ -225,7 +242,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                     className="flex items-center gap-2 px-3 py-3 text-base font-sans font-medium text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    {getLabel(item.name)}
+                    {getLabel(item.name, item.url)}
                     {isExternal && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                         <path d="M7 17l9.2-9.2M17 17V7H7" />
