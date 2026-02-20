@@ -18,8 +18,14 @@ export default function LocaleSwitch({
   useEffect(() => {
     const container = ref.current;
     if (!container) return;
-    container.querySelectorAll<HTMLElement>('[data-locale]').forEach((el) => {
-      el.style.display = el.dataset.locale === language ? '' : 'none';
+    const elements = container.querySelectorAll<HTMLElement>('[data-locale]');
+    let hasMatch = false;
+    elements.forEach((el) => {
+      if (el.dataset.locale === language) hasMatch = true;
+    });
+    const effectiveLang = hasMatch ? language : elements[0]?.dataset.locale;
+    elements.forEach((el) => {
+      el.style.display = el.dataset.locale === effectiveLang ? '' : 'none';
     });
   }, [language]);
 

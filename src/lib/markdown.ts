@@ -513,10 +513,10 @@ export function getAllPages(): PostData[] {
     .filter(item => {
       if (!item.isFile()) return false;
       if (!item.name.endsWith('.mdx') && !item.name.endsWith('.md')) return false;
-      // Exclude locale variant files (e.g. about.zh.mdx) — they are not standalone routes
+      // Exclude locale variant files (e.g. about.zh.mdx, about.en.mdx) — they are not standalone routes
       const base = item.name.replace(/\.mdx?$/, '');
       const parts = base.split('.');
-      if (parts.length > 1 && siteConfig.i18n.locales.includes(parts[parts.length - 1]) && parts[parts.length - 1] !== defaultLocale) {
+      if (parts.length > 1 && siteConfig.i18n.locales.includes(parts[parts.length - 1])) {
         return false;
       }
       return true;
