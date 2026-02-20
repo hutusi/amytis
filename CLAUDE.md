@@ -22,7 +22,7 @@ bun test path/to/file.test.ts  # Run a single test file
 
 # Build
 bun run build              # Full production build (copies assets, builds Next.js, optimizes images)
-bun run build:dev          # Development build (no image optimization, faster)
+bun run build:dev          # Development build (no image optimization, faster) — also regenerates Pagefind search index in public/pagefind/
 bun run clean              # Remove .next, out, public/posts directories
 
 # Content creation
@@ -58,6 +58,7 @@ bun run new-flow --mdx              # Use .mdx format instead
 
 - `site.config.ts` - Site configuration (nav, social, pagination, themes, i18n, analytics, comments)
 - `src/lib/markdown.ts` - Data access layer with all content query functions
+- `src/lib/search-utils.ts` - Pure search utilities (URL type detection, date extraction, title cleaning, markdown stripping) shared by `Search` and the search index route
 - `src/app/globals.css` - Theme CSS variables and color palettes
 - `src/components/MarkdownRenderer.tsx` - MDX rendering with all plugins
 - `src/i18n/translations.ts` - Language strings for i18n
@@ -187,7 +188,7 @@ chapters:
 - `SeriesCatalog` - Timeline-style series post listing with numbered entries and progress indicator
 - `SeriesSidebar` - Series navigation sidebar with progress bar and color-coded states
 - `SeriesList` - Mobile-optimized series navigation matching sidebar design
-- `Search` - Client-side fuzzy search (Cmd/Ctrl+K) using Fuse.js
+- `Search` - Full-text search (Cmd/Ctrl+K) powered by Pagefind (build-time index); features type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation (arrows + number keys), debounced input, body scroll lock, focus trap, ARIA accessibility, and search syntax tips (`"phrase"`, `-exclude`)
 - `TableOfContents` - Sticky TOC with scroll tracking, reading progress, and back-to-top
 - `MarkdownRenderer` - MDX rendering with GFM, math, syntax highlighting, diagrams
 - `CoverImage` - Optimized image component with WebP support
