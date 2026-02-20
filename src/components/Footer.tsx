@@ -78,7 +78,7 @@ export default function Footer() {
               )}
               <li>
                 <a href="/feed.xml" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                  RSS Feed
+                  {t('rss_feed')}
                 </a>
               </li>
             </ul>
@@ -91,7 +91,7 @@ export default function Footer() {
           <div className="flex items-center gap-6">
              <LanguageSwitch />
              <span className="opacity-20">|</span>
-             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">Privacy</Link>
+             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
              <span className="opacity-20">|</span>
              <a href="https://github.com/hutusi/amytis" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
                Built with Amytis
