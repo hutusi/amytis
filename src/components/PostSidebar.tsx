@@ -35,6 +35,8 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   const sidebarRef = useRef<HTMLElement>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const [tocCollapsed, setTocCollapsed] = useState(false);
+  // Collapse series list by default when TOC is also present, so TOC is immediately visible
+  const [seriesCollapsed, setSeriesCollapsed] = useState(hasSeries && headings.length > 0);
   const scrollY = useScrollY();
 
   // Derive active heading from shared scroll position
@@ -93,96 +95,110 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
     >
       {/* Series section */}
       {hasSeries && (
-        <>
-          <div className="mb-6 pb-4 border-b border-muted/10">
-            <Link href={`/series/${seriesSlug}`} className="group block no-underline">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-2 block">
+        <div className={`mb-6 ${headings.length > 0 ? 'pb-4 border-b border-muted/10' : ''}`}>
+          {/* Header — always visible */}
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <Link href={`/series/${seriesSlug}`} className="group block no-underline flex-1 min-w-0">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-1 block">
                 {t('series')}
               </span>
-              <h3 className="font-serif font-bold text-heading text-lg leading-snug group-hover:text-accent transition-colors">
+              <h3 className="font-serif font-bold text-heading text-base leading-snug group-hover:text-accent transition-colors">
                 {seriesTitle}
               </h3>
             </Link>
-
-            {/* Progress */}
-            <div className="mt-3 flex items-center gap-3">
-              <div className="flex-1 h-1 bg-muted/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-accent/60 rounded-full transition-all duration-500"
-                  style={{ width: `${((currentIndex + 1) / posts!.length) * 100}%` }}
-                />
-              </div>
-              <span className="text-xs font-mono text-muted whitespace-nowrap">
-                {currentIndex + 1}/{posts!.length}
-              </span>
-            </div>
-          </div>
-
-          {/* Series posts list */}
-          <nav aria-label="Series navigation" className="mb-6">
-            <ul className="space-y-1 relative">
-              <div className="absolute left-[11px] top-3 bottom-3 w-px bg-muted/15" />
-              {getVisibleIndices(posts!.length, currentIndex).map((item, i) => {
-                if (item === 'ellipsis') {
-                  return (
-                    <li key={`ellipsis-${i}`} className="flex items-center py-1 pl-3">
-                      <span className="text-xs font-mono text-muted/40 tracking-widest">···</span>
-                    </li>
-                  );
-                }
-                const post = posts![item];
-                const isCurrent = post.slug === currentSlug;
-                const isPast = item < currentIndex;
-
-                return (
-                  <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
-                    <Link
-                      href={`/posts/${post.slug}`}
-                      className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
-                        isCurrent ? 'bg-accent/5' : 'hover:bg-muted/5'
-                      }`}
-                      aria-current={isCurrent ? 'page' : undefined}
-                    >
-                      <div className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-colors ${
-                        isCurrent
-                          ? 'bg-accent text-white shadow-sm shadow-accent/30'
-                          : isPast
-                            ? 'bg-accent/20 text-accent'
-                            : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
-                      }`}>
-                        {String(item + 1).padStart(2, '0')}
-                      </div>
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <span className={`block text-sm leading-snug transition-colors ${
-                          isCurrent
-                            ? 'text-accent font-semibold'
-                            : isPast
-                              ? 'text-foreground/70 group-hover:text-foreground'
-                              : 'text-muted group-hover:text-foreground'
-                        }`}>
-                          {post.title}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* Footer link */}
-          <div className="mb-6 pb-4 border-b border-muted/10">
-            <Link
-              href={`/series/${seriesSlug}`}
-              className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
+            <button
+              onClick={() => setSeriesCollapsed(prev => !prev)}
+              className="flex-shrink-0 mt-5 text-muted hover:text-foreground transition-colors"
+              aria-label={seriesCollapsed ? 'Expand series' : 'Collapse series'}
             >
-              {t('view_full_series')}
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${seriesCollapsed ? '' : 'rotate-180'}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
-            </Link>
+            </button>
           </div>
-        </>
+
+          {/* Progress bar — always visible */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-1 bg-muted/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent/60 rounded-full transition-all duration-500"
+                style={{ width: `${((currentIndex + 1) / posts!.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono text-muted whitespace-nowrap">
+              {currentIndex + 1}/{posts!.length}
+            </span>
+          </div>
+
+          {/* Collapsible: post list + footer link */}
+          {!seriesCollapsed && (
+            <>
+              <nav aria-label="Series navigation" className="mb-4 animate-slide-down">
+                <ul className="space-y-1 relative">
+                  <div className="absolute left-[11px] top-3 bottom-3 w-px bg-muted/15" />
+                  {getVisibleIndices(posts!.length, currentIndex).map((item, i) => {
+                    if (item === 'ellipsis') {
+                      return (
+                        <li key={`ellipsis-${i}`} className="flex items-center py-1 pl-3">
+                          <span className="text-xs font-mono text-muted/40 tracking-widest">···</span>
+                        </li>
+                      );
+                    }
+                    const post = posts![item];
+                    const isCurrent = post.slug === currentSlug;
+                    const isPast = item < currentIndex;
+
+                    return (
+                      <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
+                        <Link
+                          href={`/posts/${post.slug}`}
+                          className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
+                            isCurrent ? 'bg-accent/5' : 'hover:bg-muted/5'
+                          }`}
+                          aria-current={isCurrent ? 'page' : undefined}
+                        >
+                          <div className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-colors ${
+                            isCurrent
+                              ? 'bg-accent text-white shadow-sm shadow-accent/30'
+                              : isPast
+                                ? 'bg-accent/20 text-accent'
+                                : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
+                          }`}>
+                            {String(item + 1).padStart(2, '0')}
+                          </div>
+                          <div className="flex-1 min-w-0 pt-0.5">
+                            <span className={`block text-sm leading-snug transition-colors ${
+                              isCurrent
+                                ? 'text-accent font-semibold'
+                                : isPast
+                                  ? 'text-foreground/70 group-hover:text-foreground'
+                                  : 'text-muted group-hover:text-foreground'
+                            }`}>
+                              {post.title}
+                            </span>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+
+              <Link
+                href={`/series/${seriesSlug}`}
+                className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
+              >
+                {t('view_full_series')}
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </>
+          )}
+        </div>
       )}
 
       {/* Page TOC */}
