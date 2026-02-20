@@ -88,6 +88,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
         data-palette={siteConfig.themeColor}
+        suppressHydrationWarning
       >
         {/* Skip to main content link for accessibility */}
         <a

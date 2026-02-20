@@ -43,6 +43,9 @@ next-env.d.ts
 # copied assets
 /public/posts/
 
+# pagefind index (generated after build)
+/public/pagefind/
+
 # image optimization
 /public/**/nextImageExportOptimizer/
 !/public/next-image-export-optimizer-hashes.json

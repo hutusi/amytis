@@ -1,4 +1,5 @@
 import { getAllPosts, getAllBooks, getBookChapter, getAllFlows } from '@/lib/markdown';
+import { stripMarkdown } from '@/lib/search-utils';
 
 export const dynamic = 'force-static';
 
@@ -12,6 +13,7 @@ export async function GET() {
     excerpt: post.excerpt,
     category: post.category,
     tags: post.tags,
+    content: stripMarkdown(post.content),
   }));
 
   // Add book chapters to search index
@@ -27,6 +29,7 @@ export async function GET() {
           excerpt: chapter.excerpt || '',
           category: 'Book',
           tags: [],
+          content: stripMarkdown(chapter.content),
         });
       }
     }
@@ -42,6 +45,7 @@ export async function GET() {
       excerpt: flow.excerpt,
       category: 'Flow',
       tags: flow.tags,
+      content: stripMarkdown(flow.content),
     });
   }
 
