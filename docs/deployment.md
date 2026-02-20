@@ -17,7 +17,7 @@ bun run build:dev
 bun run clean && bun run build
 ```
 
-The `out/` directory contains plain HTML, CSS, JS, and images — ready to be served by any static file server.
+The `out/` directory contains plain HTML, CSS, JS, images, and the Pagefind search index (`out/pagefind/`) — ready to be served by any static file server.
 
 ### Preview Locally
 
@@ -190,6 +190,12 @@ server {
         add_header Cache-Control "public";
     }
 
+    # Cache Pagefind search index (regenerated on each build, so short TTL is fine)
+    location /pagefind/ {
+        expires 1h;
+        add_header Cache-Control "public";
+    }
+
     # trailingSlash is true, so pages are slug/index.html
     # Redirect URLs without trailing slash to add one (except files)
     location / {
@@ -227,6 +233,9 @@ yourdomain.com {
 
     @postassets path /posts/*
     header @postassets Cache-Control "public, max-age=2592000"
+
+    @pagefind path /pagefind/*
+    header @pagefind Cache-Control "public, max-age=3600"
 
     handle_errors {
         rewrite * /404/index.html

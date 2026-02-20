@@ -75,7 +75,7 @@ src/app/
 
 ### Navigation & Discovery
 - **`TableOfContents`** - Sticky TOC with scroll-based tracking.
-- **`Search`** - Client-side fuzzy search modal (Cmd/Ctrl+K).
+- **`Search`** - Full-text search modal (Cmd/Ctrl+K) powered by Pagefind. Supports type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation, debounced input, focus trap, and ARIA accessibility. Search syntax: `"exact phrase"`, `word1 word2` (AND), `-exclude`.
 - **`Pagination`** - Previous/Next page navigation.
 - **`ReadingProgressBar`** - Top-of-page progress bar for book chapters.
 
@@ -100,4 +100,5 @@ Theming is handled by `next-themes` and Tailwind CSS v4. `src/app/globals.css` d
 
 1. **`scripts/copy-assets.ts`** - Copies images from content directories (`posts/`, `series/`, `books/`, `flows/`) to `public/posts/` for static hosting.
 2. **`next build`** - Next.js static export to `out/`.
-3. **`next-image-export-optimizer`** - Generates optimized WebP variants.
+3. **`next-image-export-optimizer`** - Generates optimized WebP variants (production build only).
+4. **`pagefind --site out`** - Crawls the exported HTML and builds a full-text search index in `out/pagefind/`. The index is loaded at runtime by `src/components/Search.tsx` via a dynamic import. Pure utility functions used by the search component and the search index route live in `src/lib/search-utils.ts`.
