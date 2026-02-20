@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
 import { type ContentType, getResultType, getDateFromUrl, cleanTitle } from '@/lib/search-utils';
+import type { TranslationKey } from '@/i18n/translations';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface DisplayResult {
@@ -23,6 +24,12 @@ const MAX_RECENT = 5;
 const MAX_RESULTS = 8;
 const FETCH_RESULTS = 24; // fetch more so type filter always has enough
 const DEBOUNCE_MS = 150;
+
+const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
+  Post: 'search_type_post',
+  Flow: 'search_type_flow',
+  Book: 'search_type_book',
+};
 
 const TYPE_STYLES: Record<string, string> = {
   Flow: 'border-accent/30 text-accent',
@@ -94,7 +101,7 @@ export default function Search() {
   const [isUnavailable, setIsUnavailable] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t } = useLanguage();
+  const { t, tWith } = useLanguage();
 
   // True while debounce is pending — suppress "no results" flash
   const isTyping = query.length > 0 && query !== debouncedQuery;
@@ -341,7 +348,7 @@ export default function Search() {
                         : 'text-muted hover:text-foreground hover:bg-muted/5'
                     }`}
                   >
-                    {type === 'All' ? t('search_all') : type}
+                    {type === 'All' ? t('search_all') : t(TYPE_LABEL_KEYS[type])}
                     <span className="ml-1 text-[10px] opacity-60">{typeCounts[type]}</span>
                     <span className="hidden sm:inline ml-1 text-[9px] opacity-30">{i + 1}</span>
                   </button>
@@ -372,7 +379,7 @@ export default function Search() {
                               <span className="text-[10px] font-mono text-muted/60">{result.date}</span>
                             )}
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[result.type]}`}>
-                              {result.type}
+                              {t(TYPE_LABEL_KEYS[result.type])}
                             </span>
                           </div>
                         </div>
@@ -390,7 +397,7 @@ export default function Search() {
               {/* Result count when capped */}
               {displayedResults.length > 0 && totalFilteredCount > MAX_RESULTS && (
                 <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-muted/10 text-center">
-                  Showing {displayedResults.length} of {totalFilteredCount} results
+                  {tWith('search_showing', { shown: displayedResults.length, total: totalFilteredCount })}
                 </div>
               )}
 
