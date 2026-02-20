@@ -267,7 +267,7 @@ export default function Search() {
 
       {isOpen && (
         // Overlay: full-column on mobile, centered on desktop
-        <div className="fixed inset-0 z-50 flex flex-col sm:items-start sm:justify-center sm:pt-24 sm:px-4 bg-background/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col sm:flex-row sm:items-start sm:justify-center sm:pt-24 sm:px-4 bg-background/80 backdrop-blur-sm">
           {/* Modal: full-height on mobile, auto-height on desktop */}
           <div
             ref={searchRef}
