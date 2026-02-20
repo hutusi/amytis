@@ -20,24 +20,39 @@ export const metadata: Metadata = {
   },
 };
 
+type HomepageSection = {
+  id: string;
+  enabled?: boolean;
+  weight: number;
+  maxItems?: number;
+  scrollThreshold?: number;
+};
+
 export default function Home() {
   const features = siteConfig.features;
-  const featuredConfig = siteConfig.featured || { series: { scrollThreshold: 2, maxItems: 6 }, stories: { scrollThreshold: 1, maxItems: 5 } };
 
-  // Load data only for enabled features
-  const allSeries = features?.series?.enabled !== false ? getAllSeries() : {};
-  const featuredBooks = features?.books?.enabled !== false ? getFeaturedBooks() : [];
-  const recentFlows = features?.flows?.enabled !== false
+  // Resolve ordered, enabled homepage sections from config
+  const sections = ([...(siteConfig.homepage?.sections as HomepageSection[] ?? [])])
+    .filter(s => s.enabled !== false)
+    .sort((a, b) => a.weight - b.weight);
+
+  const has = (id: string) => sections.some(s => s.id === id);
+
+  // Load data only for sections that are both enabled on homepage and globally
+  const allSeries = has('series') && features?.series?.enabled !== false ? getAllSeries() : {};
+  const featuredBooks = has('books') && features?.books?.enabled !== false ? getFeaturedBooks() : [];
+  const recentFlows = has('recent-flows') && features?.flows?.enabled !== false
     ? getRecentFlows(siteConfig.flows?.recentCount ?? 5)
     : [];
-  const allPosts = features?.posts?.enabled !== false ? getAllPosts() : [];
-  const featuredPosts = features?.posts?.enabled !== false ? getFeaturedPosts() : [];
+  const needsPosts = has('featured-posts') || has('latest-posts');
+  const allPosts = needsPosts && features?.posts?.enabled !== false ? getAllPosts() : [];
+  const featuredPosts = has('featured-posts') && features?.posts?.enabled !== false ? getFeaturedPosts() : [];
 
   const pageSize = siteConfig.pagination.posts;
   const posts = allPosts.slice(0, pageSize);
 
-  // Prepare serializable series data for the client component
-  const seriesItems: SeriesItem[] = features?.series?.enabled !== false
+  // Prepare serializable data for client components
+  const seriesItems: SeriesItem[] = has('series') && features?.series?.enabled !== false
     ? Object.keys(allSeries).map(name => {
         const seriesPosts = allSeries[name];
         const slug = name.toLowerCase().replace(/ /g, '-');
@@ -54,8 +69,7 @@ export default function Home() {
       })
     : [];
 
-  // Prepare serializable books data
-  const bookItems: BookItem[] = features?.books?.enabled !== false
+  const bookItems: BookItem[] = has('books') && features?.books?.enabled !== false
     ? featuredBooks.map(b => ({
         slug: b.slug,
         title: b.title,
@@ -67,8 +81,7 @@ export default function Home() {
       }))
     : [];
 
-  // Prepare serializable flow data
-  const recentNoteItems: RecentNoteItem[] = features?.flows?.enabled !== false
+  const recentNoteItems: RecentNoteItem[] = has('recent-flows') && features?.flows?.enabled !== false
     ? recentFlows.map(f => ({
         slug: f.slug,
         date: f.date,
@@ -77,8 +90,7 @@ export default function Home() {
       }))
     : [];
 
-  // Prepare serializable featured posts data
-  const featuredItems: FeaturedPost[] = features?.posts?.enabled !== false
+  const featuredItems: FeaturedPost[] = has('featured-posts') && features?.posts?.enabled !== false
     ? featuredPosts.map(p => ({
         slug: p.slug,
         title: p.title,
@@ -90,42 +102,54 @@ export default function Home() {
       }))
     : [];
 
+  const renderSection = (section: HomepageSection) => {
+    switch (section.id) {
+      case 'series':
+        if (features?.series?.enabled === false) return null;
+        return (
+          <CuratedSeriesSection
+            key="series"
+            allSeries={seriesItems}
+            maxItems={section.maxItems ?? 6}
+            scrollThreshold={section.scrollThreshold ?? 2}
+          />
+        );
+      case 'books':
+        if (features?.books?.enabled === false) return null;
+        return <SelectedBooksSection key="books" books={bookItems} />;
+      case 'featured-posts':
+        if (features?.posts?.enabled === false) return null;
+        return (
+          <FeaturedStoriesSection
+            key="featured-posts"
+            allFeatured={featuredItems}
+            maxItems={section.maxItems ?? 4}
+            scrollThreshold={section.scrollThreshold ?? 1}
+          />
+        );
+      case 'latest-posts':
+        if (features?.posts?.enabled === false) return null;
+        return <LatestWritingSection key="latest-posts" posts={posts} totalCount={allPosts.length} />;
+      case 'recent-flows':
+        if (features?.flows?.enabled === false) return null;
+        return <RecentNotesSection key="recent-flows" notes={recentNoteItems} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
-      <Hero
-        tagline={siteConfig.hero.tagline}
-        title={siteConfig.hero.title}
-        subtitle={siteConfig.hero.subtitle}
-      />
+      {has('hero') && (
+        <Hero
+          tagline={siteConfig.hero.tagline}
+          title={siteConfig.hero.title}
+          subtitle={siteConfig.hero.subtitle}
+        />
+      )}
 
       <div className="layout-main pt-0 md:pt-0">
-        {features?.series?.enabled !== false && (
-          <CuratedSeriesSection
-            allSeries={seriesItems}
-            maxItems={featuredConfig.series.maxItems}
-            scrollThreshold={featuredConfig.series.scrollThreshold}
-          />
-        )}
-
-        {features?.books?.enabled !== false && (
-          <SelectedBooksSection books={bookItems} />
-        )}
-
-        {features?.posts?.enabled !== false && (
-          <>
-            <FeaturedStoriesSection
-              allFeatured={featuredItems}
-              maxItems={featuredConfig.stories.maxItems}
-              scrollThreshold={featuredConfig.stories.scrollThreshold}
-            />
-
-            <LatestWritingSection posts={posts} totalCount={allPosts.length} />
-          </>
-        )}
-
-        {features?.flows?.enabled !== false && (
-          <RecentNotesSection notes={recentNoteItems} />
-        )}
+        {sections.filter(s => s.id !== 'hero').map(renderSection)}
       </div>
     </div>
   );
