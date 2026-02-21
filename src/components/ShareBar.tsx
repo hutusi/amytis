@@ -11,7 +11,6 @@ interface ShareBarProps {
   url: string;
   title: string;
   excerpt?: string;
-  layout?: 'horizontal' | 'vertical';
   className?: string;
 }
 
@@ -37,7 +36,7 @@ function getShareUrl(platform: Platform, url: string, title: string): string {
   }
 }
 
-export default function ShareBar({ url, title, layout = 'horizontal', className = '' }: ShareBarProps) {
+export default function ShareBar({ url, title, className = '' }: ShareBarProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
@@ -58,7 +57,7 @@ export default function ShareBar({ url, title, layout = 'horizontal', className 
   const btnClass = 'inline-flex items-center justify-center w-8 h-8 rounded text-muted hover:text-accent hover:bg-muted/10 transition-colors';
 
   return (
-    <div className={`${layout === 'vertical' ? 'flex flex-col gap-1' : 'flex flex-row flex-wrap gap-1'} ${className}`}>
+    <div className={`flex flex-row flex-wrap gap-1 ${className}`}>
       {platforms.map((platform) => {
         const { label, Icon } = PLATFORM_META[platform];
 

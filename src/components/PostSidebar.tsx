@@ -263,7 +263,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
           <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
             {t('share_post')}
           </p>
-          <ShareBar url={shareUrl} title={shareTitle!} excerpt={shareExcerpt} layout="vertical" />
+          <ShareBar url={shareUrl} title={shareTitle!} excerpt={shareExcerpt} />
         </div>
       )}
     </aside>
