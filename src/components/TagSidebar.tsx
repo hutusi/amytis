@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { t } from '@/lib/i18n';
+import { t, tWith } from '@/lib/i18n';
 import { LuTag, LuX, LuSearch } from 'react-icons/lu';
 
 const INITIAL_SHOW = 12;
@@ -68,6 +68,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter…"
+            aria-label={t('filter_tags')}
             className="w-full pl-8 pr-7 py-1.5 text-xs bg-muted/5 border border-muted/15 rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
           />
           {filter && (
@@ -111,9 +112,10 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
           {showExpandButton && (
             <button
               onClick={() => setExpanded(true)}
+              aria-expanded={false}
               className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
             >
-              + {remainingCount} more
+              {tWith('more_tags', { count: remainingCount })}
             </button>
           )}
 
@@ -121,15 +123,16 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
           {showCollapseButton && (
             <button
               onClick={() => setExpanded(false)}
+              aria-expanded={true}
               className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
             >
-              Show less
+              {t('collapse_tags')}
             </button>
           )}
 
           {/* Empty state */}
           {visibleTags.length === 0 && (
-            <p className="text-xs text-muted/60 italic px-2.5 py-2">No tags found</p>
+            <p className="text-xs text-muted/60 italic px-2.5 py-2">{t('no_tags_found')}</p>
           )}
         </nav>
 

@@ -9,6 +9,7 @@ export const siteConfig = {
   title: { en: "Amytis", zh: "Amytis" },
   description: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
   baseUrl: "https://example.com", // Replace with your actual domain
+  ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
   nav: [
     { name: "Flow", url: "/flows", weight: 1 },

@@ -13,7 +13,7 @@ export default function PostNavigation({ prev, next }: PostNavigationProps) {
   return (
     <nav
       className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-1 sm:grid-cols-2 gap-3"
-      aria-label="Post navigation"
+      aria-label={t('post_navigation')}
     >
       {prev ? (
         <Link

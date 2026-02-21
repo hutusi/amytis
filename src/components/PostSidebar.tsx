@@ -17,7 +17,6 @@ interface PostSidebarProps {
   localeHeadings?: Record<string, Heading[]>;
   shareUrl?: string;
   shareTitle?: string;
-  shareExcerpt?: string;
 }
 
 function getVisibleIndices(total: number, current: number): (number | 'ellipsis')[] {
@@ -33,7 +32,7 @@ function getVisibleIndices(total: number, current: number): (number | 'ellipsis'
   return result;
 }
 
-export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings, shareUrl, shareTitle, shareExcerpt }: PostSidebarProps) {
+export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings, shareUrl, shareTitle }: PostSidebarProps) {
   const { t, language } = useLanguage();
   const activeHeadings = localeHeadings?.[language] ?? headings;
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
@@ -264,7 +263,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
           <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
             {t('share_post')}
           </p>
-          <ShareBar url={shareUrl} title={shareTitle!} excerpt={shareExcerpt} />
+          <ShareBar url={shareUrl} title={shareTitle ?? ''} />
         </div>
       )}
     </aside>

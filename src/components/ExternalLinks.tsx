@@ -1,11 +1,14 @@
+'use client';
+
 import { ExternalLink } from '@/lib/markdown';
-import { t } from '@/lib/i18n';
+import { useLanguage } from './LanguageProvider';
 
 interface ExternalLinksProps {
   links: ExternalLink[];
 }
 
 export default function ExternalLinks({ links }: ExternalLinksProps) {
+  const { t } = useLanguage();
   if (!links || links.length === 0) {
     return null;
   }

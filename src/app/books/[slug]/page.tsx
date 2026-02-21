@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const ogImage = book.coverImage && !book.coverImage.startsWith('text:') && !book.coverImage.startsWith('./')
     ? book.coverImage
-    : '/icon.svg';
+    : siteConfig.ogImage;
 
   return {
     title: `${book.title} | ${resolveLocale(siteConfig.title)}`,
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [{ url: ogImage, width: 1200, height: 630, alt: book.title }],
     },
     twitter: {
-      card: ogImage !== '/icon.svg' ? 'summary_large_image' : 'summary',
+      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
       title: book.title,
       description: book.excerpt,
       images: [ogImage],

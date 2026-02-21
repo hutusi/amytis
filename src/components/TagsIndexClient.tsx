@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { LuSearch, LuX } from 'react-icons/lu';
+import { useLanguage } from './LanguageProvider';
 
 interface TagsIndexClientProps {
   tags: Record<string, number>;
@@ -32,6 +33,7 @@ function TagLink({ tag, count, min, max }: { tag: string; count: number; min: nu
 }
 
 export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
+  const { t, tWith } = useLanguage();
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState<SortMode>('popular');
 
@@ -74,6 +76,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter tags…"
+            aria-label={t('filter_tags')}
             className="w-full pl-9 pr-8 py-2 text-sm bg-muted/5 border border-muted/15 rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
           />
           {filter && (
@@ -89,16 +92,20 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
 
         <div className="flex rounded-lg border border-muted/15 overflow-hidden text-xs font-sans font-semibold self-start">
           <button
+            type="button"
             onClick={() => setSort('popular')}
+            aria-pressed={sort === 'popular'}
             className={`px-4 py-2 transition-colors ${sort === 'popular' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-muted/5'}`}
           >
-            Popular
+            {t('sort_popular')}
           </button>
           <button
+            type="button"
             onClick={() => setSort('alpha')}
+            aria-pressed={sort === 'alpha'}
             className={`px-4 py-2 border-l border-muted/15 transition-colors ${sort === 'alpha' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-muted/5'}`}
           >
-            A–Z
+            {t('sort_az')}
           </button>
         </div>
       </div>
@@ -106,7 +113,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
       {/* Result count when filtering */}
       {filter && (
         <p className="text-xs font-mono text-muted mb-6">
-          {filtered.length} / {total} tags
+          {tWith('tags_count', { shown: filtered.length, total })}
         </p>
       )}
 
@@ -117,7 +124,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             <TagLink key={tag} tag={tag} count={count} min={min} max={max} />
           ))}
           {filtered.length === 0 && (
-            <p className="text-sm text-muted italic">No tags match &ldquo;{filter}&rdquo;</p>
+            <p className="text-sm text-muted italic">{tWith('tags_no_match', { filter })}</p>
           )}
         </div>
       )}
@@ -126,7 +133,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
       {sort === 'alpha' && sortedLetters && (
         <div>
           {sortedLetters.length === 0 ? (
-            <p className="text-sm text-muted italic">No tags match &ldquo;{filter}&rdquo;</p>
+            <p className="text-sm text-muted italic">{tWith('tags_no_match', { filter })}</p>
           ) : (
             sortedLetters.map((letter, i) => (
               <div key={letter} className={i > 0 ? 'mt-10' : ''}>

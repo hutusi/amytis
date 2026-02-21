@@ -11,7 +11,6 @@ import { useLanguage } from './LanguageProvider';
 interface ShareBarProps {
   url: string;
   title: string;
-  excerpt?: string;
   className?: string;
 }
 

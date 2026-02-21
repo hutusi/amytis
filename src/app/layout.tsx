@@ -6,7 +6,7 @@ import Analytics from "@/components/Analytics";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { getAllSeries, getAllBooks } from "@/lib/markdown";
+import { getAllSeries, getAllBooks, getSeriesData } from "@/lib/markdown";
 import { resolveLocale } from "@/lib/i18n";
 import "./globals.css";
 
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     siteName: resolveLocale(siteConfig.title),
     locale: siteConfig.i18n.defaultLocale,
     type: 'website',
-    images: [{ url: '/icon.svg', width: 1200, height: 630 }],
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary',
@@ -91,7 +91,7 @@ export default function RootLayout({
       ? seriesKeys.filter(slug => featuredSeries.includes(slug))
       : seriesKeys.slice(0, 5);
     seriesList = filteredKeys.map(slug => ({
-      name: allSeries[slug][0]?.series || slug,
+      name: getSeriesData(slug)?.title || allSeries[slug][0]?.series || slug,
       slug,
     }));
   }

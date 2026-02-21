@@ -28,10 +28,9 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
 
   const showPosts = activeTab === 'all' || activeTab === 'posts';
   const showFlows = activeTab === 'all' || activeTab === 'flows';
-  const showSectionHeaders = true;
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'all', label: t('search_all'), count: posts.length + flows.length },
+    { key: 'all', label: t('tab_all'), count: posts.length + flows.length },
     { key: 'posts', label: t('posts'), count: posts.length },
     { key: 'flows', label: t('flow_notes'), count: flows.length },
   ];
@@ -40,10 +39,13 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
     <div>
       {/* Type tabs — only shown when both content types exist */}
       {hasBoth && (
-        <div className="flex mb-8 border-b border-muted/20">
+        <div role="tablist" className="flex mb-8 border-b border-muted/20">
           {tabs.map(({ key, label, count }) => (
             <button
               key={key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === key}
               onClick={() => setActiveTab(key)}
               className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === key
@@ -63,14 +65,12 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
       {/* Posts section */}
       {showPosts && posts.length > 0 && (
         <div>
-          {showSectionHeaders && (
-            <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-6">
-              {t('posts')}
-              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
-                {posts.length}
-              </span>
-            </h2>
-          )}
+          <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-6">
+            {t('posts')}
+            <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
+              {posts.length}
+            </span>
+          </h2>
           <PostList posts={posts} />
         </div>
       )}
@@ -78,15 +78,13 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
       {/* Flows section */}
       {showFlows && flows.length > 0 && (
         <div className={showPosts && posts.length > 0 ? 'mt-12' : ''}>
-          {showSectionHeaders && (
-            <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-4">
-              {t('flow_notes')}
-              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
-                {flows.length}
-              </span>
-            </h2>
-          )}
-          <div className="space-y-0">
+          <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-4">
+            {t('flow_notes')}
+            <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
+              {flows.length}
+            </span>
+          </h2>
+          <div>
             {flows.map(flow => (
               <FlowTimelineEntry
                 key={flow.slug}

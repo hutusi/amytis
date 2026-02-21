@@ -46,7 +46,6 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             headings={showToc ? post.headings : []}
             shareUrl={postUrl}
             shareTitle={post.title}
-            shareExcerpt={post.excerpt}
           />
         )}
 
@@ -129,7 +128,6 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           <ShareBar
             url={postUrl}
             title={post.title}
-            excerpt={post.excerpt}
             className={showSidebar ? 'mt-8 lg:hidden' : 'mt-8'}
           />
 

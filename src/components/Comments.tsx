@@ -4,11 +4,27 @@ import Giscus from '@giscus/react';
 import { siteConfig } from '../../site.config';
 import { useTheme } from 'next-themes';
 
+// Maps site locale codes to Giscus-supported language codes.
+// Full list: https://github.com/giscus/giscus/tree/main/locales
+const GISCUS_LANG: Record<string, string> = {
+  en: 'en',
+  zh: 'zh-CN',
+  'zh-TW': 'zh-TW',
+  ja: 'ja',
+  ko: 'ko',
+  de: 'de',
+  fr: 'fr',
+  es: 'es',
+  pt: 'pt',
+  ru: 'ru',
+};
+
 export default function Comments({ slug }: { slug: string }) {
   const { provider, giscus, disqus } = siteConfig.comments;
   const { theme, systemTheme } = useTheme();
-  
+
   const currentTheme = theme === 'system' ? systemTheme : theme;
+  const giscusLang = GISCUS_LANG[siteConfig.i18n.defaultLocale] ?? siteConfig.i18n.defaultLocale;
 
   if (provider === 'giscus' && giscus.repo) {
     return (
@@ -25,7 +41,7 @@ export default function Comments({ slug }: { slug: string }) {
           emitMetadata="0"
           inputPosition="top"
           theme={currentTheme === 'dark' ? 'transparent_dark' : 'light'}
-          lang="en"
+          lang={giscusLang}
           loading="lazy"
         />
       </div>

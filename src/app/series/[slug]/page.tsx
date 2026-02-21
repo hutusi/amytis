@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const ogImage = seriesData.coverImage && !seriesData.coverImage.startsWith('text:') && !seriesData.coverImage.startsWith('./')
     ? seriesData.coverImage
-    : '/icon.svg';
+    : siteConfig.ogImage;
 
   return {
     title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [{ url: ogImage, width: 1200, height: 630, alt: seriesData.title }],
     },
     twitter: {
-      card: ogImage !== '/icon.svg' ? 'summary_large_image' : 'summary',
+      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
       title: seriesData.title,
       description: seriesData.excerpt,
       images: [ogImage],

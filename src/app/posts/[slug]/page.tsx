@@ -45,9 +45,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const ogImage = post.coverImage && !post.coverImage.startsWith('text:')
+  const ogImage = post.coverImage && !post.coverImage.startsWith('text:') && !post.coverImage.startsWith('./')
     ? post.coverImage
-    : `/icon.svg`;
+    : siteConfig.ogImage;
 
   return {
     title: `${post.title} | ${resolveLocale(siteConfig.title)}`,

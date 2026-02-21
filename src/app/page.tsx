@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     siteName: resolveLocale(siteConfig.title),
     url: siteConfig.baseUrl,
     type: 'website',
-    images: [{ url: '/icon.svg', width: 1200, height: 630 }],
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary',
