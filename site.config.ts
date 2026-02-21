@@ -23,6 +23,7 @@ export const siteConfig = {
       { name: "Tags", url: "/tags", weight: 2 },
       { name: "Links", url: "/links", weight: 3 },
       { name: "About", url: "/about", weight: 4 },
+      { name: "Subscribe", url: "/subscribe", weight: 5 },
     ],
     builtWith: {
       show: true,
@@ -61,6 +62,15 @@ export const siteConfig = {
     // Supported: twitter, facebook, linkedin, weibo, reddit, hackernews,
     //            telegram, bluesky, mastodon, douban, zhihu, copy
     platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'copy'],
+  },
+  subscribe: {
+    substack: '',       // Substack publication URL, e.g., 'https://yourname.substack.com'
+    telegram: '',       // Telegram channel URL, e.g., 'https://t.me/yourchannel'
+    wechat: {
+      qrCode: '',       // Path to QR image in public/, e.g., '/images/wechat-qr.png'
+      account: '',      // WeChat official account ID/name shown below QR
+    },
+    email: '',          // Alternative email newsletter URL (if not using Substack)
   },
   features: {
     posts: {
