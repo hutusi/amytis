@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { IconType } from 'react-icons';
-import { FaXTwitter, FaFacebook, FaLinkedin, FaWeibo } from 'react-icons/fa6';
+import { FaXTwitter, FaFacebook, FaLinkedin, FaWeibo, FaRedditAlien, FaTelegram, FaMastodon, FaHackerNews } from 'react-icons/fa6';
+import { SiBluesky, SiDouban, SiZhihu } from 'react-icons/si';
 import { LuLink, LuCheck } from 'react-icons/lu';
 import { siteConfig } from '../../site.config';
 import { useLanguage } from './LanguageProvider';
@@ -14,25 +15,44 @@ interface ShareBarProps {
   className?: string;
 }
 
-type Platform = 'twitter' | 'facebook' | 'linkedin' | 'weibo' | 'copy';
+type Platform =
+  | 'twitter' | 'facebook' | 'linkedin' | 'weibo'
+  | 'reddit' | 'hackernews' | 'telegram' | 'bluesky' | 'mastodon'
+  | 'douban' | 'zhihu'
+  | 'copy';
 
 const PLATFORM_META: Record<Platform, { label: string; Icon: IconType }> = {
-  twitter:  { label: 'X / Twitter', Icon: FaXTwitter },
-  facebook: { label: 'Facebook',    Icon: FaFacebook },
-  linkedin: { label: 'LinkedIn',    Icon: FaLinkedin },
-  weibo:    { label: '微博',         Icon: FaWeibo },
-  copy:     { label: 'Copy link',   Icon: LuLink },
+  twitter:    { label: 'X / Twitter', Icon: FaXTwitter },
+  facebook:   { label: 'Facebook',    Icon: FaFacebook },
+  linkedin:   { label: 'LinkedIn',    Icon: FaLinkedin },
+  weibo:      { label: '微博',         Icon: FaWeibo },
+  reddit:     { label: 'Reddit',      Icon: FaRedditAlien },
+  hackernews: { label: 'Hacker News', Icon: FaHackerNews },
+  telegram:   { label: 'Telegram',    Icon: FaTelegram },
+  bluesky:    { label: 'Bluesky',     Icon: SiBluesky },
+  mastodon:   { label: 'Mastodon',    Icon: FaMastodon },
+  douban:     { label: '豆瓣',         Icon: SiDouban },
+  zhihu:      { label: '知乎',         Icon: SiZhihu },
+  copy:       { label: 'Copy link',   Icon: LuLink },
 };
 
 function getShareUrl(platform: Platform, url: string, title: string): string {
   const eu = encodeURIComponent(url);
   const et = encodeURIComponent(title);
+  const combined = encodeURIComponent(`${title} ${url}`);
   switch (platform) {
-    case 'twitter':  return `https://twitter.com/intent/tweet?text=${et}&url=${eu}`;
-    case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${eu}`;
-    case 'linkedin': return `https://www.linkedin.com/sharing/share-offsite/?url=${eu}`;
-    case 'weibo':    return `https://service.weibo.com/share/share.php?url=${eu}&title=${et}`;
-    case 'copy':     return '';
+    case 'twitter':    return `https://twitter.com/intent/tweet?text=${et}&url=${eu}`;
+    case 'facebook':   return `https://www.facebook.com/sharer/sharer.php?u=${eu}`;
+    case 'linkedin':   return `https://www.linkedin.com/sharing/share-offsite/?url=${eu}`;
+    case 'weibo':      return `https://service.weibo.com/share/share.php?url=${eu}&title=${et}`;
+    case 'reddit':     return `https://www.reddit.com/submit?url=${eu}&title=${et}`;
+    case 'hackernews': return `https://news.ycombinator.com/submitlink?u=${eu}&t=${et}`;
+    case 'telegram':   return `https://t.me/share/url?url=${eu}&text=${et}`;
+    case 'bluesky':    return `https://bsky.app/intent/compose?text=${combined}`;
+    case 'mastodon':   return `https://mastodon.social/share?text=${combined}`;
+    case 'douban':     return `https://www.douban.com/share/service?href=${eu}&name=${et}`;
+    case 'zhihu':      return `https://www.zhihu.com/share?href=${eu}&type=text&title=${et}`;
+    case 'copy':       return '';
   }
 }
 
