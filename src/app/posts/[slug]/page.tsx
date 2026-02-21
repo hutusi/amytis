@@ -30,14 +30,7 @@ function resolvePostFromParam(rawSlug: string) {
  */
 export async function generateStaticParams() {
   const posts = getAllPosts();
-  const slugs = new Set<string>();
-
-  for (const post of posts) {
-    slugs.add(post.slug);
-    slugs.add(encodeURIComponent(post.slug));
-  }
-
-  return [...slugs].map((slug) => ({ slug }));
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export const dynamicParams = false;

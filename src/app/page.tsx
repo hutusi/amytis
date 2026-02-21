@@ -58,7 +58,7 @@ export default function Home() {
   const seriesItems: SeriesItem[] = has('featured-series') && features?.series?.enabled !== false
     ? Object.keys(allSeries).map(name => {
         const seriesPosts = allSeries[name];
-        const slug = name.toLowerCase().replace(/ /g, '-');
+        const slug = name; // name is already the series directory slug
         const seriesData = getSeriesData(slug);
         return {
           name,
