@@ -62,30 +62,26 @@ export default function Footer() {
           <div>
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('connect')}</h4>
             <ul className="space-y-3 text-sm">
-              {siteConfig.social.github && (
-                <li>
-                  <a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                    GitHub
-                  </a>
-                </li>
-              )}
-              {siteConfig.social.twitter && (
-                <li>
-                  <a href={siteConfig.social.twitter} target="_blank" rel="noopener noreferrer" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                    Twitter
-                  </a>
-                </li>
-              )}
-              <li>
-                <a href="/feed.xml" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                  {t('rss_feed')}
-                </a>
-              </li>
-              <li>
-                <Link href="/subscribe" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                  {t('subscribe')}
-                </Link>
-              </li>
+              {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
+                const isExternal = item.url.startsWith('http');
+                const key = item.name.toLowerCase() as TranslationKey;
+                const translated = t(key);
+                const label = translated !== key ? translated : item.name;
+                const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2";
+                return (
+                  <li key={item.url}>
+                    {isExternal ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+                        {label}
+                      </a>
+                    ) : (
+                      <Link href={item.url} className={className}>
+                        {label}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

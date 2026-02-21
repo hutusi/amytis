@@ -25,6 +25,12 @@ export const siteConfig = {
       { name: "Links", url: "/links", weight: 3 },
       { name: "About", url: "/about", weight: 4 },
     ],
+    connect: [
+      { name: "GitHub", url: "https://github.com/hutusi/amytis", weight: 1 },
+      { name: "Twitter", url: "https://twitter.com/hutusi", weight: 2 },
+      { name: "RSS Feed", url: "/feed.xml", weight: 3 },
+      { name: "Subscribe", url: "/subscribe", weight: 4 },
+    ],
     builtWith: {
       show: true,
       url: "https://github.com/hutusi/amytis",
