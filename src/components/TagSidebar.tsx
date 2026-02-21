@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { t } from '@/lib/i18n';
-import { LuTag } from 'react-icons/lu';
+import { LuTag, LuX, LuSearch } from 'react-icons/lu';
+
+const INITIAL_SHOW = 12;
 
 interface TagSidebarProps {
   tags: Record<string, number>;
@@ -12,37 +14,67 @@ interface TagSidebarProps {
 
 export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
   const [filter, setFilter] = useState('');
+  const [expanded, setExpanded] = useState(false);
+
+  const totalCount = Object.keys(tags).length;
 
   const sortedTags = Object.entries(tags)
     .sort((a, b) => b[1] - a[1])
     .filter(([tag]) => !filter || tag.toLowerCase().includes(filter.toLowerCase()));
 
+  // Ensure the active tag is always visible
+  const activeIndex = sortedTags.findIndex(([tag]) => tag === activeTag);
+  const activeIsHidden = !expanded && !filter && activeIndex >= INITIAL_SHOW;
+
+  const visibleTags = filter || expanded || activeIsHidden
+    ? sortedTags
+    : sortedTags.slice(0, INITIAL_SHOW);
+
+  const remainingCount = sortedTags.length - INITIAL_SHOW;
+  const showExpandButton = !filter && !expanded && !activeIsHidden && remainingCount > 0;
+  // Only allow collapsing if it won't hide the active tag
+  const showCollapseButton = expanded && !filter && (activeIndex === -1 || activeIndex < INITIAL_SHOW);
+
   return (
     <aside className="hidden lg:block flex-shrink-0">
       <div className="sticky top-24">
+
+        {/* Section heading → links to all tags, shows total count */}
         <Link
           href="/tags"
           className="flex items-center gap-1.5 text-[10px] font-sans font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline mb-3"
         >
           <LuTag className="w-3 h-3" />
-          {t('tags')}
+          <span>{t('tags')}</span>
+          <span className="ml-auto font-mono font-normal normal-case tracking-normal text-muted/50">
+            {totalCount}
+          </span>
         </Link>
 
-        <div className="relative mb-2">
-          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+        {/* Filter input with clear button */}
+        <div className="relative mb-3">
+          <LuSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted/40 pointer-events-none" />
           <input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter…"
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-muted/5 border border-muted/15 rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-muted/5 border border-muted/15 rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
           />
+          {filter && (
+            <button
+              onClick={() => setFilter('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/40 hover:text-muted transition-colors p-0.5 rounded"
+              aria-label="Clear filter"
+            >
+              <LuX className="w-3 h-3" />
+            </button>
+          )}
         </div>
 
-        <nav className="space-y-0.5 max-h-[calc(100vh-14rem)] overflow-y-auto pr-1">
-          {sortedTags.map(([tag, count]) => {
+        {/* Tag list — no overflow, no scrollbar */}
+        <nav className="space-y-0.5">
+          {visibleTags.map(([tag, count]) => {
             const isActive = tag === activeTag;
             return (
               <Link
@@ -61,10 +93,33 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
               </Link>
             );
           })}
-          {sortedTags.length === 0 && (
+
+          {/* Expand button */}
+          {showExpandButton && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
+            >
+              + {remainingCount} more
+            </button>
+          )}
+
+          {/* Collapse button */}
+          {showCollapseButton && (
+            <button
+              onClick={() => setExpanded(false)}
+              className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
+            >
+              Show less
+            </button>
+          )}
+
+          {/* Empty state */}
+          {visibleTags.length === 0 && (
             <p className="text-xs text-muted/60 italic px-2.5 py-2">No tags found</p>
           )}
         </nav>
+
       </div>
     </aside>
   );
