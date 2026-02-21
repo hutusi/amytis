@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { siteConfig } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
+import LanguageSwitch from './LanguageSwitch';
 import Search from '@/components/Search';
 import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
@@ -215,6 +216,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
             </svg>
           </button>
           <Search />
+          <LanguageSwitch />
           <ThemeToggle />
         </div>
       </div>
@@ -252,6 +254,9 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                   </Component>
                 );
               })}
+              <div className="mt-2 pt-3 border-t border-muted/10 px-3">
+                <LanguageSwitch />
+              </div>
             </div>
           </div>
         </>
