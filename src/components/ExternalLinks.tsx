@@ -11,7 +11,7 @@ export default function ExternalLinks({ links }: ExternalLinksProps) {
   }
 
   return (
-    <div className="mt-12 pt-8 border-t border-muted/20">
+    <div className="mt-12 pt-12 border-t border-muted/20">
       <h3 className="text-sm font-sans font-semibold uppercase tracking-widest text-muted mb-4">
         {t('discuss_post')}
       </h3>

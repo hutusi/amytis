@@ -51,7 +51,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
         )}
 
         <article className="min-w-0 max-w-3xl mx-auto">
-          <header className="mb-16 border-b border-muted/10 pb-12">
+          <header className="mb-16 border-b border-muted/10 pb-8">
             {post.draft && (
               <div className="mb-4">
                 <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -114,7 +114,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
 
           {post.tags && post.tags.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-muted/10 flex flex-wrap items-center gap-2">
+            <div className="mt-12 pt-12 border-t border-muted/20 flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
               {post.tags.map((tag) => (
                 <Tag key={tag} tag={tag} variant="default" />

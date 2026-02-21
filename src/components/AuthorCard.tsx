@@ -7,7 +7,7 @@ export default function AuthorCard({ authors }: { authors: string[] }) {
   if (!authors || authors.length === 0) return null;
 
   return (
-    <div className="mt-16 pt-12 border-t border-muted/20">
+    <div className="mt-12 pt-12 border-t border-muted/20">
       <div className="flex flex-col gap-6">
         {authors.map((author) => {
           const slug = getAuthorSlug(author);

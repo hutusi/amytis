@@ -89,7 +89,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           <ShareBar url={flowUrl} title={flow!.title} className="mt-8 mb-2" />
 
           {/* Prev/Next navigation */}
-          <nav className="mt-16 pt-8 border-t border-muted/20 grid grid-cols-2 gap-4">
+          <nav className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
             {prev ? (
               <Link
                 href={`/flows/${prev.slug}`}
