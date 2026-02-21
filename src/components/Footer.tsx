@@ -81,6 +81,11 @@ export default function Footer() {
                   {t('rss_feed')}
                 </a>
               </li>
+              <li>
+                <Link href="/subscribe" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
+                  {t('subscribe')}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

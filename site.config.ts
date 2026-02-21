@@ -24,7 +24,6 @@ export const siteConfig = {
       { name: "Tags", url: "/tags", weight: 2 },
       { name: "Links", url: "/links", weight: 3 },
       { name: "About", url: "/about", weight: 4 },
-      { name: "Subscribe", url: "/subscribe", weight: 5 },
     ],
     builtWith: {
       show: true,
