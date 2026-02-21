@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import ShareBar from '@/components/ShareBar';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -24,6 +25,19 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   return {
     title: `${flow.title} | ${resolveLocale(siteConfig.title)}`,
     description: flow.excerpt,
+    openGraph: {
+      title: flow.title,
+      description: flow.excerpt,
+      type: 'article',
+      publishedTime: flow.date,
+      url: `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`,
+      siteName: resolveLocale(siteConfig.title),
+    },
+    twitter: {
+      card: 'summary',
+      title: flow.title,
+      description: flow.excerpt,
+    },
   };
 }
 
@@ -36,6 +50,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
   const { prev, next } = getAdjacentFlows(flow.slug);
+  const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
   return (
     <div className="layout-main">
@@ -71,14 +86,16 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
             <MarkdownRenderer content={flow.content} />
           </div>
 
+          <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
+
           {/* Prev/Next navigation */}
-          <nav className="mt-16 pt-8 border-t border-muted/20 grid grid-cols-2 gap-4">
+          <nav className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
             {prev ? (
               <Link
                 href={`/flows/${prev.slug}`}
                 className="group text-left no-underline"
               >
-                <span className="text-xs text-muted">Older</span>
+                <span className="text-xs text-muted">{t('older')}</span>
                 <div className="text-sm font-medium text-heading group-hover:text-accent transition-colors truncate">
                   {prev.title}
                 </div>
@@ -90,7 +107,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
                 href={`/flows/${next.slug}`}
                 className="group text-right no-underline"
               >
-                <span className="text-xs text-muted">Newer</span>
+                <span className="text-xs text-muted">{t('newer')}</span>
                 <div className="text-sm font-medium text-heading group-hover:text-accent transition-colors truncate">
                   {next.title}
                 </div>

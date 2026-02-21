@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import CoverImage from './CoverImage';
+import HorizontalScroll from './HorizontalScroll';
 import { useLanguage } from './LanguageProvider';
 
 export interface BookItem {
@@ -16,12 +17,15 @@ export interface BookItem {
 
 interface SelectedBooksSectionProps {
   books: BookItem[];
+  maxItems?: number;
+  scrollThreshold?: number;
 }
 
-export default function SelectedBooksSection({ books }: SelectedBooksSectionProps) {
+export default function SelectedBooksSection({ books, maxItems = 4, scrollThreshold = 2 }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
+  const displayed = books.slice(0, maxItems);
 
-  if (books.length === 0) return null;
+  if (displayed.length === 0) return null;
 
   return (
     <section className="mb-24">
@@ -31,9 +35,10 @@ export default function SelectedBooksSection({ books }: SelectedBooksSectionProp
           {t('all_books')} →
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {books.map(book => (
-          <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
+      <HorizontalScroll itemCount={displayed.length} scrollThreshold={scrollThreshold}>
+        <div className={`flex gap-8 ${displayed.length > scrollThreshold ? 'pb-4' : ''}`}>
+        {displayed.map(book => (
+          <Link key={book.slug} href={`/books/${book.slug}`} className={`group block no-underline ${displayed.length > scrollThreshold ? 'w-[85vw] md:w-[calc(50%-1rem)] flex-shrink-0 snap-start' : 'flex-1'}`}>
             <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
               <div className="relative h-48 w-full overflow-hidden bg-muted/10">
                 <CoverImage
@@ -74,7 +79,8 @@ export default function SelectedBooksSection({ books }: SelectedBooksSectionProp
             </div>
           </Link>
         ))}
-      </div>
+        </div>
+      </HorizontalScroll>
     </section>
   );
 }

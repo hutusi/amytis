@@ -5,18 +5,15 @@ import { useLanguage } from './LanguageProvider';
 
 interface TagPageHeaderProps {
   tag: string;
-  postCount: number;
 }
 
-export default function TagPageHeader({ tag, postCount }: TagPageHeaderProps) {
-  const { t, tWith } = useLanguage();
-
-  const subtitleKey = postCount === 1 ? 'tag_posts_found_one' : 'tag_posts_found';
-  const subtitle = tWith(subtitleKey, { count: postCount });
+export default function TagPageHeader({ tag }: TagPageHeaderProps) {
+  const { t } = useLanguage();
 
   return (
     <>
-      <nav className="mb-12 flex justify-center">
+      {/* Back link: visible only on mobile (desktop has sidebar) */}
+      <nav className="mb-8 flex lg:hidden">
         <Link
           href="/tags"
           className="text-xs font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline"
@@ -25,13 +22,10 @@ export default function TagPageHeader({ tag, postCount }: TagPageHeaderProps) {
         </Link>
       </nav>
 
-      <header className="mb-20 text-center">
-        <h1 className="text-4xl md:text-6xl font-serif font-bold text-heading mb-6 capitalize">
-          <span className="text-accent/50 mr-2">#</span>{tag}
+      <header className="mb-10">
+        <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading">
+          <span className="text-accent/50 mr-1">#</span>{tag}
         </h1>
-        <p className="text-lg text-muted font-serif italic">
-          {subtitle}
-        </p>
       </header>
     </>
   );

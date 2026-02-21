@@ -6,7 +6,7 @@ import Analytics from "@/components/Analytics";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { getAllSeries, getAllBooks } from "@/lib/markdown";
+import { getAllSeries, getAllBooks, getSeriesData } from "@/lib/markdown";
 import { resolveLocale } from "@/lib/i18n";
 import "./globals.css";
 
@@ -47,12 +47,29 @@ const baskerville = localFont({
   variable: "--font-baskerville",
 });
 
+const siteTwitterHandle = (() => {
+  const url = siteConfig.social?.twitter ?? '';
+  const m = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
+  return m ? `@${m[1]}` : undefined;
+})();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.baseUrl),
   title: resolveLocale(siteConfig.title),
   description: resolveLocale(siteConfig.description),
   icons: {
     icon: "/icon.svg",
+  },
+  openGraph: {
+    siteName: resolveLocale(siteConfig.title),
+    locale: siteConfig.i18n.defaultLocale,
+    type: 'website',
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary',
+    site: siteTwitterHandle,
+    creator: siteTwitterHandle,
   },
 };
 
@@ -61,30 +78,39 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const allSeries = getAllSeries();
-  const featuredSeries = siteConfig.series?.navbar;
-  
-  const seriesKeys = Object.keys(allSeries).sort();
-  const filteredKeys = featuredSeries 
-    ? seriesKeys.filter(slug => featuredSeries.includes(slug))
-    : seriesKeys.slice(0, 5);
+  const features = siteConfig.features;
 
-  const seriesList = filteredKeys.map(slug => ({
-    name: allSeries[slug][0]?.series || slug,
-    slug,
-  }));
+  // Build series list for navbar (only when series feature is enabled)
+  const seriesNavItem = siteConfig.nav.find(item => item.url === '/series');
+  const featuredSeries = seriesNavItem?.dropdown;
+  let seriesList: { name: string; slug: string }[] = [];
+  if (features?.series?.enabled !== false) {
+    const allSeries = getAllSeries();
+    const seriesKeys = Object.keys(allSeries).sort();
+    const filteredKeys = featuredSeries && featuredSeries.length > 0
+      ? seriesKeys.filter(slug => featuredSeries.includes(slug))
+      : seriesKeys.slice(0, 5);
+    seriesList = filteredKeys.map(slug => ({
+      name: getSeriesData(slug)?.title || allSeries[slug][0]?.series || slug,
+      slug,
+    }));
+  }
 
-  // Build books list for navbar
-  const allBooks = getAllBooks();
-  const featuredBookSlugs = siteConfig.books?.navbar;
-  const booksList = featuredBookSlugs && featuredBookSlugs.length > 0
-    ? allBooks
-        .filter(book => featuredBookSlugs.includes(book.slug))
-        .map(book => ({ name: book.title, slug: book.slug }))
-    : allBooks.map(book => ({ name: book.title, slug: book.slug }));
+  // Build books list for navbar (only when books feature is enabled)
+  const booksNavItem = siteConfig.nav.find(item => item.url === '/books');
+  const featuredBookSlugs = booksNavItem?.dropdown;
+  let booksList: { name: string; slug: string }[] = [];
+  if (features?.books?.enabled !== false) {
+    const allBooks = getAllBooks();
+    booksList = featuredBookSlugs && featuredBookSlugs.length > 0
+      ? allBooks
+          .filter(book => featuredBookSlugs.includes(book.slug))
+          .map(book => ({ name: book.title, slug: book.slug }))
+      : allBooks.slice(0, 5).map(book => ({ name: book.title, slug: book.slug }));
+  }
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={siteConfig.i18n.defaultLocale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${baskerville.variable} font-sans min-h-screen transition-colors duration-300`}
         data-palette={siteConfig.themeColor}

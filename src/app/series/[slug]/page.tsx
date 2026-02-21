@@ -36,9 +36,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Series Not Found' };
   }
 
+  const ogImage = seriesData.coverImage && !seriesData.coverImage.startsWith('text:') && !seriesData.coverImage.startsWith('./')
+    ? seriesData.coverImage
+    : siteConfig.ogImage;
+
   return {
     title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
     description: seriesData.excerpt,
+    openGraph: {
+      title: seriesData.title,
+      description: seriesData.excerpt,
+      type: 'website',
+      url: `${siteConfig.baseUrl}/series/${slug}`,
+      siteName: resolveLocale(siteConfig.title),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: seriesData.title }],
+    },
+    twitter: {
+      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
+      title: seriesData.title,
+      description: seriesData.excerpt,
+      images: [ogImage],
+    },
   };
 }
 

@@ -6,7 +6,7 @@ export default function RelatedPosts({ posts }: { posts: PostData[] }) {
   if (!posts || posts.length === 0) return null;
 
   return (
-    <div className="mt-16 pt-12 border-t border-muted/20">
+    <div className="mt-12 pt-12 border-t border-muted/20">
       <h3 className="text-2xl font-serif font-bold text-heading mb-8">{t('related_posts')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {posts.map(post => (

@@ -43,7 +43,7 @@ export default function Footer() {
           <div>
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('explore')}</h4>
             <ul className="space-y-3 text-sm">
-              {[...siteConfig.nav].sort((a, b) => a.weight - b.weight).map((item) => {
+              {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
                 const key = item.name.toLowerCase() as TranslationKey;
                 const translated = t(key);
                 const label = translated !== key ? translated : item.name;
@@ -62,25 +62,26 @@ export default function Footer() {
           <div>
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('connect')}</h4>
             <ul className="space-y-3 text-sm">
-              {siteConfig.social.github && (
-                <li>
-                  <a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                    GitHub
-                  </a>
-                </li>
-              )}
-              {siteConfig.social.twitter && (
-                <li>
-                  <a href={siteConfig.social.twitter} target="_blank" rel="noopener noreferrer" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                    Twitter
-                  </a>
-                </li>
-              )}
-              <li>
-                <a href="/feed.xml" className="text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2">
-                  RSS Feed
-                </a>
-              </li>
+              {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
+                const isExternal = item.url.startsWith('http');
+                const key = item.name.toLowerCase() as TranslationKey;
+                const translated = t(key);
+                const label = translated !== key ? translated : item.name;
+                const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2";
+                return (
+                  <li key={item.url}>
+                    {isExternal ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+                        {label}
+                      </a>
+                    ) : (
+                      <Link href={item.url} className={className}>
+                        {label}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
@@ -89,13 +90,21 @@ export default function Footer() {
         <div className="pt-8 border-t border-muted/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <span>{resolveLocaleValue(siteConfig.footerText, language)}</span>
           <div className="flex items-center gap-6">
-             <LanguageSwitch />
+             <LanguageSwitch variant="text" />
              <span className="opacity-20">|</span>
-             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">Privacy</Link>
-             <span className="opacity-20">|</span>
-             <a href="https://github.com/hutusi/amytis" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
-               Built with Amytis
-             </a>
+             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
+             {siteConfig.footer?.builtWith?.show && (() => {
+               const cfg = siteConfig.footer.builtWith;
+               const label = cfg.text ? resolveLocaleValue(cfg.text, language) : t('built_with');
+               return (
+                 <>
+                   <span className="opacity-20">|</span>
+                   <a href={cfg.url ?? 'https://github.com/hutusi/amytis'} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
+                     {label}
+                   </a>
+                 </>
+               );
+             })()}
           </div>
         </div>
       </div>

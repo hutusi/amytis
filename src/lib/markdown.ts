@@ -68,6 +68,7 @@ export interface PostData {
   readingTime: string;
   content: string;
   headings: Heading[];
+  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
 }
 
 export function calculateReadingTime(content: string): string {
@@ -238,7 +239,7 @@ export function getAllPosts(): PostData[] {
       
       if (match) {
         dateFromFileName = match[1];
-        if (siteConfig.includeDateInUrl) {
+        if (siteConfig.posts?.includeDateInUrl) {
           slug = rawName;
         } else {
           slug = match[2];
@@ -266,7 +267,7 @@ export function getAllPosts(): PostData[] {
                let sDate = undefined;
                if (sMatch) {
                  sDate = sMatch[1];
-                 sSlug = siteConfig.includeDateInUrl ? sRawName : sMatch[2];
+                 sSlug = siteConfig.posts?.includeDateInUrl ? sRawName : sMatch[2];
                }
                
                allPostsData.push(parseMarkdownFile(
@@ -294,7 +295,7 @@ export function getAllPosts(): PostData[] {
                      
                      if (sMatch) {
                        sDate = sMatch[1];
-                       sSlug = siteConfig.includeDateInUrl ? sItem.name : sMatch[2];
+                       sSlug = siteConfig.posts?.includeDateInUrl ? sItem.name : sMatch[2];
                      }
 
                      allPostsData.push(parseMarkdownFile(
@@ -338,7 +339,7 @@ export function getAllPosts(): PostData[] {
         return false;
       }
 
-      if (!siteConfig.showFuturePosts) {
+      if (!siteConfig.posts?.showFuturePosts) {
         const postDate = new Date(post.date);
         const now = new Date();
         if (postDate > now) return false;
@@ -396,7 +397,7 @@ function findPostFile(name: string, targetSlug: string): PostData | null {
 export function getPostBySlug(slug: string): PostData | null {
   let post: PostData | null = null;
 
-  if (siteConfig.includeDateInUrl) {
+  if (siteConfig.posts?.includeDateInUrl) {
     post = findPostFile(slug, slug);
   } else {
     post = findPostFile(slug, slug);
@@ -445,12 +446,51 @@ export function getPostBySlug(slug: string): PostData | null {
     return null;
   }
 
-  if (!siteConfig.showFuturePosts) {
+  if (!siteConfig.posts?.showFuturePosts) {
       const postDate = new Date(post.date);
       const now = new Date();
       if (postDate > now) return null;
   }
   return post;
+}
+
+/**
+ * Load the content and frontmatter of a locale variant file, e.g. about.zh.mdx.
+ * Returns null when the file does not exist or cannot be parsed.
+ */
+function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string; headings?: Heading[] } | null {
+  for (const ext of ['.mdx', '.md']) {
+    const filePath = path.join(pagesDirectory, `${slug}.${locale}${ext}`);
+    if (fs.existsSync(filePath)) {
+      try {
+        const { data, content } = matter(fs.readFileSync(filePath, 'utf8'));
+        const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+        return {
+          content: body,
+          title: typeof data.title === 'string' ? data.title : undefined,
+          excerpt: typeof data.excerpt === 'string' ? data.excerpt : undefined,
+          headings: getHeadings(body),
+        };
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Collect contentLocales for all non-default locales that have a variant file.
+ */
+function attachContentLocales(page: PostData, slug: string): PostData {
+  const defaultLocale = siteConfig.i18n.defaultLocale;
+  const otherLocales = siteConfig.i18n.locales.filter(l => l !== defaultLocale);
+  const contentLocales: NonNullable<PostData['contentLocales']> = {};
+  for (const locale of otherLocales) {
+    const localeData = loadLocaleContent(slug, locale);
+    if (localeData !== null) contentLocales[locale] = localeData;
+  }
+  return Object.keys(contentLocales).length > 0 ? { ...page, contentLocales } : page;
 }
 
 export function getPageBySlug(slug: string): PostData | null {
@@ -459,12 +499,8 @@ export function getPageBySlug(slug: string): PostData | null {
     if (!fs.existsSync(fullPath)) {
       fullPath = path.join(pagesDirectory, `${slug}.md`);
     }
-    
-    if (!fs.existsSync(fullPath)) {
-      return null;
-    }
-
-    return parseMarkdownFile(fullPath, slug);
+    if (!fs.existsSync(fullPath)) return null;
+    return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
   } catch {
     return null;
   }
@@ -473,11 +509,21 @@ export function getPageBySlug(slug: string): PostData | null {
 export function getAllPages(): PostData[] {
   const items = fs.readdirSync(pagesDirectory, { withFileTypes: true });
   return items
-    .filter(item => item.isFile() && (item.name.endsWith('.mdx') || item.name.endsWith('.md')))
+    .filter(item => {
+      if (!item.isFile()) return false;
+      if (!item.name.endsWith('.mdx') && !item.name.endsWith('.md')) return false;
+      // Exclude locale variant files (e.g. about.zh.mdx, about.en.mdx) — they are not standalone routes
+      const base = item.name.replace(/\.mdx?$/, '');
+      const parts = base.split('.');
+      if (parts.length > 1 && siteConfig.i18n.locales.includes(parts[parts.length - 1])) {
+        return false;
+      }
+      return true;
+    })
     .map(item => {
       const slug = item.name.replace(/\.mdx?$/, '');
       const fullPath = path.join(pagesDirectory, item.name);
-      return parseMarkdownFile(fullPath, slug);
+      return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
     });
 }
 
@@ -656,6 +702,16 @@ export function getAllSeries(): Record<string, PostData[]> {
 export function getFeaturedPosts(): PostData[] {
   const allPosts = getAllPosts();
   return allPosts.filter(post => post.featured);
+}
+
+export function getAdjacentPosts(slug: string): { prev: PostData | null; next: PostData | null } {
+  const allPosts = getAllPosts(); // sorted desc by date (newest first)
+  const index = allPosts.findIndex(p => p.slug === slug);
+  if (index === -1) return { prev: null, next: null };
+  return {
+    prev: index < allPosts.length - 1 ? allPosts[index + 1] : null, // older post
+    next: index > 0 ? allPosts[index - 1] : null,                   // newer post
+  };
 }
 
 export function getFeaturedSeries(): Record<string, PostData[]> {
@@ -1001,7 +1057,7 @@ export function getAllFlows(): FlowData[] {
   return flows
     .filter(flow => {
       if (process.env.NODE_ENV === 'production' && flow.draft) return false;
-      if (!siteConfig.showFuturePosts) {
+      if (!siteConfig.posts?.showFuturePosts) {
         const flowDate = new Date(flow.date);
         const now = new Date();
         if (flowDate > now) return false;

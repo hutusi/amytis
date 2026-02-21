@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
 import { type ContentType, getResultType, getDateFromUrl, cleanTitle } from '@/lib/search-utils';
 import type { TranslationKey } from '@/i18n/translations';
+import { siteConfig } from '../../site.config';
+import { resolveLocaleValue } from '@/lib/i18n';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface DisplayResult {
@@ -18,7 +20,18 @@ interface DisplayResult {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CONTENT_TYPES: ContentType[] = ['All', 'Post', 'Flow', 'Book'];
+const CONTENT_TYPES: ContentType[] = [
+  'All',
+  ...(siteConfig.features?.posts?.enabled !== false ? ['Post' as ContentType] : []),
+  ...(siteConfig.features?.flows?.enabled !== false ? ['Flow' as ContentType] : []),
+  ...(siteConfig.features?.books?.enabled !== false ? ['Book' as ContentType] : []),
+];
+
+const CONTENT_TYPE_FEATURE: Record<Exclude<ContentType, 'All'>, keyof typeof siteConfig.features> = {
+  Post: 'posts',
+  Flow: 'flows',
+  Book: 'books',
+};
 const RECENT_KEY = 'amytis-recent-searches';
 const MAX_RECENT = 5;
 const MAX_RESULTS = 8;
@@ -101,7 +114,14 @@ export default function Search() {
   const [isUnavailable, setIsUnavailable] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t, tWith } = useLanguage();
+  const { t, tWith, language } = useLanguage();
+
+  const getTypeLabel = (type: Exclude<ContentType, 'All'>): string => {
+    const featureKey = CONTENT_TYPE_FEATURE[type];
+    const featureName = siteConfig.features?.[featureKey]?.name;
+    if (featureName) return resolveLocaleValue(featureName, language);
+    return t(TYPE_LABEL_KEYS[type]);
+  };
 
   // True while debounce is pending — suppress "no results" flash
   const isTyping = query.length > 0 && query !== debouncedQuery;
@@ -348,7 +368,7 @@ export default function Search() {
                         : 'text-muted hover:text-foreground hover:bg-muted/5'
                     }`}
                   >
-                    {type === 'All' ? t('search_all') : t(TYPE_LABEL_KEYS[type])}
+                    {type === 'All' ? t('search_all') : getTypeLabel(type)}
                     <span className="ml-1 text-[10px] opacity-60">{typeCounts[type]}</span>
                     <span className="hidden sm:inline ml-1 text-[9px] opacity-30">⌥{i + 1}</span>
                   </button>
@@ -379,7 +399,7 @@ export default function Search() {
                               <span className="text-[10px] font-mono text-muted/60">{result.date}</span>
                             )}
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[result.type]}`}>
-                              {t(TYPE_LABEL_KEYS[result.type])}
+                              {getTypeLabel(result.type)}
                             </span>
                           </div>
                         </div>

@@ -53,15 +53,5 @@ export default async function Page({
     return <PostLayout post={page} />;
   }
 
-  if (slug === 'about' && siteConfig.about) {
-    return (
-      <SimpleLayout
-        post={page}
-        titleOverride={siteConfig.about.title}
-        subtitleOverride={siteConfig.about.subtitle}
-      />
-    );
-  }
-
   return <SimpleLayout post={page} />;
 }

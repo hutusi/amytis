@@ -22,9 +22,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Book Not Found' };
   }
 
+  const ogImage = book.coverImage && !book.coverImage.startsWith('text:') && !book.coverImage.startsWith('./')
+    ? book.coverImage
+    : siteConfig.ogImage;
+
   return {
     title: `${book.title} | ${resolveLocale(siteConfig.title)}`,
     description: book.excerpt,
+    openGraph: {
+      title: book.title,
+      description: book.excerpt,
+      type: 'website',
+      url: `${siteConfig.baseUrl}/books/${slug}`,
+      siteName: resolveLocale(siteConfig.title),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: book.title }],
+    },
+    twitter: {
+      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
+      title: book.title,
+      description: book.excerpt,
+      images: [ogImage],
+    },
   };
 }
 

@@ -1,67 +1,140 @@
+export interface NavItem {
+  name: string;
+  url: string;
+  weight: number;
+  dropdown?: string[];
+}
+
+// Defined up-front so footer.connect can reference these URLs without duplication
+const social = {
+  github: "https://github.com/hutusi/amytis",
+  twitter: "https://twitter.com/hutusi",
+  email: "mailto:huziyong@gmail.com",
+};
+
 export const siteConfig = {
+
+  // ── Site identity ─────────────────────────────────────────────────────────
   title: { en: "Amytis", zh: "Amytis" },
   description: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
   baseUrl: "https://example.com", // Replace with your actual domain
+  ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
+
+  // ── i18n ──────────────────────────────────────────────────────────────────
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'zh'],
+  },
+
+  // ── Navigation ────────────────────────────────────────────────────────────
   nav: [
-    { name: "Home", url: "/", weight: 1 },
-    { name: "Flow", url: "/flows", weight: 1.1 },
-    { name: "Books", url: "/books", weight: 1.3 },
-    { name: "Series", url: "/series", weight: 1.5 },
-    { name: "Archive", url: "/archive", weight: 2 },
-    { name: "Tags", url: "/tags", weight: 3 },
-    { name: "About", url: "/about", weight: 4 },
-  ],
-  social: {
-    github: "https://github.com/hutusi/amytis",
-    twitter: "https://twitter.com/hutusi",
-    email: "mailto:huziyong@gmail.com",
+    { name: "Flow", url: "/flows", weight: 1 },
+    { name: "Posts", url: "/posts", weight: 2 },
+    { name: "Series", url: "/series", weight: 3, dropdown: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"] },
+    { name: "Books", url: "/books", weight: 4, dropdown: [] },
+    { name: "About", url: "/about", weight: 5 },
+  ] as NavItem[],
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footer: {
+    explore: [
+      { name: "Archive", url: "/archive", weight: 1 },
+      { name: "Tags", url: "/tags", weight: 2 },
+      { name: "Links", url: "/links", weight: 3 },
+      { name: "About", url: "/about", weight: 4 },
+    ],
+    connect: [
+      { name: "GitHub", url: social.github, weight: 1 },
+      { name: "Twitter", url: social.twitter, weight: 2 },
+      { name: "RSS Feed", url: "/feed.xml", weight: 3 },
+      { name: "Subscribe", url: "/subscribe", weight: 4 },
+    ],
+    builtWith: {
+      show: true,
+      url: "https://github.com/hutusi/amytis",
+      text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
+    },
   },
-  series: {
-    navbar: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"], // Slugs of series to show in navbar
+
+  // ── Social & sharing ──────────────────────────────────────────────────────
+  social,
+  share: {
+    enabled: true,
+    // Supported: twitter, facebook, linkedin, weibo, reddit, hackernews,
+    //            telegram, bluesky, mastodon, douban, zhihu, copy
+    platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'copy'],
   },
-  books: {
-    navbar: [] as string[], // Slugs of books to show in navbar dropdown
+  subscribe: {
+    substack: '',       // Substack publication URL, e.g., 'https://yourname.substack.com'
+    telegram: '',       // Telegram channel URL, e.g., 'https://t.me/yourchannel'
+    wechat: {
+      qrCode: '',       // Path to QR image in public/, e.g., '/images/wechat-qr.png'
+      account: '',      // WeChat official account ID/name shown below QR
+    },
+    email: '',          // Newsletter/mailing list URL (distinct from social.email contact address)
   },
-  archive: {
-    showAuthors: true,
+
+  // ── Features ──────────────────────────────────────────────────────────────
+  features: {
+    posts: {
+      enabled: true,
+      name: { en: "Posts", zh: "文章" },
+    },
+    series: {
+      enabled: true,
+      name: { en: "Series", zh: "系列" },
+    },
+    books: {
+      enabled: true,
+      name: { en: "Books", zh: "书籍" },
+    },
+    flows: {
+      enabled: true,
+      name: { en: "Flow", zh: "随笔" },
+    },
   },
-  pagination: {
-    posts: 5,
-    series: 1,
-    flows: 20,
-  },
-  includeDateInUrl: false,
-  // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
-  showFuturePosts: false,
-  toc: true,
-  themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
+
+  // ── Homepage ──────────────────────────────────────────────────────────────
   hero: {
     tagline: { en: "Digital Garden", zh: "数字花园" },
     title: { en: "Cultivating Digital Knowledge", zh: "培育数字知识" },
     subtitle: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
   },
-  about: {
-    title: { en: "About Amytis", zh: "关于 Amytis" },
-    subtitle: { en: "Learn more about the philosophy and technology behind this digital garden.", zh: "了解这座数字花园背后的理念与技术。" },
+  homepage: {
+    sections: [
+      { id: 'hero',            enabled: true, weight: 1 },
+      { id: 'featured-series', enabled: true, weight: 2, maxItems: 6, scrollThreshold: 2 },
+      { id: 'featured-books',  enabled: true, weight: 3, maxItems: 4, scrollThreshold: 2 },
+      { id: 'featured-posts',  enabled: true, weight: 4, maxItems: 4, scrollThreshold: 1 },
+      { id: 'latest-posts',    enabled: true, weight: 5, maxItems: 5 },
+      { id: 'recent-flows',    enabled: true, weight: 6, maxItems: 5 },
+    ],
+  },
+
+  // ── Content ───────────────────────────────────────────────────────────────
+  pagination: {
+    posts: 5,
+    series: 1,
+    flows: 20,
+  },
+  posts: {
+    toc: true,
+    showFuturePosts: false,
+    includeDateInUrl: false,
+    // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
+    archive: {
+      showAuthors: true,
+    },
   },
   flows: {
     recentCount: 5,
   },
-  featured: {
-    series: {
-      scrollThreshold: 2,  // Enable scrolling when more than this number
-      maxItems: 6,
-    },
-    stories: {
-      scrollThreshold: 1,  // Enable scrolling when more than this number
-      maxItems: 4,
-    },
-  },
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'zh'],
-  },
+
+  // ── Appearance ────────────────────────────────────────────────────────────
+  themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
+
+  // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
     provider: 'umami', // 'umami' | 'plausible' | 'google' | null
     umami: {
@@ -76,6 +149,8 @@ export const siteConfig = {
       measurementId: '', // G-XXXXXXXXXX
     },
   },
+
+  // ── Comments ──────────────────────────────────────────────────────────────
   comments: {
     provider: 'giscus', // 'giscus' | 'disqus' | null
     giscus: {
@@ -88,4 +163,11 @@ export const siteConfig = {
       shortname: '',
     },
   },
+
+  // ── Authors ───────────────────────────────────────────────────────────────
+  authors: {
+    // Map display name (as used in post frontmatter) to author profile
+    // "Author Name": { bio: "Short bio shown in author card below each post." },
+  } as Record<string, { bio?: string }>,
+
 };

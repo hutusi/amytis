@@ -8,6 +8,9 @@ import Comments from '@/components/Comments';
 import ExternalLinks from '@/components/ExternalLinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
+import PostNavigation from '@/components/PostNavigation';
+import AuthorCard from '@/components/AuthorCard';
+import ShareBar from '@/components/ShareBar';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
 
@@ -16,15 +19,18 @@ interface PostLayoutProps {
   relatedPosts?: PostData[];
   seriesPosts?: PostData[];
   seriesTitle?: string;
+  prevPost?: PostData | null;
+  nextPost?: PostData | null;
 }
 
-export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle }: PostLayoutProps) {
-  const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
+export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost }: PostLayoutProps) {
+  const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
   const showSidebar = showToc || hasSeries;
+  const postUrl = `${siteConfig.baseUrl}/posts/${post.slug}`;
 
   return (
-    <div className={`layout-container ${showSidebar ? 'lg:max-w-7xl' : 'lg:max-w-6xl'}`}>
+    <div className="layout-container">
       <ReadingProgressBar />
       <div className={showSidebar
         ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
@@ -38,11 +44,13 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             posts={hasSeries ? seriesPosts : undefined}
             currentSlug={post.slug}
             headings={showToc ? post.headings : []}
+            shareUrl={postUrl}
+            shareTitle={post.title}
           />
         )}
 
-        <article className="min-w-0 max-w-3xl">
-          <header className="mb-16 border-b border-muted/10 pb-12">
+        <article className="min-w-0 max-w-3xl mx-auto">
+          <header className="mb-16 border-b border-muted/10 pb-8">
             {post.draft && (
               <div className="mb-4">
                 <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -104,13 +112,32 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
 
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-12 pt-12 border-t border-muted/20 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
+              {post.tags.map((tag) => (
+                <Tag key={tag} tag={tag} variant="default" />
+              ))}
+            </div>
+          )}
+
           {post.externalLinks && post.externalLinks.length > 0 && (
             <ExternalLinks links={post.externalLinks} />
           )}
 
-          <RelatedPosts posts={relatedPosts || []} />
+          <ShareBar
+            url={postUrl}
+            title={post.title}
+            className={showSidebar ? 'mt-8 lg:hidden' : 'mt-8'}
+          />
+
+          <AuthorCard authors={post.authors} />
+
+          <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} />
 
           <Comments slug={post.slug} />
+
+          <RelatedPosts posts={relatedPosts || []} />
         </article>
       </div>
     </div>

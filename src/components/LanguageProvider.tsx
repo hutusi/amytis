@@ -27,11 +27,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const rafId = requestAnimationFrame(() => {
       if (savedLang && translations[savedLang]) {
         setLanguageState(savedLang);
-      } else {
-        const browserLang = navigator.language.split('-')[0] as Language;
-        if (translations[browserLang]) {
-          setLanguageState(browserLang);
-        }
       }
       setIsHydrated(true);
     });

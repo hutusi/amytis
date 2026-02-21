@@ -1,0 +1,150 @@
+---
+title: "i18n in a Static Next.js Blog: Client-Side Toggle vs URL-Based Routing"
+date: "2026-02-20"
+excerpt: "A deep dive into the trade-offs between client-side language switching and proper URL-based locale routing for a statically exported Next.js digital garden."
+tags: ["nextjs", "i18n", "seo", "static-site"]
+---
+
+When building a multilingual static blog with Next.js, there are two fundamentally different approaches to internationalisation. Choosing between them involves trade-offs across SEO, developer experience, content strategy, and hosting complexity.
+
+## The Client-Side Toggle Approach
+
+The simplest approach stores language preference in client state and resolves translations after hydration:
+
+```tsx
+// Language stored in context, resolved on the client
+const { t, language } = useLanguage();
+const label = t('about'); // "About" or "关于"
+```
+
+For page content that has locale variants, all versions are server-rendered into the HTML and a thin client wrapper toggles visibility:
+
+```tsx
+// LocaleSwitch: shows/hides [data-locale] divs via useEffect
+<LocaleSwitch>
+  <div data-locale="en"><MarkdownRenderer content={enContent} /></div>
+  <div data-locale="zh" style={{ display: 'none' }}><MarkdownRenderer content={zhContent} /></div>
+</LocaleSwitch>
+```
+
+This works and is zero-config — no routing changes needed. But it has real limitations.
+
+### SEO Problems
+
+- **Crawlers always see the default language.** Googlebot doesn't execute `localStorage` reads, so it always indexes the default locale's content.
+- **`display:none` content is risky.** Google may partially index hidden locale variants, or ignore them entirely.
+- **No `hreflang` signals.** Search engines can't discover alternate language versions of a page.
+- **`<html lang>` not updated.** Accessibility and search engine tooling rely on this attribute.
+
+---
+
+## URL-Based Locale Routing
+
+The proper solution gives each language variant its own URL:
+
+```
+/about        → English (default, no prefix)
+/zh/about     → Chinese
+```
+
+With Next.js App Router, this means moving all routes under an `app/[locale]/` segment and using `generateStaticParams` to pre-render each route for each locale at build time.
+
+Since Amytis uses `output: "export"`, this is pure **Static Site Generation** — the HTML is fully pre-built per locale. Crawlers get complete HTML with no JavaScript required, and each locale is independently indexable.
+
+### The Default Locale Prefix Problem
+
+Most sites want the default locale to have a clean URL (`/about`, not `/en/about`). With a runtime server, middleware handles this transparently. With static export, you need your **hosting layer** to do the rewrite.
+
+#### Netlify / Cloudflare Pages
+
+Drop a `_redirects` file in `public/`:
+
+```
+/en              /            301
+/en/*            /:splat      301
+/*               /en/:splat   200
+```
+
+The `200` status is a **silent rewrite** — the user sees `/about` in the URL bar, but the server serves `out/en/about/index.html`.
+
+#### Vercel
+
+```json
+{
+  "redirects": [
+    { "source": "/en/:path*", "destination": "/:path*", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/((?!zh/).*)", "destination": "/en/$1" }
+  ]
+}
+```
+
+#### Nginx
+
+```nginx
+location ~ ^/en(/.*)?$ { return 301 ${1:-/}; }
+location /zh/ { try_files $uri $uri/index.html =404; }
+location / { try_files /en$uri /en$uri/index.html =404; }
+```
+
+#### GitHub Pages
+
+GitHub Pages has no native rewrite support. The simplest workaround is a root `index.html` with a JS language detector:
+
+```html
+<script>
+  const lang = navigator.language.startsWith('zh') ? 'zh' : 'en';
+  window.location.replace('/' + lang + '/');
+</script>
+```
+
+Or just accept the `/en/` prefix for all locales.
+
+---
+
+## Content Strategy
+
+URL-based routing changes more than just URLs — it changes how you think about content.
+
+For a personal digital garden, most content is written in one language and won't be fully translated. The realistic scope is:
+
+| Content Type | Translated? | Approach |
+|---|---|---|
+| Static pages (about, privacy) | Yes | Optional `.zh.mdx` variant files |
+| Posts | Rarely | Fallback to original + notice |
+| Series descriptions | Maybe | Optional `index.zh.mdx` |
+| Books | Unlikely | Fallback |
+| Flows (daily notes) | No | UI-only i18n, no locale in URL |
+
+The `.{locale}.mdx` convention — already used for static pages in Amytis — extends naturally to posts and series:
+
+```
+content/posts/my-post.mdx           # default locale
+content/posts/my-post.zh.mdx        # optional Chinese translation
+content/series/my-series/index.zh.mdx
+```
+
+At build time, `generateStaticParams` generates `/en/my-post` and `/zh/my-post`. If the `.zh.mdx` file doesn't exist, the Chinese URL falls back to the English content with a small "not available in this language" banner.
+
+---
+
+## Trade-offs at a Glance
+
+| Aspect | Client-Side Toggle | URL-Based Routing |
+|---|---|---|
+| SEO | Crawlers see default lang only | Each locale fully indexed |
+| Default locale prefix | No prefix | CDN rewrite needed |
+| Build size | Same | ~2× |
+| Refactor scope | None | Large |
+| Content strategy | `.zh.mdx` for pages only | `.zh.mdx` for all content types |
+
+---
+
+## Conclusion
+
+For a personal blog where SEO in a second language isn't critical, the client-side toggle approach is pragmatic and gets the job done. UI strings translate, page content can optionally have locale variants, and there's no hosting complexity.
+
+For a project where bilingual SEO matters — where you genuinely want Chinese content indexed under Chinese URLs — URL-based routing is the right architecture. The CDN configuration is a one-time setup, and the `.{locale}.mdx` convention for content is already half-implemented.
+
+The good news: both approaches share the same content file convention. Migrating from client-side toggle to URL-based routing is a routing and build change, not a content restructure.

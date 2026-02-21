@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, PostData } from '@/lib/markdown';
+import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, PostData } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -30,14 +30,7 @@ function resolvePostFromParam(rawSlug: string) {
  */
 export async function generateStaticParams() {
   const posts = getAllPosts();
-  const slugs = new Set<string>();
-
-  for (const post of posts) {
-    slugs.add(post.slug);
-    slugs.add(encodeURIComponent(post.slug));
-  }
-
-  return [...slugs].map((slug) => ({ slug }));
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export const dynamicParams = false;
@@ -52,9 +45,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const ogImage = post.coverImage && !post.coverImage.startsWith('text:')
+  const ogImage = post.coverImage && !post.coverImage.startsWith('text:') && !post.coverImage.startsWith('./')
     ? post.coverImage
-    : `/icon.svg`;
+    : siteConfig.ogImage;
 
   return {
     title: `${post.title} | ${resolveLocale(siteConfig.title)}`,
@@ -105,6 +98,7 @@ export default async function PostPage({
   }
 
   const relatedPosts = getRelatedPosts(slug);
+  const { prev, next } = getAdjacentPosts(slug);
   let seriesPosts: PostData[] = [];
   let seriesTitle: string | undefined;
 
@@ -115,5 +109,5 @@ export default async function PostPage({
   }
 
   // Default to standard post layout
-  return <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} />;
+  return <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} prevPost={prev} nextPost={next} />;
 }
