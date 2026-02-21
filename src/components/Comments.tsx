@@ -12,7 +12,7 @@ export default function Comments({ slug }: { slug: string }) {
 
   if (provider === 'giscus' && giscus.repo) {
     return (
-      <div className="mt-16 pt-12 border-t border-muted/20">
+      <div className="mt-12 pt-12 border-t border-muted/20">
         <Giscus
           id="comments"
           repo={giscus.repo as `${string}/${string}`}
@@ -34,7 +34,7 @@ export default function Comments({ slug }: { slug: string }) {
 
   if (provider === 'disqus' && disqus.shortname) {
     return (
-      <div className="mt-16 pt-12 border-t border-muted/20">
+      <div className="mt-12 pt-12 border-t border-muted/20">
         <div id="disqus_thread"></div>
         <script
           dangerouslySetInnerHTML={{
