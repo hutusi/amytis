@@ -28,7 +28,7 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
 
   const showPosts = activeTab === 'all' || activeTab === 'posts';
   const showFlows = activeTab === 'all' || activeTab === 'flows';
-  const showSectionHeaders = hasBoth && activeTab === 'all';
+  const showSectionHeaders = true;
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: 'all', label: t('search_all'), count: posts.length + flows.length },
@@ -77,7 +77,7 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
 
       {/* Flows section */}
       {showFlows && flows.length > 0 && (
-        <div className={showSectionHeaders && posts.length > 0 ? 'mt-12' : ''}>
+        <div className={showPosts && posts.length > 0 ? 'mt-12' : ''}>
           {showSectionHeaders && (
             <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-4">
               {t('flow_notes')}

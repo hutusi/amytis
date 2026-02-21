@@ -22,16 +22,25 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
     .sort((a, b) => b[1] - a[1])
     .filter(([tag]) => !filter || tag.toLowerCase().includes(filter.toLowerCase()));
 
-  // Ensure the active tag is always visible
   const activeIndex = sortedTags.findIndex(([tag]) => tag === activeTag);
-  const activeIsHidden = !expanded && !filter && activeIndex >= INITIAL_SHOW;
 
-  const visibleTags = filter || expanded || activeIsHidden
-    ? sortedTags
-    : sortedTags.slice(0, INITIAL_SHOW);
+  // Compute visible tags:
+  // - Filtering or expanded: show all
+  // - Default: show first INITIAL_SHOW, then append active tag (with a separator)
+  //   if it falls beyond the initial slice — keeps sidebar compact while
+  //   always making the selected tag visible
+  const getVisibleTags = (): { entries: [string, number][]; appendedAt: number | null } => {
+    if (filter || expanded) return { entries: sortedTags, appendedAt: null };
+    const initial = sortedTags.slice(0, INITIAL_SHOW);
+    if (activeIndex >= INITIAL_SHOW) {
+      return { entries: [...initial, sortedTags[activeIndex]], appendedAt: INITIAL_SHOW };
+    }
+    return { entries: initial, appendedAt: null };
+  };
 
-  const remainingCount = sortedTags.length - INITIAL_SHOW;
-  const showExpandButton = !filter && !expanded && !activeIsHidden && remainingCount > 0;
+  const { entries: visibleTags, appendedAt } = getVisibleTags();
+  const remainingCount = sortedTags.length - visibleTags.length;
+  const showExpandButton = !filter && !expanded && remainingCount > 0;
   // Only allow collapsing if it won't hide the active tag
   const showCollapseButton = expanded && !filter && (activeIndex === -1 || activeIndex < INITIAL_SHOW);
 
@@ -74,23 +83,27 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
 
         {/* Tag list — no overflow, no scrollbar */}
         <nav className="space-y-0.5">
-          {visibleTags.map(([tag, count]) => {
+          {visibleTags.map(([tag, count], index) => {
             const isActive = tag === activeTag;
+            // Thin separator before the appended active tag
+            const showSeparator = appendedAt !== null && index === appendedAt;
             return (
-              <Link
-                key={tag}
-                href={`/tags/${encodeURIComponent(tag)}`}
-                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm no-underline transition-colors ${
-                  isActive
-                    ? 'bg-accent/10 text-accent font-medium'
-                    : 'text-foreground/70 hover:text-foreground hover:bg-muted/10'
-                }`}
-              >
-                <span className="truncate">{tag}</span>
-                <span className={`ml-2 text-xs font-mono flex-shrink-0 ${isActive ? 'text-accent/70' : 'text-muted/50'}`}>
-                  {count}
-                </span>
-              </Link>
+              <div key={tag}>
+                {showSeparator && <div className="my-1.5 h-px bg-muted/10" />}
+                <Link
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm no-underline transition-colors ${
+                    isActive
+                      ? 'bg-accent/10 text-accent font-medium'
+                      : 'text-foreground/70 hover:text-foreground hover:bg-muted/10'
+                  }`}
+                >
+                  <span className="truncate">{tag}</span>
+                  <span className={`ml-2 text-xs font-mono flex-shrink-0 ${isActive ? 'text-accent/70' : 'text-muted/50'}`}>
+                    {count}
+                  </span>
+                </Link>
+              </div>
             );
           })}
 

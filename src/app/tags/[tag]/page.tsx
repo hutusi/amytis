@@ -47,14 +47,10 @@ export default async function TagPage({
   return (
     <div className="layout-container">
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
-        <TagSidebar tags={allTags} activeTag={decodedTag} />
+        <TagSidebar key={decodedTag} tags={allTags} activeTag={decodedTag} />
 
         <div className="flex-1 min-w-0">
-          <TagPageHeader
-            tag={decodedTag}
-            postCount={posts.length}
-            flowCount={flows.length}
-          />
+          <TagPageHeader tag={decodedTag} />
           <TagContentTabs posts={posts} flows={flows} />
         </div>
       </div>
