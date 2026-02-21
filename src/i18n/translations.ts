@@ -80,6 +80,9 @@ export const translations = {
     search_tip_and: "Use spaces to combine keywords (Space = AND)",
     search_tip_exclude: "Exclude a term (- = Exclude)",
     discuss_post: "Discuss this post",
+    share_post: "Share",
+    copy_link: "Copy link",
+    link_copied: "Copied!",
   },
   zh: {
     home: "首页",
@@ -162,6 +165,9 @@ export const translations = {
     search_tip_and: "使用空格组合关键词（空格表示 AND）",
     search_tip_exclude: "排除关键词（- 表示排除）",
     discuss_post: "讨论这篇文章",
+    share_post: "分享",
+    copy_link: "复制链接",
+    link_copied: "已复制",
   },
 };
 

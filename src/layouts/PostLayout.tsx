@@ -10,6 +10,7 @@ import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
 import PostNavigation from '@/components/PostNavigation';
 import AuthorCard from '@/components/AuthorCard';
+import ShareBar from '@/components/ShareBar';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
 
@@ -26,6 +27,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
   const showSidebar = showToc || hasSeries;
+  const postUrl = `${siteConfig.baseUrl}/posts/${post.slug}`;
 
   return (
     <div className="layout-container">
@@ -42,6 +44,9 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             posts={hasSeries ? seriesPosts : undefined}
             currentSlug={post.slug}
             headings={showToc ? post.headings : []}
+            shareUrl={postUrl}
+            shareTitle={post.title}
+            shareExcerpt={post.excerpt}
           />
         )}
 
@@ -120,6 +125,13 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           {post.externalLinks && post.externalLinks.length > 0 && (
             <ExternalLinks links={post.externalLinks} />
           )}
+
+          <ShareBar
+            url={postUrl}
+            title={post.title}
+            excerpt={post.excerpt}
+            className={showSidebar ? 'mt-8 lg:hidden' : 'mt-8'}
+          />
 
           <AuthorCard authors={post.authors} />
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PostData, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { useScrollY } from '@/hooks/useScrollY';
+import ShareBar from './ShareBar';
 
 interface PostSidebarProps {
   seriesSlug?: string;
@@ -13,6 +14,9 @@ interface PostSidebarProps {
   currentSlug: string;
   headings: Heading[];
   localeHeadings?: Record<string, Heading[]>;
+  shareUrl?: string;
+  shareTitle?: string;
+  shareExcerpt?: string;
 }
 
 function getVisibleIndices(total: number, current: number): (number | 'ellipsis')[] {
@@ -28,7 +32,7 @@ function getVisibleIndices(total: number, current: number): (number | 'ellipsis'
   return result;
 }
 
-export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings }: PostSidebarProps) {
+export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings, shareUrl, shareTitle, shareExcerpt }: PostSidebarProps) {
   const { t, language } = useLanguage();
   const activeHeadings = localeHeadings?.[language] ?? headings;
   const hasSeries = !!(seriesSlug && posts && posts.length > 0);
@@ -251,6 +255,15 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
               </Link>
             </>
           )}
+        </div>
+      )}
+
+      {shareUrl && (
+        <div className="mt-6 pt-6 border-t border-muted/10">
+          <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
+            {t('share_post')}
+          </p>
+          <ShareBar url={shareUrl} title={shareTitle!} excerpt={shareExcerpt} layout="vertical" />
         </div>
       )}
     </aside>

@@ -56,6 +56,9 @@ export const siteConfig = {
   flows: {
     recentCount: 5,
   },
+  share: {
+    platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'hackernews', 'copy'],
+  },
   features: {
     posts: {
       enabled: true,
