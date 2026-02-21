@@ -1,5 +1,5 @@
 import { getAllTags, getPostsByTag, getFlowsByTag } from '@/lib/markdown';
-import PostCard from '@/components/PostCard';
+import PostList from '@/components/PostList';
 import FlowTimelineEntry from '@/components/FlowTimelineEntry';
 import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';
@@ -54,11 +54,7 @@ export default async function TagPage({
           <TagPageHeader tag={decodedTag} postCount={posts.length + flows.length} />
 
           {posts.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map(post => (
-                <PostCard key={post.slug} post={post} />
-              ))}
-            </div>
+            <PostList posts={posts} />
           )}
 
           {flows.length > 0 && (

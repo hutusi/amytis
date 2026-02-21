@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { t } from '@/lib/i18n';
+import { LuTag } from 'react-icons/lu';
 
 interface TagSidebarProps {
   tags: Record<string, number>;
@@ -19,9 +20,13 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
   return (
     <aside className="hidden lg:block flex-shrink-0">
       <div className="sticky top-24">
-        <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
+        <Link
+          href="/tags"
+          className="flex items-center gap-1.5 text-[10px] font-sans font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline mb-3"
+        >
+          <LuTag className="w-3 h-3" />
           {t('tags')}
-        </p>
+        </Link>
 
         <div className="relative mb-2">
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
