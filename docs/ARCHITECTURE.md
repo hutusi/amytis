@@ -50,6 +50,10 @@ src/app/
     [author]/page.tsx               # Posts by author
   archive/
     page.tsx                        # Chronological archive
+  subscribe/
+    page.tsx                        # Subscription options
+  search.json/
+    route.ts                        # Supplementary structured search data
   [slug]/page.tsx                   # Static pages (about, etc.)
 ```
 
@@ -60,6 +64,7 @@ src/app/
 - **`Footer`** - Social links, copyright, site metadata, and language switch.
 - **`Hero`** - Homepage hero with collapsible intro.
 - **`BookLayout`** - Dedicated layout for book chapters with sidebar navigation.
+- **`PageHeader`** - Consistent header for simple pages (Archive, Tags, About).
 
 ### Content Display
 - **`PostList`** - Card-based post listing.
@@ -67,6 +72,8 @@ src/app/
 - **`SeriesCatalog`** - Timeline-style post listing for series.
 - **`PostCard`** - Individual post preview card.
 - **`CoverImage`** - Optimized image component using `next-image-export-optimizer` with dynamic desaturated gradients.
+- **`ShareBar`** - Social sharing buttons for posts and books.
+- **`TagContentTabs`** - Tabbed interface for filtering posts vs flows by tag.
 
 ### Content Rendering
 - **`MarkdownRenderer`** - Core rendering component using `react-markdown` with plugins (GFM, Math, Raw HTML).
@@ -78,6 +85,7 @@ src/app/
 - **`Search`** - Full-text search modal (Cmd/Ctrl+K) powered by Pagefind. Supports type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation, debounced input, focus trap, and ARIA accessibility. Search syntax: `"exact phrase"`, `word1 word2` (AND), `-exclude`.
 - **`Pagination`** - Previous/Next page navigation.
 - **`ReadingProgressBar`** - Top-of-page progress bar for book chapters.
+- **`SubscribePage`** - Centralized page for all subscription options.
 
 ## Data Access Layer (`src/lib/markdown.ts`)
 

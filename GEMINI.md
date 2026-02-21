@@ -43,9 +43,13 @@ bun test
   - `archive/`: Timeline-based chronological archive grouped by year and month.
   - `tags/`: Popularity-sorted tag cloud and filtered listings.
   - `authors/`: Posts filtered by individual authors.
+  - `subscribe/`: Subscription options (RSS, Newsletter, Social).
+  - `search.json/`: Static search index generator (supplementary).
 - `src/lib/`: Core logic and utilities.
-  - `markdown.ts`: Advanced parsing for posts/series/flows, sorting, reading time calculation (multilingual), and metadata inheritance.
-- `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, etc.).
+  - `markdown.ts`: Advanced parsing for posts/series/flows, sorting, and metadata.
+  - `search-utils.ts`: Content cleaning and search result processing.
+  - `shuffle.ts`: Deterministic and random array shuffling.
+- `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, ShareBar, etc.).
 - `content/`: Source Markdown/MDX content.
 - `scripts/`: CLI tools for content management and asset processing.
 

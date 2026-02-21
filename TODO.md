@@ -9,7 +9,6 @@
 ## 🌿 Digital Garden Evolution
 - [ ] **Backlinks**: Automatically list "Pages that link here" at the bottom of articles.
 - [ ] **Wiki-links**: Support `[[internal-link]]` syntax for easier cross-referencing.
-- [ ] **Recent Notes**: Integrate a "Recent Flows" section on the homepage.
 
 ## 🛠 Performance & Social
 - [ ] **Dynamic OG**: Generate automated social cards with Satori based on post titles.
@@ -19,6 +18,7 @@
 ## ✅ Completed Highlights
 - [x] **Full-text Search**: Migrated to **Pagefind** for high-performance static indexing.
 - [x] **Multi-format Content**: Native support for **Posts**, **Series**, **Books**, and **Flows**.
+- [x] **Recent Notes**: Integrated a "Recent Notes" section on the homepage.
 - [x] **Scoped Publishing**: Official release as `@hutusi/amytis` on npm and GitHub.
 - [x] **Robust Engineering**: Zero hydration mismatches, full Zod validation, and 64+ automated tests.
 - [x] **Refined UI**: High-contrast typography, four color palettes, and horizontal featured scrolling.
