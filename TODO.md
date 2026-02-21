@@ -1,25 +1,21 @@
 # Amytis Roadmap
 
-## 🚀 Immediate UX & Polish
+## 🚀 Priority UX & Engineering
 - [ ] **Image Zoom**: Implement medium-zoom or a lightbox for MDX images.
-- [ ] **Breadcrumbs**: Add path navigation (e.g., `Home > Books > Chapter`) to all pages.
-- [ ] **Smart Nav**: Add "Previous" and "Next" article links at the bottom of posts.
+- [ ] **Breadcrumbs**: Extend Flow breadcrumbs to standard Posts and Books.
+- [ ] **Dynamic OG**: Generate automated social cards with Satori for every post.
+- [ ] **PWA Support**: Add manifest and service worker for offline reading.
 
 ## 🌿 Digital Garden Evolution
 - [ ] **Backlinks**: Automatically list "Pages that link here" at the bottom of articles.
 - [ ] **Wiki-links**: Support `[[internal-link]]` syntax for easier cross-referencing.
-
-## 🛠 Performance & Social
-- [ ] **Dynamic OG**: Generate automated social cards with Satori based on post titles.
-- [ ] **PWA**: Add a manifest and service worker for basic offline reading support.
+- [ ] **Knowledge Graph**: Interactive visual map of all connected notes.
 
 ## ✅ Completed Highlights
-- [x] **Full-text Search**: Migrated to **Pagefind** for high-performance static indexing.
-- [x] **Search UI**: Refined Pagefind results with highlighted context and full-screen mobile layout.
-- [x] **Interactive Code**: Added "Copy to Clipboard" buttons to all code blocks.
+- [x] **Pagefind Search**: High-performance static full-text indexing with rich UI.
+- [x] **Smart Navigation**: Persistent "Previous" and "Next" article links on all posts.
 - [x] **Multi-format Content**: Native support for **Posts**, **Series**, **Books**, and **Flows**.
-- [x] **Recent Notes**: Integrated a "Recent Notes" section on the homepage.
-- [x] **Scoped Publishing**: Official release as `@hutusi/amytis` on npm and GitHub.
-- [x] **Robust Engineering**: Zero hydration mismatches, full Zod validation, and 64+ automated tests.
-- [x] **Refined UI**: High-contrast typography, four color palettes, and horizontal featured scrolling.
-- [x] **Asset Pipeline**: Automatic co-located image mapping and WebP optimization.
+- [x] **Professional Publishing**: Scoped `@hutusi/amytis` package with OIDC Trusted Publishing.
+- [x] **Robust Engineering**: Zero hydration mismatches, Zod validation, and 64+ automated tests.
+- [x] **Refined UI**: High-contrast typography, four color palettes, and horizontal scroll featured sections.
+- [x] **Sub-features**: Newsletter/Subscribe page, Reading Progress, and Author Ecosystem.
