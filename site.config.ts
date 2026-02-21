@@ -113,6 +113,11 @@ export const siteConfig = {
   },
 
   // ── Content ───────────────────────────────────────────────────────────────
+  pagination: {
+    posts: 5,
+    series: 1,
+    flows: 20,
+  },
   posts: {
     toc: true,
     showFuturePosts: false,

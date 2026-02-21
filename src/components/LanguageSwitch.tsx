@@ -1,6 +1,7 @@
 'use client';
 
 import { useLanguage } from './LanguageProvider';
+import { Language } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
 
 const LOCALE_LABELS: Record<string, string> = {
@@ -32,12 +33,12 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
   }
 
   const currentIndex = locales.indexOf(language);
-  const nextLocale = locales[(currentIndex + 1) % locales.length];
+  const nextLocale = locales[(currentIndex + 1) % locales.length] as Language;
 
   // ── Text variant: quiet typographic links for the footer ──────────────────
   if (variant === 'text') {
     if (locales.length === 2) {
-      const [a, b] = locales;
+      const [a, b] = locales as Language[];
       return (
         <span className="flex items-center gap-1.5" role="group" aria-label="Language">
           <button
@@ -83,7 +84,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
 
   // ── Pill variant: compact segmented pill for the navbar ───────────────────
   if (locales.length === 2) {
-    const [a, b] = locales;
+    const [a, b] = locales as Language[];
     return (
       <button
         onClick={() => setLanguage(nextLocale)}

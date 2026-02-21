@@ -51,7 +51,7 @@ function getSlugFromFilename(filename: string): string {
   const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
   const match = nameWithoutExt.match(dateRegex);
 
-  if (match && !siteConfig.includeDateInUrl) {
+  if (match && !siteConfig.posts?.includeDateInUrl) {
     return match[2];
   }
   return nameWithoutExt;
