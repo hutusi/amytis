@@ -239,7 +239,7 @@ export function getAllPosts(): PostData[] {
       
       if (match) {
         dateFromFileName = match[1];
-        if (siteConfig.includeDateInUrl) {
+        if (siteConfig.posts?.includeDateInUrl) {
           slug = rawName;
         } else {
           slug = match[2];
@@ -267,7 +267,7 @@ export function getAllPosts(): PostData[] {
                let sDate = undefined;
                if (sMatch) {
                  sDate = sMatch[1];
-                 sSlug = siteConfig.includeDateInUrl ? sRawName : sMatch[2];
+                 sSlug = siteConfig.posts?.includeDateInUrl ? sRawName : sMatch[2];
                }
                
                allPostsData.push(parseMarkdownFile(
@@ -295,7 +295,7 @@ export function getAllPosts(): PostData[] {
                      
                      if (sMatch) {
                        sDate = sMatch[1];
-                       sSlug = siteConfig.includeDateInUrl ? sItem.name : sMatch[2];
+                       sSlug = siteConfig.posts?.includeDateInUrl ? sItem.name : sMatch[2];
                      }
 
                      allPostsData.push(parseMarkdownFile(
@@ -339,7 +339,7 @@ export function getAllPosts(): PostData[] {
         return false;
       }
 
-      if (!siteConfig.showFuturePosts) {
+      if (!siteConfig.posts?.showFuturePosts) {
         const postDate = new Date(post.date);
         const now = new Date();
         if (postDate > now) return false;
@@ -397,7 +397,7 @@ function findPostFile(name: string, targetSlug: string): PostData | null {
 export function getPostBySlug(slug: string): PostData | null {
   let post: PostData | null = null;
 
-  if (siteConfig.includeDateInUrl) {
+  if (siteConfig.posts?.includeDateInUrl) {
     post = findPostFile(slug, slug);
   } else {
     post = findPostFile(slug, slug);
@@ -446,7 +446,7 @@ export function getPostBySlug(slug: string): PostData | null {
     return null;
   }
 
-  if (!siteConfig.showFuturePosts) {
+  if (!siteConfig.posts?.showFuturePosts) {
       const postDate = new Date(post.date);
       const now = new Date();
       if (postDate > now) return null;
@@ -1057,7 +1057,7 @@ export function getAllFlows(): FlowData[] {
   return flows
     .filter(flow => {
       if (process.env.NODE_ENV === 'production' && flow.draft) return false;
-      if (!siteConfig.showFuturePosts) {
+      if (!siteConfig.posts?.showFuturePosts) {
         const flowDate = new Date(flow.date);
         const now = new Date();
         if (flowDate > now) return false;

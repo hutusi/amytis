@@ -5,12 +5,29 @@ export interface NavItem {
   dropdown?: string[];
 }
 
+// Defined up-front so footer.connect can reference these URLs without duplication
+const social = {
+  github: "https://github.com/hutusi/amytis",
+  twitter: "https://twitter.com/hutusi",
+  email: "mailto:huziyong@gmail.com",
+};
+
 export const siteConfig = {
+
+  // ── Site identity ─────────────────────────────────────────────────────────
   title: { en: "Amytis", zh: "Amytis" },
   description: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
   baseUrl: "https://example.com", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
+
+  // ── i18n ──────────────────────────────────────────────────────────────────
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'zh'],
+  },
+
+  // ── Navigation ────────────────────────────────────────────────────────────
   nav: [
     { name: "Flow", url: "/flows", weight: 1 },
     { name: "Posts", url: "/posts", weight: 2 },
@@ -18,6 +35,8 @@ export const siteConfig = {
     { name: "Books", url: "/books", weight: 4, dropdown: [] },
     { name: "About", url: "/about", weight: 5 },
   ] as NavItem[],
+
+  // ── Footer ────────────────────────────────────────────────────────────────
   footer: {
     explore: [
       { name: "Archive", url: "/archive", weight: 1 },
@@ -26,8 +45,8 @@ export const siteConfig = {
       { name: "About", url: "/about", weight: 4 },
     ],
     connect: [
-      { name: "GitHub", url: "https://github.com/hutusi/amytis", weight: 1 },
-      { name: "Twitter", url: "https://twitter.com/hutusi", weight: 2 },
+      { name: "GitHub", url: social.github, weight: 1 },
+      { name: "Twitter", url: social.twitter, weight: 2 },
       { name: "RSS Feed", url: "/feed.xml", weight: 3 },
       { name: "Subscribe", url: "/subscribe", weight: 4 },
     ],
@@ -37,32 +56,9 @@ export const siteConfig = {
       text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
     },
   },
-  social: {
-    github: "https://github.com/hutusi/amytis",
-    twitter: "https://twitter.com/hutusi",
-    email: "mailto:huziyong@gmail.com",
-  },
-  archive: {
-    showAuthors: true,
-  },
-  pagination: {
-    posts: 5,
-    series: 1,
-    flows: 20,
-  },
-  includeDateInUrl: false,
-  // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
-  showFuturePosts: false,
-  toc: true,
-  themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
-  hero: {
-    tagline: { en: "Digital Garden", zh: "数字花园" },
-    title: { en: "Cultivating Digital Knowledge", zh: "培育数字知识" },
-    subtitle: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
-  },
-  flows: {
-    recentCount: 5,
-  },
+
+  // ── Social & sharing ──────────────────────────────────────────────────────
+  social,
   share: {
     enabled: true,
     // Supported: twitter, facebook, linkedin, weibo, reddit, hackernews,
@@ -76,8 +72,10 @@ export const siteConfig = {
       qrCode: '',       // Path to QR image in public/, e.g., '/images/wechat-qr.png'
       account: '',      // WeChat official account ID/name shown below QR
     },
-    email: '',          // Alternative email newsletter URL (if not using Substack)
+    email: '',          // Newsletter/mailing list URL (distinct from social.email contact address)
   },
+
+  // ── Features ──────────────────────────────────────────────────────────────
   features: {
     posts: {
       enabled: true,
@@ -96,6 +94,13 @@ export const siteConfig = {
       name: { en: "Flow", zh: "随笔" },
     },
   },
+
+  // ── Homepage ──────────────────────────────────────────────────────────────
+  hero: {
+    tagline: { en: "Digital Garden", zh: "数字花园" },
+    title: { en: "Cultivating Digital Knowledge", zh: "培育数字知识" },
+    subtitle: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
+  },
   homepage: {
     sections: [
       { id: 'hero',            enabled: true, weight: 1 },
@@ -106,10 +111,25 @@ export const siteConfig = {
       { id: 'recent-flows',    enabled: true, weight: 6, maxItems: 5 },
     ],
   },
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'zh'],
+
+  // ── Content ───────────────────────────────────────────────────────────────
+  posts: {
+    toc: true,
+    showFuturePosts: false,
+    includeDateInUrl: false,
+    // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
+    archive: {
+      showAuthors: true,
+    },
   },
+  flows: {
+    recentCount: 5,
+  },
+
+  // ── Appearance ────────────────────────────────────────────────────────────
+  themeColor: 'default', // 'default' | 'blue' | 'rose' | 'amber'
+
+  // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
     provider: 'umami', // 'umami' | 'plausible' | 'google' | null
     umami: {
@@ -124,10 +144,8 @@ export const siteConfig = {
       measurementId: '', // G-XXXXXXXXXX
     },
   },
-  authors: {
-    // Map display name (as used in post frontmatter) to author profile
-    // "Author Name": { bio: "Short bio shown in author card below each post." },
-  } as Record<string, { bio?: string }>,
+
+  // ── Comments ──────────────────────────────────────────────────────────────
   comments: {
     provider: 'giscus', // 'giscus' | 'disqus' | null
     giscus: {
@@ -140,4 +158,11 @@ export const siteConfig = {
       shortname: '',
     },
   },
+
+  // ── Authors ───────────────────────────────────────────────────────────────
+  authors: {
+    // Map display name (as used in post frontmatter) to author profile
+    // "Author Name": { bio: "Short bio shown in author card below each post." },
+  } as Record<string, { bio?: string }>,
+
 };

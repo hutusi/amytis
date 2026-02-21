@@ -24,7 +24,7 @@ interface PostLayoutProps {
 }
 
 export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost }: PostLayoutProps) {
-  const showToc = siteConfig.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
+  const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
   const showSidebar = showToc || hasSeries;
   const postUrl = `${siteConfig.baseUrl}/posts/${post.slug}`;

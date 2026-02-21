@@ -41,7 +41,7 @@ function groupPostsByDate(posts: PostData[]): GroupedPosts {
 export default function ArchivePage() {
   const posts = getAllPosts();
   const groupedPosts = groupPostsByDate(posts);
-  const showAuthors = siteConfig.archive?.showAuthors;
+  const showAuthors = siteConfig.posts?.archive?.showAuthors;
 
   // Sort years descending to show newest content first
   const years = Object.keys(groupedPosts).sort((a, b) => Number(b) - Number(a));

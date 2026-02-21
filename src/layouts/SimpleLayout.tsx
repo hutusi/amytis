@@ -15,7 +15,7 @@ interface SimpleLayoutProps {
 export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayoutProps) {
   const defaultLocale = siteConfig.i18n.defaultLocale;
   const localeEntries = Object.entries(post.contentLocales ?? {});
-  const showToc = siteConfig.toc !== false && post.toc !== false && post.headings?.length > 0;
+  const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings?.length > 0;
   const localeHeadings = post.contentLocales
     ? Object.fromEntries(
         Object.entries(post.contentLocales)
