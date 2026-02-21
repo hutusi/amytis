@@ -1,7 +1,6 @@
 # Amytis Roadmap
 
 ## 🚀 Immediate UX & Polish
-- [ ] **Interactive Code**: Add "Copy to Clipboard" buttons to code blocks.
 - [ ] **Image Zoom**: Implement medium-zoom or a lightbox for MDX images.
 - [ ] **Breadcrumbs**: Add path navigation (e.g., `Home > Books > Chapter`) to all pages.
 - [ ] **Smart Nav**: Add "Previous" and "Next" article links at the bottom of posts.
@@ -13,10 +12,11 @@
 ## 🛠 Performance & Social
 - [ ] **Dynamic OG**: Generate automated social cards with Satori based on post titles.
 - [ ] **PWA**: Add a manifest and service worker for basic offline reading support.
-- [ ] **Search UI**: Refine Pagefind results with highlighted context and better mobile layout.
 
 ## ✅ Completed Highlights
 - [x] **Full-text Search**: Migrated to **Pagefind** for high-performance static indexing.
+- [x] **Search UI**: Refined Pagefind results with highlighted context and full-screen mobile layout.
+- [x] **Interactive Code**: Added "Copy to Clipboard" buttons to all code blocks.
 - [x] **Multi-format Content**: Native support for **Posts**, **Series**, **Books**, and **Flows**.
 - [x] **Recent Notes**: Integrated a "Recent Notes" section on the homepage.
 - [x] **Scoped Publishing**: Official release as `@hutusi/amytis` on npm and GitHub.
