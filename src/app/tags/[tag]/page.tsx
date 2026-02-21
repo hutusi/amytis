@@ -47,7 +47,7 @@ export default async function TagPage({
 
   return (
     <div className="layout-container">
-      <div className="flex gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
         <TagSidebar tags={allTags} activeTag={decodedTag} />
 
         <div className="flex-1 min-w-0">
