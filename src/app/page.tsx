@@ -16,7 +16,14 @@ export const metadata: Metadata = {
     title: resolveLocale(siteConfig.title),
     description: resolveLocale(siteConfig.description),
     siteName: resolveLocale(siteConfig.title),
+    url: siteConfig.baseUrl,
     type: 'website',
+    images: [{ url: '/icon.svg', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary',
+    title: resolveLocale(siteConfig.title),
+    description: resolveLocale(siteConfig.description),
   },
 };
 

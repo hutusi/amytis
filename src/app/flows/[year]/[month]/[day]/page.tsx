@@ -25,6 +25,19 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   return {
     title: `${flow.title} | ${resolveLocale(siteConfig.title)}`,
     description: flow.excerpt,
+    openGraph: {
+      title: flow.title,
+      description: flow.excerpt,
+      type: 'article',
+      publishedTime: flow.date,
+      url: `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`,
+      siteName: resolveLocale(siteConfig.title),
+    },
+    twitter: {
+      card: 'summary',
+      title: flow.title,
+      description: flow.excerpt,
+    },
   };
 }
 

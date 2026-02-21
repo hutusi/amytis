@@ -47,12 +47,29 @@ const baskerville = localFont({
   variable: "--font-baskerville",
 });
 
+const siteTwitterHandle = (() => {
+  const url = siteConfig.social?.twitter ?? '';
+  const m = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
+  return m ? `@${m[1]}` : undefined;
+})();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.baseUrl),
   title: resolveLocale(siteConfig.title),
   description: resolveLocale(siteConfig.description),
   icons: {
     icon: "/icon.svg",
+  },
+  openGraph: {
+    siteName: resolveLocale(siteConfig.title),
+    locale: siteConfig.i18n.defaultLocale,
+    type: 'website',
+    images: [{ url: '/icon.svg', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary',
+    site: siteTwitterHandle,
+    creator: siteTwitterHandle,
   },
 };
 
