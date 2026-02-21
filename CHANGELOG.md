@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-21
+
+### Added
+- **Subscription Hub**: Dedicated `/subscribe` page with support for RSS, Email/Substack, Telegram, and WeChat.
+- **Social Sharing**: New configurable `ShareBar` for posts and books with support for 10+ platforms (X, Reddit, Telegram, etc.).
+- **Enhanced Tags UX**:
+  - Redesigned tags index with A-Z grouping and popularity badges.
+  - Tabbed filtering for "Posts" vs "Flows" within each tag page.
+  - Sidebar-driven tag navigation with pagination and search.
+- **Improved Archive**: Redesigned chronological archive with year-based navigation, post counts, and series indicators.
+- **Content Expansion**: New multimedia showcase post and deep-dives on i18n routing strategies.
+- **Author Pages**: Added series contribution tracking and per-author book listings.
+
+### Changed
+- **Homepage Refinement**: Dynamic sections with configurable ordering, scrolling thresholds, and item limits via `site.config.ts`.
+- **Navigation Upgrade**: Segmented pill design for the language switcher and improved mobile drawer.
+- **Documentation**: Synchronized and streamlined `GEMINI.md`, `ARCHITECTURE.md`, and `TODO.md` roadmap.
+
+### Fixed
+- **Engineering**: Resolved multiple race conditions in scroll listeners via a new `useScrollY` singleton hook.
+- **Layout Consistency**: Standardized spacing, dividers, and typography across all content layouts.
+- **i18n Logic**: Fixed locale-specific TOC heading extraction and variant file exclusions.
+
 ## [1.6.0] - 2026-02-20
 
 ### Added
