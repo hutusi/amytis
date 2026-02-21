@@ -83,6 +83,11 @@ export const translations = {
     share_post: "Share",
     copy_link: "Copy link",
     link_copied: "Copied!",
+    flow_notes: "Flow Notes",
+    tag_post_count: "{count} posts",
+    tag_post_count_one: "1 post",
+    tag_flow_count: "{count} flow notes",
+    tag_flow_count_one: "1 flow note",
   },
   zh: {
     home: "首页",
@@ -168,6 +173,11 @@ export const translations = {
     share_post: "分享",
     copy_link: "复制链接",
     link_copied: "已复制",
+    flow_notes: "随笔",
+    tag_post_count: "{count} 篇文章",
+    tag_post_count_one: "1 篇文章",
+    tag_flow_count: "{count} 条随笔",
+    tag_flow_count_one: "1 条随笔",
   },
 };
 

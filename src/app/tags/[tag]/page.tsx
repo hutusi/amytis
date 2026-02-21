@@ -1,12 +1,11 @@
 import { getAllTags, getPostsByTag, getFlowsByTag } from '@/lib/markdown';
-import PostList from '@/components/PostList';
-import FlowTimelineEntry from '@/components/FlowTimelineEntry';
 import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { resolveLocale } from '@/lib/i18n';
 import TagPageHeader from '@/components/TagPageHeader';
 import TagSidebar from '@/components/TagSidebar';
+import TagContentTabs from '@/components/TagContentTabs';
 
 export async function generateStaticParams() {
   const tags = getAllTags();
@@ -51,28 +50,12 @@ export default async function TagPage({
         <TagSidebar tags={allTags} activeTag={decodedTag} />
 
         <div className="flex-1 min-w-0">
-          <TagPageHeader tag={decodedTag} postCount={posts.length + flows.length} />
-
-          {posts.length > 0 && (
-            <PostList posts={posts} />
-          )}
-
-          {flows.length > 0 && (
-            <div className={posts.length > 0 ? 'mt-12' : ''}>
-              <div className="space-y-0">
-                {flows.map(flow => (
-                  <FlowTimelineEntry
-                    key={flow.slug}
-                    date={flow.date}
-                    title={flow.title}
-                    excerpt={flow.excerpt}
-                    tags={flow.tags}
-                    slug={flow.slug}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <TagPageHeader
+            tag={decodedTag}
+            postCount={posts.length}
+            flowCount={flows.length}
+          />
+          <TagContentTabs posts={posts} flows={flows} />
         </div>
       </div>
     </div>

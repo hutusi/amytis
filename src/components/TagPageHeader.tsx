@@ -6,13 +6,20 @@ import { useLanguage } from './LanguageProvider';
 interface TagPageHeaderProps {
   tag: string;
   postCount: number;
+  flowCount: number;
 }
 
-export default function TagPageHeader({ tag, postCount }: TagPageHeaderProps) {
+export default function TagPageHeader({ tag, postCount, flowCount }: TagPageHeaderProps) {
   const { t, tWith } = useLanguage();
 
-  const subtitleKey = postCount === 1 ? 'tag_posts_found_one' : 'tag_posts_found';
-  const subtitle = tWith(subtitleKey, { count: postCount });
+  const parts: string[] = [];
+  if (postCount > 0) {
+    parts.push(tWith(postCount === 1 ? 'tag_post_count_one' : 'tag_post_count', { count: postCount }));
+  }
+  if (flowCount > 0) {
+    parts.push(tWith(flowCount === 1 ? 'tag_flow_count_one' : 'tag_flow_count', { count: flowCount }));
+  }
+  const subtitle = parts.join(' · ');
 
   return (
     <>
