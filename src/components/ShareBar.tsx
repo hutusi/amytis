@@ -60,6 +60,7 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
+  if (!siteConfig.share?.enabled) return null;
   const configured = siteConfig.share?.platforms ?? [];
   const platforms = configured.filter((p): p is Platform => p in PLATFORM_META);
   if (platforms.length === 0) return null;

@@ -57,6 +57,7 @@ export const siteConfig = {
     recentCount: 5,
   },
   share: {
+    enabled: true,
     // Supported: twitter, facebook, linkedin, weibo, reddit, hackernews,
     //            telegram, bluesky, mastodon, douban, zhihu, copy
     platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'copy'],

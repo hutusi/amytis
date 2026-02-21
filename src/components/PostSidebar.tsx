@@ -6,6 +6,7 @@ import { PostData, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { useScrollY } from '@/hooks/useScrollY';
 import ShareBar from './ShareBar';
+import { siteConfig } from '../../site.config';
 
 interface PostSidebarProps {
   seriesSlug?: string;
@@ -258,7 +259,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
         </div>
       )}
 
-      {shareUrl && (
+      {shareUrl && siteConfig.share?.enabled && (
         <div className="mt-6 pt-6 border-t border-muted/10">
           <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
             {t('share_post')}
