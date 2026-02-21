@@ -57,7 +57,7 @@ export const siteConfig = {
     recentCount: 5,
   },
   share: {
-    platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'hackernews', 'copy'],
+    platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'copy'],
   },
   features: {
     posts: {
