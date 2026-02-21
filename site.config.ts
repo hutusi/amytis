@@ -1,3 +1,10 @@
+export interface NavItem {
+  name: string;
+  url: string;
+  weight: number;
+  dropdown?: string[];
+}
+
 export const siteConfig = {
   title: { en: "Amytis", zh: "Amytis" },
   description: { en: "A minimalist digital garden for growing thoughts and sharing knowledge.", zh: "一个极简的数字花园，用于培育思想和分享知识。" },
@@ -7,9 +14,9 @@ export const siteConfig = {
     { name: "Flow", url: "/flows", weight: 1 },
     { name: "Posts", url: "/posts", weight: 2 },
     { name: "Series", url: "/series", weight: 3, dropdown: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"] },
-    { name: "Books", url: "/books", weight: 4, dropdown: [] as string[] },
+    { name: "Books", url: "/books", weight: 4, dropdown: [] },
     { name: "About", url: "/about", weight: 5 },
-  ],
+  ] as NavItem[],
   footer: {
     explore: [
       { name: "Archive", url: "/archive", weight: 1 },

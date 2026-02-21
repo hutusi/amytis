@@ -507,7 +507,6 @@ export function getPageBySlug(slug: string): PostData | null {
 }
 
 export function getAllPages(): PostData[] {
-  const defaultLocale = siteConfig.i18n.defaultLocale;
   const items = fs.readdirSync(pagesDirectory, { withFileTypes: true });
   return items
     .filter(item => {

@@ -65,7 +65,7 @@ export default function RootLayout({
 
   // Build series list for navbar (only when series feature is enabled)
   const seriesNavItem = siteConfig.nav.find(item => item.url === '/series');
-  const featuredSeries = (seriesNavItem as { dropdown?: string[] } | undefined)?.dropdown;
+  const featuredSeries = seriesNavItem?.dropdown;
   let seriesList: { name: string; slug: string }[] = [];
   if (features?.series?.enabled !== false) {
     const allSeries = getAllSeries();
@@ -81,7 +81,7 @@ export default function RootLayout({
 
   // Build books list for navbar (only when books feature is enabled)
   const booksNavItem = siteConfig.nav.find(item => item.url === '/books');
-  const featuredBookSlugs = (booksNavItem as { dropdown?: string[] } | undefined)?.dropdown;
+  const featuredBookSlugs = booksNavItem?.dropdown;
   let booksList: { name: string; slug: string }[] = [];
   if (features?.books?.enabled !== false) {
     const allBooks = getAllBooks();
