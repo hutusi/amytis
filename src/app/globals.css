@@ -81,6 +81,7 @@
 }
 .wikilink--broken {
   color: var(--muted);
+  text-decoration: underline dashed;
   cursor: default;
 }
 
