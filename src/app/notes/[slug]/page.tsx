@@ -9,7 +9,10 @@ import Tag from '@/components/Tag';
 import Link from 'next/link';
 
 export function generateStaticParams() {
-  return getAllNotes().map(note => ({ slug: note.slug }));
+  const notes = getAllNotes();
+  // Return a placeholder when empty so Next.js static export doesn't error on the dynamic route
+  if (notes.length === 0) return [{ slug: '_empty' }];
+  return notes.map(note => ({ slug: note.slug }));
 }
 
 export const dynamicParams = false;
