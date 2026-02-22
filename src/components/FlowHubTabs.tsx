@@ -8,9 +8,12 @@ export default function FlowHubTabs() {
   const pathname = usePathname();
   const { t } = useLanguage();
 
-  const isFlowsActive = pathname === '/flows' || /^\/flows\/page\//.test(pathname);
-  const isNotesActive = pathname === '/notes' || pathname.startsWith('/notes/page/');
-  const isGraphActive = pathname.startsWith('/graph');
+  // Normalize: strip trailing slash added by next.config trailingSlash:true
+  const path = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+  const isFlowsActive = path === '/flows' || path.startsWith('/flows/page');
+  const isNotesActive = path === '/notes' || path.startsWith('/notes/page');
+  const isGraphActive = path.startsWith('/graph');
 
   const tabs = [
     { href: '/flows', label: t('tab_daily_flow'), active: isFlowsActive },
