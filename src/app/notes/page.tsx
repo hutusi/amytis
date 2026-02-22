@@ -1,8 +1,7 @@
 import { getAllNotes, getNoteTags } from '@/lib/markdown';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
-import { t, resolveLocale } from '@/lib/i18n';
-import PageHeader from '@/components/PageHeader';
+import { t, tWith, resolveLocale } from '@/lib/i18n';
 import NoteContent from '@/components/NoteContent';
 import FlowHubTabs from '@/components/FlowHubTabs';
 
@@ -21,12 +20,7 @@ export default function NotesPage() {
 
   return (
     <div className="layout-main">
-      <PageHeader
-        titleKey="notes"
-        subtitleKey="notes_subtitle"
-        subtitleParams={{ count: allNotes.length }}
-      />
-      <FlowHubTabs />
+      <FlowHubTabs subtitle={tWith('notes_subtitle', { count: allNotes.length })} />
       <NoteContent
         notes={notes}
         tags={tags}

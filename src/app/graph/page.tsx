@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { t, resolveLocale } from '@/lib/i18n';
 import { siteConfig } from '../../../site.config';
-import PageHeader from '@/components/PageHeader';
 import FlowHubTabs from '@/components/FlowHubTabs';
 import KnowledgeGraph from '@/components/KnowledgeGraph';
 
@@ -13,8 +12,7 @@ export const metadata: Metadata = {
 export default function GraphPage() {
   return (
     <div className="layout-main">
-      <PageHeader titleKey="tab_graph" subtitleKey="graph_subtitle" />
-      <FlowHubTabs />
+      <FlowHubTabs subtitle={t('graph_subtitle')} />
       <KnowledgeGraph />
     </div>
   );
