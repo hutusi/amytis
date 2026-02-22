@@ -1,0 +1,49 @@
+---
+title: "React Server Components"
+date: "2026-02-10"
+tags: ["react", "nextjs", "architecture"]
+---
+
+React Server Components (RSC) represent the most significant architectural shift in React since hooks. The mental model: components that run only on the server, produce static output, and ship *zero* JavaScript to the client.
+
+## The Key Insight
+
+Before RSC, React components were always client-side primitives — even when rendered on the server via SSR, their JavaScript was re-hydrated in the browser. RSC breaks this assumption. A server component:
+
+- Can directly `await` database queries, file reads, or API calls
+- Never re-renders on the client (no hydration cost)
+- Can import server-only packages without any client bundle impact
+
+## Composition Model
+
+The power is in the *composition*: you can freely mix server and client components in the same tree. A server component can render a client component; a client component can receive server-rendered children as props.
+
+```tsx
+// Server component — runs only on server
+async function ArticlePage({ slug }: { slug: string }) {
+  const post = await getPostBySlug(slug); // direct DB/file access
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <LikeButton postId={post.id} /> {/* client component */}
+      <MarkdownContent content={post.body} /> {/* server component */}
+    </article>
+  );
+}
+```
+
+## The "use client" Boundary
+
+`"use client"` marks the boundary where server-rendered output hands off to client-side JavaScript. It doesn't mean "client-only" — server-rendered HTML still crosses the boundary; only interactivity (event handlers, state) requires the client bundle.
+
+Common pitfall: passing non-serializable values (like a `Map` or class instance) through the boundary. These can't be serialized to JSON and will cause a runtime error.
+
+## Relation to Hooks
+
+RSC doesn't replace [[understanding-react-hooks|React hooks]] — hooks remain the right tool for client-side state and effects. The shift is that *data fetching* moves to the server, while *interactivity* stays with hooks on the client.
+
+The practical result: far less `useEffect` for data loading, simpler components, better performance.
+
+## In Next.js App Router
+
+Next.js App Router makes RSC the default. Every component in `app/` is a server component unless it declares `"use client"`. This site's data layer (`src/lib/markdown.ts`) runs exclusively on the server — no API routes needed.
