@@ -93,6 +93,10 @@ export const siteConfig = {
       enabled: true,
       name: { en: "Flow", zh: "随笔" },
     },
+    notes: {
+      enabled: true,
+      name: { en: "Notes", zh: "笔记" },
+    },
   },
 
   // ── Homepage ──────────────────────────────────────────────────────────────
@@ -117,6 +121,7 @@ export const siteConfig = {
     posts: 5,
     series: 1,
     flows: 20,
+    notes: 20,
   },
   posts: {
     toc: true,

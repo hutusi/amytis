@@ -44,6 +44,30 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
+  const breadcrumb = (
+    <div className="space-y-2">
+      <nav className="flex items-center gap-1.5 text-sm text-muted">
+        <Link href="/flows" className="hover:text-accent no-underline">
+          {t('all_flows')}
+        </Link>
+        <span className="text-muted/40">›</span>
+        <span className="text-foreground">{year}</span>
+      </nav>
+      <div className="flex flex-wrap gap-1.5">
+        {sortedMonths.map(m => (
+          <Link
+            key={m}
+            href={`/flows/${year}/${m}`}
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-muted/20 text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
+          >
+            {monthNames[parseInt(m, 10) - 1]}
+            <span className="text-muted text-[10px]">({monthCounts[m]})</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="layout-main">
       <PageHeader
@@ -53,29 +77,12 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         subtitleParams={{ count: flows.length }}
       />
 
-      {/* Month navigation pills */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Link href="/flows" className="text-sm text-muted hover:text-accent no-underline">
-          ← {t('all_flows')}
-        </Link>
-        <span className="text-muted/30">|</span>
-        {sortedMonths.map(m => (
-          <Link
-            key={m}
-            href={`/flows/${year}/${m}`}
-            className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full border border-muted/20 text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
-          >
-            {monthNames[parseInt(m, 10) - 1]}
-            <span className="text-muted text-[10px]">({monthCounts[m]})</span>
-          </Link>
-        ))}
-      </div>
-
       <FlowContent
         flows={flows}
         entryDates={entryDates}
         tags={tags}
         currentDate={`${year}-01-01`}
+        breadcrumb={breadcrumb}
       />
     </div>
   );

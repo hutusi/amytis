@@ -1,0 +1,43 @@
+---
+title: "Tailwind CSS v4"
+date: "2026-02-12"
+tags: ["css", "tailwind", "frontend"]
+aliases: ["tailwind-css-v4"]
+---
+
+Tailwind CSS v4 is a complete rewrite of the framework, shifting from a JavaScript-based configuration model to a CSS-first approach. The migration story is smoother than expected, and the performance improvements are significant.
+
+## CSS-First Configuration
+
+The biggest change: configuration moves from `tailwind.config.js` into your CSS file using the `@theme` directive.
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-accent: oklch(60% 0.2 250);
+  --font-serif: "Georgia", serif;
+  --spacing-18: 4.5rem;
+}
+```
+
+This means your design tokens live in CSS — where they belong. You can inspect them in DevTools, use them in arbitrary CSS, and they compose naturally with CSS custom properties.
+
+## The New Engine
+
+v4's engine is built in Rust (via Lightning CSS) and is dramatically faster. Cold starts drop from seconds to milliseconds. The dev server no longer needs to scan your content for class names — it intercepts class usage at the PostCSS level.
+
+## Breaking Changes
+
+- No more `tailwind.config.js` for most use cases (it still exists for plugins)
+- Some utility names changed (e.g., `shadow` → `drop-shadow`, `ring` uses new syntax)
+- `@apply` works differently for custom utilities
+- Dark mode config moves to CSS: `@variant dark (&:where(.dark, .dark *))`
+
+## Integration with React Server Components
+
+Tailwind v4 pairs well with [[react-server-components|React Server Components]]. Static CSS generation means zero runtime overhead — the right tool for a server-rendered architecture. The class scanning approach would have conflicted with server components anyway (no runtime class generation).
+
+## This Site
+
+This garden uses Tailwind v4 with a custom theme defined entirely in `src/app/globals.css`. Theme colors use CSS custom properties so the light/dark toggle works without JavaScript class manipulation.

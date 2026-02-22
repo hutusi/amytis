@@ -39,6 +39,20 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
   const tags = getFlowTags();
   const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+  const breadcrumb = (
+    <nav className="flex items-center gap-1.5 text-sm text-muted">
+      <Link href="/flows" className="hover:text-accent no-underline">
+        {t('all_flows')}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
+        {year}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <span className="text-foreground">{month}</span>
+    </nav>
+  );
+
   return (
     <div className="layout-main">
       <PageHeader
@@ -48,24 +62,12 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
         subtitleParams={{ count: flows.length }}
       />
 
-      {/* Breadcrumb navigation */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted mb-6">
-        <Link href="/flows" className="hover:text-accent no-underline">
-          {t('all_flows')}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
-          {year}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <span className="text-foreground">{month}</span>
-      </nav>
-
       <FlowContent
         flows={flows}
         entryDates={entryDates}
         tags={tags}
         currentDate={`${year}-${month}-01`}
+        breadcrumb={breadcrumb}
       />
     </div>
   );

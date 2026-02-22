@@ -89,7 +89,6 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
               <FlowTimelineEntry
                 key={flow.slug}
                 date={flow.date}
-                title={flow.title}
                 excerpt={flow.excerpt}
                 tags={flow.tags}
                 slug={flow.slug}

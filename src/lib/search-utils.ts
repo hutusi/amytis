@@ -1,9 +1,10 @@
-export type ContentType = 'All' | 'Post' | 'Flow' | 'Book';
+export type ContentType = 'All' | 'Post' | 'Flow' | 'Book' | 'Note';
 
 /** Derive content type from a Pagefind result URL. */
 export function getResultType(url: string): Exclude<ContentType, 'All'> {
   if (url.includes('/flows/')) return 'Flow';
   if (url.includes('/books/')) return 'Book';
+  if (url.includes('/notes/')) return 'Note';
   return 'Post';
 }
 
