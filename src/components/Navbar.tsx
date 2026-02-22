@@ -26,6 +26,7 @@ const FEATURE_URLS: Partial<Record<string, keyof typeof siteConfig.features>> = 
   '/flows': 'flows',
   '/series': 'series',
   '/books': 'books',
+  '/notes': 'notes',
 };
 
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {

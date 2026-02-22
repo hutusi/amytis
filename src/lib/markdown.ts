@@ -10,6 +10,7 @@ const pagesDirectory = path.join(process.cwd(), 'content');
 const seriesDirectory = path.join(process.cwd(), 'content', 'series');
 const booksDirectory = path.join(process.cwd(), 'content', 'books');
 const flowsDirectory = path.join(process.cwd(), 'content', 'flows');
+const notesDirectory = path.join(process.cwd(), 'content', 'notes');
 
 const ExternalLinkSchema = z.object({
   name: z.string(),
@@ -549,6 +550,7 @@ export function getFlowTags(): Record<string, number> {
 export function getAllTags(): Record<string, number> {
   const allPosts = getAllPosts();
   const allFlows = getAllFlows();
+  const allNotes = getAllNotes();
   const tags: Record<string, number> = {};
 
   allPosts.forEach((post) => {
@@ -560,6 +562,13 @@ export function getAllTags(): Record<string, number> {
 
   allFlows.forEach((flow) => {
     flow.tags.forEach((tag) => {
+      const normalizedTag = tag.toLowerCase();
+      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
+    });
+  });
+
+  allNotes.forEach((note) => {
+    note.tags.forEach((tag) => {
       const normalizedTag = tag.toLowerCase();
       tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
     });
@@ -1120,4 +1129,261 @@ export function getAdjacentFlows(slug: string): { prev: FlowData | null; next: F
 
 export function getRecentFlows(limit: number = 5): FlowData[] {
   return getAllFlows().slice(0, limit);
+}
+
+// ─── Notes (Knowledge Base) ──────────────────────────────────────────────────
+
+const NoteSchema = z.object({
+  title: z.string(),
+  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
+  tags: z.array(z.string()).optional().default([]),
+  draft: z.boolean().optional().default(false),
+  aliases: z.array(z.string()).optional().default([]),
+  toc: z.boolean().optional().default(true),
+  backlinks: z.boolean().optional().default(true),
+});
+
+export interface NoteData {
+  slug: string;
+  title: string;
+  date: string;
+  tags: string[];
+  draft: boolean;
+  aliases: string[];
+  toc: boolean;
+  backlinks: boolean;
+  content: string;
+  excerpt: string;
+  headings: Heading[];
+  readingTime: string;
+}
+
+function parseNoteFile(fullPath: string, slug: string): NoteData {
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const { data: rawData, content } = matter(fileContents);
+
+  const parsed = NoteSchema.safeParse(rawData);
+  if (!parsed.success) {
+    console.error(`Invalid note frontmatter in ${fullPath}:`, parsed.error.format());
+    throw new Error(`Invalid note frontmatter in ${fullPath}`);
+  }
+  const data = parsed.data;
+
+  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const date = data.date || new Date().toISOString().split('T')[0];
+  const excerpt = generateExcerpt(contentWithoutH1);
+  const headings = getHeadings(content);
+  const readingTime = calculateReadingTime(contentWithoutH1);
+
+  return {
+    slug,
+    title: data.title,
+    date,
+    tags: data.tags,
+    draft: data.draft,
+    aliases: data.aliases,
+    toc: data.toc,
+    backlinks: data.backlinks,
+    content: contentWithoutH1,
+    excerpt,
+    headings,
+    readingTime,
+  };
+}
+
+let _allNotes: NoteData[] | null = null;
+
+export function getAllNotes(): NoteData[] {
+  if (_allNotes) return _allNotes;
+
+  if (!fs.existsSync(notesDirectory)) {
+    _allNotes = [];
+    return _allNotes;
+  }
+
+  const notes: NoteData[] = [];
+  const items = fs.readdirSync(notesDirectory, { withFileTypes: true });
+
+  for (const item of items) {
+    if (!item.isFile()) continue;
+    if (!item.name.endsWith('.md') && !item.name.endsWith('.mdx')) continue;
+    const slug = item.name.replace(/\.mdx?$/, '');
+    const fullPath = path.join(notesDirectory, item.name);
+    try {
+      notes.push(parseNoteFile(fullPath, slug));
+    } catch (e) {
+      console.error(`Error parsing note ${fullPath}:`, e);
+    }
+  }
+
+  _allNotes = notes
+    .filter(note => process.env.NODE_ENV !== 'production' || !note.draft)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  return _allNotes;
+}
+
+export function getNoteBySlug(slug: string): NoteData | null {
+  if (!fs.existsSync(notesDirectory)) return null;
+
+  const mdxPath = path.join(notesDirectory, `${slug}.mdx`);
+  const mdPath = path.join(notesDirectory, `${slug}.md`);
+
+  let fullPath = '';
+  if (fs.existsSync(mdxPath)) fullPath = mdxPath;
+  else if (fs.existsSync(mdPath)) fullPath = mdPath;
+  else return null;
+
+  try {
+    const note = parseNoteFile(fullPath, slug);
+    if (process.env.NODE_ENV === 'production' && note.draft) return null;
+    return note;
+  } catch {
+    return null;
+  }
+}
+
+export function getAdjacentNotes(slug: string): { prev: NoteData | null; next: NoteData | null } {
+  const allNotes = getAllNotes(); // sorted newest-first
+  const index = allNotes.findIndex(n => n.slug === slug);
+  if (index === -1) return { prev: null, next: null };
+  return {
+    prev: index < allNotes.length - 1 ? allNotes[index + 1] : null, // older
+    next: index > 0 ? allNotes[index - 1] : null, // newer
+  };
+}
+
+export function getRecentNotes(limit: number = 5): NoteData[] {
+  return getAllNotes().slice(0, limit);
+}
+
+export function getNoteTags(): Record<string, number> {
+  const tags: Record<string, number> = {};
+  getAllNotes().forEach(note => {
+    note.tags.forEach(tag => {
+      const normalized = tag.toLowerCase();
+      tags[normalized] = (tags[normalized] || 0) + 1;
+    });
+  });
+  return tags;
+}
+
+export function getNotesByTag(tag: string): NoteData[] {
+  return getAllNotes().filter(n =>
+    n.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase())
+  );
+}
+
+// ─── Slug Registry ───────────────────────────────────────────────────────────
+
+export interface SlugRegistryEntry {
+  url: string;
+  type: 'post' | 'note' | 'flow' | 'series';
+  title: string;
+}
+
+let _slugRegistry: Map<string, SlugRegistryEntry> | null = null;
+
+export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
+  if (_slugRegistry) return _slugRegistry;
+
+  const map = new Map<string, SlugRegistryEntry>();
+
+  getAllPosts().forEach(p =>
+    map.set(p.slug, { url: `/posts/${p.slug}`, type: 'post', title: p.title })
+  );
+
+  getAllFlows().forEach(f =>
+    map.set(f.slug, { url: `/flows/${f.slug}`, type: 'flow', title: f.title })
+  );
+
+  getAllNotes().forEach(n => {
+    map.set(n.slug, { url: `/notes/${n.slug}`, type: 'note', title: n.title });
+    n.aliases.forEach(a =>
+      map.set(a, { url: `/notes/${n.slug}`, type: 'note', title: n.title })
+    );
+  });
+
+  if (fs.existsSync(seriesDirectory)) {
+    fs.readdirSync(seriesDirectory, { withFileTypes: true }).forEach(entry => {
+      if (!entry.isDirectory()) return;
+      const slug = entry.name;
+      const seriesData = getSeriesData(slug);
+      map.set(slug, {
+        url: `/series/${slug}`,
+        type: 'series',
+        title: seriesData?.title || slug,
+      });
+    });
+  }
+
+  _slugRegistry = map;
+  return map;
+}
+
+// ─── Backlink Index ──────────────────────────────────────────────────────────
+
+export interface BacklinkSource {
+  slug: string;
+  title: string;
+  type: 'post' | 'note' | 'flow' | 'series';
+  url: string;
+  context: string;
+}
+
+function extractWikilinkContext(text: string, matchStart: number, matchEnd: number): string {
+  const RADIUS = 120;
+  const start = Math.max(0, matchStart - RADIUS);
+  const end = Math.min(text.length, matchEnd + RADIUS);
+  let ctx = text.slice(start, end);
+
+  // Replace wikilinks in context with just display text for readability
+  ctx = ctx.replace(/\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g, (_, slug, display) => display || slug);
+
+  if (start > 0) ctx = ctx.replace(/^[^\s.!?]*/, '').trimStart();
+  if (end < text.length) ctx = ctx.replace(/[^\s.!?]*$/, '').trimEnd();
+
+  return ctx.trim().slice(0, 200);
+}
+
+function buildBacklinkIndex(): Map<string, BacklinkSource[]> {
+  const index = new Map<string, BacklinkSource[]>();
+
+  const addBacklinks = (
+    content: string,
+    sourceSlug: string,
+    sourceTitle: string,
+    sourceType: BacklinkSource['type'],
+    sourceUrl: string
+  ) => {
+    // Create a fresh RegExp per call to avoid lastIndex issues with 'g' flag
+    const WIKILINK = /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g;
+    let match;
+    while ((match = WIKILINK.exec(content)) !== null) {
+      const targetSlug = match[1].trim();
+      if (targetSlug === sourceSlug) continue; // skip self-references
+      const context = extractWikilinkContext(content, match.index, match.index + match[0].length);
+      let sources = index.get(targetSlug);
+      if (!sources) {
+        sources = [];
+        index.set(targetSlug, sources);
+      }
+      if (!sources.some(b => b.slug === sourceSlug && b.type === sourceType)) {
+        sources.push({ slug: sourceSlug, title: sourceTitle, type: sourceType, url: sourceUrl, context });
+      }
+    }
+  };
+
+  getAllPosts().forEach(p => addBacklinks(p.content, p.slug, p.title, 'post', `/posts/${p.slug}`));
+  getAllNotes().forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', `/notes/${n.slug}`));
+  getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', `/flows/${f.slug}`));
+
+  return index;
+}
+
+let _backlinkIndex: Map<string, BacklinkSource[]> | null = null;
+
+export function getBacklinks(slug: string): BacklinkSource[] {
+  if (!_backlinkIndex) _backlinkIndex = buildBacklinkIndex();
+  return _backlinkIndex.get(slug) ?? [];
 }

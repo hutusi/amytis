@@ -1,10 +1,11 @@
-import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/markdown';
+import { getAllFlows, getFlowBySlug, getAdjacentFlows, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import Backlinks from '@/components/Backlinks';
 import ShareBar from '@/components/ShareBar';
 import Link from 'next/link';
 
@@ -50,6 +51,8 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
   const { prev, next } = getAdjacentFlows(flow.slug);
+  const slugRegistry = buildSlugRegistry();
+  const backlinks = getBacklinks(flow.slug);
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
   return (
@@ -83,8 +86,10 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
           {/* Content */}
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            <MarkdownRenderer content={flow.content} />
+            <MarkdownRenderer content={flow.content} slugRegistry={slugRegistry} />
           </div>
+
+          <Backlinks backlinks={backlinks} />
 
           <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
 

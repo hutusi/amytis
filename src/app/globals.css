@@ -54,6 +54,24 @@
   --accent-hover: #f59e0b;
 }
 
+/* Wikilink styles */
+.wikilink {
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  transition: color 0.15s;
+}
+.wikilink--resolved {
+  color: var(--accent);
+}
+.wikilink--resolved:hover {
+  color: var(--accent-hover);
+}
+.wikilink--broken {
+  color: var(--muted);
+  border-bottom-style: dashed;
+  cursor: default;
+}
+
 /* PrismJS Syntax Highlighting Custom Theme */
 code[class*="language-"],
 pre[class*="language-"] {

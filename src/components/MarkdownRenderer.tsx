@@ -7,18 +7,25 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
+import type { SlugRegistryEntry } from '@/lib/markdown';
 
 interface MarkdownRendererProps {
   content: string;
   latex?: boolean;
   slug?: string;
+  slugRegistry?: Map<string, SlugRegistryEntry>;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
   const remarkPlugins: PluggableList = [remarkGfm];
   const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
+
+  if (slugRegistry && slugRegistry.size > 0) {
+    remarkPlugins.push([remarkWikilinks, { slugRegistry }]);
+  }
 
   if (latex) {
     remarkPlugins.push(remarkMath);
