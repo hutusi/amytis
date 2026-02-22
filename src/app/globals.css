@@ -74,6 +74,7 @@
 }
 .wikilink--resolved:hover {
   color: var(--accent-hover);
+  text-decoration: underline;
 }
 .wikilink--resolved:hover::before,
 .wikilink--resolved:hover::after {
