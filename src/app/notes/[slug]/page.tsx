@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { t, resolveLocale } from '@/lib/i18n';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
-import Backlinks from '@/components/Backlinks';
+import NoteSidebar from '@/components/NoteSidebar';
 import Tag from '@/components/Tag';
 import Link from 'next/link';
 
@@ -43,6 +43,10 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
   const backlinks = getBacklinks(slug);
   const { prev, next } = getAdjacentNotes(slug);
 
+  const showToc = note.toc !== false && note.headings.length > 0;
+  const visibleBacklinks = note.backlinks !== false ? backlinks : [];
+  const showSidebar = showToc || visibleBacklinks.length > 0;
+
   return (
     <div className="layout-main">
       {/* Breadcrumb */}
@@ -54,8 +58,18 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
         <span className="text-foreground">{note.title}</span>
       </nav>
 
-      <div className="max-w-3xl mx-auto">
-        <article>
+      <div className={showSidebar
+        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+        : 'max-w-3xl mx-auto'
+      }>
+        {showSidebar && (
+          <NoteSidebar
+            headings={note.headings}
+            showToc={showToc}
+            backlinks={visibleBacklinks}
+          />
+        )}
+        <article className="min-w-0 max-w-3xl mx-auto">
           <header className="mb-8 border-b border-muted/10 pb-8">
             {note.draft && (
               <div className="mb-4">
@@ -80,8 +94,6 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
           </header>
 
           <MarkdownRenderer content={note.content} slug={note.slug} slugRegistry={slugRegistry} />
-
-          {note.backlinks && <Backlinks backlinks={backlinks} />}
 
           {/* Prev/Next navigation */}
           <nav className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
@@ -109,3 +121,4 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
     </div>
   );
 }
+
