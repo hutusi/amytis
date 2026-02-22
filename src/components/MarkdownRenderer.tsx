@@ -65,7 +65,11 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // Style links individually to avoid hover-all issue
     a: (props) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { node: _node, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      const { node: _node, className, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      // Preserve wikilink classes injected by remark-wikilinks — they have their own CSS styling
+      if (className?.includes('wikilink')) {
+        return <a {...rest} className={className} />;
+      }
       return <a {...rest} className="text-accent no-underline hover:underline transition-colors duration-200" />;
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
