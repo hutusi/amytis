@@ -57,7 +57,6 @@
 /* Wikilink styles */
 .wikilink {
   text-decoration: none;
-  border-bottom: 1px solid currentColor;
   transition: color 0.15s;
 }
 .wikilink::before,
@@ -82,7 +81,6 @@
 }
 .wikilink--broken {
   color: var(--muted);
-  border-bottom-style: dashed;
   cursor: default;
 }
 
