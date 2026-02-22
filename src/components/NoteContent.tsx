@@ -42,8 +42,8 @@ export default function NoteContent({ notes, tags, pagination }: NoteContentProp
   return (
     <div className="flex gap-10">
       {/* Tag sidebar */}
-      <aside className="w-44 shrink-0 hidden md:block">
-        <div className="sticky top-24 space-y-1">
+      <aside className="hidden lg:block sticky top-20 self-start w-[280px] shrink-0">
+        <div className="border border-muted/20 rounded-lg p-4 space-y-1">
           {sortedTags.length > 0 && (
             <>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-3">{t('tags')}</p>
