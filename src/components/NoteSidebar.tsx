@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useScrollY } from '@/hooks/useScrollY';
 import type { BacklinkSource, Heading } from '@/lib/markdown';
@@ -10,9 +10,10 @@ interface NoteSidebarProps {
   headings: Heading[];
   showToc: boolean;
   backlinks: BacklinkSource[];
+  breadcrumb?: ReactNode;
 }
 
-export default function NoteSidebar({ headings, showToc, backlinks }: NoteSidebarProps) {
+export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }: NoteSidebarProps) {
   const { t } = useLanguage();
   const scrollY = useScrollY();
   const [activeHeadingId, setActiveHeadingId] = useState('');
@@ -45,6 +46,7 @@ export default function NoteSidebar({ headings, showToc, backlinks }: NoteSideba
 
   return (
     <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin">
+      {breadcrumb && <div className="mb-4">{breadcrumb}</div>}
       {/* TOC */}
       {showToc && headings.length > 0 && (
         <nav

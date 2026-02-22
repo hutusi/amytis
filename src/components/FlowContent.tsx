@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import FlowTimelineEntry from '@/components/FlowTimelineEntry';
@@ -24,9 +24,10 @@ interface FlowContentProps {
     totalPages: number;
     basePath: string;
   };
+  breadcrumb?: ReactNode;
 }
 
-export default function FlowContent({ flows, entryDates, tags, currentDate, pagination }: FlowContentProps) {
+export default function FlowContent({ flows, entryDates, tags, currentDate, pagination, breadcrumb }: FlowContentProps) {
   const { t } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export default function FlowContent({ flows, entryDates, tags, currentDate, pagi
         tags={tags}
         selectedTag={selectedTag}
         onTagSelect={handleTagSelect}
+        breadcrumb={breadcrumb}
       />
 
       <div className="flex-1 min-w-0">

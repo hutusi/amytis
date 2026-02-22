@@ -47,16 +47,19 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
   const visibleBacklinks = note.backlinks !== false ? backlinks : [];
   const showSidebar = showToc || visibleBacklinks.length > 0;
 
+  const breadcrumb = (
+    <nav className="flex items-center gap-1.5 text-sm text-muted">
+      <Link href="/notes" className="hover:text-accent no-underline">
+        {t('notes')}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <span className="text-foreground truncate">{note.title}</span>
+    </nav>
+  );
+
   return (
     <div className="layout-main">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted mb-6">
-        <Link href="/notes" className="hover:text-accent no-underline">
-          {t('notes')}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <span className="text-foreground">{note.title}</span>
-      </nav>
+      {!showSidebar && <div className="mb-6">{breadcrumb}</div>}
 
       <div className={showSidebar
         ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
@@ -67,6 +70,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
             headings={note.headings}
             showToc={showToc}
             backlinks={visibleBacklinks}
+            breadcrumb={breadcrumb}
           />
         )}
         <article className="min-w-0 max-w-3xl mx-auto">

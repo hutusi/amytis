@@ -55,27 +55,28 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const backlinks = getBacklinks(flow.slug);
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
+  const breadcrumb = (
+    <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+      <Link href="/flows" className="hover:text-accent no-underline shrink-0">
+        {t('all_flows')}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <Link href={`/flows/${year}`} className="hover:text-accent no-underline shrink-0">
+        {year}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline shrink-0">
+        {month}
+      </Link>
+      <span className="text-muted/40">›</span>
+      <span className="text-foreground shrink-0">{day}</span>
+    </nav>
+  );
+
   return (
     <div className="layout-main">
-      {/* Breadcrumb navigation */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted mb-6">
-        <Link href="/flows" className="hover:text-accent no-underline">
-          {t('all_flows')}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
-          {year}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline">
-          {month}
-        </Link>
-        <span className="text-muted/40">›</span>
-        <span className="text-foreground">{day}</span>
-      </nav>
-
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} />
+        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} breadcrumb={breadcrumb} />
 
         <article className="flex-1 min-w-0">
           {/* Header */}
