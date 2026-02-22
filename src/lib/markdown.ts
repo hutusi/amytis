@@ -98,7 +98,7 @@ export function generateExcerpt(content: string): string {
   plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
   plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
-  plain = plain.replace(/`[^`]*`/g, '');
+  plain = plain.replace(/`([^`]+)`/g, '$1');
   plain = plain.replace(/^>\s+/gm, '');
   plain = plain.replace(/\s+/g, ' ').trim();
   
