@@ -60,11 +60,25 @@
   border-bottom: 1px solid currentColor;
   transition: color 0.15s;
 }
+.wikilink::before,
+.wikilink::after {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  opacity: 0.45;
+  vertical-align: 0.08em;
+  transition: opacity 0.15s;
+}
+.wikilink::before { content: '[['; }
+.wikilink::after  { content: ']]'; }
 .wikilink--resolved {
   color: var(--accent);
 }
 .wikilink--resolved:hover {
   color: var(--accent-hover);
+}
+.wikilink--resolved:hover::before,
+.wikilink--resolved:hover::after {
+  opacity: 0.75;
 }
 .wikilink--broken {
   color: var(--muted);
