@@ -974,7 +974,7 @@ export function getBooksByAuthor(author: string): BookData[] {
 // ─── Flows (Daily Notes) ────────────────────────────────────────────────────
 
 const FlowSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
   tags: z.array(z.string()).optional().default([]),
   draft: z.boolean().optional().default(false),
@@ -1010,7 +1010,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   return {
     slug,
     date,
-    title: data.title,
+    title: data.title ?? date, // fall back to date string if no title in frontmatter
     tags: data.tags,
     draft: data.draft,
     content: contentWithoutH1,

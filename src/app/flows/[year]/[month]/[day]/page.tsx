@@ -81,8 +81,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
         <article className="flex-1 min-w-0">
           {/* Header */}
           <header className="mb-8">
-            <time className="text-sm font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
-            <h1 className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading">{flow.title}</h1>
+            <time className="text-base font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
           </header>
 
           {/* Content */}
@@ -102,10 +101,9 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
                 className="group text-left no-underline"
               >
                 <span className="text-xs text-muted">{t('older')}</span>
-                <div className="text-sm font-medium text-heading group-hover:text-accent transition-colors truncate">
-                  {prev.title}
+                <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
+                  {prev.date}
                 </div>
-                <span className="text-xs font-mono text-muted">{prev.date}</span>
               </Link>
             ) : <div />}
             {next ? (
@@ -114,10 +112,9 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
                 className="group text-right no-underline"
               >
                 <span className="text-xs text-muted">{t('newer')}</span>
-                <div className="text-sm font-medium text-heading group-hover:text-accent transition-colors truncate">
-                  {next.title}
+                <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
+                  {next.date}
                 </div>
-                <span className="text-xs font-mono text-muted">{next.date}</span>
               </Link>
             ) : <div />}
           </nav>

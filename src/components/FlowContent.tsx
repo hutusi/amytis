@@ -74,7 +74,6 @@ export default function FlowContent({ flows, entryDates, tags, currentDate, pagi
               <FlowTimelineEntry
                 key={flow.slug}
                 date={flow.date}
-                title={flow.title}
                 excerpt={flow.excerpt}
                 tags={flow.tags}
                 slug={flow.slug}
