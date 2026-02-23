@@ -1,8 +1,17 @@
+export interface NavChildItem {
+  name: string;
+  url: string;
+  external?: boolean;
+  dividerBefore?: boolean; // render a separator line before this item
+}
+
 export interface NavItem {
   name: string;
   url: string;
   weight: number;
+  external?: boolean;
   dropdown?: string[];
+  children?: NavChildItem[]; // static sub-links rendered as a dropdown
 }
 
 // Defined up-front so footer.connect can reference these URLs without duplication
@@ -34,6 +43,12 @@ export const siteConfig = {
     { name: "Series", url: "/series", weight: 3, dropdown: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"] },
     { name: "Books", url: "/books", weight: 4, dropdown: [] },
     { name: "About", url: "/about", weight: 5 },
+    { name: "More", url: "", weight: 6, children: [
+      { name: "Archive", url: "/archive" },
+      { name: "Tags", url: "/tags" },
+      { name: "Links", url: "/links" },
+      { name: "Subscribe", url: "/subscribe", dividerBefore: true },
+    ]},
   ] as NavItem[],
 
   // ── Footer ────────────────────────────────────────────────────────────────
@@ -119,7 +134,7 @@ export const siteConfig = {
   // ── Content ───────────────────────────────────────────────────────────────
   pagination: {
     posts: 5,
-    series: 1,
+    series: 5,
     flows: 20,
     notes: 20,
   },

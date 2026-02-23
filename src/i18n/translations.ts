@@ -126,6 +126,7 @@ export const translations = {
     search_type_note: "Note",
     all_notes: "All Notes",
     no_notes: "No notes yet.",
+    more: "More",
   },
   zh: {
     home: "首页",
@@ -254,6 +255,7 @@ export const translations = {
     search_type_note: "笔记",
     all_notes: "全部笔记",
     no_notes: "暂无笔记。",
+    more: "更多",
   },
 };
 
