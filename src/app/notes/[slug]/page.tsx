@@ -48,11 +48,11 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
   const showSidebar = showToc || visibleBacklinks.length > 0;
 
   const breadcrumb = (
-    <nav className="flex items-center gap-1.5 text-sm text-muted">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
       <Link href="/notes" className="hover:text-accent no-underline">
         {t('notes')}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <span className="text-foreground truncate">{note.title}</span>
     </nav>
   );
@@ -100,7 +100,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
           <MarkdownRenderer content={note.content} slug={note.slug} slugRegistry={slugRegistry} />
 
           {/* Prev/Next navigation */}
-          <nav className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
+          <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
             {prev ? (
               <Link href={`/notes/${prev.slug}`} className="group text-left no-underline">
                 <span className="text-xs text-muted">{t('older')}</span>

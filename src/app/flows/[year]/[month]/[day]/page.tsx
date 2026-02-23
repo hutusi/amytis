@@ -56,19 +56,19 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
   const breadcrumb = (
-    <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
       <Link href="/flows" className="hover:text-accent no-underline shrink-0">
         {t('all_flows')}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <Link href={`/flows/${year}`} className="hover:text-accent no-underline shrink-0">
         {year}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline shrink-0">
         {month}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <span className="text-foreground shrink-0">{day}</span>
     </nav>
   );
@@ -94,7 +94,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
 
           {/* Prev/Next navigation */}
-          <nav className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
+          <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
             {prev ? (
               <Link
                 href={`/flows/${prev.slug}`}

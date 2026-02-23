@@ -40,15 +40,15 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
   const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const breadcrumb = (
-    <nav className="flex items-center gap-1.5 text-sm text-muted">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
       <Link href="/flows" className="hover:text-accent no-underline">
         {t('all_flows')}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <Link href={`/flows/${year}`} className="hover:text-accent no-underline">
         {year}
       </Link>
-      <span className="text-muted/40">›</span>
+      <span className="text-muted/40" aria-hidden="true">›</span>
       <span className="text-foreground">{month}</span>
     </nav>
   );
