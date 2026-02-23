@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { getAuthorSlug, PostData } from '@/lib/markdown';
+import { getAuthorSlug, PostData, BacklinkSource, SlugRegistryEntry } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
 import PostSidebar from '@/components/PostSidebar';
 import Comments from '@/components/Comments';
 import ExternalLinks from '@/components/ExternalLinks';
+import Backlinks from '@/components/Backlinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
 import PostNavigation from '@/components/PostNavigation';
@@ -21,9 +22,11 @@ interface PostLayoutProps {
   seriesTitle?: string;
   prevPost?: PostData | null;
   nextPost?: PostData | null;
+  backlinks?: BacklinkSource[];
+  slugRegistry?: Map<string, SlugRegistryEntry>;
 }
 
-export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost }: PostLayoutProps) {
+export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost, backlinks, slugRegistry }: PostLayoutProps) {
   const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
   const showSidebar = showToc || hasSeries;
@@ -110,7 +113,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             </div>
           )}
 
-          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} />
+          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.slug} slugRegistry={slugRegistry} />
 
           {post.tags && post.tags.length > 0 && (
             <div className="mt-12 pt-12 border-t border-muted/20 flex flex-wrap items-center gap-2">
@@ -124,6 +127,8 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           {post.externalLinks && post.externalLinks.length > 0 && (
             <ExternalLinks links={post.externalLinks} />
           )}
+
+          <Backlinks backlinks={backlinks ?? []} />
 
           <ShareBar
             url={postUrl}

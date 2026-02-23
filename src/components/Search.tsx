@@ -25,12 +25,14 @@ const CONTENT_TYPES: ContentType[] = [
   ...(siteConfig.features?.posts?.enabled !== false ? ['Post' as ContentType] : []),
   ...(siteConfig.features?.flows?.enabled !== false ? ['Flow' as ContentType] : []),
   ...(siteConfig.features?.books?.enabled !== false ? ['Book' as ContentType] : []),
+  ...(siteConfig.features?.notes?.enabled !== false ? ['Note' as ContentType] : []),
 ];
 
 const CONTENT_TYPE_FEATURE: Record<Exclude<ContentType, 'All'>, keyof typeof siteConfig.features> = {
   Post: 'posts',
   Flow: 'flows',
   Book: 'books',
+  Note: 'notes',
 };
 const RECENT_KEY = 'amytis-recent-searches';
 const MAX_RECENT = 5;
@@ -42,12 +44,14 @@ const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
   Post: 'search_type_post',
   Flow: 'search_type_flow',
   Book: 'search_type_book',
+  Note: 'search_type_note',
 };
 
 const TYPE_STYLES: Record<string, string> = {
   Flow: 'border-accent/30 text-accent',
   Book: 'border-foreground/30 text-foreground/60',
   Post: 'border-muted/30 text-muted',
+  Note: 'border-emerald-400/30 text-emerald-600 dark:text-emerald-400',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -192,7 +196,7 @@ export default function Search() {
 
   // Count per type for tab badges
   const typeCounts = useMemo(() => {
-    const counts: Record<ContentType, number> = { All: allResults.length, Post: 0, Flow: 0, Book: 0 };
+    const counts: Record<ContentType, number> = { All: allResults.length, Post: 0, Flow: 0, Book: 0, Note: 0 };
     for (const r of allResults) counts[r.type]++;
     return counts;
   }, [allResults]);

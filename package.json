@@ -14,8 +14,9 @@
   "packageManager": "bun@1.3.4",
   "scripts": {
     "dev": "next dev",
-    "build": "bun scripts/copy-assets.ts && next build && next-image-export-optimizer && pagefind --site out",
-    "build:dev": "bun scripts/copy-assets.ts && next build && pagefind --site out --output-path public/pagefind",
+    "build": "bun scripts/copy-assets.ts && bun run build:graph && next build && next-image-export-optimizer && pagefind --site out",
+    "build:dev": "bun scripts/copy-assets.ts && bun run build:graph && next build && pagefind --site out --output-path public/pagefind",
+    "build:graph": "NODE_ENV=production bun scripts/generate-knowledge-graph.ts",
     "validate": "bun run lint && bun run test && bun run build:dev",
     "clean": "rm -rf .next out public/posts public/books public/flows",
     "new": "bun scripts/new-post.ts",
@@ -24,6 +25,7 @@
     "new-from-pdf": "bun scripts/new-from-pdf.ts",
     "new-from-images": "bun scripts/new-from-images.ts",
     "new-flow": "bun scripts/new-flow.ts",
+    "new-note": "bun scripts/new-note.ts",
     "series-draft": "bun scripts/series-draft.ts",
     "start": "next start",
     "lint": "eslint",
@@ -35,6 +37,7 @@
   "dependencies": {
     "@giscus/react": "^3.1.0",
     "@tailwindcss/typography": "^0.5.19",
+    "d3": "^7.9.0",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "image-size": "^2.0.2",
@@ -58,6 +61,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/bun": "^1.3.9",
+    "@types/d3": "^7.4.3",
     "@types/image-size": "^0.8.0",
     "@types/node": "^24.10.13",
     "@types/react": "^19.2.14",

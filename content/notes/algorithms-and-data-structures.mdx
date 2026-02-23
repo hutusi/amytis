@@ -1,0 +1,51 @@
+---
+title: "Algorithms and Data Structures"
+date: "2026-01-28"
+tags: ["algorithms", "computer-science", "fundamentals"]
+aliases: ["algorithms"]
+---
+
+Algorithms and data structures are the grammar of computation. You can write software without thinking about them explicitly, but the moment performance matters — or the problem gets hard — you need this vocabulary.
+
+## Why They Still Matter
+
+Modern abstractions (ORMs, high-level languages, framework magic) can obscure algorithmic complexity. But complexity doesn't disappear — it hides. A seemingly innocent nested loop in an ORM query is still O(n²). Knowing the fundamentals lets you see through the abstractions.
+
+## The Core Data Structures
+
+**Arrays** — contiguous memory, O(1) random access, O(n) insertion. The foundation of almost everything else.
+
+**Linked lists** — O(1) insertion at head, O(n) random access. Useful when you need frequent insertion/deletion and don't need random access.
+
+**Hash maps** — amortized O(1) for insert, lookup, delete. The most-used data structure in practice. Collision resolution strategy matters.
+
+**Trees** — hierarchical structure. Binary search trees give O(log n) operations when balanced. The key insight: balance is not automatic.
+
+**Heaps** — a tree where every parent is ≥ (max-heap) or ≤ (min-heap) its children. The natural implementation of a priority queue.
+
+**Graphs** — the most general structure. Almost every interesting problem is a graph problem in disguise.
+
+## Sorting as a Lens
+
+Sorting algorithms are pedagogically valuable because they expose different algorithmic strategies in a simple domain:
+
+- **Insertion sort** — O(n²) worst case, but excellent on nearly-sorted data
+- **Merge sort** — O(n log n) guaranteed, stable, but O(n) extra space
+- **QuickSort** — O(n log n) average, O(n²) worst case, but cache-friendly and in-place
+- **HeapSort** — O(n log n) guaranteed, O(1) space, but not stable and poor cache behavior
+
+The [[the-art-of-algorithms|QuickSort deep dive]] post covers the implementation and visualization in detail.
+
+## Complexity Intuition
+
+A useful mental model: for n = 1,000,000 operations per second,
+
+| Complexity | n=1000 | n=1,000,000 |
+|-----------|--------|-------------|
+| O(1)      | instant | instant |
+| O(log n)  | ~10 ops | ~20 ops |
+| O(n)      | 1ms     | 1s |
+| O(n log n)| ~10ms   | ~20s |
+| O(n²)     | 1s      | 11.5 days |
+
+This table should be tattooed on the inside of every programmer's eyelids.

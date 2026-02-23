@@ -6,7 +6,6 @@ import { useLanguage } from './LanguageProvider';
 export interface RecentNoteItem {
   slug: string;
   date: string;
-  title: string;
   excerpt: string;
 }
 
@@ -38,16 +37,12 @@ export default function RecentNotesSection({ notes }: RecentNotesSectionProps) {
         {notes.map(note => (
           <div key={note.slug} className="relative pl-6 pb-6 border-l-2 border-muted/20 last:pb-0">
             <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent" />
-            <div className="flex items-baseline gap-3 mb-1">
-              <time className="text-xs font-mono text-accent shrink-0">{note.date}</time>
-              <Link
-                href={`/flows/${note.slug}`}
-                className="text-base font-serif font-bold text-heading hover:text-accent transition-colors no-underline truncate"
-              >
-                {note.title}
-              </Link>
-            </div>
-            <p className="text-sm text-muted line-clamp-2 pl-0">{note.excerpt}</p>
+            <Link href={`/flows/${note.slug}`} className="no-underline group">
+              <time className="text-sm font-mono text-accent group-hover:text-accent/70 transition-colors">{note.date}</time>
+            </Link>
+            {note.excerpt && (
+              <p className="mt-1.5 text-sm text-muted line-clamp-2">{note.excerpt}</p>
+            )}
           </div>
         ))}
       </div>

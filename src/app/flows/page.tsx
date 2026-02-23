@@ -1,9 +1,9 @@
 import { getAllFlows, getFlowTags } from '@/lib/markdown';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
-import { t, resolveLocale } from '@/lib/i18n';
-import PageHeader from '@/components/PageHeader';
+import { t, tWith, resolveLocale } from '@/lib/i18n';
 import FlowContent from '@/components/FlowContent';
+import FlowHubTabs from '@/components/FlowHubTabs';
 
 const PAGE_SIZE = siteConfig.pagination.flows;
 
@@ -21,12 +21,7 @@ export default function FlowsPage() {
 
   return (
     <div className="layout-main">
-      <PageHeader
-        titleKey="flow"
-        subtitleKey="flow_subtitle"
-        subtitleParams={{ count: allFlows.length }}
-      />
-
+      <FlowHubTabs subtitle={tWith('flow_subtitle', { count: allFlows.length })} />
       <FlowContent
         flows={flows}
         entryDates={entryDates}

@@ -7,18 +7,25 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
+import type { SlugRegistryEntry } from '@/lib/markdown';
 
 interface MarkdownRendererProps {
   content: string;
   latex?: boolean;
   slug?: string;
+  slugRegistry?: Map<string, SlugRegistryEntry>;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
   const remarkPlugins: PluggableList = [remarkGfm];
   const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
+
+  if (slugRegistry && slugRegistry.size > 0) {
+    remarkPlugins.push([remarkWikilinks, { slugRegistry }]);
+  }
 
   if (latex) {
     remarkPlugins.push(remarkMath);
@@ -58,7 +65,11 @@ export default function MarkdownRenderer({ content, latex = false, slug }: Markd
     // Style links individually to avoid hover-all issue
     a: (props) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { node: _node, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      const { node: _node, className, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      // Preserve wikilink classes injected by remark-wikilinks — they have their own CSS styling
+      if (className?.includes('wikilink')) {
+        return <a {...rest} className={className} />;
+      }
       return <a {...rest} className="text-accent no-underline hover:underline transition-colors duration-200" />;
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting

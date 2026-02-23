@@ -1,4 +1,4 @@
-import { getAllPosts, getAllBooks, getBookChapter, getAllFlows } from '@/lib/markdown';
+import { getAllPosts, getAllBooks, getBookChapter, getAllFlows, getAllNotes } from '@/lib/markdown';
 import { stripMarkdown } from '@/lib/search-utils';
 
 export const dynamic = 'force-static';
@@ -46,6 +46,20 @@ export async function GET() {
       category: 'Flow',
       tags: flow.tags,
       content: stripMarkdown(flow.content),
+    });
+  }
+
+  // Add notes to search index
+  const notes = getAllNotes();
+  for (const note of notes) {
+    searchIndex.push({
+      title: note.title,
+      slug: `notes/${note.slug}`,
+      date: note.date,
+      excerpt: note.excerpt,
+      category: 'Note',
+      tags: note.tags,
+      content: stripMarkdown(note.content),
     });
   }
 

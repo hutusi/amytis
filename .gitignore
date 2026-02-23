@@ -46,6 +46,9 @@ next-env.d.ts
 # pagefind index (generated after build)
 /public/pagefind/
 
+# knowledge graph (generated at build time)
+/public/knowledge-graph.json
+
 # image optimization
 /public/**/nextImageExportOptimizer/
 !/public/next-image-export-optimizer-hashes.json
