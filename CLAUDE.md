@@ -43,6 +43,9 @@ bun run new-from-images ./photos --no-copy             # Reference images instea
 bun run new-flow                    # Create today's flow note (.md)
 bun run new-flow "My Title"         # Create flow with custom title
 bun run new-flow --mdx              # Use .mdx format instead
+bun run sync-book                   # Sync chapters list for all books from disk
+bun run sync-book <slug>            # Sync chapters list for one book
+bun run sync-book <slug> --update-titles  # Also refresh titles from chapter frontmatter
 ```
 
 ## Architecture
