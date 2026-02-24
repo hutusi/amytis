@@ -4,16 +4,30 @@
  * directories are empty, rather than returning [] which would cause Next.js
  * static export (`output: export`) to fail at build time.
  *
- * Strategy: mock.module() replaces @/lib/markdown with empty-collection stubs,
- * then each test uses await import() to load the page module *after* mocks are
- * in place (bun:test does not auto-hoist mock.module, so dynamic imports are
- * required).
+ * Isolation strategy
+ * ──────────────────
+ * bun:test loads all test files before running any tests. A module-level
+ * mock.module() call runs at load time and would replace @/lib/markdown in the
+ * shared module registry before integration test files resolve their static
+ * imports — causing those tests to see empty stubs instead of real content.
+ *
+ * To avoid this:
+ *   • Next.js / component mocks stay at module level — integration tests never
+ *     import those, so they are harmless.
+ *   • @/lib/markdown is mocked inside beforeAll, which runs AFTER all files
+ *     have finished loading and resolving their static imports.
+ *   • Page files are loaded via await import() inside each test, which runs
+ *     after beforeAll, so they pick up the mock correctly.
+ *   • afterAll restores the real module so any subsequent tests see real data.
  */
-import { describe, test, expect, mock } from 'bun:test';
+import { describe, test, expect, mock, beforeAll, afterAll } from 'bun:test';
 
-// ─── Next.js runtime stubs ───────────────────────────────────────────────────
-// notFound / redirect are only valid inside the Next.js runtime; stub them so
-// page files can be imported without errors in the test environment.
+// ─── Capture real markdown module ────────────────────────────────────────────
+// Static imports are hoisted and resolved before any executable code (including
+// beforeAll / mock.module calls), so this always captures the real module.
+import * as realMarkdown from '../../src/lib/markdown';
+
+// ─── Next.js runtime stubs (module-level — safe) ─────────────────────────────
 mock.module('next/navigation', () => ({
   notFound: () => { throw new Error('NOT_FOUND'); },
   redirect: () => { throw new Error('REDIRECT'); },
@@ -25,7 +39,7 @@ mock.module('next/navigation', () => ({
 mock.module('next/link', () => ({ default: 'a' }));
 mock.module('next/image', () => ({ default: 'img' }));
 
-// ─── i18n stubs ──────────────────────────────────────────────────────────────
+// ─── i18n stub (module-level — safe) ─────────────────────────────────────────
 mock.module('@/lib/i18n', () => ({
   t: (k: string) => k,
   tWith: (k: string) => k,
@@ -34,9 +48,7 @@ mock.module('@/lib/i18n', () => ({
   useLanguage: () => ({ locale: 'en', setLocale: () => {} }),
 }));
 
-// ─── Component / layout stubs ────────────────────────────────────────────────
-// Replaced wholesale so transitive imports inside each component are never
-// evaluated. Only the generateStaticParams export from each page is exercised.
+// ─── Component / layout stubs (module-level — safe) ──────────────────────────
 const Noop = { default: () => null };
 
 mock.module('@/components/PageHeader', () => Noop);
@@ -63,52 +75,59 @@ mock.module('@/layouts/PostLayout', () => Noop);
 mock.module('@/layouts/SimpleLayout', () => Noop);
 mock.module('@/layouts/BookLayout', () => Noop);
 
-// ─── Data layer stub: empty content ──────────────────────────────────────────
-// Simulates a fresh install where all content directories exist but contain no
-// files. Every function that iterates content returns an empty collection.
-mock.module('@/lib/markdown', () => ({
-  getAllFlows: () => [],
-  getAllNotes: () => [],
-  getAllPosts: () => [],
-  getAllBooks: () => [],
-  getAllSeries: () => ({}),
-  getAllTags: () => ({}),
-  getAllAuthors: () => ({}),
+// ─── Data layer stub: deferred to beforeAll ───────────────────────────────────
+// Must NOT be called at module level — would replace @/lib/markdown in the
+// shared registry before integration test files resolve their static imports.
+beforeAll(() => {
+  mock.module('@/lib/markdown', () => ({
+    getAllFlows: () => [],
+    getAllNotes: () => [],
+    getAllPosts: () => [],
+    getAllBooks: () => [],
+    getAllSeries: () => ({}),
+    getAllTags: () => ({}),
+    getAllAuthors: () => ({}),
 
-  getFlowsByYear: () => [],
-  getFlowsByMonth: () => [],
-  getFlowBySlug: () => null,
-  getFlowTags: () => ({}),
-  getFlowsByTag: () => [],
+    getFlowsByYear: () => [],
+    getFlowsByMonth: () => [],
+    getFlowBySlug: () => null,
+    getFlowTags: () => ({}),
+    getFlowsByTag: () => [],
 
-  getNoteBySlug: () => null,
-  getNoteTags: () => ({}),
-  getNotesByTag: () => [],
-  getAdjacentNotes: () => ({ prev: null, next: null }),
-  getRecentNotes: () => [],
+    getNoteBySlug: () => null,
+    getNoteTags: () => ({}),
+    getNotesByTag: () => [],
+    getAdjacentNotes: () => ({ prev: null, next: null }),
+    getRecentNotes: () => [],
 
-  getPostBySlug: () => null,
-  getRelatedPosts: () => [],
-  getAdjacentPosts: () => ({ prev: null, next: null }),
-  getPostsByTag: () => [],
-  getPostsByAuthor: () => [],
+    getPostBySlug: () => null,
+    getRelatedPosts: () => [],
+    getAdjacentPosts: () => ({ prev: null, next: null }),
+    getPostsByTag: () => [],
+    getPostsByAuthor: () => [],
 
-  getBookData: () => null,
-  getBookChapter: () => null,
-  getBooksByAuthor: () => [],
+    getBookData: () => null,
+    getBookChapter: () => null,
+    getBooksByAuthor: () => [],
 
-  getSeriesData: () => null,
-  getSeriesPosts: () => [],
-  getSeriesAuthors: () => [],
+    getSeriesData: () => null,
+    getSeriesPosts: () => [],
+    getSeriesAuthors: () => [],
 
-  getAuthorSlug: (name: string) =>
-    name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-  resolveAuthorParam: () => null,
+    getAuthorSlug: (name: string) =>
+      name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    resolveAuthorParam: () => null,
 
-  getAdjacentFlows: () => ({ prev: null, next: null }),
-  buildSlugRegistry: () => new Map(),
-  getBacklinks: () => [],
-}));
+    getAdjacentFlows: () => ({ prev: null, next: null }),
+    buildSlugRegistry: () => new Map(),
+    getBacklinks: () => [],
+  }));
+});
+
+// ─── Restore real markdown module ─────────────────────────────────────────────
+afterAll(() => {
+  mock.module('@/lib/markdown', () => realMarkdown);
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 

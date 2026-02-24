@@ -29,8 +29,8 @@
     "series-draft": "bun scripts/series-draft.ts",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test",
-    "test:unit": "bun test src",
+    "test": "bun test src tests/unit tests/tooling && bun run test:int",
+    "test:unit": "bun test src tests/unit",
     "test:int": "bun test tests/integration",
     "test:e2e": "bun test tests/e2e"
   },
