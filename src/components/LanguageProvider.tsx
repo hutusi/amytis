@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { siteConfig } from '../../site.config';
 import { translations, Language, TranslationKey } from '../i18n/translations';
+import { buildFeatureOverrides } from '@/lib/i18n';
 
 interface LanguageContextType {
   language: Language;
@@ -38,12 +39,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('amytis-language', lang);
   };
 
+  const activeLang = (isHydrated ? language : siteConfig.i18n.defaultLocale) as Language;
+
+  // Recompute only when the active language changes; siteConfig is static
+  const featureOverrides = useMemo(
+    () => buildFeatureOverrides(activeLang),
+    [activeLang],
+  );
+
   /**
-   * Translates a key. 
+   * Translates a key.
    * Returns the default locale translation if not hydrated to prevent hydration mismatch.
+   * Feature name overrides from siteConfig.features.*.name take precedence.
    */
   const t = (key: TranslationKey) => {
-    const activeLang = isHydrated ? language : (siteConfig.i18n.defaultLocale as Language);
+    if (key in featureOverrides) return featureOverrides[key]!;
     return translations[activeLang][key] || key;
   };
 
@@ -51,8 +61,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
    * Translates a key with parameters.
    */
   const tWith = (key: TranslationKey, params: Record<string, string | number>) => {
-    const activeLang = isHydrated ? language : (siteConfig.i18n.defaultLocale as Language);
-    let result = translations[activeLang][key] || key;
+    let result = (key in featureOverrides ? featureOverrides[key]! : translations[activeLang][key]) || key;
     for (const [name, value] of Object.entries(params)) {
       result = result.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
     }
