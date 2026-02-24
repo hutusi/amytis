@@ -196,27 +196,19 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     >
       {/* Book Header */}
       <div className="mb-6 pb-4 border-b border-muted/10">
-        <Link href={`/books/${bookSlug}`} className="group block no-underline">
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-2 block">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
             {t('book')}
           </span>
-          <h3 className="font-serif font-bold text-heading text-lg leading-snug group-hover:text-accent transition-colors">
-            {bookTitle}
-          </h3>
-        </Link>
-
-        {/* Progress */}
-        <div className="mt-3 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-muted/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent/60 rounded-full transition-all duration-500"
-              style={{ width: `${((currentIndex + 1) / chapters.length) * 100}%` }}
-            />
-          </div>
           <span className="text-xs font-mono text-muted whitespace-nowrap">
             {currentIndex + 1}/{chapters.length}
           </span>
         </div>
+        <Link href={`/books/${bookSlug}`} className="group block no-underline">
+          <h3 className="font-serif font-bold text-heading text-lg leading-snug group-hover:text-accent transition-colors">
+            {bookTitle}
+          </h3>
+        </Link>
       </div>
 
       {/* TOC */}
