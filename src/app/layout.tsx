@@ -129,7 +129,7 @@ export default function RootLayout({
             <div className="selection:bg-accent/20 selection:text-accent dark:selection:bg-accent/30 dark:selection:text-accent min-h-screen flex flex-col">
               <Navbar seriesList={seriesList} booksList={booksList} />
               <main id="main-content" className="pt-16 flex-grow">
-                <BrowserDetectionBanner />
+                <BrowserDetectionBanner updateUrl={siteConfig.browserCheck?.updateUrl} />
                 {children}
               </main>
               <Footer />

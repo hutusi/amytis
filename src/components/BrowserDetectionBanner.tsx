@@ -12,11 +12,11 @@ function isOutdatedBrowser(): boolean {
   // CSS custom properties (Chrome 49+, Firefox 31+, Safari 9.1+)
   if (!('CSS' in window) || !CSS.supports('color', 'var(--x)')) return true;
 
-  // IntersectionObserver (Chrome 51+, Firefox 55+, Safari 12.1+)
-  if (!('IntersectionObserver' in window)) return true;
+  // CSS cascade layers — required by Tailwind CSS v4 (Chrome 99+, Firefox 97+, Safari 15.4+)
+  if (!CSS.supports('@layer test {}')) return true;
 
-  // fetch (Chrome 42+, Firefox 39+, Safari 10.1+)
-  if (!('fetch' in window)) return true;
+  // CSS oklch() — required by Tailwind CSS v4 color system (Chrome 111+, Firefox 113+, Safari 15.4+)
+  if (!CSS.supports('color', 'oklch(0.5 0.1 0)')) return true;
 
   return false;
 }
@@ -39,7 +39,7 @@ function getServerSnapshot(): boolean {
   return false;
 }
 
-export default function BrowserDetectionBanner() {
+export default function BrowserDetectionBanner({ updateUrl }: { updateUrl?: string }) {
   const { t } = useLanguage();
   const isOutdated = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [dismissed, setDismissed] = useState(false);
@@ -73,14 +73,16 @@ export default function BrowserDetectionBanner() {
         />
       </svg>
       <span>{t('browser_outdated')}</span>
-      <a
-        href="https://browsehappy.com/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline underline-offset-2 font-medium hover:opacity-75 transition-opacity shrink-0"
-      >
-        {t('browser_update')}
-      </a>
+      {updateUrl && (
+        <a
+          href={updateUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 font-medium hover:opacity-75 transition-opacity shrink-0"
+        >
+          {t('browser_update')}
+        </a>
+      )}
       <button
         onClick={dismiss}
         aria-label={t('browser_dismiss')}
