@@ -39,6 +39,7 @@ type TocItem = ChapterRef | PartGroup;
 
 const toc: TocItem[] = [];
 let currentPart: PartGroup | null = null;
+const usedChapterIds = new Set<string>();
 
 function slugify(text: string): string {
     return text
@@ -51,13 +52,31 @@ function processChapter(title: string, rawPath: string): ChapterRef | null {
     // Decode URI component (e.g. %20 -> space)
     const cleanPath = decodeURIComponent(rawPath.replace(/^<|>$/g, ''));
     const fullSrcPath = path.resolve(sourceDir, cleanPath);
+    const relativeToRoot = path.relative(bookRootDir, fullSrcPath);
+    if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+        console.warn(`Warning: Chapter path escapes book root, skipping: ${rawPath}`);
+        return null;
+    }
     
     if (!fs.existsSync(fullSrcPath)) {
         console.warn(`Warning: File not found: ${fullSrcPath}`);
         return null;
     }
 
-    const id = slugify(path.basename(cleanPath).replace(/\.mdx?$/, ''));
+    let id = slugify(path.basename(cleanPath).replace(/\.mdx?$/, ''));
+    if (!id) {
+        id = slugify(title);
+    }
+    if (!id) {
+        console.warn(`Warning: Could not derive chapter id, skipping: ${rawPath}`);
+        return null;
+    }
+    const baseId = id;
+    let suffix = 2;
+    while (usedChapterIds.has(id) || fs.existsSync(path.join(contentDir, `${id}.mdx`))) {
+        id = `${baseId}-${suffix++}`;
+    }
+    usedChapterIds.add(id);
     const destPath = path.join(contentDir, `${id}.mdx`);
 
     const rawContent = fs.readFileSync(fullSrcPath, 'utf8');
