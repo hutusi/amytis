@@ -7,6 +7,7 @@ import path from 'path';
 //   bun run new-flow-from-chat --dry-run               # preview without writing
 //   bun run new-flow-from-chat --author "Alice"        # only include Alice's messages
 //   bun run new-flow-from-chat --append                # append to existing flow files
+//   bun run new-flow-from-chat --timestamp             # include timestamps (default: excluded)
 //
 // Usage (explicit file):
 //   bun run new-flow-from-chat <file>                  # process one specific file
@@ -36,12 +37,13 @@ for (let i = 0; i < args.length; i++) {
   if (!args[i].startsWith('--')) positional.push(args[i]);
 }
 
-const explicitFile  = positional[0] ?? null;
-const authorIdx     = args.indexOf('--author');
-const filterAuthor  = authorIdx > -1 ? args[authorIdx + 1] : null;
-const dryRun        = args.includes('--dry-run');
-const appendMode    = args.includes('--append');
-const reimportAll   = args.includes('--all');
+const explicitFile      = positional[0] ?? null;
+const authorIdx         = args.indexOf('--author');
+const filterAuthor      = authorIdx > -1 ? args[authorIdx + 1] : null;
+const dryRun            = args.includes('--dry-run');
+const appendMode        = args.includes('--append');
+const reimportAll       = args.includes('--all');
+const includeTimestamp  = args.includes('--timestamp');
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,17 +81,20 @@ function parseChat(raw: string): Message[] {
 
 // ── Rendering ─────────────────────────────────────────────────────────────
 
-function renderBlock(msg: Message, showUsername: boolean): string {
+function renderBlock(msg: Message, showUsername: boolean, showTime: boolean): string {
   const content = msg.lines.join('\n').trimEnd();
   if (!content.trim()) return ''; // skip empty messages
-  const header = showUsername
-    ? `**${msg.username}** · ${msg.time}`
-    : `_${msg.time}_`;
-  return `${header}\n\n${content}`;
+
+  const metaParts: string[] = [];
+  if (showUsername) metaParts.push(`— ${msg.username}`);
+  if (showTime) metaParts.push(msg.time);
+
+  if (metaParts.length === 0) return content;
+  return `${content}\n\n_${metaParts.join(' · ')}_`;
 }
 
-function renderFlow(messages: Message[], showUsername: boolean): string {
-  const blocks = messages.map(m => renderBlock(m, showUsername)).filter(Boolean);
+function renderFlow(messages: Message[], showUsername: boolean, showTime: boolean): string {
+  const blocks = messages.map(m => renderBlock(m, showUsername, showTime)).filter(Boolean);
   return `---\ntags: []\n---\n\n${blocks.join('\n\n---\n\n')}\n`;
 }
 
@@ -151,6 +156,7 @@ function processFile(filePath: string): boolean {
   }
 
   const showUsername = filterAuthor === null;
+  const showTime = includeTimestamp;
   const flowsDir = path.join(process.cwd(), 'content', 'flows');
   let created = 0, appended = 0, skipped = 0;
 
@@ -160,7 +166,7 @@ function processFile(filePath: string): boolean {
     const mdPath  = path.join(dirPath, `${day}.md`);
     const mdxPath = path.join(dirPath, `${day}.mdx`);
     const existing = fs.existsSync(mdPath) ? mdPath : fs.existsSync(mdxPath) ? mdxPath : null;
-    const flowContent = renderFlow(dayMsgs, showUsername);
+    const flowContent = renderFlow(dayMsgs, showUsername, showTime);
 
     if (dryRun) {
       const label = `${date} (${dayMsgs.length} msg${dayMsgs.length === 1 ? '' : 's'})`;

@@ -44,11 +44,6 @@ bun run new-flow                    # Create today's flow note (.md)
 bun run new-flow "My Title"         # Create flow with custom title
 bun run new-flow --mdx              # Use .mdx format instead
 bun run new-flow-from-chat                             # Import all new files from imports/chats/
-bun run new-flow-from-chat --dry-run                   # Preview without writing
-bun run new-flow-from-chat --author "Alice"            # Only include Alice's messages
-bun run new-flow-from-chat --append                    # Append to existing flow files
-bun run new-flow-from-chat --all                       # Re-import all files (ignore history)
-bun run new-flow-from-chat <file>                      # Process a specific file
 bun run sync-book                   # Sync chapters list for all books from disk
 bun run sync-book <slug>            # Sync chapters list for one book
 bun run sync-book <slug> --update-titles  # Also refresh titles from chapter frontmatter
