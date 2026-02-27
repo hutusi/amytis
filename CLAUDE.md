@@ -43,6 +43,10 @@ bun run new-from-images ./photos --no-copy             # Reference images instea
 bun run new-flow                    # Create today's flow note (.md)
 bun run new-flow "My Title"         # Create flow with custom title
 bun run new-flow --mdx              # Use .mdx format instead
+bun run new-flow-from-chat chat.txt                    # Import flows from group chat export
+bun run new-flow-from-chat chat.txt --author "Alice"   # Only include Alice's messages
+bun run new-flow-from-chat chat.txt --dry-run          # Preview without writing
+bun run new-flow-from-chat chat.txt --append           # Append to existing flow files
 bun run sync-book                   # Sync chapters list for all books from disk
 bun run sync-book <slug>            # Sync chapters list for one book
 bun run sync-book <slug> --update-titles  # Also refresh titles from chapter frontmatter

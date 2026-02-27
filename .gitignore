@@ -55,3 +55,6 @@ next-env.d.ts
 
 # claude
 /.claude/
+
+# raw import files (chat exports, PDFs, etc.) — not published content
+/imports/
