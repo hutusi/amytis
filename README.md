@@ -1,5 +1,7 @@
 # Amytis
 
+[English](README.md) | [简体中文](README.zh.md)
+
 **Amytis** is an elegant, open-source framework for building a personal digital garden: a living knowledge space where ideas grow from raw notes to refined writing. It is built with Next.js 16, React 19, and Tailwind CSS v4, with a strong focus on readability, structure, and long-term content ownership.
 
 [**Live Demo**](https://amytis.vercel.app/)
