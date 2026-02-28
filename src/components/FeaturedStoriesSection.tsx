@@ -57,60 +57,60 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        {/* Hero card — large */}
+        {/* Hero card — full image with obi (belly band) text overlay */}
         <div className={secondary.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}>
           <Link href={`/posts/${hero.slug}`} className="group block no-underline">
-            <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted/10 mb-5">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted/10">
               <CoverImage
                 src={hero.coverImage}
                 title={hero.title}
                 slug={hero.slug}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:from-black/10 transition-all duration-500" />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+              {/* Obi text band */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <div className="flex items-center gap-2 text-xs font-mono text-white/60 mb-3">
+                  <span className="text-accent uppercase tracking-wider">{hero.category}</span>
+                  <span>·</span>
+                  <span>{hero.readingTime}</span>
+                  <span>·</span>
+                  <span>{hero.date}</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-3 leading-snug group-hover:text-accent/90 transition-colors line-clamp-2">
+                  {hero.title}
+                </h3>
+                {hero.excerpt && (
+                  <p className="text-white/65 text-sm leading-relaxed line-clamp-2">
+                    {hero.excerpt}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-muted mb-3">
-              <span className="text-accent uppercase tracking-wider">{hero.category}</span>
-              <span>·</span>
-              <span>{hero.readingTime}</span>
-              <span>·</span>
-              <span>{hero.date}</span>
-            </div>
-            <h3 className="text-2xl md:text-3xl font-serif font-bold text-heading mb-3 leading-snug group-hover:text-accent transition-colors line-clamp-2">
-              {hero.title}
-            </h3>
-            {hero.excerpt && (
-              <p className="text-muted text-base leading-relaxed line-clamp-2">
-                {hero.excerpt}
-              </p>
-            )}
           </Link>
         </div>
 
-        {/* Secondary cards — compact horizontal */}
+        {/* Secondary cards — text-only with accent left border */}
         {secondary.length > 0 && (
-          <div className="lg:col-span-5 flex flex-col gap-5 lg:gap-6">
+          <div className="lg:col-span-5 flex flex-col gap-6 lg:justify-center">
             {secondary.map(post => (
               <Link
                 key={post.slug}
                 href={`/posts/${post.slug}`}
-                className="group flex gap-4 no-underline"
+                className="group block no-underline border-l-2 border-accent/30 pl-4 hover:border-accent transition-colors"
               >
-                <div className="relative w-24 h-20 flex-shrink-0 overflow-hidden rounded-xl bg-muted/10">
-                  <CoverImage
-                    src={post.coverImage}
-                    title={post.title}
-                    slug={post.slug}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                <div className="flex items-center gap-2 text-xs font-mono text-muted mb-2">
+                  <span className="text-accent uppercase tracking-wider">{post.category}</span>
+                  <span>·</span>
+                  <span>{post.date}</span>
                 </div>
-                <div className="flex flex-col justify-center min-w-0">
-                  <span className="text-xs font-mono text-accent uppercase tracking-wider mb-1">{post.category}</span>
-                  <h4 className="font-serif font-bold text-heading group-hover:text-accent transition-colors line-clamp-2 text-base leading-snug">
-                    {post.title}
-                  </h4>
-                  <span className="text-xs font-mono text-muted/60 mt-1">{post.date}</span>
-                </div>
+                <h4 className="font-serif font-bold text-heading group-hover:text-accent transition-colors line-clamp-2 text-base leading-snug mb-1">
+                  {post.title}
+                </h4>
+                {post.excerpt && (
+                  <p className="text-sm text-muted line-clamp-1">{post.excerpt}</p>
+                )}
               </Link>
             ))}
           </div>

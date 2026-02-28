@@ -34,7 +34,7 @@ export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBo
           {t('all_books')} →
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {displayed.map(book => (
           <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
             <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
