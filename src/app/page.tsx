@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { getAllPosts, getFeaturedSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
@@ -111,6 +112,11 @@ export default function Home() {
       }))
     : [];
 
+  // Stats for hero display
+  const heroPostCount = allPosts.length;
+  const heroSeriesCount = Object.keys(allSeries).length;
+  const heroBookCount = featuredBooks.length;
+
   const renderSection = (section: HomepageSection) => {
     switch (section.id) {
       case 'featured-series':
@@ -130,7 +136,6 @@ export default function Home() {
             key="featured-books"
             books={bookItems}
             maxItems={section.maxItems ?? 4}
-            scrollThreshold={section.scrollThreshold ?? 2}
           />
         );
       case 'featured-posts':
@@ -154,6 +159,43 @@ export default function Home() {
     }
   };
 
+  // Build content sections, pairing latest-posts + recent-flows into a two-column layout
+  const sectionsForContent = sections.filter(s => s.id !== 'hero');
+  const latestIdx = sectionsForContent.findIndex(s => s.id === 'latest-posts');
+  const flowsIdx = sectionsForContent.findIndex(s => s.id === 'recent-flows');
+  const pairLatestFlows = latestIdx >= 0 && flowsIdx >= 0;
+
+  const renderList: ReactNode[] = [];
+  const skippedIds = new Set<string>();
+
+  for (const section of sectionsForContent) {
+    if (skippedIds.has(section.id)) continue;
+
+    if (pairLatestFlows && (section.id === 'latest-posts' || section.id === 'recent-flows')) {
+      skippedIds.add(section.id === 'latest-posts' ? 'recent-flows' : 'latest-posts');
+      const showLatest = features?.posts?.enabled !== false;
+      const showFlows = features?.flow?.enabled !== false && recentNoteItems.length > 0;
+      if (showLatest || showFlows) {
+        renderList.push(
+          <div key="latest-flows-combined" className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 mb-24">
+            {showLatest && (
+              <div className="lg:col-span-7">
+                <LatestWritingSection posts={posts} totalCount={allPosts.length} />
+              </div>
+            )}
+            {showFlows && (
+              <div className="lg:col-span-5">
+                <RecentNotesSection notes={recentNoteItems} />
+              </div>
+            )}
+          </div>
+        );
+      }
+    } else {
+      renderList.push(renderSection(section));
+    }
+  }
+
   return (
     <div>
       {has('hero') && (
@@ -161,11 +203,14 @@ export default function Home() {
           tagline={siteConfig.hero.tagline}
           title={siteConfig.hero.title}
           subtitle={siteConfig.hero.subtitle}
+          postCount={heroPostCount}
+          seriesCount={heroSeriesCount}
+          bookCount={heroBookCount}
         />
       )}
 
       <div className="layout-main pt-0 md:pt-0">
-        {sections.filter(s => s.id !== 'hero').map(renderSection)}
+        {renderList}
       </div>
     </div>
   );
