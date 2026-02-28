@@ -14,6 +14,12 @@ interface HeroProps {
   seriesCount?: number;
   bookCount?: number;
   flowCount?: number;
+  featureNames?: {
+    flow?: LocaleValue;
+    posts?: LocaleValue;
+    series?: LocaleValue;
+    books?: LocaleValue;
+  };
 }
 
 interface StatItem {
@@ -22,17 +28,20 @@ interface StatItem {
   label: string;
 }
 
-export default function Hero({ tagline, title, subtitle, postCount, seriesCount, bookCount, flowCount }: HeroProps) {
+export default function Hero({ tagline, title, subtitle, postCount, seriesCount, bookCount, flowCount, featureNames }: HeroProps) {
   const { language } = useLanguage();
   const resolvedTagline = resolveLocaleValue(tagline, language);
   const resolvedTitle = resolveLocaleValue(title, language);
   const resolvedSubtitle = resolveLocaleValue(subtitle, language);
 
+  const label = (key: keyof NonNullable<typeof featureNames>, fallback: string) =>
+    featureNames?.[key] ? resolveLocaleValue(featureNames[key]!, language) : fallback;
+
   const stats = [
-    flowCount   ? { href: '#recent-flows',    count: flowCount,   label: 'flows'  } : null,
-    postCount   ? { href: '#featured-posts',  count: postCount,   label: 'posts'  } : null,
-    seriesCount ? { href: '#featured-series', count: seriesCount, label: 'series' } : null,
-    bookCount   ? { href: '#featured-books',  count: bookCount,   label: 'books'  } : null,
+    flowCount   ? { href: '#recent-flows',    count: flowCount,   label: label('flow',   'Flow')    } : null,
+    postCount   ? { href: '#featured-posts',  count: postCount,   label: label('posts',  'Posts')   } : null,
+    seriesCount ? { href: '#featured-series', count: seriesCount, label: label('series', 'Series')  } : null,
+    bookCount   ? { href: '#featured-books',  count: bookCount,   label: label('books',  'Books')   } : null,
   ].filter((s): s is StatItem => s !== null);
 
   return (

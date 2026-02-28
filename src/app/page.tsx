@@ -208,6 +208,12 @@ export default function Home() {
           seriesCount={heroSeriesCount}
           bookCount={heroBookCount}
           flowCount={heroFlowCount}
+          featureNames={{
+            flow:   features?.flow?.name,
+            posts:  features?.posts?.name,
+            series: features?.series?.name,
+            books:  features?.books?.name,
+          }}
         />
       )}
 
