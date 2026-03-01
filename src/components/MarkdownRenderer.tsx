@@ -1,6 +1,7 @@
 import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
+import RssFeedWidget from '@/components/RssFeedWidget';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
@@ -125,6 +126,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       // eslint-disable-next-line @next/next/no-img-element
       return <img src={imageSrc} alt={alt || ''} {...rest} className="max-w-full h-auto rounded-lg my-4" />;
     },
+    // Custom element: <rss-feed></rss-feed> — renders the site RSS URL with a copy button
+    'rss-feed': () => <RssFeedWidget />,
   };
 
   return (
