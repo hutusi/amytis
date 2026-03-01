@@ -218,8 +218,22 @@ export const siteConfig = {
 
   // ── Authors ───────────────────────────────────────────────────────────────
   authors: {
-    // Map display name (as used in post frontmatter) to author profile
-    // "Author Name": { bio: "Short bio shown in author card below each post." },
-  } as Record<string, { bio?: string }>,
+    // Map display name (as used in post frontmatter) to author profile.
+    // Example:
+    // "Author Name": {
+    //   bio: "Short bio shown in author card below each post.",
+    //   avatar: "/images/authors/author-name.jpg", // path under public/
+    //   social: [
+    //     { image: "/images/authors/wechat-qr.jpg", description: "WeChat Official Account" },
+    //   ],
+    // },
+  } as Record<string, {
+    bio?: string;
+    avatar?: string;  // Avatar image path served from public/
+    social?: Array<{
+      image: string;       // Social image (e.g. QR code) path served from public/
+      description: string; // Label shown below the image
+    }>;
+  }>,
 
 };
