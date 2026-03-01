@@ -91,31 +91,43 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
           </Link>
         </div>
 
-        {/* Secondary cards — text-only with accent left border */}
+        {/* Secondary cards — box style with flush right image */}
         {secondary.length > 0 && (
-          <div className="lg:col-span-5 flex flex-col gap-6 lg:justify-center">
+          <div className="lg:col-span-5 flex flex-col gap-4 lg:justify-center">
             {secondary.map(post => (
               <Link
                 key={post.slug}
                 href={`/posts/${post.slug}`}
-                className="group block no-underline border-l-2 border-accent/30 pl-4 hover:border-accent transition-colors"
+                className="group flex no-underline rounded-2xl border border-muted/20 bg-muted/5 overflow-hidden hover:border-accent/30 hover:bg-muted/10 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300 h-28"
               >
-                <div className="flex items-center gap-2 text-xs font-mono text-muted mb-2">
-                  <span className="text-accent uppercase tracking-wider">{post.category}</span>
-                  <span>·</span>
-                  <span>{post.readingTime}</span>
-                  <span>·</span>
-                  <span>{post.date}</span>
+                {/* Text content */}
+                <div className="flex-1 p-4 flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted mb-2">
+                    <span className="text-accent uppercase tracking-wider">{post.category}</span>
+                    <span>·</span>
+                    <span>{post.readingTime}</span>
+                    <span>·</span>
+                    <span>{post.date}</span>
+                  </div>
+                  <h4 className="font-serif font-bold text-heading group-hover:text-accent transition-colors line-clamp-2 text-base leading-snug">
+                    {post.title}
+                  </h4>
+                  <span className="mt-auto pt-2 inline-flex items-center gap-1 text-xs font-mono text-muted/50 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200">
+                    Read
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </span>
                 </div>
-                <h4 className="font-serif font-bold text-heading group-hover:text-accent transition-colors line-clamp-2 text-base leading-snug">
-                  {post.title}
-                </h4>
-                <span className="mt-2 inline-flex items-center gap-1 text-xs font-mono text-muted/50 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200">
-                  Read
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </span>
+                {/* Cover image — flush to right edge, full card height */}
+                <div className="relative w-24 flex-shrink-0 overflow-hidden bg-muted/10">
+                  <CoverImage
+                    src={post.coverImage}
+                    title={post.title}
+                    slug={post.slug}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
               </Link>
             ))}
           </div>
