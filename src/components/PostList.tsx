@@ -31,9 +31,9 @@ export default function PostList({
           >
             {/* Content card */}
             <div className="rounded-2xl border border-muted/20 bg-muted/5 overflow-hidden transition-all duration-300 group-hover:border-accent/30 group-hover:bg-muted/10 group-hover:shadow-lg group-hover:shadow-accent/5">
-              <div className="flex flex-col sm:flex-row">
+              <div className="flex flex-col sm:flex-row sm:h-40">
                 {/* Thumbnail */}
-                <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 overflow-hidden bg-muted/10">
+                <div className="relative w-full sm:w-48 h-40 sm:h-full flex-shrink-0 overflow-hidden bg-muted/10">
                   <CoverImage
                     src={post.coverImage}
                     title={post.title}
