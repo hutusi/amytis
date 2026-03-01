@@ -32,8 +32,9 @@ function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, shuffledN
   const hero = pinned[0] ?? nonPinned[0];
   if (!hero) return [];
 
-  const fixedSecondaries = pinned.slice(1);
-  const shuffleSlots = Math.max(0, maxItems - 1 - fixedSecondaries.length);
+  const maxSecondaries = maxItems - 1;
+  const fixedSecondaries = pinned.slice(1, maxSecondaries + 1); // cap to available secondary slots
+  const shuffleSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
 
   // Non-pinned pool excludes the hero if the hero is non-pinned
   const heroIsNonPinned = !hero.pinned;

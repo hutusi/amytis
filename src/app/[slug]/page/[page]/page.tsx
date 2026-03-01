@@ -76,7 +76,7 @@ export default async function PrefixPageRoute({
   params: Promise<{ slug: string; page: string }>;
 }) {
   const { slug: prefix, page: pageStr } = await params;
-  const page = parseInt(pageStr);
+  const page = parseInt(pageStr, 10);
 
   if (isNaN(page) || page < 2) notFound();
 
@@ -145,8 +145,6 @@ export default async function PrefixPageRoute({
       authors = [];
     }
 
-    const startIndex = (page - 1) * SERIES_PAGE_SIZE;
-
     return (
       <div className="layout-main">
         <header className="mb-16">
@@ -192,7 +190,7 @@ export default async function PrefixPageRoute({
             )}
           </div>
         </header>
-        <SeriesCatalog posts={posts} startIndex={startIndex} totalPosts={allPosts.length} />
+        <SeriesCatalog posts={posts} startIndex={start} totalPosts={allPosts.length} />
         <div className="mt-12">
           <Pagination currentPage={page} totalPages={totalPages} basePath={`/${prefix}`} />
         </div>

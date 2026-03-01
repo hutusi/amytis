@@ -5,7 +5,10 @@ import fs from 'fs';
 
 function flag(name: string): string | undefined {
   const idx = process.argv.indexOf(`--${name}`);
-  return idx !== -1 ? process.argv[idx + 1] : undefined;
+  if (idx === -1) return undefined;
+  const value = process.argv[idx + 1];
+  // Treat missing or another flag as absent
+  return value && !value.startsWith('--') ? value : undefined;
 }
 
 // Flags take priority over .env / .env.local values (loaded automatically by Bun)
@@ -50,7 +53,7 @@ console.log(`Deploying out/ → ${destination}`);
 
 const rsync = spawnSync(
   'sshpass',
-  ['-p', password!, 'rsync', '-avz', '--delete', '-e', 'ssh -o StrictHostKeyChecking=no', 'out/', destination],
+  ['-p', password!, 'rsync', '-avz', '--delete', '-e', 'ssh -o StrictHostKeyChecking=accept-new', 'out/', destination],
   { stdio: 'inherit' }
 );
 
@@ -63,7 +66,7 @@ console.log('\nReloading nginx...');
 
 const reload = spawnSync(
   'sshpass',
-  ['-p', password!, 'ssh', '-o', 'StrictHostKeyChecking=no', `${user}@${host}`, 'nginx -s reload'],
+  ['-p', password!, 'ssh', '-o', 'StrictHostKeyChecking=accept-new', `${user}@${host}`, 'nginx -s reload'],
   { stdio: 'inherit' }
 );
 

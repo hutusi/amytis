@@ -31,14 +31,12 @@ export async function generateStaticParams() {
   // Custom posts basePath — all posts served at /[basePath]/[slug]
   const basePath = getPostsBasePath();
   if (basePath !== 'posts') {
-    getAllPosts().forEach(post => params.push({ slug: basePath, postSlug: post.slug }));
+    getAllPosts().forEach(post => { params.push({ slug: basePath, postSlug: post.slug }); });
   }
 
   // Series custom paths — only posts belonging to that series
   for (const [seriesSlug, customPath] of Object.entries(getSeriesCustomPaths())) {
-    getSeriesPosts(seriesSlug).forEach(post =>
-      params.push({ slug: customPath, postSlug: post.slug })
-    );
+    getSeriesPosts(seriesSlug).forEach(post => { params.push({ slug: customPath, postSlug: post.slug }); });
   }
 
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
@@ -122,10 +120,10 @@ export default async function PrefixPostPage({
     return <SimpleLayout post={post} />;
   }
 
-  const relatedPosts = getRelatedPosts(postSlug);
-  const { prev, next } = getAdjacentPosts(postSlug);
+  const relatedPosts = getRelatedPosts(post.slug);
+  const { prev, next } = getAdjacentPosts(post.slug);
   const slugRegistry = buildSlugRegistry();
-  const backlinks = getBacklinks(postSlug);
+  const backlinks = getBacklinks(post.slug);
   let seriesPosts: PostData[] = [];
   let seriesTitle: string | undefined;
 

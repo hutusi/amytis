@@ -6,7 +6,7 @@ import { LuCopy, LuCheck } from 'react-icons/lu';
 
 export default function RssFeedWidget() {
   const [copied, setCopied] = useState(false);
-  const feedUrl = `${siteConfig.baseUrl}/feed.xml`;
+  const feedUrl = `${siteConfig.baseUrl.replace(/\/+$/, '')}/feed.xml`;
 
   const handleCopy = async () => {
     try {

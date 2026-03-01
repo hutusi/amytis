@@ -284,7 +284,7 @@ apt install sshpass
 
 Configure your server in `.env.local` (gitignored):
 
-```
+```env
 DEPLOY_HOST=192.168.1.1
 DEPLOY_USER=root
 DEPLOY_PASSWORD=yourpassword

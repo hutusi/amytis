@@ -1,11 +1,19 @@
 import { siteConfig } from '../../site.config';
 
+/** Strip leading and trailing slashes so path segments compose cleanly. */
+function normalizeSegment(segment: string): string {
+  return segment.replace(/^\/+|\/+$/g, '');
+}
+
 export function getPostsBasePath(): string {
-  return siteConfig.posts?.basePath ?? 'posts';
+  return normalizeSegment(siteConfig.posts?.basePath ?? 'posts') || 'posts';
 }
 
 export function getSeriesCustomPaths(): Record<string, string> {
-  return siteConfig.series?.customPaths ?? {};
+  const raw = siteConfig.series?.customPaths ?? {};
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [k, normalizeSegment(v)])
+  );
 }
 
 /** Returns the canonical URL path for a post, respecting series custom paths and posts basePath. */
