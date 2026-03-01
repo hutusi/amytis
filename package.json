@@ -30,6 +30,7 @@
     "import-book": "bun scripts/import-book.ts",
     "sync-book": "bun scripts/sync-book-chapters.ts",
     "series-draft": "bun scripts/series-draft.ts",
+    "deploy": "bun scripts/deploy.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "bun test src tests/unit tests/tooling && bun run test:int",

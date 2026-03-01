@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import { getPostUrl } from '@/lib/urls';
 
 interface SeriesSidebarProps {
   seriesSlug: string;
@@ -77,7 +78,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
             return (
               <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
                 <Link
-                  href={`/posts/${post.slug}`}
+                  href={getPostUrl(post)}
                   className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
                     isCurrent
                       ? 'bg-accent/5'

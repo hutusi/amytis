@@ -1,12 +1,14 @@
 import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
+import RssFeedWidget from '@/components/RssFeedWidget';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
@@ -21,7 +23,8 @@ interface MarkdownRendererProps {
 
 export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
   const remarkPlugins: PluggableList = [remarkGfm];
-  const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug }]];
+  const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
+  const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
 
   if (slugRegistry && slugRegistry.size > 0) {
     remarkPlugins.push([remarkWikilinks, { slugRegistry }]);
@@ -106,7 +109,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       const { src, alt, width, height, node: _node, ...rest } = props;
       const isDev = process.env.NODE_ENV === 'development';
       const imageSrc = src as string;
-      
+      const isExternal = imageSrc?.startsWith('http') || imageSrc?.startsWith('//');
+
       if (width && height) {
         return (
           <ExportedImage
@@ -115,7 +119,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
             width={Number(width)}
             height={Number(height)}
             className="max-w-full h-auto rounded-lg my-4"
-            unoptimized={isDev}
+            unoptimized={isDev || isExternal}
           />
         );
       }
@@ -123,6 +127,10 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       return <img src={imageSrc} alt={alt || ''} {...rest} className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
+
+  // Merge custom HTML elements not in the Components type (e.g. web components used in MDX)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allComponents = { ...components, 'rss-feed': () => <RssFeedWidget /> } as any;
 
   return (
     <div className="prose prose-lg max-w-none text-foreground
@@ -137,7 +145,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        components={components}
+        components={allComponents}
       >
         {content}
       </ReactMarkdown>

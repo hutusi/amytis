@@ -54,12 +54,23 @@ const siteTwitterHandle = (() => {
   return m ? `@${m[1]}` : undefined;
 })();
 
+// Build icon metadata with explicit MIME type so browsers correctly handle
+// all formats. Without this, .ico files served via the metadata API lack
+// type="image/x-icon" and may be ignored in favour of app/favicon.ico.
+const faviconSrc = siteConfig.logo?.favicon || "/icon.svg";
+const ext = faviconSrc.split('.').pop()?.toLowerCase();
+const faviconMeta =
+  ext === 'ico' ? [{ url: faviconSrc, type: 'image/x-icon', sizes: 'any' }] :
+  ext === 'png' ? [{ url: faviconSrc, type: 'image/png' }] :
+  ext === 'svg' ? [{ url: faviconSrc, type: 'image/svg+xml' }] :
+  faviconSrc;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.baseUrl),
   title: resolveLocale(siteConfig.title),
   description: resolveLocale(siteConfig.description),
   icons: {
-    icon: "/icon.svg",
+    icon: faviconMeta,
   },
   openGraph: {
     siteName: resolveLocale(siteConfig.title),

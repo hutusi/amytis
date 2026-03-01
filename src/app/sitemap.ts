@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getAllPosts, getAllPages, getAllBooks, getAllFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
+import { getPostUrl } from '@/lib/urls';
 
 export const dynamic = 'force-static';
 
@@ -12,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = siteConfig.baseUrl;
 
   const postUrls = posts.map((post) => ({
-    url: `${baseUrl}/posts/${post.slug}`,
+    url: `${baseUrl}${getPostUrl(post)}`,
     lastModified: post.date,
     changeFrequency: 'monthly' as const,
     priority: 0.7,

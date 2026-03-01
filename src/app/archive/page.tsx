@@ -3,6 +3,7 @@ import { getAllPosts, getSeriesData, PostData } from '@/lib/markdown';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale, t } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
+import { getPostUrl } from '@/lib/urls';
 
 export const metadata = {
   title: `Archive | ${resolveLocale(siteConfig.title)}`,
@@ -129,7 +130,7 @@ export default function ArchivePage() {
                             
                             return (
                               <li key={post.slug} className="group">
-                                <Link href={`/posts/${post.slug}`} className="block no-underline">
+                                <Link href={getPostUrl(post)} className="block no-underline">
                                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-6">
                                     <div className="flex items-baseline gap-6">
                                       <span className="font-mono text-base text-muted shrink-0 w-8">

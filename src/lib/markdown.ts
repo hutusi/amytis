@@ -4,6 +4,7 @@ import matter from 'gray-matter';
 import { siteConfig } from '../../site.config';
 import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
+import { getPostUrl } from './urls';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -32,6 +33,7 @@ const PostSchema = z.object({
   sort: z.enum(['date-desc', 'date-asc', 'manual']).optional().default('date-desc'),
   posts: z.array(z.string()).optional(),
   featured: z.boolean().optional().default(false),
+  pinned: z.boolean().optional().default(false),
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
@@ -64,6 +66,7 @@ export interface PostData {
   sort?: 'date-desc' | 'date-asc' | 'manual';
   posts?: string[];
   featured?: boolean;
+  pinned?: boolean;
   draft?: boolean;
   latex?: boolean;
   toc?: boolean;
@@ -179,7 +182,10 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
       }
     }
     if (authors.length === 0) {
-      authors = ['Amytis'];
+      const defaultAuthors = siteConfig.posts?.authors?.default;
+      if (defaultAuthors && defaultAuthors.length > 0) {
+        authors = defaultAuthors;
+      }
     }
   }
 
@@ -213,6 +219,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     sort: data.sort,
     posts: data.posts,
     featured: data.featured,
+    pinned: data.pinned,
     draft: data.draft,
     latex: data.latex,
     toc: data.toc,
@@ -351,6 +358,17 @@ export function getAllPosts(): PostData[] {
       return true;
     })
     .sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+/**
+ * Returns posts for the main listing pages, honouring posts.excludeFromListing.
+ * Use this instead of getAllPosts() on any listing/pagination page.
+ * Individual post routes and series pages still use getAllPosts() directly.
+ */
+export function getListingPosts(): PostData[] {
+  const excluded = new Set(siteConfig.posts?.excludeFromListing ?? []);
+  if (excluded.size === 0) return getAllPosts();
+  return getAllPosts().filter(p => !p.series || !excluded.has(p.series));
 }
 
 function findPostFile(name: string, targetSlug: string): PostData | null {
@@ -1307,7 +1325,7 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
   const map = new Map<string, SlugRegistryEntry>();
 
   getAllPosts().forEach(p =>
-    map.set(p.slug, { url: `/posts/${p.slug}`, type: 'post', title: p.title })
+    map.set(p.slug, { url: getPostUrl(p), type: 'post', title: p.title })
   );
 
   getAllFlows().forEach(f =>
@@ -1398,7 +1416,7 @@ function buildBacklinkIndex(): Map<string, BacklinkSource[]> {
     }
   };
 
-  getAllPosts().forEach(p => addBacklinks(p.content, p.slug, p.title, 'post', `/posts/${p.slug}`));
+  getAllPosts().forEach(p => addBacklinks(p.content, p.slug, p.title, 'post', getPostUrl(p)));
   getAllNotes().forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', `/notes/${n.slug}`));
   getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', `/flows/${f.slug}`));
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
+import { getPostUrl } from '@/lib/urls';
 
 export interface FeaturedPost {
   slug: string;
@@ -15,6 +16,8 @@ export interface FeaturedPost {
   category: string;
   readingTime: string;
   coverImage?: string;
+  series?: string;
+  pinned?: boolean;
 }
 
 interface FeaturedStoriesSectionProps {
@@ -22,19 +25,51 @@ interface FeaturedStoriesSectionProps {
   maxItems: number;
 }
 
+function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, shuffledNonPinned: FeaturedPost[]): FeaturedPost[] {
+  const pinned = allFeatured.filter(p => p.pinned);
+  const nonPinned = allFeatured.filter(p => !p.pinned);
+
+  const hero = pinned[0] ?? nonPinned[0];
+  if (!hero) return [];
+
+  const maxSecondaries = maxItems - 1;
+  const fixedSecondaries = pinned.slice(1, maxSecondaries + 1); // cap to available secondary slots
+  const shuffleSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
+
+  // Non-pinned pool excludes the hero if the hero is non-pinned
+  const heroIsNonPinned = !hero.pinned;
+  const shufflePool = heroIsNonPinned ? nonPinned.filter(p => p.slug !== hero.slug) : nonPinned;
+  const shuffledSlice = shuffledNonPinned.filter(p => shufflePool.some(q => q.slug === p.slug)).slice(0, shuffleSlots);
+
+  return [hero, ...fixedSecondaries, ...shuffledSlice];
+}
+
 export default function FeaturedStoriesSection({ allFeatured, maxItems }: FeaturedStoriesSectionProps) {
   const { t } = useLanguage();
-  const [displayed, setDisplayed] = useState(() => allFeatured.slice(0, maxItems));
+
+  const nonPinned = allFeatured.filter(p => !p.pinned);
+
+  const [shuffledNonPinned, setShuffledNonPinned] = useState<FeaturedPost[]>(() => nonPinned);
 
   useEffect(() => {
-    setDisplayed(shuffle(allFeatured).slice(0, maxItems));
-  }, [allFeatured, maxItems]);
+    setShuffledNonPinned(shuffle(nonPinned));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFeatured]);
 
   const handleShuffle = useCallback(() => {
-    setDisplayed(shuffle(allFeatured).slice(0, maxItems));
-  }, [allFeatured, maxItems]);
+    setShuffledNonPinned(shuffle(nonPinned));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFeatured]);
+
+  const displayed = buildDisplayed(allFeatured, maxItems, shuffledNonPinned);
 
   if (displayed.length === 0) return null;
+
+  // Show shuffle button only when there are more non-pinned posts than available shuffle slots
+  const pinned = allFeatured.filter(p => p.pinned);
+  const fixedCount = 1 + Math.min(pinned.slice(1).length, maxItems - 1);
+  const shuffleSlots = Math.max(0, maxItems - fixedCount);
+  const canShuffle = nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
 
   const [hero, ...secondary] = displayed;
 
@@ -42,7 +77,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
     <section id="featured-posts" className="mb-24">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
-        {allFeatured.length > maxItems && (
+        {canShuffle && (
           <button
             onClick={handleShuffle}
             className="text-sm text-muted hover:text-accent transition-colors focus:outline-none"
@@ -59,7 +94,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         {/* Hero card — full image with obi (belly band) text overlay */}
         <div className={secondary.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}>
-          <Link href={`/posts/${hero.slug}`} className={`group block no-underline${secondary.length > 0 ? ' h-full' : ''}`}>
+          <Link href={getPostUrl(hero)} className={`group block no-underline${secondary.length > 0 ? ' h-full' : ''}`}>
             <div className={`relative overflow-hidden rounded-2xl bg-muted/10 ${secondary.length > 0 ? 'aspect-[16/9] lg:aspect-auto lg:h-full' : 'aspect-[16/9]'}`}>
               <CoverImage
                 src={hero.coverImage}
@@ -97,7 +132,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
             {secondary.map(post => (
               <Link
                 key={post.slug}
-                href={`/posts/${post.slug}`}
+                href={getPostUrl(post)}
                 className="group flex no-underline rounded-2xl border border-muted/20 bg-muted/5 overflow-hidden hover:border-accent/30 hover:bg-muted/10 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300 h-32"
               >
                 {/* Text content */}

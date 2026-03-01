@@ -1,10 +1,12 @@
-import { getAllPosts } from '@/lib/markdown';
+import { getListingPosts } from '@/lib/markdown';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { t, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
+import { getPostsBasePath } from '@/lib/urls';
+import { notFound } from 'next/navigation';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
@@ -14,7 +16,8 @@ export const metadata: Metadata = {
 };
 
 export default function AllPostsPage() {
-  const allPosts = getAllPosts();
+  if (getPostsBasePath() !== 'posts') notFound();
+  const allPosts = getListingPosts();
   const page = 1;
   const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
   const posts = allPosts.slice(0, PAGE_SIZE);

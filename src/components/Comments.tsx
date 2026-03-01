@@ -3,6 +3,7 @@
 import Giscus from '@giscus/react';
 import { siteConfig } from '../../site.config';
 import { useTheme } from 'next-themes';
+import { getPostsBasePath } from '@/lib/urls';
 
 // Maps site locale codes to Giscus-supported language codes.
 // Full list: https://github.com/giscus/giscus/tree/main/locales
@@ -19,7 +20,7 @@ const GISCUS_LANG: Record<string, string> = {
   ru: 'ru',
 };
 
-export default function Comments({ slug }: { slug: string }) {
+export default function Comments({ slug, postUrl }: { slug: string; postUrl?: string }) {
   const { provider, giscus, disqus } = siteConfig.comments;
   const { theme, systemTheme } = useTheme();
 
@@ -56,8 +57,8 @@ export default function Comments({ slug }: { slug: string }) {
           dangerouslySetInnerHTML={{
             __html: `
               var disqus_config = function () {
-                this.page.url = '${siteConfig.baseUrl}/posts/${slug}';
-                this.page.identifier = '${slug}';
+                this.page.url = ${JSON.stringify(postUrl ?? `${siteConfig.baseUrl.replace(/\/+$/, '')}/${getPostsBasePath()}/${slug}`)};
+                this.page.identifier = ${JSON.stringify(slug)};
               };
               (function() {
                 var d = document, s = d.createElement('script');

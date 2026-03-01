@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import CoverImage from './CoverImage';
+import { getPostUrl } from '@/lib/urls';
 
 interface PostListProps {
   posts: PostData[];
@@ -28,7 +29,7 @@ export default function PostList({
       {posts.map((post) => (
         <article key={post.slug} className="group relative">
           <Link
-            href={`/posts/${post.slug}`}
+            href={getPostUrl(post)}
             className="block no-underline"
           >
             {/* Content card */}

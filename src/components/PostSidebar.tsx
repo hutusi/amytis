@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostData, Heading } from '@/lib/markdown';
+import { getPostUrl } from '@/lib/urls';
 import { useLanguage } from './LanguageProvider';
 import { useScrollY } from '@/hooks/useScrollY';
 import ShareBar from './ShareBar';
@@ -211,7 +212,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                     return (
                       <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
                         <Link
-                          href={`/posts/${post.slug}`}
+                          href={getPostUrl(post)}
                           className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
                             isCurrent ? 'bg-accent/5' : 'hover:bg-muted/5'
                           }`}

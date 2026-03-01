@@ -4,6 +4,7 @@ import Link from 'next/link';
 import PostList from './PostList';
 import { useLanguage } from './LanguageProvider';
 import { PostData } from '@/lib/markdown';
+import { getPostsListUrl } from '@/lib/urls';
 
 interface LatestWritingSectionProps {
   posts: PostData[];
@@ -18,7 +19,7 @@ export default function LatestWritingSection({ posts, totalCount }: LatestWritin
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-serif font-bold text-heading">{t('latest_writing')}</h2>
         <Link
-          href="/posts"
+          href={getPostsListUrl()}
           className="text-sm text-muted hover:text-accent transition-colors no-underline inline-flex items-center gap-1"
         >
           {tWith('view_all_posts', { count: totalCount })}

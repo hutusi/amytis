@@ -268,28 +268,45 @@ sudo certbot renew --dry-run
 
 ### Step 4: Automate Deployment (Optional)
 
-Create a deploy script on your local machine at `scripts/deploy.sh`:
+Amytis includes a built-in deploy command for Linux servers running nginx.
+
+#### Using `bun run deploy`
+
+First install `sshpass` on your local machine:
 
 ```bash
-#!/bin/bash
-set -e
+# macOS
+brew install hudochenkov/sshpass/sshpass
 
-SERVER="user@server"
-REMOTE_DIR="/var/www/amytis"
+# Linux
+apt install sshpass
+```
 
-echo "Building..."
+Configure your server in `.env.local` (gitignored):
+
+```env
+DEPLOY_HOST=192.168.1.1
+DEPLOY_USER=root
+DEPLOY_PASSWORD=yourpassword
+DEPLOY_PATH=/var/www/amytis
+```
+
+Then deploy with a single command:
+
+```bash
 bun run build
-
-echo "Deploying to $SERVER..."
-rsync -avz --delete out/ "$SERVER:$REMOTE_DIR/"
-
-echo "Done! Site deployed."
+bun run deploy
 ```
+
+You can also pass values as flags to override `.env.local`:
 
 ```bash
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh
+bun run deploy --host 1.2.3.4 --user root --password mypass --path /var/www/amytis
 ```
+
+The script builds the `out/` directory, uploads it via rsync, and automatically reloads nginx.
+
+#### Using CI/CD
 
 Or use a CI/CD pipeline — add a job in your GitHub Actions workflow:
 
@@ -323,5 +340,6 @@ Or use a CI/CD pipeline — add a job in your GitHub Actions workflow:
 |---|---|---|
 | Build | `bun run build` | Output in `out/` |
 | GitHub Pages | Push to `main` | With GitHub Actions workflow |
-| Linux (upload) | `rsync -avz --delete out/ user@server:/var/www/amytis/` | After local build |
+| Linux (one command) | `bun run deploy` | Requires `.env.local` with server config |
+| Linux (manual upload) | `rsync -avz --delete out/ user@server:/var/www/amytis/` | After local build |
 | Linux (on server) | `bun install && bun run build` | Clone repo on server |

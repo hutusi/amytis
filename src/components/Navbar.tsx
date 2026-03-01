@@ -101,21 +101,30 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
           href="/"
           className="flex items-center gap-3 text-xl font-serif font-bold text-heading hover:text-accent transition-colors duration-200"
         >
-          <svg
-            viewBox="0 0 32 32"
-            className="w-8 h-8 text-accent"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M16 4 L7 28" />
-            <path d="M16 4 L25 28" />
-            <path d="M11.5 18 H 20.5" />
-            <path d="M20.5 18 Q 26 14 26 8 Q 23 12 20.5 18" fill="currentColor" stroke="none" />
-          </svg>
+          {siteConfig.logo?.src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={siteConfig.logo.src}
+              alt=""
+              className="h-8 w-auto"
+            />
+          ) : (
+            <svg
+              viewBox="0 0 32 32"
+              className="w-8 h-8 text-accent"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M16 4 L7 28" />
+              <path d="M16 4 L25 28" />
+              <path d="M11.5 18 H 20.5" />
+              <path d="M20.5 18 Q 26 14 26 8 Q 23 12 20.5 18" fill="currentColor" stroke="none" />
+            </svg>
+          )}
           <span>{resolveLocaleValue(siteConfig.title, language)}</span>
         </Link>
 

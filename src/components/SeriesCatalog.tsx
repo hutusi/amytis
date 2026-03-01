@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import CoverImage from './CoverImage';
+import { getPostUrl } from '@/lib/urls';
 
 interface SeriesCatalogProps {
   posts: PostData[];
@@ -19,7 +20,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts }: Ser
         {posts.map((post, index) => (
           <article key={post.slug} className="group relative">
             <Link
-              href={`/posts/${post.slug}`}
+              href={getPostUrl(post)}
               className="block no-underline"
             >
               <div className="flex gap-6 md:gap-8">

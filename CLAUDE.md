@@ -25,6 +25,9 @@ bun run build              # Full production build (copies assets, builds Next.j
 bun run build:dev          # Development build (no image optimization, faster) — also regenerates Pagefind search index in public/pagefind/
 bun run clean              # Remove .next, out, public/posts directories
 
+# Deploy
+bun run deploy             # Deploy out/ to Linux/nginx server via rsync+sshpass (reads .env.local)
+
 # Content creation
 bun run new "Post Title"              # Create new post
 bun run new-series "Series Name"      # Create new series
@@ -49,6 +52,7 @@ bun run sync-book <slug>              # Sync chapters list for one book
 
 - `site.config.ts` - Site configuration (nav, social, pagination, themes, i18n, analytics, comments)
 - `src/lib/markdown.ts` - Data access layer with all content query functions
+- `src/lib/urls.ts` - Central URL helpers (`getPostUrl`, `getPostsBasePath`, `getSeriesCustomPaths`, etc.) — always use these instead of hardcoding `/posts/[slug]`
 - `src/lib/search-utils.ts` - Pure search utilities (URL type detection, date extraction, title cleaning, markdown stripping) shared by `Search` and the search index route
 - `src/app/globals.css` - Theme CSS variables and color palettes
 - `src/components/MarkdownRenderer.tsx` - MDX rendering with all plugins
@@ -74,7 +78,9 @@ bun run sync-book <slug>              # Sync chapters list for one book
 - `/flows/[year]` - Flows filtered by year
 - `/flows/[year]/[month]` - Flows filtered by month
 - `/flows/[year]/[month]/[day]` - Single flow detail page
-- `/[slug]` - Static pages (about, etc.)
+- `/[slug]` - Static pages (about, subscribe, etc.) and custom posts/series listing pages
+- `/[prefix]/[slug]` - Posts at custom URL prefixes (e.g. `/articles/my-post`, `/weeklies/my-post`)
+- `/[prefix]/page/[page]` - Paginated listing at custom URL prefixes
 
 ### Content Structure
 
@@ -96,6 +102,7 @@ Key configuration options:
 - `nav` - Navigation links with weights
 - `social` - GitHub, Twitter, email links for footer
 - `series.navbar` - Series slugs to show in navbar dropdown
+- `series.customPaths` - Per-series custom URL prefix e.g. `{ 'weeklies': 'weeklies' }` → posts at `/weeklies/[slug]`
 - `pagination.posts`, `pagination.series` - Items per page
 - `themeColor` - 'default' | 'blue' | 'rose' | 'amber'
 - `hero` - Homepage hero title and subtitle
@@ -104,6 +111,12 @@ Key configuration options:
 - `featured.stories` - Scrollable stories: `scrollThreshold` (default: 1), `maxItems` (default: 5)
 - `analytics.provider` - 'umami' | 'plausible' | 'google' | null
 - `comments.provider` - 'giscus' | 'disqus' | null
+- `posts.basePath` - Custom URL prefix for all posts (default: `'posts'`); e.g. `'articles'` → posts at `/articles/[slug]`
+- `posts.authors.default` - Fallback authors when a post has none set in frontmatter
+- `posts.authors.showInHeader` - Show author byline below post title (default: true)
+- `posts.authors.showAuthorCard` - Show author card at end of post (default: true)
+- `posts.excludeFromListing` - Series slugs whose posts are hidden from `/posts` listing pages
+- `authors` - Per-author profiles: `bio`, `avatar` (image path), `social` (array of `{ image, description }`)
 
 ## Content Frontmatter
 
@@ -120,6 +133,7 @@ authors: ["Author Name"]
 series: "series-slug"      # Link to a series
 draft: true                # Hidden in production
 featured: true             # Show in featured section
+pinned: true               # Always shown in featured section; never shuffled away (hero = most recent pinned)
 coverImage: "./images/cover.jpg"  # Local or external URL
 latex: true                # Enable KaTeX math
 toc: false                 # Hide table of contents

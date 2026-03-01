@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import { t } from '@/lib/i18n';
+import { getPostUrl } from '@/lib/urls';
 
 interface PostNavigationProps {
   prev: PostData | null;
@@ -17,7 +18,7 @@ export default function PostNavigation({ prev, next }: PostNavigationProps) {
     >
       {prev ? (
         <Link
-          href={`/posts/${prev.slug}`}
+          href={getPostUrl(prev)}
           className="group flex flex-col gap-1.5 p-4 rounded-xl border border-muted/15 hover:border-accent/30 hover:bg-accent/5 transition-all no-underline"
         >
           <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5">
@@ -35,7 +36,7 @@ export default function PostNavigation({ prev, next }: PostNavigationProps) {
 
       {next ? (
         <Link
-          href={`/posts/${next.slug}`}
+          href={getPostUrl(next)}
           className="group flex flex-col gap-1.5 p-4 rounded-xl border border-muted/15 hover:border-accent/30 hover:bg-accent/5 transition-all no-underline sm:items-end sm:text-right"
         >
           <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5">

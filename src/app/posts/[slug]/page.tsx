@@ -5,6 +5,7 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
+import { getPostsBasePath } from '@/lib/urls';
 
 function safeDecodeParam(param: string): string {
   try {
@@ -29,6 +30,7 @@ function resolvePostFromParam(rawSlug: string) {
  * This ensures fast page loads and SEO optimization.
  */
 export async function generateStaticParams() {
+  if (getPostsBasePath() !== 'posts') return []; // Route disabled; custom path handles this
   const posts = getAllPosts();
   if (posts.length === 0) return [{ slug: '_' }];
   return posts.map((post) => ({ slug: post.slug }));

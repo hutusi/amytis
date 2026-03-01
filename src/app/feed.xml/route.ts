@@ -1,6 +1,7 @@
 import { getAllPosts } from '@/lib/markdown';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
+import { getPostUrl } from '@/lib/urls';
 
 export const dynamic = 'force-static';
 
@@ -10,7 +11,7 @@ export async function GET() {
 
   const rssItemsXml = posts
     .map((post) => {
-      const url = `${baseUrl}/posts/${post.slug}`;
+      const url = `${baseUrl}${getPostUrl(post)}`;
       return `
         <item>
           <title><![CDATA[${post.title}]]></title>

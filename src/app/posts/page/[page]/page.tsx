@@ -1,4 +1,4 @@
-import { getAllPosts } from '@/lib/markdown';
+import { getListingPosts } from '@/lib/markdown';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../../../site.config';
@@ -6,11 +6,13 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
+import { getPostsBasePath } from '@/lib/urls';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
 export function generateStaticParams() {
-  const allPosts = getAllPosts();
+  if (getPostsBasePath() !== 'posts') return []; // Route disabled; custom path handles this
+  const allPosts = getListingPosts();
   const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
 
   // Generate params for page 2 to totalPages (page 1 is handled by /posts/page.tsx)
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 export default async function PostsPage({ params }: { params: Promise<{ page: string }> }) {
   const { page: pageStr } = await params;
   const page = parseInt(pageStr);
-  const allPosts = getAllPosts();
+  const allPosts = getListingPosts();
   const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
 
   if (isNaN(page) || page < 2 || page > totalPages) notFound();

@@ -6,6 +6,7 @@ import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
+import { getPostUrl } from '@/lib/urls';
 
 export interface SeriesItem {
   name: string;
@@ -101,7 +102,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
                     {series.topPosts.map((p, idx) => (
                       <Link
                         key={p.slug}
-                        href={`/posts/${p.slug}`}
+                        href={getPostUrl({ slug: p.slug, series: series.name })}
                         className="flex items-center gap-3 group/link no-underline"
                       >
                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted/10 text-[10px] flex items-center justify-center font-mono text-muted group-hover/link:bg-accent/10 group-hover/link:text-accent transition-colors">

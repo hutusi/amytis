@@ -101,10 +101,11 @@ bun dev
 bun run lint
 bun run validate
 
-## Build
+## Build & Deploy
 bun run build
 bun run build:dev
 bun run clean
+bun run deploy                 # Deploy to Linux/nginx server (requires .env.local)
 
 ## Test
 bun test
@@ -209,6 +210,7 @@ amytis/
 ## Documentation
 
 - [Architecture Overview](docs/ARCHITECTURE.md)
+- [Deployment Guide](docs/deployment.md)
 - [Digital Garden Guide](docs/DIGITAL_GARDEN.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
 

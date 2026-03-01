@@ -92,10 +92,11 @@ bun dev
 bun run lint
 bun run validate
 
-## Build
+## Build & Deploy
 bun run build
 bun run build:dev
 bun run clean
+bun run deploy                 # 部署到 Linux/nginx 服务器（需要 .env.local 配置）
 
 ## Test
 bun test
@@ -162,6 +163,7 @@ amytis/
 ## 文档
 
 - [架构说明](docs/ARCHITECTURE.md)
+- [部署指南](docs/deployment.md)
 - [数字花园指南](docs/DIGITAL_GARDEN.md)
 - [贡献指南](docs/CONTRIBUTING.md)
 

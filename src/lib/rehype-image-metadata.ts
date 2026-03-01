@@ -3,9 +3,11 @@ import sizeOf from 'image-size';
 import path from 'path';
 import fs from 'fs';
 import { Root, Element } from 'hast';
+import { getCdnImageUrl } from './image-utils';
 
 interface Options {
   slug?: string;
+  cdnBaseUrl?: string;
 }
 
 export default function rehypeImageMetadata(options: Options) {
@@ -34,15 +36,19 @@ export default function rehypeImageMetadata(options: Options) {
           return;
         }
 
+        // Always resolve to the public path (and apply CDN prefix if configured).
+        // Path resolution must happen regardless of whether the file exists locally,
+        // so that images hosted only on CDN still get the correct URL.
+        node.properties.src = getCdnImageUrl(publicPath, options.cdnBaseUrl ?? '');
+
+        // Enrich with dimensions only when the file is available locally
         try {
-          // Check if file exists before reading
           if (imagePath && fs.existsSync(imagePath)) {
             const buffer = fs.readFileSync(imagePath);
             const dimensions = sizeOf(buffer);
             if (dimensions) {
               node.properties.width = dimensions.width;
               node.properties.height = dimensions.height;
-              node.properties.src = publicPath;
             }
           }
         } catch {

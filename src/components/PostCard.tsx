@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import CoverImage from './CoverImage';
+import { getPostUrl } from '@/lib/urls';
 
 export default function PostCard({ post }: { post: PostData }) {
   return (
-    <Link href={`/posts/${post.slug}`} className="group block h-full no-underline">
+    <Link href={getPostUrl(post)} className="group block h-full no-underline">
       <div className="flex flex-col h-full overflow-hidden rounded-xl border border-muted/20 bg-background transition-all duration-300 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5">
         <div className="relative h-32 w-full overflow-hidden bg-muted/10">
           <CoverImage 

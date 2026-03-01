@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import { getPostUrl } from '@/lib/urls';
 
 interface SeriesListProps {
   seriesSlug: string;
@@ -55,7 +56,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
       <div className="flex gap-3 mb-3">
         {prevPost ? (
           <Link
-            href={`/posts/${prevPost.slug}`}
+            href={getPostUrl(prevPost)}
             className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group"
           >
             <svg className="w-4 h-4 flex-shrink-0 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -71,7 +72,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
         )}
         {nextPost ? (
           <Link
-            href={`/posts/${nextPost.slug}`}
+            href={getPostUrl(nextPost)}
             className="flex-1 flex items-center justify-end gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group text-right"
           >
             <div className="min-w-0">
@@ -125,7 +126,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
                   </div>
                 ) : (
                   <Link
-                    href={`/posts/${post.slug}`}
+                    href={getPostUrl(post)}
                     className="group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg hover:bg-muted/5 no-underline transition-colors"
                   >
                     <span className={`flex-shrink-0 w-5 h-5 rounded-full text-[10px] font-mono font-bold flex items-center justify-center transition-colors ${

@@ -25,6 +25,13 @@ export const siteConfig = {
 
   // ── Site identity ─────────────────────────────────────────────────────────
   title: { en: "Amytis", zh: "Amytis" },
+  logo: {
+    // Path to navbar logo image served from public/ (leave empty for the default built-in icon)
+    // Accepts SVG, PNG, etc. — e.g. "/logo.svg" or "/images/my-logo.png"
+    src: "",
+    // Path to favicon served from public/ (defaults to /icon.svg)
+    favicon: "/icon.svg",
+  },
   description: { en: "Amytis — an elegant open-source framework for building your personal digital garden.", zh: "Amytis — 优雅的开源数字花园框架。" },
   baseUrl: "https://example.com", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
@@ -135,16 +142,41 @@ export const siteConfig = {
     notes: 20,
   },
   posts: {
+    basePath: 'posts', // Change to e.g. 'articles' to serve all posts at /articles/[slug]
     toc: true,
     showFuturePosts: false,
     includeDateInUrl: false,
     // trailingSlash is configured in next.config.ts (Next.js handles URL normalization)
+    authors: {
+      // Default author names applied when a post has no author in its frontmatter.
+      // Falls back to series authors first, then to this list.
+      default: ["John Hu"] as string[],
+      showInHeader: true,   // Show author byline below the post title
+      showAuthorCard: true, // Show author bio card at the end of the post
+    },
+    // Series slugs whose posts are hidden from the main posts listing.
+    // Posts remain accessible via their series page and direct URLs.
+    excludeFromListing: [] as string[],
     archive: {
       showAuthors: true,
     },
   },
+  series: {
+    // Per-series custom URL prefix for posts within that series
+    // e.g., { 'weeklies': 'weeklies' } → posts served at /weeklies/[slug]
+    customPaths: {} as Record<string, string>,
+  },
   flows: {
     recentCount: 5,
+  },
+
+  // ── Images ────────────────────────────────────────────────────────────────
+  images: {
+    // CDN base URL for serving images (leave empty to serve locally)
+    // e.g., "https://cdn.example.com" or "https://your-bucket.r2.dev"
+    // When set, local image paths like /posts/slug/images/cover.jpg are rewritten
+    // to https://cdn.example.com/posts/slug/images/cover.jpg at render time.
+    cdnBaseUrl: "",
   },
 
   // ── Appearance ────────────────────────────────────────────────────────────
@@ -189,8 +221,29 @@ export const siteConfig = {
 
   // ── Authors ───────────────────────────────────────────────────────────────
   authors: {
-    // Map display name (as used in post frontmatter) to author profile
-    // "Author Name": { bio: "Short bio shown in author card below each post." },
-  } as Record<string, { bio?: string }>,
+    // Map display name (as used in post frontmatter) to author profile.
+    // Example:
+    // "Author Name": {
+    //   bio: "Short bio shown in author card below each post.",
+    //   avatar: "/images/authors/author-name.jpg", // path under public/
+    //   social: [
+    //     { image: "/images/authors/wechat-qr.jpg", description: "WeChat Official Account" },
+    //   ],
+    // },
+    "John Hu": {
+      bio: "Coder, Writer, Creator.",
+      avatar: "/images/avatar.jpg",
+      social: [
+        { image: "/images/wechat-qr.jpg", description: "Follow on WeChat" },
+      ],
+    },
+  } as Record<string, {
+    bio?: string;
+    avatar?: string;  // Avatar image path served from public/
+    social?: Array<{
+      image: string;       // Social image (e.g. QR code) path served from public/
+      description: string; // Label shown below the image
+    }>;
+  }>,
 
 };

@@ -1,5 +1,7 @@
 import React from 'react';
 import ExportedImage from 'next-image-export-optimizer';
+import { siteConfig } from '../../site.config';
+import { getCdnImageUrl } from '@/lib/image-utils';
 
 // Each palette defines a gradient background and text color for light/dark modes
 const palettes = [
@@ -81,13 +83,18 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
     );
   }
 
+  const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
+  const imageSrc = getCdnImageUrl(src!, cdnBaseUrl);
+  const isCdn = cdnBaseUrl && imageSrc !== src;
+
   return (
-    <ExportedImage 
-      src={src}
-      alt={title} 
+    <ExportedImage
+      src={imageSrc}
+      alt={title}
       className={className}
       fill
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      unoptimized={!!isCdn}
     />
   );
 }

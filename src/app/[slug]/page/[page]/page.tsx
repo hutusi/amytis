@@ -1,118 +1,116 @@
-import { getPageBySlug, getAllPages, getAllPosts, getListingPosts, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
-import { notFound } from 'next/navigation';
-import PostLayout from '@/layouts/PostLayout';
-import SimpleLayout from '@/layouts/SimpleLayout';
+import { getListingPosts, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
 import PostList from '@/components/PostList';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
+import { siteConfig } from '../../../../../site.config';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { t, resolveLocale } from '@/lib/i18n';
+import PageHeader from '@/components/PageHeader';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
-import { Metadata } from 'next';
-import { siteConfig } from '../../../site.config';
-import { resolveLocale, t } from '@/lib/i18n';
-import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath, getSeriesCustomPaths } from '@/lib/urls';
 
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
 
-/**
- * Generates the static paths for all top-level pages at build time,
- * plus any custom URL prefixes configured for posts or series.
- */
 export async function generateStaticParams() {
-  const pages = getAllPages();
-  const params = pages.map((page) => ({ slug: page.slug }));
+  const params: { slug: string; page: string }[] = [];
 
-  // Add custom posts basePath listing (e.g. /articles)
+  // Custom posts basePath — paginated listing pages (page 2+)
   const basePath = getPostsBasePath();
   if (basePath !== 'posts') {
-    params.push({ slug: basePath });
+    const allPosts = getListingPosts();
+    const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
+    for (let i = 2; i <= totalPages; i++) {
+      params.push({ slug: basePath, page: i.toString() });
+    }
   }
 
-  // Add series custom path listings (e.g. /weeklies)
-  for (const customPath of Object.values(getSeriesCustomPaths())) {
-    params.push({ slug: customPath });
+  // Series custom paths — paginated series listing (page 2+)
+  for (const [seriesSlug, customPath] of Object.entries(getSeriesCustomPaths())) {
+    const posts = getSeriesPosts(seriesSlug);
+    const totalPages = Math.ceil(posts.length / SERIES_PAGE_SIZE);
+    for (let i = 2; i <= totalPages; i++) {
+      params.push({ slug: customPath, page: i.toString() });
+    }
   }
 
-  return params;
+  // Placeholder keeps Next.js happy with output: export when no custom paths configured.
+  // dynamicParams = false ensures any unrecognised slug/page combo returns 404.
+  return params.length > 0 ? params : [{ slug: '_', page: '2' }];
 }
 
 export const dynamicParams = false;
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
-
-  // Custom posts basePath
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; page: string }>;
+}): Promise<Metadata> {
+  const { slug: prefix, page } = await params;
   const basePath = getPostsBasePath();
-  if (slug === basePath && basePath !== 'posts') {
+  const customPaths = getSeriesCustomPaths();
+  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === prefix)?.[0];
+
+  if (prefix === basePath && basePath !== 'posts') {
     return {
-      title: `${t('posts')} | ${resolveLocale(siteConfig.title)}`,
-      description: 'Browse the complete archive of articles.',
+      title: `${t('posts')} - ${page} | ${resolveLocale(siteConfig.title)}`,
     };
   }
 
-  // Series custom paths
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === slug)?.[0];
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
-    if (seriesData) {
-      return {
-        title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
-        description: seriesData.excerpt,
-      };
-    }
+    const title = seriesData?.title || matchedSeriesSlug;
+    return {
+      title: `${title} - ${page} | ${resolveLocale(siteConfig.title)}`,
+    };
   }
 
-  const page = getPageBySlug(slug);
-  if (!page) {
-    return { title: 'Page Not Found' };
-  }
-
-  return {
-    title: `${page.title} | ${resolveLocale(siteConfig.title)}`,
-    description: page.excerpt,
-  };
+  return { title: 'Not Found' };
 }
 
-export default async function Page({
+export default async function PrefixPageRoute({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; page: string }>;
 }) {
-  const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const { slug: prefix, page: pageStr } = await params;
+  const page = parseInt(pageStr, 10);
 
-  // Check if slug matches custom posts basePath
+  if (isNaN(page) || page < 2) notFound();
+
   const basePath = getPostsBasePath();
-  if (slug === basePath && basePath !== 'posts') {
+  const customPaths = getSeriesCustomPaths();
+  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === prefix)?.[0];
+
+  // Custom posts basePath listing
+  if (prefix === basePath && basePath !== 'posts') {
     const allPosts = getListingPosts();
     const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
-    const posts = allPosts.slice(0, POST_PAGE_SIZE);
+
+    if (page > totalPages) notFound();
+
+    const start = (page - 1) * POST_PAGE_SIZE;
+    const posts = allPosts.slice(start, start + POST_PAGE_SIZE);
 
     return (
       <div className="layout-main">
         <PageHeader
           titleKey="posts"
-          subtitleKey="posts_subtitle"
-          subtitleParams={{ count: allPosts.length }}
+          subtitleKey="page_of_total"
+          subtitleParams={{ page, total: totalPages }}
           className="mb-12"
         />
         <PostList posts={posts} />
-        {totalPages > 1 && (
-          <div className="mt-12">
-            <Pagination currentPage={1} totalPages={totalPages} basePath={`/${basePath}`} />
-          </div>
-        )}
+        <div className="mt-12">
+          <Pagination currentPage={page} totalPages={totalPages} basePath={`/${basePath}`} />
+        </div>
       </div>
     );
   }
 
-  // Check if slug matches a series custom path
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === slug)?.[0];
+  // Series custom path listing
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     const allPosts = getSeriesPosts(matchedSeriesSlug);
@@ -122,7 +120,10 @@ export default async function Page({
     }
 
     const totalPages = Math.ceil(allPosts.length / SERIES_PAGE_SIZE);
-    const posts = allPosts.slice(0, SERIES_PAGE_SIZE);
+    if (page > totalPages) notFound();
+
+    const start = (page - 1) * SERIES_PAGE_SIZE;
+    const posts = allPosts.slice(start, start + SERIES_PAGE_SIZE);
 
     const title = seriesData?.title || matchedSeriesSlug.charAt(0).toUpperCase() + matchedSeriesSlug.slice(1);
     const description = seriesData?.excerpt;
@@ -162,7 +163,12 @@ export default async function Page({
             <span className="badge-accent mb-4">
               {t('series')} • {allPosts.length} {t('parts')}
             </span>
-            <h1 className="page-title mb-4">{title}</h1>
+            <h1 className="page-title mb-4">
+              {title}
+              <span className="block text-lg text-muted font-sans font-normal mt-2">
+                {page} / {totalPages}
+              </span>
+            </h1>
             {description && (
               <p className="text-lg text-muted font-serif italic leading-relaxed">{description}</p>
             )}
@@ -184,29 +190,13 @@ export default async function Page({
             )}
           </div>
         </header>
-        <SeriesCatalog posts={posts} totalPosts={allPosts.length} />
-        {totalPages > 1 && (
-          <div className="mt-12">
-            <Pagination currentPage={1} totalPages={totalPages} basePath={`/${slug}`} />
-          </div>
-        )}
+        <SeriesCatalog posts={posts} startIndex={start} totalPosts={allPosts.length} />
+        <div className="mt-12">
+          <Pagination currentPage={page} totalPages={totalPages} basePath={`/${prefix}`} />
+        </div>
       </div>
     );
   }
 
-  // Default: static page
-  const page = getPageBySlug(slug);
-
-  if (!page) {
-    notFound();
-  }
-
-  // Determine layout based on frontmatter, defaulting to 'simple' for pages
-  const layout = page.layout || 'simple';
-
-  if (layout === 'post') {
-    return <PostLayout post={page} />;
-  }
-
-  return <SimpleLayout post={page} />;
+  notFound();
 }
