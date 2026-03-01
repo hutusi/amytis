@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "0b152c656bf9",
+  "session_id": "22db4cc7-3a8d-47f9-8aee-843343c96c31",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-01T20:54:15.34422Z",
+  "branch": "hutusi",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/CuratedSeriesSection.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "9f29f3a0bd4f",
+  "token_usage": {
+    "input_tokens": 25,
+    "cache_creation_tokens": 21246,
+    "cache_read_tokens": 173880,
+    "output_tokens": 2816,
+    "api_call_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-01T20:54:15.269674Z",
+    "agent_lines": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "agent_percentage": 100
+  }
+}
