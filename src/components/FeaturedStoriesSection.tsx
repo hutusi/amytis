@@ -82,7 +82,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
                   {hero.title}
                 </h3>
                 {(hero.subtitle || hero.excerpt) && (
-                  <p className="text-white/65 text-sm leading-relaxed line-clamp-2">
+                  <p className="text-white/65 text-sm leading-relaxed line-clamp-1">
                     {hero.subtitle || hero.excerpt}
                   </p>
                 )}

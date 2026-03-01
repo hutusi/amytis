@@ -6,12 +6,14 @@ interface PostListProps {
   posts: PostData[];
   showExcerpt?: boolean;
   showTags?: boolean;
+  excerptLines?: 1 | 2;
 }
 
 export default function PostList({
   posts,
   showExcerpt = true,
   showTags = true,
+  excerptLines = 2,
 }: PostListProps) {
   if (posts.length === 0) {
     return (
@@ -74,9 +76,9 @@ export default function PostList({
                   </h3>
 
                   {/* Excerpt */}
-                  {showExcerpt && post.excerpt && (
-                    <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-4">
-                      {post.excerpt}
+                  {showExcerpt && (post.subtitle || post.excerpt) && (
+                    <p className={`text-sm text-muted leading-relaxed ${excerptLines === 1 ? 'line-clamp-1' : 'line-clamp-2 mb-4'}`}>
+                      {post.subtitle || post.excerpt}
                     </p>
                   )}
 

@@ -28,7 +28,7 @@ export default function LatestWritingSection({ posts, totalCount }: LatestWritin
         </Link>
       </div>
 
-      <PostList posts={posts} showExcerpt={false} showTags={false} />
+      <PostList posts={posts} showTags={false} excerptLines={1} />
     </section>
   );
 }
