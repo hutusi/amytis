@@ -49,7 +49,7 @@ export default function PostList({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-5 sm:p-6 flex flex-col">
+                <div className="flex-1 p-5 sm:p-6 flex flex-col overflow-hidden">
                   {/* Meta info */}
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted mb-3">
                     <span>{post.date}</span>
