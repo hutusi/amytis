@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "62c4bc8fa9f9",
+  "strategy": "manual-commit",
+  "branch": "package",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "site.config.ts",
+    "src/app/feed.atom/route.ts",
+    "src/app/feed.xml/route.ts",
+    "src/components/RssFeedWidget.tsx",
+    "src/lib/feed-utils.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/62/c4bc8fa9f9/0/metadata.json",
+      "transcript": "/62/c4bc8fa9f9/0/full.jsonl",
+      "context": "/62/c4bc8fa9f9/0/context.md",
+      "content_hash": "/62/c4bc8fa9f9/0/content_hash.txt",
+      "prompt": "/62/c4bc8fa9f9/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 39,
+    "cache_creation_tokens": 81851,
+    "cache_read_tokens": 791060,
+    "output_tokens": 14795,
+    "api_call_count": 21
+  }
+}
