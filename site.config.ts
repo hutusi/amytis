@@ -174,6 +174,12 @@ export const siteConfig = {
   flows: {
     recentCount: 5,
   },
+  feed: {
+    maxItems: 20,                                           // Max items per feed (0 = no limit)
+    format: 'rss' as 'rss' | 'atom' | 'both',              // Format(s) to serve and advertise
+    content: 'full' as 'excerpt' | 'full',                  // Full post content or excerpt only
+    includeFlows: false,                                    // Include flow notes alongside posts
+  },
 
   // ── Images ────────────────────────────────────────────────────────────────
   images: {
