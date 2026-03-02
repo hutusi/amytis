@@ -26,7 +26,7 @@ You can link between any content (Posts, Notes, Flows) using double-bracket synt
 - **Cross-Type Linking:**
   - If a slug matches a Note, it links to `/notes/[slug]`
   - If it matches a Post, it links to `/posts/[slug]`
-  - If it matches a Flow, it links to `/flows/[slug]`
+  - If it matches a Flow date slug, it links to `/flows/YYYY/MM/DD`
 
 ### 3. Backlinks
 At the bottom of every Note, Amytis automatically generates a "Linked References" section. This lists every other page that links *to* the current note, along with a context snippet showing how it was referenced.
@@ -46,27 +46,23 @@ Flows are a stream-style collection of daily notes, micro-blogging, or imported 
 
 ## How to Use
 
-1. **Create a Note**: Run `bun run new-note "My Concept"` (or `bun run new "My Concept" --note`).
+1. **Create a Note**: Run `bun run new-note "My Concept"`.
 2. **Create a Flow**: Run `bun run new-flow`.
 3. **Link to it**: In a blog post, note, or flow, type `[[my-concept]]` or `[[2026-02-27]]`.
 4. **Explore**: Visit `/notes` or `/flows` to see your collection, or `/graph` to see the connections.
 
 ## Configuration
 
-In `site.config.ts`, you can configure the graph visualization:
+In `site.config.ts`, ensure flow features are enabled (the graph and notes surfaces are flow-related in current routing):
 
 ```typescript
 export const siteConfig = {
   // ...
   features: {
-    graph: {
+    flow: {
       enabled: true,
-      name: { en: "Graph", zh: "知识图谱" },
+      name: { en: "Flow", zh: "随笔" },
     },
-    notes: {
-      enabled: true,
-      name: { en: "Notes", zh: "笔记" },
-    }
   }
 };
 ```

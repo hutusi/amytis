@@ -1,120 +1,100 @@
 # Architecture Overview
 
-Amytis is a static site generator built with **Next.js 16 (App Router)**, designed to render a "digital garden" of Markdown/MDX content.
+Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX publishing across posts, series, books, flows, and notes.
 
 ## Core Stack
 
-- **Framework:** Next.js 16.1.6 (App Router) with React 19
-- **Runtime:** Bun
-- **Styling:** Tailwind CSS v4 with CSS variables for theming
-- **Content:** Local `.md`/`.mdx` files parsed at build time
-- **Validation:** Zod for frontmatter schema validation
-- **Testing:** Bun Test
+- Framework: Next.js 16.1.6 + React 19
+- Runtime/tooling: Bun
+- Styling: Tailwind CSS v4 + CSS variables + `next-themes`
+- Content parsing: `gray-matter` + Zod validation in `src/lib/markdown.ts`
+- Search: Pagefind (`/pagefind/pagefind.js` loaded at runtime)
+- Tests: Bun test suites in `src/` and `tests/`
 
-## Data Flow
+## Content Model
 
-1. **Source:** Content lives in `content/posts/`, `content/series/`, `content/books/`, and `content/flows/`.
-2. **Parsing:** `src/lib/markdown.ts` reads the file system using Node.js `fs`. It uses `gray-matter` to parse frontmatter, `zod` to validate the schema, and `image-size` to extract image dimensions.
-3. **Filtering:** Draft content (`draft: true`) is excluded in production. Future-dated posts are hidden unless `showFuturePosts` is enabled.
-4. **Rendering:**
-   - **Lists:** `getAllPosts()` / `getAllBooks()` / `getAllFlows()` returns sorted metadata for listing pages.
-   - **Single Post/Book:** `getPostBySlug(slug)` / `getBookData(slug)` reads a specific file with full content.
-   - **Series:** `getSeriesPosts(slug)` fetches posts for a series.
-   - **Book Chapters:** `getBookChapter(bookSlug, chapterSlug)` fetches individual chapter content.
-   - **Flows:** `getFlowBySlug(slug)` fetches individual flow entries.
-   - **Static Generation:** `generateStaticParams` is implemented in dynamic routes (`[slug]`, `[page]`, `[tag]`, `[author]`, `[year]`) to pre-render all pages at build time.
+- `content/posts/`: standalone posts (`.md/.mdx`) and folder posts (`index.mdx`)
+- `content/series/<slug>/`: series metadata (`index.mdx`) + series posts
+- `content/books/<slug>/`: book metadata + chapter files
+- `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
+- `content/notes/`: evergreen notes
+- `content/*.mdx`: static pages (about, links, subscribe, privacy, etc.)
 
-## Route Structure
+## Runtime Data Flow
 
-```
+1. Source files are read from disk by `src/lib/markdown.ts`.
+2. Frontmatter is parsed and validated (invalid frontmatter throws at build time).
+3. Draft/future filtering and sorting are applied (based on `site.config.ts`).
+4. Route files consume typed helpers (`getAllPosts`, `getBookData`, `getAllFlows`, `getAllNotes`, etc.).
+5. `generateStaticParams()` precomputes dynamic routes for static export.
+
+## Route Map (App Router)
+
+```text
 src/app/
-  page.tsx                          # Homepage (hero, featured, latest)
-  layout.tsx                        # Root layout (providers, navbar, footer)
-  posts/
-    [slug]/page.tsx                 # Individual post
-    page.tsx                        # Posts listing
-  series/
-    page.tsx                        # All series overview
-    [slug]/page.tsx                 # Single series
-  books/
-    page.tsx                        # All books overview
-    [slug]/page.tsx                 # Book landing page
-    [slug]/[chapter]/page.tsx       # Individual book chapter
-  notes/
-    page.tsx                        # All notes list
-    [slug]/page.tsx                 # Individual note
-  graph/
-    page.tsx                        # Knowledge graph visualization
-  flows/
-    page.tsx                        # Flows stream/listing
-    [year]/[month]/[day]/page.tsx   # Individual flow entry (optional if modal/stream used)
-  tags/
-    page.tsx                        # Tag cloud
-    [tag]/page.tsx                  # Posts by tag
-  authors/
-    [author]/page.tsx               # Posts by author
-  archive/
-    page.tsx                        # Chronological archive
-  subscribe/
-    page.tsx                        # Subscription options
-  search.json/
-    route.ts                        # Supplementary structured search data
-  [slug]/page.tsx                   # Static pages (about, etc.)
+  page.tsx                          # Homepage
+  page/[page]/page.tsx              # Homepage pagination
+  layout.tsx                        # Root layout/providers
+  posts/page.tsx                    # Posts index
+  posts/page/[page]/page.tsx        # Posts pagination
+  posts/[slug]/page.tsx             # Canonical post route
+  series/page.tsx                   # Series index
+  series/[slug]/page.tsx            # Series detail
+  series/[slug]/page/[page]/page.tsx
+  books/page.tsx                    # Books index
+  books/[slug]/page.tsx             # Book landing
+  books/[slug]/[chapter]/page.tsx   # Book chapter
+  flows/page.tsx                    # Flow index
+  flows/page/[page]/page.tsx        # Flow pagination
+  flows/[year]/page.tsx
+  flows/[year]/[month]/page.tsx
+  flows/[year]/[month]/[day]/page.tsx
+  notes/page.tsx                    # Notes index
+  notes/page/[page]/page.tsx
+  notes/[slug]/page.tsx
+  tags/page.tsx
+  tags/[tag]/page.tsx
+  authors/[author]/page.tsx
+  archive/page.tsx
+  graph/page.tsx
+  feed.xml/route.ts
+  search.json/route.ts
+  sitemap.ts
+  [slug]/page.tsx                   # Static pages + custom series listing path
+  [slug]/page/[page]/page.tsx       # Custom series listing pagination
+  [slug]/[postSlug]/page.tsx        # Custom post basePath/series post path
 ```
 
-## Component Architecture
+## URL Routing Rules
 
-### Layout Components
-- **`Navbar`** - Config-driven navigation with series dropdown, search trigger, theme toggle, and language switch.
-- **`Footer`** - Social links, copyright, site metadata, and language switch.
-- **`Hero`** - Homepage hero with collapsible intro.
-- **`BookLayout`** - Dedicated layout for book chapters with sidebar navigation.
-- **`PageHeader`** - Consistent header for simple pages (Archive, Tags, About).
+- `next.config.ts` sets `output: "export"` and `trailingSlash: true`.
+- Post URLs use `getPostUrl()` in `src/lib/urls.ts`:
+  - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)
+  - Series override: `/<series.customPaths[seriesSlug]>/<post.slug>`
+- Dynamic route params should return raw segment values from `generateStaticParams()` (do not pre-encode values).
 
-### Content Display
-- **`PostList`** - Card-based post listing.
-- **`FlowContent`** - Stream-based display for daily notes with timeline grouping.
-- **`SeriesCatalog`** - Timeline-style post listing for series.
-- **`PostCard`** - Individual post preview card.
-- **`CoverImage`** - Optimized image component using `next-image-export-optimizer` with dynamic desaturated gradients.
-- **`ShareBar`** - Social sharing buttons for posts and books.
-- **`TagContentTabs`** - Tabbed interface for filtering posts vs flows by tag.
+## Key Components
 
-### Content Rendering
-- **`MarkdownRenderer`** - Core rendering component using `react-markdown` with plugins (GFM, Math, Raw HTML).
-- **`CodeBlock`** - Syntax-highlighted code blocks with copy button.
-- **`Mermaid`** - Client-side Mermaid diagram rendering.
+- Layout/navigation: `Navbar`, `Footer`, `Hero`, `FlowHubTabs`
+- Content renderers: `MarkdownRenderer`, `CodeBlock`, `Mermaid`
+- Post surfaces: `PostLayout`, `PostSidebar`, `PostCard`, `RelatedPosts`, `ShareBar`
+- Notes/flows discovery: `NoteSidebar`, `FlowContent`, `FlowCalendarSidebar`, `TagContentTabs`
+- Search/discovery: `Search`, `Pagination`, `KnowledgeGraph`
 
-### Navigation & Discovery
-- **`TableOfContents`** - Sticky TOC with scroll-based tracking.
-- **`Search`** - Full-text search modal (Cmd/Ctrl+K) powered by Pagefind. Supports type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation, debounced input, focus trap, and ARIA accessibility. Search syntax: `"exact phrase"`, `word1 word2` (AND), `-exclude`.
-- **`Pagination`** - Previous/Next page navigation.
-- **`ReadingProgressBar`** - Top-of-page progress bar for book chapters.
-- **`SubscribePage`** - Centralized page for all subscription options.
+## Data Layer Highlights (`src/lib/markdown.ts`)
 
-## Data Access Layer (`src/lib/markdown.ts`)
-
-| Function | Returns | Purpose |
-|----------|---------|---------|
-| `getAllPosts()` | `PostData[]` | All posts, filtered and sorted |
-| `getAllFlows()` | `FlowData[]` | All daily notes, sorted by date |
-| `getAllBooks()` | `BookData[]` | All books metadata |
-| `getBookData(slug)` | `BookData \| null` | Single book metadata & TOC |
-| `getBookChapter(...)` | `BookChapterData` | Single chapter content |
-| `getAllNotes()` | `NoteData[]` | All notes, sorted by date |
-| `getNoteBySlug(slug)` | `NoteData \| null` | Single note content |
-| `getBacklinks(slug)` | `BacklinkSource[]` | Inbound links for a page |
-| `getFlowBySlug(slug)` | `FlowData \| null` | Single flow entry |
-| `getSeriesPosts(slug)` | `PostData[]` | Posts in a series |
-| `calculateReadingTime(content)` | `string` | Estimated reading time (multilingual) |
-
-## Theming
-
-Theming is handled by `next-themes` and Tailwind CSS v4. `src/app/globals.css` defines CSS variables for palettes (`default`, `blue`, `rose`, `amber`).
+- Posts/series: `getAllPosts`, `getListingPosts`, `getPostBySlug`, `getSeriesPosts`, `getSeriesData`
+- Books: `getAllBooks`, `getBookData`, `getBookChapter`
+- Flows: `getAllFlows`, `getFlowBySlug`, `getFlowsByYear`, `getFlowsByMonth`
+- Notes: `getAllNotes`, `getNoteBySlug`, `getNotesByTag`
+- Discovery: `buildSlugRegistry`, `getBacklinks`, `getAllTags`, `getAllAuthors`
 
 ## Build Pipeline
 
-1. **`scripts/copy-assets.ts`** - Copies images from content directories (`posts/`, `series/`, `books/`, `flows/`) to `public/posts/` for static hosting.
-2. **`next build`** - Next.js static export to `out/`.
-3. **`next-image-export-optimizer`** - Generates optimized WebP variants (production build only).
-4. **`pagefind --site out`** - Crawls the exported HTML and builds a full-text search index in `out/pagefind/`. The index is loaded at runtime by `src/components/Search.tsx` via a dynamic import. Pure utility functions used by the search component and the search index route live in `src/lib/search-utils.ts`.
+1. `bun scripts/copy-assets.ts`: copy co-located media into `public/`
+2. `bun run build:graph`: generate graph data
+3. `next build`: static export to `out/`
+4. Production only (`bun run build`): `next-image-export-optimizer`
+5. Pagefind indexing:
+   - Production: `pagefind --site out` (writes to `out/pagefind`)
+   - Dev build: `pagefind --site out --output-path public/pagefind`

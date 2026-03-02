@@ -62,9 +62,6 @@ Notes live in `content/notes/`.
 ```bash
 # Create a new note using the dedicated script
 bun run new-note "Zettelkasten Method"
-
-# Or using the general new script
-bun run new "Zettelkasten Method" --note
 ```
 
 ### Importing Content
@@ -105,6 +102,15 @@ bun run test:e2e           # Run end-to-end tests
 bun run build              # Production build (includes image optimization and Pagefind index)
 bun run build:dev          # Development build (faster, no image optimization; also generates Pagefind index)
 ```
+
+## Static Export Routing Rules
+
+Amytis relies on static export (`output: "export"`) with `trailingSlash: true`.
+
+- In `generateStaticParams()`, return raw segment values and let Next.js handle encoding.
+- Do not pre-encode route params with `encodeURIComponent`.
+- Do not link to placeholder routes such as `/posts/[slug]`; always link to concrete URLs.
+- When touching dynamic routes, verify both ASCII and Unicode slugs.
 
 ## Code Style
 
