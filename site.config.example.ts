@@ -1,3 +1,10 @@
+// Single-language starter template for Amytis.
+// Copy this file to site.config.ts and customize it for your site.
+//
+// This template has i18n disabled. All locale-aware fields use plain strings.
+// To add multi-language support later, switch to { en: '...', zh: '...' } objects
+// and set i18n.enabled: true with your locales.
+
 export interface NavChildItem {
   name: string;
   url: string;
@@ -16,15 +23,15 @@ export interface NavItem {
 
 // Defined up-front so footer.connect can reference these URLs without duplication
 const social = {
-  github: "https://github.com/hutusi/amytis",
-  twitter: "https://twitter.com/hutusi",
-  email: "mailto:huziyong@gmail.com",
+  github: "https://github.com/your-username",
+  twitter: "https://twitter.com/your-username",
+  email: "mailto:you@example.com",
 };
 
 export const siteConfig = {
 
   // ── Site identity ─────────────────────────────────────────────────────────
-  title: { en: "Amytis", zh: "Amytis" },
+  title: "My Garden",
   logo: {
     // Path to navbar logo image served from public/ (leave empty for the default built-in icon)
     // Accepts SVG, PNG, etc. — e.g. "/logo.svg" or "/images/my-logo.png"
@@ -32,33 +39,29 @@ export const siteConfig = {
     // Path to favicon served from public/ (defaults to /icon.svg)
     favicon: "/icon.svg",
   },
-  description: { en: "Amytis — an elegant open-source framework for building your personal digital garden.", zh: "Amytis — 优雅的开源数字花园框架。" },
+  description: "A personal digital garden — notes, articles, and ideas.",
   baseUrl: "https://example.com", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
-  footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
+  footerText: `© ${new Date().getFullYear()} My Garden. All rights reserved.`,
 
   // ── i18n ──────────────────────────────────────────────────────────────────
   i18n: {
-    // Set enabled: false to disable multi-language support entirely.
-    // The language switcher will be hidden and the defaultLocale is always used.
-    // When disabled, all locale-aware fields (title, description, hero, etc.)
-    // accept plain strings instead of { en: '...', zh: '...' } objects.
-    enabled: true,
+    // i18n is disabled: the language switcher is hidden and defaultLocale is always used.
+    // To enable multi-language support, set enabled: true, add more locales, and
+    // convert plain string fields to locale maps: e.g. title: { en: '...', zh: '...' }
+    enabled: false,
     defaultLocale: 'en',
-    locales: ['en', 'zh'],
+    locales: ['en'],
   },
 
   // ── Navigation ────────────────────────────────────────────────────────────
   nav: [
-    { name: "Flow", url: "/flows", weight: 1 },
-    { name: "Posts", url: "/posts", weight: 2 },
-    { name: "Series", url: "/series", weight: 3, dropdown: ["digital-garden", "markdown-showcase", "ai-nexus-weekly"] },
-    { name: "Books", url: "/books", weight: 4, dropdown: [] },
-    { name: "About", url: "/about", weight: 5 },
-    { name: "More", url: "", weight: 6, children: [
+    { name: "Posts", url: "/posts", weight: 1 },
+    { name: "Series", url: "/series", weight: 2 },
+    { name: "About", url: "/about", weight: 3 },
+    { name: "More", url: "", weight: 4, children: [
       { name: "Archive", url: "/archive" },
       { name: "Tags", url: "/tags" },
-      { name: "Links", url: "/links" },
       { name: "Subscribe", url: "/subscribe", dividerBefore: true },
     ]},
   ] as NavItem[],
@@ -68,8 +71,7 @@ export const siteConfig = {
     explore: [
       { name: "Archive", url: "/archive", weight: 1 },
       { name: "Tags", url: "/tags", weight: 2 },
-      { name: "Links", url: "/links", weight: 3 },
-      { name: "About", url: "/about", weight: 4 },
+      { name: "About", url: "/about", weight: 3 },
     ],
     connect: [
       { name: "GitHub", url: social.github, weight: 1 },
@@ -80,7 +82,7 @@ export const siteConfig = {
     builtWith: {
       show: true,
       url: "https://github.com/hutusi/amytis",
-      text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
+      text: "Built with Amytis",
     },
   },
 
@@ -90,7 +92,7 @@ export const siteConfig = {
     enabled: true,
     // Supported: twitter, facebook, linkedin, weibo, reddit, hackernews,
     //            telegram, bluesky, mastodon, douban, zhihu, copy
-    platforms: ['twitter', 'facebook', 'linkedin', 'weibo', 'copy'],
+    platforms: ['twitter', 'facebook', 'linkedin', 'copy'],
   },
   subscribe: {
     substack: '',       // Substack publication URL, e.g., 'https://yourname.substack.com'
@@ -106,42 +108,42 @@ export const siteConfig = {
   features: {
     posts: {
       enabled: true,
-      name: { en: "Articles", zh: "文章" },
+      name: "Articles",
     },
     series: {
       enabled: true,
-      name: { en: "Series", zh: "系列" },
+      name: "Series",
     },
     books: {
-      enabled: true,
-      name: { en: "Books", zh: "书籍" },
+      enabled: false,
+      name: "Books",
     },
     flow: {
-      enabled: true,
-      name: { en: "Flow", zh: "随笔" },
+      enabled: false,
+      name: "Flow",
     },
   },
 
   // ── Homepage ──────────────────────────────────────────────────────────────
   hero: {
-    tagline: { en: "Open Source Digital Garden", zh: "开源数字花园框架" },
-    title: { en: "A home for ideas to grow, link, and evolve.", zh: "让想法生长、关联、演化的地方。" },
-    subtitle: { en: "An elegant, open-source framework for cultivating personal knowledge — from raw daily flows to refined articles, curated series, and structured books.", zh: "优雅的开源知识培育框架——从每日随笔到精炼文章，从系列合集到结构化书籍，层层深化。" },
+    tagline: "My Personal Digital Garden",
+    title: "A place for ideas to grow.",
+    subtitle: "Notes, articles, and explorations — written for curiosity, shared for connection.",
   },
   homepage: {
     sections: [
       { id: 'hero',            enabled: true, weight: 1 },
       { id: 'featured-posts',  enabled: true, weight: 2, maxItems: 4 },
       { id: 'latest-posts',    enabled: true, weight: 3, maxItems: 3 },
-      { id: 'recent-flows',    enabled: true, weight: 4, maxItems: 8 },
+      { id: 'recent-flows',    enabled: false, weight: 4, maxItems: 8 },
       { id: 'featured-series', enabled: true, weight: 5, maxItems: 6, scrollThreshold: 2 },
-      { id: 'featured-books',  enabled: true, weight: 6, maxItems: 4 },
+      { id: 'featured-books',  enabled: false, weight: 6, maxItems: 4 },
     ],
   },
 
   // ── Content ───────────────────────────────────────────────────────────────
   pagination: {
-    posts: 5,
+    posts: 10,
     series: 5,
     flows: 20,
     notes: 20,
@@ -155,7 +157,7 @@ export const siteConfig = {
     authors: {
       // Default author names applied when a post has no author in its frontmatter.
       // Falls back to series authors first, then to this list.
-      default: ["John Hu"] as string[],
+      default: ["Your Name"] as string[],
       showInHeader: true,   // Show author byline below the post title
       showAuthorCard: true, // Show author bio card at the end of the post
     },
@@ -196,7 +198,7 @@ export const siteConfig = {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
-    provider: 'umami', // 'umami' | 'plausible' | 'google' | null
+    provider: null, // 'umami' | 'plausible' | 'google' | null
     umami: {
       websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '', // Your Umami Website ID
       src: process.env.NEXT_PUBLIC_UMAMI_URL || 'https://us.umami.is/script.js', // Default or self-hosted URL
@@ -212,12 +214,12 @@ export const siteConfig = {
 
   // ── Comments ──────────────────────────────────────────────────────────────
   comments: {
-    provider: 'giscus', // 'giscus' | 'disqus' | null
+    provider: null, // 'giscus' | 'disqus' | null
     giscus: {
-      repo: 'hutusi/amytis', // username/repo
-      repoId: 'R_kgDOQ1YSwA',
+      repo: 'your-username/your-repo', // username/repo
+      repoId: '',
       category: 'Announcements',
-      categoryId: 'DIC_kwDOQ1YSwM4C2NmL',
+      categoryId: '',
     },
     disqus: {
       shortname: '',
@@ -235,12 +237,10 @@ export const siteConfig = {
     //     { image: "/images/authors/wechat-qr.jpg", description: "WeChat Official Account" },
     //   ],
     // },
-    "John Hu": {
-      bio: "Coder, Writer, Creator.",
+    "Your Name": {
+      bio: "Write a short bio here.",
       avatar: "/images/avatar.jpg",
-      social: [
-        { image: "/images/wechat-qr.jpg", description: "Follow on WeChat" },
-      ],
+      social: [],
     },
   } as Record<string, {
     bio?: string;
