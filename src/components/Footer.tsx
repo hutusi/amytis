@@ -90,8 +90,12 @@ export default function Footer() {
         <div className="pt-8 border-t border-muted/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <span>{resolveLocaleValue(siteConfig.footerText, language)}</span>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-             <LanguageSwitch variant="text" />
-             <span className="opacity-20">|</span>
+             {siteConfig.i18n.enabled !== false && siteConfig.i18n.locales.length >= 2 && (
+               <>
+                 <LanguageSwitch variant="text" />
+                 <span className="opacity-20">|</span>
+               </>
+             )}
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
              {siteConfig.footer?.builtWith?.show && (() => {
                const cfg = siteConfig.footer.builtWith;
