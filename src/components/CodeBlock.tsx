@@ -90,21 +90,23 @@ export default function CodeBlock({ language, children, ...props }: CodeBlockPro
           )}
         </button>
       </div>
-      <SyntaxHighlighter
-        language={language || 'text'}
-        PreTag="div"
-        useInlineStyles={false}
-        customStyle={{
-          margin: 0,
-          padding: '1.5rem',
-          background: 'transparent',
-          fontSize: '0.9rem',
-          lineHeight: '1.6',
-        }}
-        {...props}
-      >
-        {children}
-      </SyntaxHighlighter>
+      <div className="overflow-x-auto">
+        <SyntaxHighlighter
+          language={language || 'text'}
+          PreTag="div"
+          useInlineStyles={false}
+          customStyle={{
+            margin: 0,
+            padding: '1.5rem',
+            background: 'transparent',
+            fontSize: '0.9rem',
+            lineHeight: '1.6',
+          }}
+          {...props}
+        >
+          {children}
+        </SyntaxHighlighter>
+      </div>
     </div>
   );
 }

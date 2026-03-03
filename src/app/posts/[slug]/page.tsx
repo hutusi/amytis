@@ -33,7 +33,17 @@ export async function generateStaticParams() {
   if (getPostsBasePath() !== 'posts') return [{ slug: '_' }]; // Route disabled; custom path handles this
   const posts = getAllPosts();
   if (posts.length === 0) return [{ slug: '_' }];
-  return posts.map((post) => ({ slug: post.slug }));
+  // Work around Next dev static-param checks for percent-encoded Unicode paths
+  // under `output: "export"` by including encoded variants only in development.
+  // Production export keeps raw segment values.
+  const slugs = new Set<string>();
+  for (const post of posts) {
+    slugs.add(post.slug);
+    if (process.env.NODE_ENV !== 'production') {
+      slugs.add(encodeURIComponent(post.slug));
+    }
+  }
+  return Array.from(slugs).map((slug) => ({ slug }));
 }
 
 export const dynamicParams = false;

@@ -20,12 +20,15 @@
  *     after beforeAll, so they pick up the mock correctly.
  *   • afterAll restores the real module so any subsequent tests see real data.
  */
-import { describe, test, expect, mock, beforeAll, afterAll } from 'bun:test';
+import { describe, test, expect, mock, beforeAll, beforeEach, afterAll, afterEach } from 'bun:test';
 
 // ─── Capture real markdown module ────────────────────────────────────────────
 // Static imports are hoisted and resolved before any executable code (including
 // beforeAll / mock.module calls), so this always captures the real module.
 import * as realMarkdown from '../../src/lib/markdown';
+
+let mockedPosts: Array<{ slug: string }> = [];
+const originalNodeEnv = process.env.NODE_ENV;
 
 // ─── Next.js runtime stubs (module-level — safe) ─────────────────────────────
 mock.module('next/navigation', () => ({
@@ -82,7 +85,7 @@ beforeAll(() => {
   mock.module('@/lib/markdown', () => ({
     getAllFlows: () => [],
     getAllNotes: () => [],
-    getAllPosts: () => [],
+    getAllPosts: () => mockedPosts,
     getAllBooks: () => [],
     getAllSeries: () => ({}),
     getAllTags: () => ({}),
@@ -124,6 +127,16 @@ beforeAll(() => {
     buildSlugRegistry: () => new Map(),
     getBacklinks: () => [],
   }));
+});
+
+beforeEach(() => {
+  mockedPosts = [];
+  process.env.NODE_ENV = originalNodeEnv;
+});
+
+afterEach(() => {
+  mockedPosts = [];
+  process.env.NODE_ENV = originalNodeEnv;
 });
 
 // ─── Restore real markdown module ─────────────────────────────────────────────
@@ -206,6 +219,26 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_' }]);
+    });
+
+    test('posts/[slug] includes raw and encoded Unicode slug in non-production', async () => {
+      mockedPosts = [{ slug: '中文测试文章' }];
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+      const params = await generateStaticParams();
+
+      expect(params).toContainEqual({ slug: '中文测试文章' });
+      expect(params).toContainEqual({ slug: '%E4%B8%AD%E6%96%87%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0' });
+    });
+
+    test('posts/[slug] includes only raw Unicode slug in production', async () => {
+      mockedPosts = [{ slug: '中文测试文章' }];
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+      const params = await generateStaticParams();
+
+      expect(params).toContainEqual({ slug: '中文测试文章' });
+      expect(params).not.toContainEqual({ slug: '%E4%B8%AD%E6%96%87%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0' });
     });
 
     test('posts/page/[page] returns [{ page: "2" }]', async () => {

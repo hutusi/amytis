@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated at build time — not authored code
     "public/pagefind/**",
+    // Package compiled output — not authored code
+    "packages/*/dist/**",
   ]),
 ]);
 

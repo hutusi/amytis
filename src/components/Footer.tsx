@@ -12,10 +12,10 @@ export default function Footer() {
   
   return (
     <footer className="bg-muted/5 border-t border-muted/10 mt-auto">
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-12">
+      <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10 lg:mb-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4 group no-underline">
               <svg
                 viewBox="0 0 32 32"
@@ -89,9 +89,13 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-muted/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <span>{resolveLocaleValue(siteConfig.footerText, language)}</span>
-          <div className="flex items-center gap-6">
-             <LanguageSwitch variant="text" />
-             <span className="opacity-20">|</span>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+             {siteConfig.i18n.enabled !== false && siteConfig.i18n.locales.length >= 2 && (
+               <>
+                 <LanguageSwitch variant="text" />
+                 <span className="opacity-20">|</span>
+               </>
+             )}
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
              {siteConfig.footer?.builtWith?.show && (() => {
                const cfg = siteConfig.footer.builtWith;

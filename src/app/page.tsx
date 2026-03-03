@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { getAllPosts, getAllFlows, getFeaturedSeries, getSeriesData, getFeaturedPosts, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
+import { getAllPosts, getAllFlows, getAllSeries, getFeaturedSeries, getSeriesData, getFeaturedPosts, getAllBooks, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
 import CuratedSeriesSection, { SeriesItem } from '@/components/CuratedSeriesSection';
@@ -117,8 +117,8 @@ export default function Home() {
 
   // Stats for hero navigation chips
   const heroPostCount = allPosts.length;
-  const heroSeriesCount = features?.series?.enabled !== false ? Object.keys(allSeries).length : undefined;
-  const heroBookCount = features?.books?.enabled !== false ? featuredBooks.length : undefined;
+  const heroSeriesCount = has('hero') && features?.series?.enabled !== false ? Object.keys(getAllSeries()).length : undefined;
+  const heroBookCount = has('hero') && features?.books?.enabled !== false ? getAllBooks().length : undefined;
   const heroFlowCount = has('hero') && features?.flow?.enabled !== false ? getAllFlows().length : undefined;
 
   const renderSection = (section: HomepageSection) => {

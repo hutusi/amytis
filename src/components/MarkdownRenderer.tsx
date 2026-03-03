@@ -102,6 +102,31 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
         </code>
       );
     },
+    // Ensure video elements are responsive and always show controls
+    video: (props: React.ClassAttributes<HTMLVideoElement> & React.VideoHTMLAttributes<HTMLVideoElement> & ExtraProps) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { node: _node, width: _w, height: _h, className: _cls, ...rest } = props;
+      return (
+        <video
+          {...rest}
+          controls
+          className="max-w-full w-full h-auto rounded-lg my-4"
+        />
+      );
+    },
+    // Wrap iframes in a 16:9 responsive container (covers YouTube, Vimeo, Bilibili, etc.)
+    iframe: (props: React.ClassAttributes<HTMLIFrameElement> & React.IframeHTMLAttributes<HTMLIFrameElement> & ExtraProps) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { node: _node, width: _w, height: _h, className: _cls, ...rest } = props;
+      return (
+        <div className="relative w-full my-6 rounded-lg overflow-hidden aspect-video">
+          <iframe
+            {...rest}
+            className="absolute inset-0 w-full h-full border-0"
+          />
+        </div>
+      );
+    },
     // Ensure images are responsive and styled, using optimized image if dimensions exist
     // In development mode, use unoptimized images since WebP versions don't exist yet
     img: (props: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
@@ -119,6 +144,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
             width={Number(width)}
             height={Number(height)}
             className="max-w-full h-auto rounded-lg my-4"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
             unoptimized={isDev || isExternal}
           />
         );

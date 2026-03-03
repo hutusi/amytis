@@ -40,12 +40,26 @@ describe("E2E: Navigation & Assets", () => {
     expect(text).toContain("<urlset");
   });
 
-  test("feed.xml should exist", async () => {
+  test("feed.xml should be a valid RSS feed", async () => {
     if (!(await isServerRunning())) return;
 
     const response = await fetch(`${BASE_URL}/feed.xml`);
     expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("xml");
     const text = await response.text();
     expect(text).toContain("<rss");
+    expect(text).toContain("<channel>");
+    expect(text).toContain("<item>");
+  });
+
+  test("feed.atom should be a valid Atom feed", async () => {
+    if (!(await isServerRunning())) return;
+
+    const response = await fetch(`${BASE_URL}/feed.atom`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("xml");
+    const text = await response.text();
+    expect(text).toContain('xmlns="http://www.w3.org/2005/Atom"');
+    expect(text).toContain("<entry>");
   });
 });

@@ -1,0 +1,13 @@
+{
+  "name": "create-amytis",
+  "version": "0.1.0",
+  "description": "Create a new Amytis digital garden",
+  "license": "MIT",
+  "bin": { "create-amytis": "./dist/index.js" },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target node --sourcemap=none",
+    "dev": "bun src/index.ts",
+    "test": "bun test src"
+  },
+  "files": ["dist"]
+}
