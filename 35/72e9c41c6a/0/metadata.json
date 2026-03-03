@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "3572e9c41c6a",
+  "session_id": "163302c1-854d-4c1f-b63b-d551d8cecf46",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-03T13:41:14.938698Z",
+  "branch": "package",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "eslint.config.mjs",
+    "packages/create-amytis/src/index.ts",
+    "src/app/[slug]/[postSlug]/page.tsx",
+    "src/app/[slug]/page.tsx",
+    "src/components/AuthorCard.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "5ce66ca77130",
+  "token_usage": {
+    "input_tokens": 3171,
+    "cache_creation_tokens": 751711,
+    "cache_read_tokens": 10733335,
+    "output_tokens": 64489,
+    "api_call_count": 145
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-03T13:41:13.154741Z",
+    "agent_lines": 17,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 17,
+    "agent_percentage": 100
+  }
+}
