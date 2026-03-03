@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "674944c12d18",
+  "session_id": "163302c1-854d-4c1f-b63b-d551d8cecf46",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-03T13:15:22.799338Z",
+  "branch": "package",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "src/components/CodeBlock.tsx",
+    "src/components/MarkdownRenderer.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "b36161d0b73d",
+  "token_usage": {
+    "input_tokens": 3110,
+    "cache_creation_tokens": 605992,
+    "cache_read_tokens": 8010209,
+    "output_tokens": 54013,
+    "api_call_count": 124
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-03T13:15:22.52414Z",
+    "agent_lines": 43,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 43,
+    "agent_percentage": 100
+  }
+}

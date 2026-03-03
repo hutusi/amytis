@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "674944c12d18",
+  "strategy": "manual-commit",
+  "branch": "package",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "src/components/CodeBlock.tsx",
+    "src/components/MarkdownRenderer.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/67/4944c12d18/0/metadata.json",
+      "transcript": "/67/4944c12d18/0/full.jsonl",
+      "context": "/67/4944c12d18/0/context.md",
+      "content_hash": "/67/4944c12d18/0/content_hash.txt",
+      "prompt": "/67/4944c12d18/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3110,
+    "cache_creation_tokens": 605992,
+    "cache_read_tokens": 8010209,
+    "output_tokens": 54013,
+    "api_call_count": 124
+  }
+}
