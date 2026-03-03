@@ -33,7 +33,7 @@
     "deploy": "bun scripts/deploy.ts",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test src tests/unit tests/tooling && bun run test:int",
+    "test": "bun test src tests/unit tests/tooling packages/create-amytis/src && bun run test:int",
     "test:unit": "bun test src tests/unit packages/create-amytis/src",
     "test:int": "bun test tests/integration",
     "test:e2e": "bun test tests/e2e"
