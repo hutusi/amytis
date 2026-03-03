@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "a3536d17730a",
+  "strategy": "manual-commit",
+  "branch": "package",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/components/Footer.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a3/536d17730a/0/metadata.json",
+      "transcript": "/a3/536d17730a/0/full.jsonl",
+      "context": "/a3/536d17730a/0/context.md",
+      "content_hash": "/a3/536d17730a/0/content_hash.txt",
+      "prompt": "/a3/536d17730a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 218,
+    "cache_creation_tokens": 180371,
+    "cache_read_tokens": 2368414,
+    "output_tokens": 21703,
+    "api_call_count": 57
+  }
+}
