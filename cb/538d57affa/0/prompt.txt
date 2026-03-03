@@ -1,0 +1,382 @@
+Implement the following plan:
+
+# Plan: create-amytis CLI (Model A)
+
+## Context
+
+Users want to start a new Amytis-based site without forking/cloning the repo manually.
+The CLI (`bunx create-amytis my-blog`) will scaffold a full Amytis project by downloading
+the latest GitHub release tarball, then asking two setup questions (site title, description)
+before patching `site.config.ts` and running `bun install`.
+
+Model A: user gets the full source — `src/`, `scripts/`, `content/`, `site.config.ts`.
+They own all the code; only `content/` and `site.config.ts` need to be touched day-to-day.
+
+---
+
+## Package structure
+
+```
+packages/
+  create-amytis/
+    package.json      ← name: "create-amytis", bin: "dist/index.js"
+    src/
+      index.ts        ← CLI entry point
+    dist/             ← compiled output (gitignored, published to npm)
+    tsconfig.json
+    .gitignore
+```
+
+Root `package.json` gets a bun workspace entry:
+```json
+"workspaces": ["packages/*"]
+```
+
+---
+
+## CLI flow
+
+```
+bunx create-amytis [project-name]
+```
+
+1. Read `project-name` from `process.argv[2]`; if missing, prompt for it
+2. Call GitHub API to get latest release tag:
+   `GET https://api.github.com/repos/hutusi/amytis/releases/latest`
+3. Download tarball:
+   `https://github.com/hutusi/amytis/archive/refs/tags/{tag}.tar.gz`
+4. Extract into `./{project-name}/`  (tarball root dir is `amytis-{version}/`, rename it)
+5. Prompt for **Site title** (default: project-name)
+6. Prompt for **Site description** (default: "My digital garden")
+7. Patch `site.config.ts`:
+   - Replace `title: { en: "Amytis", zh: "Amytis" }` with user title
+   - Replace `description: { en: "...", zh: "..." }` with user description
+8. Patch `package.json` in scaffolded dir:
+   - Set `"name"` to project-name
+   - Set `"private": true` (they're not publishing this)
+   - Remove `"repository"`, `"bugs"`, `"homepage"` fields
+9. Run `bun install` in the new directory
+10. Print success + next steps
+
+---
+
+## Critical files to create
+
+### `packages/create-amytis/package.json`
+```json
+{
+  "name": "create-amytis",
+  "version": "0.1.0",
+  "description": "Create a new Amytis digital garden",
+  "license": "MIT",
+  "bin": { "create-amytis": "./dist/index.js" },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target node --sourcemap=none",
+    "dev": "bun src/index.ts"
+  },
+  "files": ["dist"]
+}
+```
+
+### `packages/create-amytis/src/index.ts`
+
+Key implementation details:
+- `#!/usr/bin/env node` shebang
+- Zero npm dependencies — use Node.js built-ins only:
+  - `https` for API + tarball download
+  - `zlib` (gunzip) + `tar` via child_process (`tar xz`) for extraction
+  - `readline` for interactive prompts
+  - `fs`, `path`, `child_process` for file ops and install
+- Helper `prompt(question, defaultVal)` → `Promise<string>` via readline
+- Helper `fetchJson(url)` → GitHub API call with `User-Agent` header (required by GitHub API)
+- Helper `downloadTarball(url, dest)` → streams tarball to disk
+- Helper `extractTarball(tarPath, targetDir)` → runs `tar xzf` via child_process
+- Patch functions use `fs.readFileSync` + regex replace + `fs.writeFileSync`
+
+### `packages/create-amytis/tsconfig.json`
+Standard Node.js tsconfig (target ES2022, module NodeNext).
+
+---
+
+## Files to modify
+
+- `package.json` (root): add `"workspaces": ["packages/*"]`
+
+---
+
+## site.config.ts patch strategy
+
+The file has these exact strings to replace:
+
+```ts
+title: { en: "Amytis", zh: "Amytis" },
+```
+→
+```ts
+title: { en: "My Blog", zh: "My Blog" },
+```
+
+```ts
+description: { en: "Amytis — an elegant open-source framework...", zh: "Amytis — 优雅的开源数字花园框架。" },
+```
+→
+```ts
+description: { en: "My description", zh: "My description" },
+```
+
+Use regex with enough context to avoid false matches. The zh value gets the same
+user-provided string (user can change it later). The `footerText` field references
+"Amytis" by name — also replace those occurrences.
+
+---
+
+## Verification
+
+1. `cd packages/create-amytis && bun run build` — should produce `dist/index.js`
+2. `node dist/index.js test-project` — should scaffold `../../test-project/`
+3. Check that `test-project/site.config.ts` has the patched title/description
+4. Check that `test-project/package.json` has `"name": "test-project"` and `"private": true`
+5. Check that `test-project/node_modules` exists after install
+
+---
+
+## Out of scope (follow-up)
+
+- GitHub Actions workflow for publishing `create-amytis` to npm
+- Cleaning up example `content/` posts during scaffold
+- Non-bun install fallback (npm/yarn detection)
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/hutusi/.claude/projects/-Users-hutusi-workspace-ai-naive-amytis-claude-review/3ad163be-6e63-499f-81de-46ed77ebd353.jsonl
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+add or update tests for it.
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+The footer doesn't look very good on mobile; what do you think?
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+the count of series and books in hero of homepage seems to be the count of featured series or featured books, not all series and books.
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+after config only language and the language switch hide in the footer, the divider at the right of language switch still exist.
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+add or update some tests, what do you think?
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+If some images in the post are too large, it seems it will affect the post's appearance on mobile. What do you think?
+
+---
+
+OK
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
