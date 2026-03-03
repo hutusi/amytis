@@ -76,4 +76,13 @@ describe("Integration: Series", () => {
       expect(data?.featured).toBe(true);
     });
   });
+
+  test("getFeaturedSeries is a subset of getAllSeries", () => {
+    const all = getAllSeries();
+    const featured = getFeaturedSeries();
+    expect(Object.keys(featured).length).toBeLessThanOrEqual(Object.keys(all).length);
+    Object.keys(featured).forEach((slug) => {
+      expect(all).toHaveProperty(slug);
+    });
+  });
 });
