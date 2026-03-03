@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "d3d23bdb72b2",
+  "session_id": "163302c1-854d-4c1f-b63b-d551d8cecf46",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-03T11:45:04.942527Z",
+  "branch": "package",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/integration/books.test.ts",
+    "tests/integration/series.test.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "cd47f4915207",
+  "token_usage": {
+    "input_tokens": 332,
+    "cache_creation_tokens": 292441,
+    "cache_read_tokens": 5125953,
+    "output_tokens": 31864,
+    "api_call_count": 94
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-03T11:45:04.503995Z",
+    "agent_lines": 66,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 66,
+    "agent_percentage": 100
+  }
+}
