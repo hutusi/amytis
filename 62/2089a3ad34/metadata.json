@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "622089a3ad34",
+  "strategy": "manual-commit",
+  "branch": "package",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "packages/create-amytis/src/index.ts",
+    "packages/create-amytis/tsconfig.json",
+    "src/app/feed.atom/route.ts",
+    "src/app/feed.xml/route.ts",
+    "src/app/page.tsx",
+    "src/components/MarkdownRenderer.tsx",
+    "tests/integration/books.test.ts",
+    "tests/integration/feed-utils.test.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/62/2089a3ad34/0/metadata.json",
+      "transcript": "/62/2089a3ad34/0/full.jsonl",
+      "context": "/62/2089a3ad34/0/context.md",
+      "content_hash": "/62/2089a3ad34/0/content_hash.txt",
+      "prompt": "/62/2089a3ad34/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3266,
+    "cache_creation_tokens": 1065443,
+    "cache_read_tokens": 14964075,
+    "output_tokens": 75956,
+    "api_call_count": 174
+  }
+}
