@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "1a0ea79719b7",
+  "strategy": "manual-commit",
+  "branch": "refine-post-layout",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "CLAUDE.md",
+    "site.config.example.ts",
+    "site.config.ts",
+    "src/components/Footer.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1a/0ea79719b7/0/metadata.json",
+      "transcript": "/1a/0ea79719b7/0/full.jsonl",
+      "context": "/1a/0ea79719b7/0/context.md",
+      "content_hash": "/1a/0ea79719b7/0/content_hash.txt",
+      "prompt": "/1a/0ea79719b7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 5131,
+    "cache_creation_tokens": 843046,
+    "cache_read_tokens": 11534933,
+    "output_tokens": 64285,
+    "api_call_count": 149
+  }
+}

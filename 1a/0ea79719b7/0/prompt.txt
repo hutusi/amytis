@@ -1,0 +1,425 @@
+Most of the time, the user will configure author info with a description and a social QR image; please refine the display of the author card on mobile.
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+'bun run build' failed: Creating an optimized production build ...
+Error: Can't resolve 'katex/dist/katex.min.css' in '/Users/hutusi/workspace/ai/naive/amytis-claude-review/src/app'
+    [at finishWithoutResolve (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:565:18])
+
+---
+
+Running TypeScript  ...Failed to compile.
+
+./src/components/MarkdownRenderer.tsx:14:31
+Type error: Cannot find module 'unified' or its corresponding type declarations.
+
+  12 | import remarkWikilinks from '@/lib/remark-wikilinks';
+  13 | import ExportedImage from 'next-image-export-optimizer';
+> 14 | import { PluggableList } from 'unified';
+     |                               ^
+  15 | import type { SlugRegistryEntry } from '@/lib/markdown';
+  16 |
+  17 | interface MarkdownRendererProps {
+Next.js build worker exited with code: 1 and signal: null
+error: script "build:dev" exited with code 1
+error: script "validate" exited with code 1
+
+---
+
+why add these packages? it seems not add so much code . Running TypeScript  .Failed to compile.
+
+./src/lib/rehype-image-metadata.ts:5:31
+Type error: Cannot find module 'hast' or its corresponding type declarations.
+
+  3 | import path from 'path';
+  4 | import fs from 'fs';
+> 5 | import { Root, Element } from 'hast';
+    |                               ^
+  6 | import { getCdnImageUrl } from './image-utils';
+  7 |
+  8 | interface Options {
+Next.js build worker exited with code: 1 and signal: null
+error: script "build:dev" exited with code 1
+error: script "validate" exited with code 1
+
+---
+
+does we realy need these four packages?
+
+---
+
+but why we do need it before? it seems current commit not modify these, the math styling, plugin, rehype, custom remark was support very ealier.
+
+---
+
+[Request interrupted by user]
+
+---
+
+but why we do not need it before? it seems current commit not modify these, the math styling, plugin, rehype, custom remark was support very ealier.
+
+---
+
+your explanation seems reasonable.
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+check about the new code review comments by coderabbit PR #24
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+"bun run dev" failed: ⨯ ./src/app/globals.css
+Error evaluating Node.js code
+CssSyntaxError: tailwindcss: /Users/hutusi/workspace/ai/naive/amytis-claude-review/src/app/globals.css:1:1: Can't resolve 'katex/dist/katex.min.css' in '/Users/hutusi/workspace/ai/naive/amytis-claude-review/src/app'
+    [at Input.error (turbopack:///[project]/node_modules/.bun/postcss@8.4.31/node_modules/postcss/lib/input.js:106:16)]
+    [at Root.error (turbopack:///[project]/node_modules/.bun/postcss@8.4.31/node_modules/postcss/lib/node.js:115:32)]
+    [at Object.Once (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/@tailwindcss+postcss@4.1.18/node_modules/@tailwindcss/postcss/dist/index.js:10:6911)]
+    [at process.processTicksAndRejections (node:internal/process/task_queues:103:5)]
+    [at async LazyResult.runAsync (turbopack:///[project]/node_modules/.bun/postcss@8.4.31/node_modules/postcss/lib/lazy-result.js:261:11)]
+    [at async transform (turbopack:///[turbopack-node]/transforms/postcss.ts:70:34)]
+    [at async run (turbopack:///[turbopack-node]/ipc/evaluate.ts:92:23)]
+
+Import trace:
+  Client Component Browser:
+    ./src/app/globals.css [Client Component Browser]
+    ./src/app/layout.tsx [Server Component]
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+on the post page, is it better to put "discuss this post" section near the comments section? and put the "prev"and "next" section near the related articles section? what do you think?
+
+---
+
+OK, you need to known: some site may not config the comment section, and some posts may not config ExternalLinks
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+in the post page, below content, the tags, authors, comments, external links, navigation, releated articles , there are line dividid them, do you think there is too much break lines?
+
+---
+
+[Request interrupted by user]
+
+---
+
+On the post page, below the content, there are lines dividing the tags, authors, comments, external links, navigation, and related articles. Do you think there are too many break lines?
+
+---
+
+go ahead
+
+---
+
+Is it better to put the author box just after the content of the post and then remove the divider line?
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+Please support enabling multiple comment engines, such as configuring both Giscus and Disqus. What do you think?
+
+---
+
+you're right, let's skip it
+
+---
+
+Let's support multiple analytics providers, such as both Umami and Google Analytics. What do you think?
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+Some sites may need to configure certain links in the footer, such as icpInfo and others.
+
+---
+
+I think the name shouldn't be 'legal'; it is a custom section that serves more purposes.
+
+---
+
+[Request interrupted by user]
+
+---
+
+I think the name shouldn't be 'legal'; it is a custom section that serves more purposes. what do you think?
+
+---
+
+I think bottomLinks is better, what is your opinion?
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+check about the code review comments by coderabbit, PR #25
+
+---
+
+and do you notice about this review? Update site.config.example.ts to match the analytics schema change
+
+The main config now uses analytics.providers (array) instead of singular provider, but site.config.example.ts still shows the old singular schema. When users run create-amytis, they receive a tarball containing this stale example config. New setups will break if copied directly from the example. Additionally, the bottomLinks property exists in the main config but needs corresponding documentation in the example.
+
+Update site.config.example.ts lines 203–216 to use providers: [...] instead of provider, and add the bottomLinks property to match the current schema.
+
+---
+
+site.config.example.ts is for one language configuration, check about other config items, and update the rules in CLAUDE.md
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
