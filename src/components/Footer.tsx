@@ -97,6 +97,18 @@ export default function Footer() {
                </>
              )}
              <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
+             {siteConfig.footer?.bottomLinks?.map((item) => (
+               <span key={item.text} className="flex items-center gap-x-6">
+                 <span className="opacity-20">|</span>
+                 {item.url ? (
+                   <a href={item.url} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors no-underline">
+                     {item.text}
+                   </a>
+                 ) : (
+                   <span>{item.text}</span>
+                 )}
+               </span>
+             ))}
              {siteConfig.footer?.builtWith?.show && (() => {
                const cfg = siteConfig.footer.builtWith;
                const label = cfg.text ? resolveLocaleValue(cfg.text, language) : t('built_with');

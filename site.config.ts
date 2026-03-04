@@ -82,6 +82,14 @@ export const siteConfig = {
       url: "https://github.com/hutusi/amytis",
       text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
     },
+    // Optional custom links shown in the footer bottom bar.
+    // Common uses: ICP registration (China), PSB registration, cookie policy, sitemap, etc.
+    // Example:
+    // bottomLinks: [
+    //   { text: '京ICP备12345678号', url: 'https://beian.miit.gov.cn/' },
+    //   { text: 'Cookie Policy' },     // url is optional — renders as plain text
+    // ],
+    bottomLinks: [] as { text: string; url?: string }[],
   },
 
   // ── Social & sharing ──────────────────────────────────────────────────────
