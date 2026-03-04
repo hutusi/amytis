@@ -124,6 +124,10 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={`posts/${post.slug}`} slugRegistry={slugRegistry} />
 
+          {siteConfig.posts?.authors?.showAuthorCard !== false && (
+            <AuthorCard authors={post.authors} />
+          )}
+
           {post.tags && post.tags.length > 0 && (
             <div className="mt-12 pt-12 border-t border-muted/20 flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
@@ -140,10 +144,6 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             title={post.title}
             className={showSidebar ? 'mt-8 lg:hidden' : 'mt-8'}
           />
-
-          {siteConfig.posts?.authors?.showAuthorCard !== false && (
-            <AuthorCard authors={post.authors} />
-          )}
 
           <Comments slug={post.slug} postUrl={postUrl} />
 
