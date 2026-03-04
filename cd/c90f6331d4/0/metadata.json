@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "cdc90f6331d4",
+  "session_id": "1fbe0976-5d23-4331-a694-506d23771356",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-04T13:50:22.773885Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "site.config.ts",
+    "src/components/Footer.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "02917c51596b",
+  "token_usage": {
+    "input_tokens": 5060,
+    "cache_creation_tokens": 606485,
+    "cache_read_tokens": 8164617,
+    "output_tokens": 55394,
+    "api_call_count": 123
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-04T13:50:21.613232Z",
+    "agent_lines": 19,
+    "human_added": 0,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 20,
+    "agent_percentage": 95
+  }
+}
