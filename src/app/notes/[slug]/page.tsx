@@ -74,7 +74,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
             breadcrumb={breadcrumb}
           />
         )}
-        <article className="min-w-0 max-w-3xl mx-auto">
+        <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
           <header className="mb-8 border-b border-muted/10 pb-8">
             {note.draft && (
               <div className="mb-4">
@@ -126,4 +126,3 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
     </div>
   );
 }
-

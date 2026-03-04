@@ -53,7 +53,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           />
         )}
 
-        <article className="min-w-0 max-w-3xl mx-auto">
+        <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
           <header className="mb-16 border-b border-muted/10 pb-8">
             {post.draft && (
               <div className="mb-4">
