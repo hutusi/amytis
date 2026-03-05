@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "cbf01e61d376",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "src/app/layout.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cb/f01e61d376/0/metadata.json",
+      "transcript": "/cb/f01e61d376/0/full.jsonl",
+      "context": "/cb/f01e61d376/0/context.md",
+      "content_hash": "/cb/f01e61d376/0/content_hash.txt",
+      "prompt": "/cb/f01e61d376/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 138875,
+    "cache_read_tokens": 1845023,
+    "output_tokens": 32781,
+    "api_call_count": 32
+  }
+}
