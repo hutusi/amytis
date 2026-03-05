@@ -38,7 +38,16 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     setCollapsedParts(prev => ({ ...prev, [part]: !prev[part] }));
   };
 
-  useSidebarAutoScroll(sidebarRef, currentItemRef, currentChapter);
+  // Re-run auto-scroll when the chapter changes AND when its part becomes visible.
+  // Without the visibility check, navigating into a collapsed part would trigger
+  // the expansion effect but the chapter DOM element wouldn't exist yet, so scroll
+  // would silently do nothing.
+  const isCurrentChapterVisible = toc.some(item =>
+    'part' in item
+      ? !collapsedParts[item.part] && item.chapters.some(ch => ch.id === currentChapter)
+      : item.id === currentChapter
+  );
+  useSidebarAutoScroll(sidebarRef, currentItemRef, `${currentChapter}:${isCurrentChapterVisible}`);
 
   // Expand part containing current chapter when it changes
   useEffect(() => {

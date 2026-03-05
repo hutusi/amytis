@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BookTocItem, BookChapterEntry } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import PrevNextNav from './PrevNextNav';
+import { getBookChapterUrl } from '@/lib/urls';
 
 interface BookMobileNavProps {
   bookSlug: string;
@@ -51,8 +52,8 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
       {/* Prev / Next */}
       <div className="mb-3">
         <PrevNextNav
-          prev={prevChapter ? { href: `/books/${bookSlug}/${prevChapter.id}`, title: prevChapter.title } : null}
-          next={nextChapter ? { href: `/books/${bookSlug}/${nextChapter.id}`, title: nextChapter.title } : null}
+          prev={prevChapter ? { href: getBookChapterUrl(bookSlug, prevChapter.id), title: prevChapter.title } : null}
+          next={nextChapter ? { href: getBookChapterUrl(bookSlug, nextChapter.id), title: nextChapter.title } : null}
         />
       </div>
 

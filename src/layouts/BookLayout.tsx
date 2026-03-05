@@ -5,6 +5,7 @@ import BookMobileNav from '@/components/BookMobileNav';
 import PrevNextNav from '@/components/PrevNextNav';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
 import { t } from '@/lib/i18n';
+import { getBookChapterUrl } from '@/lib/urls';
 
 interface BookLayoutProps {
   book: BookData;
@@ -66,8 +67,8 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
           {/* Prev/Next navigation */}
           <div className="mt-16 pt-8 border-t border-muted/10">
             <PrevNextNav
-              prev={chapter.prevChapter ? { href: `/books/${book.slug}/${chapter.prevChapter.id}`, title: chapter.prevChapter.title } : null}
-              next={chapter.nextChapter ? { href: `/books/${book.slug}/${chapter.nextChapter.id}`, title: chapter.nextChapter.title } : null}
+              prev={chapter.prevChapter ? { href: getBookChapterUrl(book.slug, chapter.prevChapter.id), title: chapter.prevChapter.title } : null}
+              next={chapter.nextChapter ? { href: getBookChapterUrl(book.slug, chapter.nextChapter.id), title: chapter.nextChapter.title } : null}
               size="lg"
             />
           </div>

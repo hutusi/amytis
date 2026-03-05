@@ -19,15 +19,17 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
   if (headings.length === 0) return null;
 
   return (
-    <nav aria-label="Table of contents" className={className}>
+    <nav aria-label={t('on_this_page')} className={className}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted">
           {t('on_this_page')}
         </span>
         <button
+          type="button"
           onClick={() => setCollapsed(prev => !prev)}
           className="text-muted hover:text-foreground transition-colors"
-          aria-label={collapsed ? 'Expand table of contents' : 'Collapse table of contents'}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? t('toc_expand') : t('toc_collapse')}
         >
           <svg
             className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}

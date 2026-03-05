@@ -130,6 +130,8 @@ export const translations = {
     browser_outdated: "Your browser is outdated and may not display this site correctly.",
     browser_update: "Update your browser",
     browser_dismiss: "Dismiss",
+    toc_expand: "Expand table of contents",
+    toc_collapse: "Collapse table of contents",
   },
   zh: {
     home: "首页",
@@ -262,6 +264,8 @@ export const translations = {
     browser_outdated: "您的浏览器版本过旧，可能无法正常显示本站内容。",
     browser_update: "更新浏览器",
     browser_dismiss: "关闭",
+    toc_expand: "展开目录",
+    toc_collapse: "收起目录",
   },
 };
 
