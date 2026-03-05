@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "e5ec2c56062a",
+  "session_id": "1a84c7ac-c6ec-4673-b9a6-cf88f6bdb641",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-05T11:55:16.932056Z",
+  "branch": "refactor",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/components/TocPanel.tsx",
+    "src/components/InlineBookToc.tsx",
+    "src/components/PostSidebar.tsx",
+    "src/components/NoteSidebar.tsx",
+    "src/components/BookSidebar.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "348cf6873f6f",
+  "checkpoint_transcript_start": 444,
+  "transcript_lines_at_start": 444,
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 133968,
+    "cache_read_tokens": 2288149,
+    "output_tokens": 17097,
+    "api_call_count": 22
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-05T11:55:16.569735Z",
+    "agent_lines": 135,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 135,
+    "agent_percentage": 100
+  }
+}
