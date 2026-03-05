@@ -43,9 +43,13 @@ Amytis 围绕一条从粗糙到精炼的知识路径构建：
   - 自动系统主题检测（明/暗）
   - 四套配色主题：default、blue、rose、amber
   - 吸顶目录与阅读进度跟踪
+- **作者生态**：每位作者有独立主页，包含简介、头像与社交链接。文章支持按作者筛选，并可在文末显示作者卡片。
 - **性能与 SEO**：
   - 全静态导出与 WebP 优化
-  - 自动 sitemap 与 RSS
+  - 每种内容类型均有完整的 Open Graph 与 Twitter Card 元数据
+  - JSON-LD 结构化数据（`BlogPosting`、`Book`、`Article`），支持 Google 富媒体搜索结果
+  - RSS/Atom 订阅源，格式（`rss` | `atom` | `both`）与内容深度（`full` | `excerpt`）可配置
+  - `<head>` 自动注入 Feed 发现链接，原生 sitemap 生成
   - 支持 Latin/CJK 的多语言阅读时长估算
 - **集成能力**：
   - 统计：Umami / Plausible / Google Analytics
@@ -61,6 +65,18 @@ Amytis 围绕一条从粗糙到精炼的知识路径构建：
 - **纯文本长期所有权**：内容存储于 Markdown/MDX，便于版本管理与长期迁移。
 
 ## 快速开始
+
+### 新建项目（推荐）
+
+一条命令创建新的 Amytis 站点：
+
+```bash
+bun create amytis my-garden
+cd my-garden
+bun dev
+```
+
+### 克隆运行
 
 1. **安装依赖**
    ```bash

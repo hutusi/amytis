@@ -50,9 +50,13 @@ Each stage builds on the previous one, so your garden can evolve naturally.
   - Co-located assets: keep images inside post folders (`./images/`).
   - Date-prefixed filenames: `2026-01-01-my-post.mdx`.
   - Draft support for posts, series, books, and flows.
+- **Author Ecosystem:** Per-author profile pages with bio, avatar, and social links. Posts are filterable by author; an optional author card appears at the end of each post.
 - **Performance & SEO:**
   - Fully static export with optimized WebP images.
-  - Native sitemap and RSS feed generation.
+  - Open Graph and Twitter card metadata for every content type.
+  - JSON-LD structured data (`BlogPosting`, `Book`, `Article`) for Google rich results.
+  - RSS/Atom feed with configurable format (`rss` | `atom` | `both`) and content depth (`full` | `excerpt`).
+  - Feed auto-discovery links in `<head>`, native sitemap generation.
   - Multilingual reading time estimate (supports Latin and CJK).
 - **Integrations:**
   - Analytics: Umami, Plausible, or Google Analytics.
@@ -70,6 +74,18 @@ Each stage builds on the previous one, so your garden can evolve naturally.
 - **Plain text, long-term ownership**: Content stays in Markdown/MDX so it remains versionable and portable.
 
 ## Quick Start
+
+### New Project (Recommended)
+
+Scaffold a new Amytis site with one command:
+
+```bash
+bun create amytis my-garden
+cd my-garden
+bun dev
+```
+
+### Clone & Run
 
 1. **Install Dependencies:**
    ```bash

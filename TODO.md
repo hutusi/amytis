@@ -1,18 +1,19 @@
 # Amytis Roadmap
 
 ## 🚀 Priority UX & Engineering
-- [ ] **Image Zoom**: Implement medium-zoom or a lightbox for MDX images.
 - [ ] **Breadcrumbs**: Extend Flow breadcrumbs to standard Posts and Books.
 - [ ] **Dynamic OG**: Generate automated social cards with Satori for every post.
 - [ ] **PWA Support**: Add manifest and service worker for offline reading.
-- [ ] **SEO Boost**: Implement JSON-LD structured data for Articles, Books, and Breadcrumbs.
+- [ ] **Image Zoom**: Implement medium-zoom or a lightbox for MDX images.
 
 ## 🌿 Digital Garden Evolution
-- [ ] **Knowledge Graph**: 
+- [ ] **Knowledge Graph**:
   - [ ] Interactive fullscreen mode for the graph.
   - [ ] Filter graph by tags or content types.
   - [ ] "Local Graph" view in the sidebar of individual notes.
-- [ ] **Discovery**: 
+- [ ] **Hover Preview**: Show a floating excerpt card when hovering over wiki-links, without navigating away.
+- [ ] **Transclusion**: Embed another note or post's content inline using `![[slug]]` syntax.
+- [ ] **Discovery**:
   - [ ] "On this day" section for Flows (history from previous years).
   - [ ] RSS/Atom feeds for specific categories or tags.
 - [ ] **Notes**: Support for un-linked mentions (searching for note titles in plain text).
@@ -23,6 +24,7 @@
 - [ ] **Optimization**: Automatically compress and resize co-located images during build.
 
 ## ✅ Completed Highlights
+- [x] **JSON-LD Structured Data**: `BlogPosting`, `Book`, and `Article` schemas for Google rich results.
 - [x] **Digital Garden**: Notes, Wiki-links, Backlinks, and interactive Knowledge Graph.
 - [x] **Pagefind Search**: High-performance static full-text indexing with rich UI.
 - [x] **Smart Navigation**: Persistent "Previous" and "Next" article links on all posts.
