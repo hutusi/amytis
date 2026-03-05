@@ -4,46 +4,44 @@ import Script from 'next/script';
 import { siteConfig } from '../../site.config';
 
 export default function Analytics() {
-  const { provider, umami, plausible, google } = siteConfig.analytics;
+  const { providers, umami, plausible, google } = siteConfig.analytics;
 
-  if (provider === 'umami' && umami.websiteId) {
-    return (
-      <Script
-        src={umami.src}
-        data-website-id={umami.websiteId}
-        strategy="afterInteractive"
-      />
-    );
-  }
+  if (!providers || providers.length === 0) return null;
 
-  if (provider === 'plausible' && plausible.domain) {
-    return (
-      <Script
-        src={plausible.src}
-        data-domain={plausible.domain}
-        strategy="afterInteractive"
-      />
-    );
-  }
-  
-  if (provider === 'google' && google.measurementId) {
-    return (
-      <>
+  return (
+    <>
+      {providers.includes('umami') && umami.websiteId && (
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${google.measurementId}`}
+          src={umami.src}
+          data-website-id={umami.websiteId}
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${google.measurementId}');
-          `}
-        </Script>
-      </>
-    );
-  }
+      )}
 
-  return null;
+      {providers.includes('plausible') && plausible.domain && (
+        <Script
+          src={plausible.src}
+          data-domain={plausible.domain}
+          strategy="afterInteractive"
+        />
+      )}
+
+      {providers.includes('google') && google.measurementId && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${google.measurementId}`}
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${google.measurementId}');
+            `}
+          </Script>
+        </>
+      )}
+    </>
+  );
 }

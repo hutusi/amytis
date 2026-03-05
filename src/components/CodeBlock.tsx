@@ -67,7 +67,7 @@ export default function CodeBlock({ language, children, ...props }: CodeBlockPro
   };
 
   return (
-    <div className="relative my-6 rounded-lg border border-muted/20 bg-background/50 overflow-hidden shadow-sm">
+    <div className="relative my-6 w-full min-w-0 max-w-full rounded-lg border border-muted/20 bg-background/50 overflow-hidden shadow-sm">
       <div className="flex items-center justify-between px-4 py-2 border-b border-muted/10 bg-muted/5">
         <span className="text-xs font-mono text-muted uppercase tracking-wider">
           {language || 'text'}
@@ -90,7 +90,7 @@ export default function CodeBlock({ language, children, ...props }: CodeBlockPro
           )}
         </button>
       </div>
-      <div className="overflow-x-auto">
+      <div className="w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden">
         <SyntaxHighlighter
           language={language || 'text'}
           PreTag="div"
@@ -101,6 +101,8 @@ export default function CodeBlock({ language, children, ...props }: CodeBlockPro
             background: 'transparent',
             fontSize: '0.9rem',
             lineHeight: '1.6',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
           {...props}
         >

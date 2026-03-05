@@ -27,7 +27,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
         />
 
         {/* Main content */}
-        <article className="min-w-0 max-w-3xl">
+        <article className="min-w-0 w-full max-w-3xl overflow-x-hidden">
           {/* Mobile nav */}
           <div className="lg:hidden mb-8">
             <BookMobileNav

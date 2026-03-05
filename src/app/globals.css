@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import "katex/dist/katex.min.css";
 @plugin "@tailwindcss/typography";
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 4rem; /* offset for fixed navbar (h-16 = 64px) */
+  overflow-x: hidden;
 }
 
 :root {
@@ -441,6 +441,7 @@ pre[class*="language-"] {
 body {
   background-color: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
   /* Font smoothing for elegance */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

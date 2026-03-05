@@ -53,7 +53,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
           />
         )}
 
-        <article className="min-w-0 max-w-3xl mx-auto">
+        <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
           <header className="mb-16 border-b border-muted/10 pb-8">
             {post.draft && (
               <div className="mb-4">
@@ -124,6 +124,10 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
           <MarkdownRenderer content={post.content} latex={post.latex} slug={`posts/${post.slug}`} slugRegistry={slugRegistry} />
 
+          {siteConfig.posts?.authors?.showAuthorCard !== false && (
+            <AuthorCard authors={post.authors} />
+          )}
+
           {post.tags && post.tags.length > 0 && (
             <div className="mt-12 pt-12 border-t border-muted/20 flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
@@ -131,10 +135,6 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
                 <Tag key={tag} tag={tag} variant="default" />
               ))}
             </div>
-          )}
-
-          {post.externalLinks && post.externalLinks.length > 0 && (
-            <ExternalLinks links={post.externalLinks} />
           )}
 
           <Backlinks backlinks={backlinks ?? []} />
@@ -145,13 +145,13 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             className={showSidebar ? 'mt-8 lg:hidden' : 'mt-8'}
           />
 
-          {siteConfig.posts?.authors?.showAuthorCard !== false && (
-            <AuthorCard authors={post.authors} />
+          <Comments slug={post.slug} postUrl={postUrl} />
+
+          {post.externalLinks && post.externalLinks.length > 0 && (
+            <ExternalLinks links={post.externalLinks} />
           )}
 
           <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} />
-
-          <Comments slug={post.slug} postUrl={postUrl} />
 
           <RelatedPosts posts={relatedPosts || []} />
         </article>

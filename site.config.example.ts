@@ -87,6 +87,10 @@ export const siteConfig = {
       url: "https://github.com/hutusi/amytis",
       text: "Built with Amytis",
     },
+    // bottomLinks: [
+    //   { text: '京ICP备12345678号', url: 'https://beian.miit.gov.cn/' },
+    // ],
+    bottomLinks: [],
   },
 
   // ── Social & sharing ──────────────────────────────────────────────────────
@@ -180,6 +184,13 @@ export const siteConfig = {
     recentCount: 5,
   },
 
+  feed: {
+    maxItems: 20,                                           // Max items per feed (0 = no limit)
+    format: 'rss' as 'rss' | 'atom' | 'both',              // Format(s) to serve and advertise
+    content: 'full' as 'excerpt' | 'full',                  // Full post content or excerpt only
+    includeFlows: false,                                    // Include flow notes alongside posts
+  },
+
   // ── Images ────────────────────────────────────────────────────────────────
   images: {
     // CDN base URL for serving images (leave empty to serve locally)
@@ -201,7 +212,7 @@ export const siteConfig = {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
-    provider: null, // 'umami' | 'plausible' | 'google' | null
+    providers: [], // enable one or many: 'umami' | 'plausible' | 'google'
     umami: {
       websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '', // Your Umami Website ID
       src: process.env.NEXT_PUBLIC_UMAMI_URL || 'https://us.umami.is/script.js', // Default or self-hosted URL

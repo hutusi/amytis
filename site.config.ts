@@ -82,6 +82,14 @@ export const siteConfig = {
       url: "https://github.com/hutusi/amytis",
       text: { en: "Built with Amytis", zh: "基于 Amytis 构建" },
     },
+    // Optional custom links shown in the footer bottom bar.
+    // Common uses: ICP registration (China), PSB registration, cookie policy, sitemap, etc.
+    // Example:
+    // bottomLinks: [
+    //   { text: '京ICP备12345678号', url: 'https://beian.miit.gov.cn/' },
+    //   { text: 'Cookie Policy' },     // url is optional — renders as plain text
+    // ],
+    bottomLinks: [] as { text: string | Record<string, string>; url?: string }[],
   },
 
   // ── Social & sharing ──────────────────────────────────────────────────────
@@ -202,7 +210,7 @@ export const siteConfig = {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
-    provider: 'umami', // 'umami' | 'plausible' | 'google' | null
+    providers: ['umami'] as ('umami' | 'plausible' | 'google')[], // enable one or many; [] disables analytics
     umami: {
       websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '', // Your Umami Website ID
       src: process.env.NEXT_PUBLIC_UMAMI_URL || 'https://us.umami.is/script.js', // Default or self-hosted URL

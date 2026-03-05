@@ -96,6 +96,15 @@ bun run sync-book <slug>              # Sync chapters list for one book
 
 Date-prefixed filenames (`2026-01-01-my-post.mdx`) extract dates automatically.
 
+## Config Files
+
+There are two config files that must be kept in sync:
+
+- **`site.config.ts`** — the live config for this repo (i18n enabled; locale-aware fields use `{ en: '...', zh: '...' }` objects)
+- **`site.config.example.ts`** — single-language starter template shipped via `create-amytis`; locale-aware fields use plain strings; optional features (books, flow) default to disabled
+
+**Rule:** Any schema change to `site.config.ts` (new field, renamed field, type change) must be mirrored in `site.config.example.ts`. Locale-aware values (`string | Record<string, string>`) should use plain strings in the example.
+
 ## Configuration (`site.config.ts`)
 
 Key configuration options:
@@ -109,8 +118,12 @@ Key configuration options:
 - `i18n` - Default locale and supported locales
 - `featured.series` - Scrollable series: `scrollThreshold` (default: 2), `maxItems` (default: 6)
 - `featured.stories` - Scrollable stories: `scrollThreshold` (default: 1), `maxItems` (default: 5)
-- `analytics.provider` - 'umami' | 'plausible' | 'google' | null
+- `analytics.providers` - array of enabled providers: `['umami', 'google']`; `[]` disables analytics
 - `comments.provider` - 'giscus' | 'disqus' | null
+- `feed.format` - 'rss' | 'atom' | 'both'
+- `feed.content` - 'full' | 'excerpt'
+- `feed.maxItems` - max feed items (0 = unlimited)
+- `footer.bottomLinks` - custom links in the footer bottom bar (ICP, cookie policy, etc.); `text` accepts plain string or `{ en, zh }` locale map
 - `posts.basePath` - Custom URL prefix for all posts (default: `'posts'`); e.g. `'articles'` → posts at `/articles/[slug]`
 - `posts.authors.default` - Fallback authors when a post has none set in frontmatter
 - `posts.authors.showInHeader` - Show author byline below post title (default: true)

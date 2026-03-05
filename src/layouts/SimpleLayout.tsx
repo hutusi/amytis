@@ -55,12 +55,12 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       {showToc ? (
         <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
           <PostSidebar currentSlug={post.slug} headings={post.headings} localeHeadings={localeHeadings} />
-          <article className="min-w-0 max-w-3xl">
+          <article className="min-w-0 w-full max-w-3xl overflow-x-hidden">
             {articleContent}
           </article>
         </div>
       ) : (
-        <article className="max-w-3xl mx-auto">
+        <article className="w-full max-w-3xl mx-auto overflow-x-hidden">
           {articleContent}
         </article>
       )}
