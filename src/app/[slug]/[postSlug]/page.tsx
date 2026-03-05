@@ -5,7 +5,8 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
-import { getPostsBasePath, getSeriesCustomPaths } from '@/lib/urls';
+import { getPostsBasePath, getSeriesCustomPaths, getPostUrl } from '@/lib/urls';
+import { buildPostJsonLd } from '@/lib/json-ld';
 
 function safeDecodeParam(param: string): string {
   try {
@@ -132,16 +133,28 @@ export default async function PrefixPostPage({
     seriesTitle = seriesData?.title;
   }
 
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const jsonLd = buildPostJsonLd({
+    post,
+    postUrl: `${siteUrl}${getPostUrl(post)}`,
+    siteTitle: resolveLocale(siteConfig.title),
+    siteUrl,
+    defaultOgImage: siteConfig.ogImage,
+  });
+
   return (
-    <PostLayout
-      post={post}
-      relatedPosts={relatedPosts}
-      seriesPosts={seriesPosts}
-      seriesTitle={seriesTitle}
-      prevPost={prev}
-      nextPost={next}
-      backlinks={backlinks}
-      slugRegistry={slugRegistry}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PostLayout
+        post={post}
+        relatedPosts={relatedPosts}
+        seriesPosts={seriesPosts}
+        seriesTitle={seriesTitle}
+        prevPost={prev}
+        nextPost={next}
+        backlinks={backlinks}
+        slugRegistry={slugRegistry}
+      />
+    </>
   );
 }
