@@ -18,8 +18,8 @@ export default function BooksPage() {
     <div className="layout-main">
       <PageHeader
         titleKey="books"
-        subtitleKey="series_subtitle"
-        subtitleOneKey="series_subtitle_one"
+        subtitleKey="books_subtitle"
+        subtitleOneKey="books_subtitle_one"
         count={books.length}
         subtitleParams={{ count: books.length }}
       />
