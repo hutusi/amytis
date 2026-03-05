@@ -217,6 +217,32 @@ export default function KnowledgeGraph() {
       node.attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`);
     });
 
+    // After simulation cools, fit all nodes into view
+    simulation.on('end', () => {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      filteredNodes.forEach(d => {
+        const r = nodeRadius(d.connections);
+        x0 = Math.min(x0, (d.x ?? 0) - r);
+        y0 = Math.min(y0, (d.y ?? 0) - r);
+        x1 = Math.max(x1, (d.x ?? 0) + r);
+        y1 = Math.max(y1, (d.y ?? 0) + r);
+      });
+      if (!isFinite(x0) || x1 <= x0 || y1 <= y0) return;
+
+      const padding = 40;
+      const scale = Math.min(
+        (width - padding * 2) / (x1 - x0),
+        (height - padding * 2) / (y1 - y0)
+      );
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+      const tx = width / 2 - scale * cx;
+      const ty = height / 2 - scale * cy;
+
+      svgEl.transition().duration(600)
+        .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    });
+
     return () => {
       simulation.stop();
       tooltip.remove();
