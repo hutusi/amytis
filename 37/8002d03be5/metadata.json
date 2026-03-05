@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "378002d03be5",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/KnowledgeGraph.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/37/8002d03be5/0/metadata.json",
+      "transcript": "/37/8002d03be5/0/full.jsonl",
+      "context": "/37/8002d03be5/0/context.md",
+      "content_hash": "/37/8002d03be5/0/content_hash.txt",
+      "prompt": "/37/8002d03be5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 65,
+    "cache_creation_tokens": 139192,
+    "cache_read_tokens": 1934695,
+    "output_tokens": 33010,
+    "api_call_count": 33
+  }
+}

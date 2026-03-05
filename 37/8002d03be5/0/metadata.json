@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "378002d03be5",
+  "session_id": "eaa62f5c-a7dc-4bf7-b291-7a72708edde4",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-05T12:28:05.047513Z",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/KnowledgeGraph.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "263214c2de98",
+  "token_usage": {
+    "input_tokens": 65,
+    "cache_creation_tokens": 139192,
+    "cache_read_tokens": 1934695,
+    "output_tokens": 33010,
+    "api_call_count": 33
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-05T12:28:04.863384Z",
+    "agent_lines": 26,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 26,
+    "agent_percentage": 100
+  }
+}
