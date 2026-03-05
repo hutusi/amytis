@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "72980f61bfab",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/BookMobileNav.tsx",
+    "src/components/BookSidebar.tsx",
+    "src/components/FlowCalendarSidebar.tsx",
+    "src/components/NoteSidebar.tsx",
+    "src/components/PostSidebar.tsx",
+    "src/components/PrevNextNav.tsx",
+    "src/components/SectionLabel.tsx",
+    "src/components/SeriesCatalog.tsx",
+    "src/components/SeriesList.tsx",
+    "src/components/SeriesSidebar.tsx",
+    "src/hooks/useActiveHeading.ts",
+    "src/hooks/useSidebarAutoScroll.ts",
+    "src/layouts/BookLayout.tsx",
+    "src/lib/format-utils.ts",
+    "src/lib/scroll-utils.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/72/980f61bfab/0/metadata.json",
+      "transcript": "/72/980f61bfab/0/full.jsonl",
+      "context": "/72/980f61bfab/0/context.md",
+      "content_hash": "/72/980f61bfab/0/content_hash.txt",
+      "prompt": "/72/980f61bfab/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 757,
+    "cache_creation_tokens": 226226,
+    "cache_read_tokens": 3857157,
+    "output_tokens": 27080,
+    "api_call_count": 60
+  }
+}
