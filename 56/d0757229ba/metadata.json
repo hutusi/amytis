@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "56d0757229ba",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/BookMobileNav.tsx",
+    "src/components/BookSidebar.tsx",
+    "src/components/TocPanel.tsx",
+    "src/i18n/translations.ts",
+    "src/layouts/BookLayout.tsx",
+    "src/lib/scroll-utils.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/56/d0757229ba/0/metadata.json",
+      "transcript": "/56/d0757229ba/0/full.jsonl",
+      "context": "/56/d0757229ba/0/context.md",
+      "content_hash": "/56/d0757229ba/0/content_hash.txt",
+      "prompt": "/56/d0757229ba/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 162288,
+    "cache_read_tokens": 2551779,
+    "output_tokens": 8870,
+    "api_call_count": 18
+  }
+}
