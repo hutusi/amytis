@@ -1,0 +1,189 @@
+in series page, the title is "All Series", other pages do not contain "All"; the description of series page and books page seems the same "x collections of curated knowledge." do you think they need improve?
+
+---
+
+OK, do forget the chinese version.
+
+---
+
+[Request interrupted by user]
+
+---
+
+OK, don't forget the chinese version.
+
+---
+
+the tags page description "topics cultivated in this garden." do you have any better idea to improve it?
+
+---
+
+OK
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+please check about the new code review comments by coderabbit PR #27, what do you think?
+
+---
+
+what is your opinion?
+
+---
+
+go ahead
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+Think harder about the homepage; think about what can be improved.
+
+---
+
+fix the bugs
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+fix UX issues 6, 7
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
+
+---
+
+fix the minor issues 8, 9, 10
+
+---
+
+Base directory for this skill: /Users/hutusi/.claude/skills/commit
+
+Create a git commit for the current changes. Follow these steps:
+
+1. Run these commands in parallel to understand the current state:
+   - `git status` (never use -uall flag)
+   - `git diff` to see both staged and unstaged changes
+   - `git log --oneline -5` to see recent commit message style
+
+2. Analyze all changes and draft a commit message:
+   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, etc.
+   - Keep the first line under 72 characters, focusing on the "why" not the "what"
+   - Add a blank line and details in the body if the change is non-trivial
+   - Do not commit files that likely contain secrets (.env, credentials, etc.)
+
+3. Stage relevant files by name (prefer specific files over `git add -A`) and create the commit:
+   - End the commit message with: `Co-Authored-By: Claude <noreply@anthropic.com>`
+   - Use a HEREDOC for the message to ensure correct formatting
+   - Run `git status` after the commit to verify success
+
+4. If commit fails due to pre-commit hooks, fix the issue and create a NEW commit (never amend).
+
+5. Do NOT push to remote unless explicitly asked.
+
+If there are no changes to commit, inform the user and do nothing.
