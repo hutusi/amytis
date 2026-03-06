@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.9",
+  "checkpoint_id": "fe189c5ad7ff",
+  "strategy": "manual-commit",
+  "branch": "fix-rss",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "src/app/posts/[slug]/page.tsx",
+    "src/components/PostNavigation.tsx",
+    "src/components/TocPanel.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fe/189c5ad7ff/0/metadata.json",
+      "transcript": "/fe/189c5ad7ff/0/full.jsonl",
+      "context": "/fe/189c5ad7ff/0/context.md",
+      "content_hash": "/fe/189c5ad7ff/0/content_hash.txt",
+      "prompt": "/fe/189c5ad7ff/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4031,
+    "cache_creation_tokens": 98142,
+    "cache_read_tokens": 907981,
+    "output_tokens": 13848,
+    "api_call_count": 27
+  }
+}
