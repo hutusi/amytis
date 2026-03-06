@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "4039aed7819d",
+  "session_id": "f3e49d1d-8e26-43e3-a315-38a5adcd0580",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-06T05:21:46.950723Z",
+  "branch": "refactor",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/app/flows/[year]/[month]/[day]/page.tsx",
+    "src/app/flows/[year]/page.tsx",
+    "src/app/flows/page.tsx",
+    "src/app/flows/page/[page]/page.tsx",
+    "src/components/FlowCalendarSidebar.tsx",
+    "src/components/FlowContent.tsx",
+    "src/i18n/translations.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "9ee9e6ed0adb",
+  "token_usage": {
+    "input_tokens": 87,
+    "cache_creation_tokens": 112952,
+    "cache_read_tokens": 3366735,
+    "output_tokens": 20410,
+    "api_call_count": 61
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-06T05:21:46.732596Z",
+    "agent_lines": 73,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 73,
+    "agent_percentage": 100
+  }
+}

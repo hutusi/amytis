@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "4039aed7819d",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/app/flows/[year]/[month]/[day]/page.tsx",
+    "src/app/flows/[year]/page.tsx",
+    "src/app/flows/page.tsx",
+    "src/app/flows/page/[page]/page.tsx",
+    "src/components/FlowCalendarSidebar.tsx",
+    "src/components/FlowContent.tsx",
+    "src/i18n/translations.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/40/39aed7819d/0/metadata.json",
+      "transcript": "/40/39aed7819d/0/full.jsonl",
+      "context": "/40/39aed7819d/0/context.md",
+      "content_hash": "/40/39aed7819d/0/content_hash.txt",
+      "prompt": "/40/39aed7819d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 87,
+    "cache_creation_tokens": 112952,
+    "cache_read_tokens": 3366735,
+    "output_tokens": 20410,
+    "api_call_count": 61
+  }
+}
