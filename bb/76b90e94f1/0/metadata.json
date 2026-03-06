@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "bb76b90e94f1",
+  "session_id": "61eac3c9-e799-4fcc-9d9a-5581acf964bf",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-06T01:14:00.962506Z",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/page.tsx",
+    "src/components/SelectedBooksSection.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "2f0a8ba85892",
+  "checkpoint_transcript_start": 207,
+  "transcript_lines_at_start": 207,
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 171734,
+    "cache_read_tokens": 1058303,
+    "output_tokens": 6814,
+    "api_call_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-06T01:14:00.599353Z",
+    "agent_lines": 6,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 6,
+    "agent_percentage": 100
+  }
+}

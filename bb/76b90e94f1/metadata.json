@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "bb76b90e94f1",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/page.tsx",
+    "src/components/SelectedBooksSection.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/76b90e94f1/0/metadata.json",
+      "transcript": "/bb/76b90e94f1/0/full.jsonl",
+      "context": "/bb/76b90e94f1/0/context.md",
+      "content_hash": "/bb/76b90e94f1/0/content_hash.txt",
+      "prompt": "/bb/76b90e94f1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 171734,
+    "cache_read_tokens": 1058303,
+    "output_tokens": 6814,
+    "api_call_count": 14
+  }
+}
