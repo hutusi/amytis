@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "8ee347a295d0",
+  "strategy": "manual-commit",
+  "branch": "refactor-pages",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/app/books/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8e/e347a295d0/0/metadata.json",
+      "transcript": "/8e/e347a295d0/0/full.jsonl",
+      "context": "/8e/e347a295d0/0/context.md",
+      "content_hash": "/8e/e347a295d0/0/content_hash.txt",
+      "prompt": "/8e/e347a295d0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 838,
+    "cache_creation_tokens": 815275,
+    "cache_read_tokens": 14461118,
+    "output_tokens": 72852,
+    "api_call_count": 179
+  }
+}
