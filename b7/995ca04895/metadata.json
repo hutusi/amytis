@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "b7995ca04895",
+  "strategy": "manual-commit",
+  "branch": "refactor-pages",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/components/FlowCalendarSidebar.tsx",
+    "src/i18n/translations.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b7/995ca04895/0/metadata.json",
+      "transcript": "/b7/995ca04895/0/full.jsonl",
+      "context": "/b7/995ca04895/0/context.md",
+      "content_hash": "/b7/995ca04895/0/content_hash.txt",
+      "prompt": "/b7/995ca04895/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 671,
+    "cache_creation_tokens": 584909,
+    "cache_read_tokens": 9288612,
+    "output_tokens": 51206,
+    "api_call_count": 118
+  }
+}

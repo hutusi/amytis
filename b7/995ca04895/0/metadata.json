@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "b7995ca04895",
+  "session_id": "f3e49d1d-8e26-43e3-a315-38a5adcd0580",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-06T11:30:20.900781Z",
+  "branch": "refactor-pages",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/components/FlowCalendarSidebar.tsx",
+    "src/i18n/translations.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "f4d0f6648791",
+  "token_usage": {
+    "input_tokens": 671,
+    "cache_creation_tokens": 584909,
+    "cache_read_tokens": 9288612,
+    "output_tokens": 51206,
+    "api_call_count": 118
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-06T11:30:20.448141Z",
+    "agent_lines": 1,
+    "human_added": 4,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 5,
+    "agent_percentage": 20
+  }
+}
