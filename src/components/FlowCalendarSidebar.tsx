@@ -3,6 +3,7 @@
 import { useState, useMemo, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
+import { padNumber } from '@/lib/format-utils';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
@@ -111,7 +112,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
           {days.map((day, i) => {
             if (day === null) return <div key={`empty-${i}`} />;
 
-            const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${viewYear}-${padNumber(viewMonth + 1)}-${padNumber(day)}`;
             const hasEntry = entrySet.has(dateStr);
             const isToday = dateStr === todayStr;
             const isCurrent = dateStr === currentDate;
@@ -122,7 +123,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
               return (
                 <Link
                   key={dateStr}
-                  href={`/flows/${viewYear}/${String(viewMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`}
+                  href={`/flows/${viewYear}/${padNumber(viewMonth + 1)}/${padNumber(day)}`}
                   className={`${baseClasses} bg-accent text-white font-bold no-underline`}
                 >
                   {day}
@@ -134,7 +135,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
               return (
                 <Link
                   key={dateStr}
-                  href={`/flows/${viewYear}/${String(viewMonth + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`}
+                  href={`/flows/${viewYear}/${padNumber(viewMonth + 1)}/${padNumber(day)}`}
                   className={`${baseClasses} text-foreground hover:bg-accent/10 font-medium no-underline ${isToday ? 'ring-1 ring-accent' : ''}`}
                 >
                   {day}
@@ -203,12 +204,12 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                           return (
                             <Link
                               key={m}
-                              href={`/flows/${year}/${String(m).padStart(2, '0')}`}
+                              href={`/flows/${year}/${padNumber(m)}`}
                               className={`flex items-center justify-between text-xs no-underline px-1 py-0.5 rounded hover:bg-accent/10 ${
                                 isCurrentMonth ? 'text-accent font-medium' : 'text-muted'
                               }`}
                             >
-                              <span>{String(m).padStart(2, '0')}</span>
+                              <span>{padNumber(m)}</span>
                               <span className="text-[10px]">{months[m]}</span>
                             </Link>
                           );

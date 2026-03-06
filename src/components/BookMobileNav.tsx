@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { BookTocItem, BookChapterEntry } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import PrevNextNav from './PrevNextNav';
+import { getBookChapterUrl } from '@/lib/urls';
 
 interface BookMobileNavProps {
   bookSlug: string;
@@ -48,39 +50,11 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
       </div>
 
       {/* Prev / Next */}
-      <div className="flex gap-3 mb-3">
-        {prevChapter ? (
-          <Link
-            href={`/books/${bookSlug}/${prevChapter.id}`}
-            className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group"
-          >
-            <svg className="w-4 h-4 flex-shrink-0 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            <div className="min-w-0">
-              <span className="block text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-0.5">{t('prev')}</span>
-              <span className="block text-sm text-foreground/80 group-hover:text-foreground truncate transition-colors">{prevChapter.title}</span>
-            </div>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
-        {nextChapter ? (
-          <Link
-            href={`/books/${bookSlug}/${nextChapter.id}`}
-            className="flex-1 flex items-center justify-end gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group text-right"
-          >
-            <div className="min-w-0">
-              <span className="block text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-0.5">{t('next')}</span>
-              <span className="block text-sm text-foreground/80 group-hover:text-foreground truncate transition-colors">{nextChapter.title}</span>
-            </div>
-            <svg className="w-4 h-4 flex-shrink-0 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
+      <div className="mb-3">
+        <PrevNextNav
+          prev={prevChapter ? { href: getBookChapterUrl(bookSlug, prevChapter.id), title: prevChapter.title } : null}
+          next={nextChapter ? { href: getBookChapterUrl(bookSlug, nextChapter.id), title: nextChapter.title } : null}
+        />
       </div>
 
       {/* Toggle to expand full chapter list */}

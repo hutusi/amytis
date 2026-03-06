@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import CoverImage from './CoverImage';
 import { getPostUrl } from '@/lib/urls';
+import { padNumber } from '@/lib/format-utils';
 
 interface SeriesCatalogProps {
   posts: PostData[];
@@ -28,7 +29,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts }: Ser
                 <div className="hidden md:flex flex-col items-center">
                   <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background border-2 border-muted/20 group-hover:border-accent/50 transition-colors">
                     <span className="text-sm font-mono font-bold text-muted group-hover:text-accent transition-colors">
-                      {String(startIndex + index + 1).padStart(2, '0')}
+                      {padNumber(startIndex + index + 1)}
                     </span>
                   </div>
                 </div>
@@ -47,7 +48,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts }: Ser
                       {/* Mobile number badge */}
                       <div className="absolute top-3 left-3 md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-background/90 backdrop-blur border border-muted/20">
                         <span className="text-xs font-mono font-bold text-muted">
-                          {String(startIndex + index + 1).padStart(2, '0')}
+                          {padNumber(startIndex + index + 1)}
                         </span>
                       </div>
                     </div>

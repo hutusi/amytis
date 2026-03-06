@@ -5,7 +5,8 @@ import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
-import { getPostsBasePath } from '@/lib/urls';
+import { getPostsBasePath, getPostUrl } from '@/lib/urls';
+import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
 
 function safeDecodeParam(param: string): string {
   try {
@@ -106,8 +107,18 @@ export default async function PostPage({
   // Determine layout based on frontmatter
   const layout = post.layout || 'post';
 
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const jsonLd = buildPostJsonLd({
+    post,
+    postUrl: `${siteUrl}${getPostUrl(post)}`,
+    siteTitle: resolveLocale(siteConfig.title),
+    siteUrl,
+    defaultOgImage: siteConfig.ogImage,
+  });
+  const jsonLdScript = <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />;
+
   if (layout === 'simple') {
-    return <SimpleLayout post={post} />;
+    return <>{jsonLdScript}<SimpleLayout post={post} /></>;
   }
 
   const relatedPosts = getRelatedPosts(slug);
@@ -123,6 +134,10 @@ export default async function PostPage({
     seriesTitle = seriesData?.title;
   }
 
-  // Default to standard post layout
-  return <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} prevPost={prev} nextPost={next} backlinks={backlinks} slugRegistry={slugRegistry} />;
+  return (
+    <>
+      {jsonLdScript}
+      <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} prevPost={prev} nextPost={next} backlinks={backlinks} slugRegistry={slugRegistry} />
+    </>
+  );
 }

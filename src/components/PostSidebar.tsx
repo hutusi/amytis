@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { PostData, Heading } from '@/lib/markdown';
 import { getPostUrl } from '@/lib/urls';
 import { useLanguage } from './LanguageProvider';
-import { useScrollY } from '@/hooks/useScrollY';
+import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
+import { padNumber } from '@/lib/format-utils';
+import TocPanel from './TocPanel';
 import ShareBar from './ShareBar';
 import { siteConfig } from '../../site.config';
 
@@ -45,59 +47,8 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   const progressIndex = hasSeries ? sortedPosts!.findIndex(p => p.slug === currentSlug) : -1;
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
-  const [activeHeadingId, setActiveHeadingId] = useState<string>('');
-  const [tocCollapsed, setTocCollapsed] = useState(false);
   const [seriesCollapsed, setSeriesCollapsed] = useState(false);
-  const scrollY = useScrollY();
-
-  // Derive active heading from shared scroll position
-  useEffect(() => {
-    if (activeHeadings.length === 0) return;
-
-    const headingElements = activeHeadings
-      .map(h => document.getElementById(h.id))
-      .filter(Boolean) as HTMLElement[];
-
-    if (headingElements.length === 0) return;
-
-    const scrollPosition = scrollY + 100;
-    let current = headingElements[0];
-    for (const el of headingElements) {
-      if (el.offsetTop <= scrollPosition) {
-        current = el;
-      } else {
-        break;
-      }
-    }
-
-    const rafId = requestAnimationFrame(() => {
-      if (current) setActiveHeadingId(current.id);
-    });
-    return () => cancelAnimationFrame(rafId);
-  }, [scrollY, activeHeadings]);
-
-  const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-      history.pushState(null, '', `#${id}`);
-    }
-  };
-
-  // Auto-scroll sidebar to current series item
-  useEffect(() => {
-    if (currentItemRef.current && sidebarRef.current) {
-      const sidebar = sidebarRef.current;
-      const item = currentItemRef.current;
-      const itemTop = item.offsetTop;
-      const itemHeight = item.offsetHeight;
-      const sidebarHeight = sidebar.clientHeight;
-      sidebar.scrollTop = itemTop - sidebarHeight / 2 + itemHeight / 2;
-    }
-  }, [currentSlug]);
+  useSidebarAutoScroll(sidebarRef, currentItemRef, currentSlug);
 
   return (
     <aside
@@ -105,57 +56,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
       className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin"
     >
       {/* TOC — always at top */}
-      {activeHeadings.length > 0 && (
-        <nav
-          aria-label="Table of contents"
-          className={`mb-6 ${hasSeries ? 'pb-4 border-b border-muted/10' : ''}`}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted">
-              {t('on_this_page')}
-            </span>
-            <button
-              onClick={() => setTocCollapsed(prev => !prev)}
-              className="text-muted hover:text-foreground transition-colors"
-              aria-label={tocCollapsed ? 'Expand table of contents' : 'Collapse table of contents'}
-            >
-              <svg
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${tocCollapsed ? '' : 'rotate-180'}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-
-          {!tocCollapsed && (
-            <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
-              {activeHeadings.map(heading => {
-                const isActive = heading.id === activeHeadingId;
-                const isH3 = heading.level === 3;
-
-                return (
-                  <li key={heading.id}>
-                    <a
-                      href={`#${heading.id}`}
-                      onClick={(e) => scrollToHeading(e, heading.id)}
-                      className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
-                        isH3 ? 'pl-6' : 'pl-3'
-                      } ${
-                        isActive
-                          ? 'text-accent font-medium border-l-2 border-accent -ml-px'
-                          : 'text-foreground/70 hover:text-foreground'
-                      }`}
-                    >
-                      {heading.text}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </nav>
-      )}
+      <TocPanel
+        headings={activeHeadings}
+        className={`mb-6 ${hasSeries ? 'pb-4 border-b border-muted/10' : ''}`}
+      />
 
       {/* Series section — below TOC */}
       {hasSeries && (
@@ -225,7 +129,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                                 ? 'bg-accent/20 text-accent'
                                 : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
                           }`}>
-                            {String(item + 1).padStart(2, '0')}
+                            {padNumber(item + 1)}
                           </div>
                           <div className="flex-1 min-w-0 pt-0.5">
                             <span className={`block text-sm leading-snug transition-colors ${

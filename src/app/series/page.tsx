@@ -26,7 +26,7 @@ export default function SeriesIndexPage() {
   return (
     <div className="layout-main">
       <PageHeader
-        titleKey="all_series"
+        titleKey="series"
         subtitleKey="series_subtitle"
         subtitleOneKey="series_subtitle_one"
         count={totalSeries}

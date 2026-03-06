@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl } from '@/lib/urls';
+import PrevNextNav from './PrevNextNav';
+import { padNumber } from '@/lib/format-utils';
 
 interface SeriesListProps {
   seriesSlug: string;
@@ -53,39 +55,11 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
       </div>
 
       {/* Prev / Next navigation */}
-      <div className="flex gap-3 mb-3">
-        {prevPost ? (
-          <Link
-            href={getPostUrl(prevPost)}
-            className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group"
-          >
-            <svg className="w-4 h-4 flex-shrink-0 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            <div className="min-w-0">
-              <span className="block text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-0.5">{t('prev')}</span>
-              <span className="block text-sm text-foreground/80 group-hover:text-foreground truncate transition-colors">{prevPost.title}</span>
-            </div>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
-        {nextPost ? (
-          <Link
-            href={getPostUrl(nextPost)}
-            className="flex-1 flex items-center justify-end gap-2 py-2.5 px-3 rounded-lg bg-muted/5 hover:bg-muted/10 no-underline transition-colors group text-right"
-          >
-            <div className="min-w-0">
-              <span className="block text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-0.5">{t('next')}</span>
-              <span className="block text-sm text-foreground/80 group-hover:text-foreground truncate transition-colors">{nextPost.title}</span>
-            </div>
-            <svg className="w-4 h-4 flex-shrink-0 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
+      <div className="mb-3">
+        <PrevNextNav
+          prev={prevPost ? { href: getPostUrl(prevPost), title: prevPost.title } : null}
+          next={nextPost ? { href: getPostUrl(nextPost), title: nextPost.title } : null}
+        />
       </div>
 
       {/* Toggle to expand full list */}
@@ -118,7 +92,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
                 {isCurrent ? (
                   <div className="flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg bg-accent/5">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent text-white text-[10px] font-mono font-bold flex items-center justify-center">
-                      {String(index + 1).padStart(2, '0')}
+                      {padNumber(index + 1)}
                     </span>
                     <span className="text-sm font-semibold text-accent truncate">
                       {post.title}
@@ -134,7 +108,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, currentSlug
                         ? 'bg-accent/20 text-accent'
                         : 'bg-muted/10 text-muted group-hover:bg-muted/20'
                     }`}>
-                      {String(index + 1).padStart(2, '0')}
+                      {padNumber(index + 1)}
                     </span>
                     <span className={`text-sm truncate transition-colors ${
                       isPast

@@ -136,16 +136,17 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       const imageSrc = src as string;
       const isExternal = imageSrc?.startsWith('http') || imageSrc?.startsWith('//');
 
-      if (width && height) {
+      if (!isExternal) {
         return (
           <ExportedImage
             src={imageSrc || ''}
             alt={alt || ''}
-            width={Number(width)}
-            height={Number(height)}
+            width={width ? Number(width) : 1200}
+            height={height ? Number(height) : 900}
             className="max-w-full h-auto rounded-lg my-4"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-            unoptimized={isDev || isExternal}
+            unoptimized={isDev}
+            style={(!width || !height) ? { width: '100%', height: 'auto' } : undefined}
           />
         );
       }

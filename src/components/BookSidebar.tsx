@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
+import InlineBookToc from './InlineBookToc';
 
 interface BookSidebarProps {
   bookSlug: string;
@@ -17,10 +19,8 @@ interface BookSidebarProps {
 export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, currentChapter, headings = [] }: BookSidebarProps) {
   const { t } = useLanguage();
   const currentIndex = chapters.findIndex(ch => ch.id === currentChapter);
-  const [headingsCollapsed, setHeadingsCollapsed] = useState(false);
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
-  const [activeHeadingId, setActiveHeadingId] = useState<string>('');
 
   // Track which parts are collapsed
   const [collapsedParts, setCollapsedParts] = useState<Record<string, boolean>>(() => {
@@ -38,60 +38,16 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     setCollapsedParts(prev => ({ ...prev, [part]: !prev[part] }));
   };
 
-  // Scroll tracking for page headings
-  const handleScroll = useCallback(() => {
-    if (headings.length === 0) return;
-
-    const headingElements = headings
-      .map(h => document.getElementById(h.id))
-      .filter(Boolean) as HTMLElement[];
-
-    if (headingElements.length === 0) return;
-
-    const scrollPosition = window.scrollY + 100;
-    let current = headingElements[0];
-    for (const el of headingElements) {
-      if (el.offsetTop <= scrollPosition) {
-        current = el;
-      } else {
-        break;
-      }
-    }
-
-    if (current) {
-      setActiveHeadingId(current.id);
-    }
-  }, [headings]);
-
-  useEffect(() => {
-    if (headings.length === 0) return;
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, headings.length]);
-
-  // Smooth scroll to heading
-  const scrollToHeading = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-      history.pushState(null, '', `#${id}`);
-    }
-  };
-
-  useEffect(() => {
-    if (currentItemRef.current && sidebarRef.current) {
-      const sidebar = sidebarRef.current;
-      const item = currentItemRef.current;
-      const itemTop = item.offsetTop;
-      const itemHeight = item.offsetHeight;
-      const sidebarHeight = sidebar.clientHeight;
-      sidebar.scrollTop = itemTop - sidebarHeight / 2 + itemHeight / 2;
-    }
-  }, [currentChapter]);
+  // Re-run auto-scroll when the chapter changes AND when its part becomes visible.
+  // Without the visibility check, navigating into a collapsed part would trigger
+  // the expansion effect but the chapter DOM element wouldn't exist yet, so scroll
+  // would silently do nothing.
+  const isCurrentChapterVisible = toc.some(item =>
+    'part' in item
+      ? !collapsedParts[item.part] && item.chapters.some(ch => ch.id === currentChapter)
+      : item.id === currentChapter
+  );
+  useSidebarAutoScroll(sidebarRef, currentItemRef, `${currentChapter}:${isCurrentChapterVisible}`);
 
   // Expand part containing current chapter when it changes
   useEffect(() => {
@@ -102,53 +58,6 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     }
   }, [currentChapter, toc]);
 
-  // Render the inline headings sub-list for the current chapter
-  const renderHeadings = () => {
-    if (headings.length === 0) return null;
-
-    return (
-      <div className="mt-1.5 mb-1 ml-3">
-        <button
-          onClick={() => setHeadingsCollapsed(prev => !prev)}
-          className="flex items-center gap-1.5 text-[11px] font-sans font-medium uppercase tracking-wider text-muted hover:text-foreground transition-colors mb-1.5 pl-3"
-        >
-          <svg
-            className={`w-3 h-3 flex-shrink-0 transition-transform duration-200 ${headingsCollapsed ? '' : 'rotate-180'}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-          {t('on_this_page')}
-        </button>
-        {!headingsCollapsed && (
-          <ul className="space-y-0.5 border-l border-muted/15 animate-slide-down">
-            {headings.map(heading => {
-              const isActive = heading.id === activeHeadingId;
-              const isH3 = heading.level === 3;
-
-              return (
-                <li key={heading.id}>
-                  <a
-                    href={`#${heading.id}`}
-                    onClick={(e) => scrollToHeading(e, heading.id)}
-                    className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
-                      isH3 ? 'pl-6' : 'pl-3'
-                    } ${
-                      isActive
-                        ? 'text-accent font-medium border-l-2 border-accent -ml-px'
-                        : 'text-foreground/70 hover:text-foreground'
-                    }`}
-                  >
-                    {heading.text}
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    );
-  };
 
   // Pre-calculate chapter global indices to avoid reassignment during render
   const chapterIndices = new Map<string, number>();
@@ -184,7 +93,7 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
         >
           {ch.title}
         </Link>
-        {isCurrent && renderHeadings()}
+        {isCurrent && <InlineBookToc headings={headings} />}
       </li>
     );
   };

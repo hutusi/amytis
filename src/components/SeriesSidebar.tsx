@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl } from '@/lib/urls';
+import { padNumber } from '@/lib/format-utils';
 
 interface SeriesSidebarProps {
   seriesSlug: string;
@@ -94,7 +95,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
                         ? 'bg-accent/20 text-accent'
                         : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
                   }`}>
-                    {String(index + 1).padStart(2, '0')}
+                    {padNumber(index + 1)}
                   </div>
 
                   {/* Content */}
