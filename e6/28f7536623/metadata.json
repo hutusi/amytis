@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "e628f7536623",
+  "strategy": "manual-commit",
+  "branch": "refactor",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/lib/markdown.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e6/28f7536623/0/metadata.json",
+      "transcript": "/e6/28f7536623/0/full.jsonl",
+      "context": "/e6/28f7536623/0/context.md",
+      "content_hash": "/e6/28f7536623/0/content_hash.txt",
+      "prompt": "/e6/28f7536623/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 37760,
+    "cache_read_tokens": 2787336,
+    "output_tokens": 18226,
+    "api_call_count": 26
+  }
+}
