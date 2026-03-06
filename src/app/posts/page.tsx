@@ -3,17 +3,20 @@ import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
-import { t, resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale, tWith } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath } from '@/lib/urls';
 import { notFound } from 'next/navigation';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
-export const metadata: Metadata = {
-  title: `${t('posts')} | ${resolveLocale(siteConfig.title)}`,
-  description: 'Browse the complete archive of articles.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const allPosts = getListingPosts();
+  return {
+    title: `${t('posts')} | ${resolveLocale(siteConfig.title)}`,
+    description: tWith('posts_subtitle', { count: allPosts.length }),
+  };
+}
 
 export default function AllPostsPage() {
   if (getPostsBasePath() !== 'posts') notFound();

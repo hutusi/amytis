@@ -39,8 +39,8 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
         pages.push('...');
       }
     }
-    // Filter duplicates (like multiple ...)
-    return pages.filter((item, index) => pages.indexOf(item) === index);
+    // Filter consecutive duplicate ellipses
+    return pages.filter((p, i) => p !== '...' || pages[i - 1] !== '...');
   };
 
   const pages = getPages();

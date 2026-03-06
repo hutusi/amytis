@@ -4,7 +4,7 @@ import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale, tWith } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath } from '@/lib/urls';
 
@@ -27,8 +27,10 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ page: string }> }): Promise<Metadata> {
   const { page } = await params;
+  const allPosts = getListingPosts();
+  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
   return {
-    title: `${t('posts')} - ${page} | ${resolveLocale(siteConfig.title)}`,
+    title: `${t('posts')} - ${tWith('page_of_total', { page: parseInt(page), total: totalPages })} | ${resolveLocale(siteConfig.title)}`,
   };
 }
 
