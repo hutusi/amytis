@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.9",
+  "checkpoint_id": "0e4af29fd070",
+  "session_id": "06f1e1ba-6082-4b4f-bf1d-82a2c75149b9",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-06T12:58:36.413922Z",
+  "branch": "fix-rss",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/feed.atom/route.ts",
+    "src/app/feed.xml/route.ts",
+    "src/lib/feed-utils.ts",
+    "src/lib/urls.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "233a2cdc6a7c",
+  "token_usage": {
+    "input_tokens": 2675,
+    "cache_creation_tokens": 130182,
+    "cache_read_tokens": 875445,
+    "output_tokens": 14719,
+    "api_call_count": 30
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-06T12:58:36.10657Z",
+    "agent_lines": 48,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 48,
+    "agent_percentage": 100
+  }
+}
