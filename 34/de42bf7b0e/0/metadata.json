@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.9",
+  "checkpoint_id": "34de42bf7b0e",
+  "session_id": "06f1e1ba-6082-4b4f-bf1d-82a2c75149b9",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-06T13:31:09.38711Z",
+  "branch": "fix-rss",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "tests/integration/feed-utils.test.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "fb3f5d186d88",
+  "checkpoint_transcript_start": 217,
+  "transcript_lines_at_start": 217,
+  "token_usage": {
+    "input_tokens": 41,
+    "cache_creation_tokens": 69903,
+    "cache_read_tokens": 660056,
+    "output_tokens": 4333,
+    "api_call_count": 11
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-06T13:31:09.269169Z",
+    "agent_lines": 22,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 22,
+    "agent_percentage": 100
+  }
+}
