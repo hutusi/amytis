@@ -1,0 +1,1 @@
+when open some post, like @content/posts/multimedia-showcase/ the console shows warning: Allow attribute will take precedence over 'allowfullscreen'.
