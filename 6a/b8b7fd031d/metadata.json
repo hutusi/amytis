@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "6ab8b7fd031d",
+  "strategy": "manual-commit",
+  "branch": "fix-series",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/layouts/BookLayout.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6a/b8b7fd031d/0/metadata.json",
+      "transcript": "/6a/b8b7fd031d/0/full.jsonl",
+      "content_hash": "/6a/b8b7fd031d/0/content_hash.txt",
+      "prompt": "/6a/b8b7fd031d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 624,
+    "cache_creation_tokens": 40025,
+    "cache_read_tokens": 243951,
+    "output_tokens": 3381,
+    "api_call_count": 14
+  }
+}
