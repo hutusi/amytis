@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "33e29bf26e19",
+  "strategy": "manual-commit",
+  "branch": "fix-warn",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "docs/TROUBLESHOOTING.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/33/e29bf26e19/0/metadata.json",
+      "transcript": "/33/e29bf26e19/0/full.jsonl",
+      "content_hash": "/33/e29bf26e19/0/content_hash.txt",
+      "prompt": "/33/e29bf26e19/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 5350,
+    "cache_read_tokens": 929839,
+    "output_tokens": 4238,
+    "api_call_count": 8
+  }
+}

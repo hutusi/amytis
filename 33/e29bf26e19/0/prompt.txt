@@ -1,0 +1,5 @@
+so AVIF is not recommend?
+
+---
+
+please post a issue and update doc for it.
