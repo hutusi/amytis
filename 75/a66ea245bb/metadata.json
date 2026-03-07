@@ -5,6 +5,8 @@
   "branch": "test-mobile",
   "checkpoints_count": 1,
   "files_touched": [
+    "playwright.config.ts",
+    "src/components/SeriesList.tsx",
     "tests/e2e/mobile/mobile-compat.spec.ts"
   ],
   "sessions": [
@@ -13,13 +15,19 @@
       "transcript": "/75/a66ea245bb/0/full.jsonl",
       "content_hash": "/75/a66ea245bb/0/content_hash.txt",
       "prompt": "/75/a66ea245bb/0/prompt.txt"
+    },
+    {
+      "metadata": "/75/a66ea245bb/1/metadata.json",
+      "transcript": "/75/a66ea245bb/1/full.jsonl",
+      "content_hash": "/75/a66ea245bb/1/content_hash.txt",
+      "prompt": "/75/a66ea245bb/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2112,
-    "cache_creation_tokens": 543003,
-    "cache_read_tokens": 7291679,
-    "output_tokens": 39044,
-    "api_call_count": 101
+    "input_tokens": 2413,
+    "cache_creation_tokens": 1289297,
+    "cache_read_tokens": 19363018,
+    "output_tokens": 104804,
+    "api_call_count": 230
   }
 }
