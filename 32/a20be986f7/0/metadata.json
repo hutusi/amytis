@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "32a20be986f7",
+  "session_id": "0430fa98-1e3b-4b80-89b3-ddfd41747038",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T04:58:13.58439Z",
+  "branch": "fix-warn",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "content/posts/2026-01-21-kitchen-sink/index.mdx",
+    "content/posts/multimedia-showcase/index.mdx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "378547b6c3fc",
+  "checkpoint_transcript_start": 684,
+  "transcript_lines_at_start": 684,
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 4993,
+    "cache_read_tokens": 1373293,
+    "output_tokens": 2561,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 15
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T04:58:13.199495Z",
+    "agent_lines": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2,
+    "agent_percentage": 100
+  }
+}
