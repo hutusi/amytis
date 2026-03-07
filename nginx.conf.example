@@ -35,7 +35,6 @@ server {
     gzip_comp_level 6;
     gzip_min_length 1024;
     gzip_types
-        text/html
         text/css
         text/plain
         application/javascript
@@ -91,23 +90,31 @@ server {
     }
 
     # --- Feed shortcuts ---
-    # Redirect bare /feed and /atom to the canonical file URLs so that RSS
-    # readers and users who omit the extension get the correct canonical URL.
+    # Redirect bare /feed and /atom (with or without trailing slash) to the
+    # canonical file URLs so RSS readers and users who omit the extension work.
     location ~ ^/feed/?$ { return 301 /feed.xml; }
     location ~ ^/atom/?$ { return 301 /feed.atom; }
 
     # --- Static file serving ---
-    # next.config.ts sets trailingSlash: true, so pages are exported as
-    # slug/index.html (not slug.html). The order below handles:
-    #   1. $uri          — exact file match (feed.xml, images, etc.)
-    #   2. $uri/index.html — direct index file lookup (fastest for slug/ URLs)
-    #   3. $uri/         — directory lookup; Nginx issues a 301 to add the
-    #                      trailing slash when the browser omits it, then
-    #                      serves index.html via the `index` directive
-    #   4. =404          — nothing matched
+    # next.config.ts uses trailingSlash: true, so pages export as slug/index.html.
+    # Nginx strips the trailing slash from the visible URL so browsers show /slug
+    # instead of /slug/. Client-side navigation is handled by the JS router and
+    # never hits Nginx, so the redirect has no cost for in-app link clicks.
     autoindex off;
+
+    # Redirect /slug/ → /slug (removes trailing slash from visible URL).
+    # $is_args$args preserves any query string (e.g. ?page=2) in the redirect.
+    location ~ ^(.+)/$ {
+        return 301 $1$is_args$args;
+    }
+
     location / {
-        try_files $uri $uri/index.html $uri/ =404;
+        # try_files is evaluated left-to-right:
+        #   $uri         — exact file match (images, feed.xml, etc.)
+        #   $uri/index.html — directly serves slug/index.html for /slug requests
+        #                     (no redirect; the index directive only activates for
+        #                      URIs already ending with '/', not via try_files)
+        try_files $uri $uri/index.html =404;
     }
 
     # --- SSL certificates (e.g. Let's Encrypt) ---

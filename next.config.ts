@@ -3,8 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  // Set to true so pages export as slug/index.html, which coexists with
-  // asset directories (slug/images/) and avoids 403 errors on trailing slash
+  // Next.js default is false (slug.html), but we use true (slug/index.html)
+  // for two reasons:
+  //   1. Co-located assets: posts can have a slug/images/ directory alongside
+  //      slug/index.html. With false, slug.html and slug/ conflict on some
+  //      static hosts and cause 403 errors.
+  //   2. Nginx cosmetics: nginx.conf strips the trailing slash via redirect
+  //      (/slug/ → /slug) so the visible URL matches the false convention
+  //      without changing the export format.
   trailingSlash: true,
   output: "export",
   images: {
