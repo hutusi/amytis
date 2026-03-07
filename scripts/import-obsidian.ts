@@ -12,12 +12,12 @@ import matter from 'gray-matter';
 //   bun run import-obsidian --notes-only             # only process regular notes
 //   bun run import-obsidian <file>                   # process one specific file
 //
-// File routing:
-//   YYYY-MM-DD.md  →  content/flows/YYYY/MM/DD.md
+// File routing (scans vault recursively):
+//   YYYY-MM-DD.md  →  content/flows/YYYY/MM/DD.md   (matched anywhere in vault)
 //   other .md      →  content/notes/[slug].md
 //
 // Inline Obsidian #tags are extracted from body content and moved to frontmatter.
-// Import history is tracked in imports/obsidian/.imported (one filename per line).
+// Import history is tracked in imports/obsidian/.imported (relative vault paths).
 
 const DEFAULT_OBSIDIAN_DIR = path.join(process.cwd(), 'imports', 'obsidian');
 const FLOWS_DIR = path.join(process.cwd(), 'content', 'flows');
@@ -92,6 +92,12 @@ function tagsLiteral(tags: string[]): string {
 
 // ── Import tracking ──────────────────────────────────────────────────────────
 
+// Keys are relative paths from OBSIDIAN_DIR root (e.g. "journals/2024-01-15.md")
+// so files with the same name in different folders don't collide.
+function relKey(filePath: string): string {
+  return path.relative(OBSIDIAN_DIR, filePath);
+}
+
 function loadImported(): Set<string> {
   if (!fs.existsSync(IMPORTED_RECORD)) return new Set();
   return new Set(
@@ -99,8 +105,9 @@ function loadImported(): Set<string> {
   );
 }
 
-function markImported(filename: string): void {
-  fs.appendFileSync(IMPORTED_RECORD, filename + '\n');
+function markImported(filePath: string): void {
+  if (!fs.existsSync(DEFAULT_OBSIDIAN_DIR)) fs.mkdirSync(DEFAULT_OBSIDIAN_DIR, { recursive: true });
+  fs.appendFileSync(IMPORTED_RECORD, relKey(filePath) + '\n');
 }
 
 // ── Flow processor ───────────────────────────────────────────────────────────
@@ -214,6 +221,21 @@ function processFile(filePath: string): boolean {
 
 // ── File discovery ───────────────────────────────────────────────────────────
 
+// Recursively collect all .md/.mdx files, skipping hidden entries and .obsidian/.trash folders.
+function collectFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (name.startsWith('.')) continue;
+    const full = path.join(dir, name);
+    if (fs.statSync(full).isDirectory()) {
+      results.push(...collectFiles(full));
+    } else if (/\.mdx?$/.test(name)) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
 function findPendingFiles(): string[] {
   if (!fs.existsSync(OBSIDIAN_DIR)) {
     console.error(`Directory not found: ${OBSIDIAN_DIR}`);
@@ -225,11 +247,7 @@ function findPendingFiles(): string[] {
     process.exit(1);
   }
   const imported = reimportAll ? new Set<string>() : loadImported();
-  return fs.readdirSync(OBSIDIAN_DIR)
-    .filter(name => !name.startsWith('.') && /\.mdx?$/.test(name))
-    .filter(name => !imported.has(name))
-    .sort()
-    .map(name => path.join(OBSIDIAN_DIR, name));
+  return collectFiles(OBSIDIAN_DIR).filter(f => !imported.has(relKey(f)));
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -256,10 +274,10 @@ if (explicitFile) {
   let flows = 0, notes = 0, skipped = 0;
 
   for (const filePath of pending) {
-    console.log(`\n  ${path.basename(filePath)}`);
+    console.log(`\n  ${relKey(filePath)}`);
     const ok = processFile(filePath);
     if (ok && !dryRun) {
-      markImported(path.basename(filePath));
+      markImported(filePath);
       DATE_FILE_RE.test(path.basename(filePath)) ? flows++ : notes++;
     } else if (!ok) {
       skipped++;
