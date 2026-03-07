@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "a0eedb6a9bd6",
+  "strategy": "manual-commit",
+  "branch": "fix-flow",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/flows/[year]/[month]/[day]/page.tsx",
+    "src/app/notes/[slug]/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a0/eedb6a9bd6/0/metadata.json",
+      "transcript": "/a0/eedb6a9bd6/0/full.jsonl",
+      "content_hash": "/a0/eedb6a9bd6/0/content_hash.txt",
+      "prompt": "/a0/eedb6a9bd6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2518,
+    "cache_creation_tokens": 68271,
+    "cache_read_tokens": 669073,
+    "output_tokens": 6062,
+    "api_call_count": 26
+  }
+}

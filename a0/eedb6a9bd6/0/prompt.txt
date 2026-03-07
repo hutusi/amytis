@@ -1,0 +1,5 @@
+Let's think about the Flow feature; there can be some improvements. The Flow and Note pages also need a comment section and a shareable section. It would be better to put the share section in the sidebar, just like on the post page. Also, the tag style on the Flow page is not the same as on the Notes page. What do you think?
+
+---
+
+go ahead, for flow share, keep it inline, and make the note's share inline too, just like flow.
