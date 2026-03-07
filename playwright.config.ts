@@ -4,10 +4,17 @@ import { defineConfig, devices } from '@playwright/test';
  *  Update periodically to stay representative of real-world traffic. */
 const CHROME_UA_VERSION = '122.0.0.0';
 
+/** Huawei Browser version used in HarmonyOS Next user-agent strings. */
+const HUAWEI_BROWSER_VERSION = '15.0.6.301';
+
 /**
  * Mobile compatibility test configuration.
  * Covers Apple (iPhone SE → Pro Max, iPad), Google Pixel, Samsung Galaxy,
  * and major Chinese Android brands (Huawei, Xiaomi, Oppo, Vivo).
+ *
+ * Huawei has two distinct browser engines across its lineup:
+ *   - P50 Pro (EMUI/Android)    → Chromium
+ *   - HarmonyOS Next generation → WebKit-based Huawei Browser (Mate 60, Pura 70, etc.)
  */
 export default defineConfig({
   testDir: './tests/e2e/mobile',
@@ -90,15 +97,17 @@ export default defineConfig({
       },
     },
     {
-      name: 'Huawei Mate 60',
+      // Represents the HarmonyOS Next generation (Mate 60, Pura 70, Mate X6, …).
+      // All share ~393×873 CSS viewport and use WebKit-based Huawei Browser.
+      name: 'Huawei (HarmonyOS Next)',
       use: {
         userAgent:
-          `Mozilla/5.0 (Linux; Android 13; BRA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
+          `Mozilla/5.0 (Linux; Android 12; HarmonyOS; ALN-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} HuaweiBrowser/${HUAWEI_BROWSER_VERSION} Mobile Safari/537.36`,
         viewport: { width: 393, height: 873 },
         deviceScaleFactor: 3,
         isMobile: true,
         hasTouch: true,
-        defaultBrowserType: 'chromium',
+        defaultBrowserType: 'webkit',
       },
     },
 
