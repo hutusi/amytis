@@ -181,10 +181,10 @@ test.describe('Mobile Compatibility', () => {
       expect(box!.height).toBeGreaterThanOrEqual(40);
     });
 
-    test('theme toggle button meets 40px minimum', async ({ page }) => {
+    test('theme toggle button meets 32px minimum', async ({ page }) => {
       await page.goto('/');
       const toggle = page.getByRole('button', { name: /toggle theme|dark mode|light mode/i });
-      if (!(await toggle.count())) return; // skip if not present
+      if (!(await toggle.count())) { test.skip(); return; }
       const box = await toggle.boundingBox();
       expect(box).not.toBeNull();
       expect(Math.max(box!.width, box!.height)).toBeGreaterThanOrEqual(32);

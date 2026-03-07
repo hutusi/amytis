@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/** Chrome version used in custom Android device user-agent strings.
+ *  Update periodically to stay representative of real-world traffic. */
+const CHROME_UA_VERSION = '122.0.0.0';
+
 /**
  * Mobile compatibility test configuration.
  * Covers Apple (iPhone SE → Pro Max, iPad), Google Pixel, Samsung Galaxy,
@@ -63,7 +67,7 @@ export default defineConfig({
       name: 'Galaxy S21',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 12; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 12; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 360, height: 800 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -77,7 +81,7 @@ export default defineConfig({
       name: 'Huawei P50 Pro',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 12; HMA-LX9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 12; HMA-LX9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 360, height: 800 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -89,7 +93,7 @@ export default defineConfig({
       name: 'Huawei Mate 60',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 13; BRA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 13; BRA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 393, height: 873 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -103,7 +107,7 @@ export default defineConfig({
       name: 'Xiaomi 14',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 14; 2312DRAAl) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 14; 2312DRAAl) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 393, height: 873 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -115,7 +119,7 @@ export default defineConfig({
       name: 'Redmi Note 13',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 13; 23117RA68G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 13; 23117RA68G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 360, height: 800 },
         deviceScaleFactor: 2.75,
         isMobile: true,
@@ -129,7 +133,7 @@ export default defineConfig({
       name: 'Oppo Find X7',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 14; PHB110) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 14; PHB110) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 393, height: 873 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -141,7 +145,7 @@ export default defineConfig({
       name: 'Oppo Reno 11',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 13; CPH2599) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 13; CPH2599) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 360, height: 780 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -155,7 +159,7 @@ export default defineConfig({
       name: 'Vivo X100',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 14; V2309A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 14; V2309A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 393, height: 873 },
         deviceScaleFactor: 3,
         isMobile: true,
@@ -167,7 +171,7 @@ export default defineConfig({
       name: 'Vivo Y100',
       use: {
         userAgent:
-          'Mozilla/5.0 (Linux; Android 13; V2302A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+          `Mozilla/5.0 (Linux; Android 13; V2302A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_UA_VERSION} Mobile Safari/537.36`,
         viewport: { width: 360, height: 800 },
         deviceScaleFactor: 3,
         isMobile: true,

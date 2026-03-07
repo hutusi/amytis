@@ -35,6 +35,11 @@ export function getPostsPageUrl(page: number): string {
   return `/${getPostsBasePath()}/page/${page}`;
 }
 
+/** Returns the books listing URL. */
+export function getBooksListUrl(): string {
+  return '/books';
+}
+
 /** Returns the canonical URL path for a book landing page. */
 export function getBookUrl(slug: string): string {
   return `/books/${slug}`;
