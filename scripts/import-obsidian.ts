@@ -76,10 +76,11 @@ function extractInlineTags(body: string): { body: string; tags: string[] } {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function slugify(title: string): string {
-  return title
+  const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
     .replace(/^-|-$/g, '');
+  return slug || 'untitled';
 }
 
 function formatDate(d: Date): string {
@@ -164,7 +165,7 @@ function processFlow(filePath: string, filename: string): boolean {
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
   if (existing) {
-    fs.appendFileSync(existing, `\n\n---\n\n${body}\n`);
+    fs.appendFileSync(existing, `\n\n* * *\n\n${body}\n`);
     console.log(`    +  ${date}: appended → ${path.basename(existing)}`);
   } else {
     fs.writeFileSync(outPath, flowContent);
