@@ -20,6 +20,9 @@ describe("MarkdownRenderer", () => {
       expect(html).toContain('src="https://example.com/image.jpg"');
       // No fallback dimensions — external images are not processed by ExportedImage
       expect(html).not.toContain('width="1200"');
+      // fetchpriority="low" prevents React 19 from auto-preloading external
+      // images as LCP candidates, avoiding "preloaded but not used" warnings
+      expect(html).toContain('fetchPriority="low"');
     });
   });
 

@@ -23,7 +23,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
     .sort((a, b) => b[1] - a[1])
     .filter(([tag]) => !filter || tag.toLowerCase().includes(filter.toLowerCase()));
 
-  const activeIndex = sortedTags.findIndex(([tag]) => tag === activeTag);
+  const activeIndex = sortedTags.findIndex(([tag]) => tag.toLowerCase() === activeTag.toLowerCase());
 
   // Compute visible tags:
   // - Filtering or expanded: show all
@@ -86,14 +86,14 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
         {/* Tag list — no overflow, no scrollbar */}
         <nav className="space-y-0.5">
           {visibleTags.map(([tag, count], index) => {
-            const isActive = tag === activeTag;
+            const isActive = tag.toLowerCase() === activeTag.toLowerCase();
             // Thin separator before the appended active tag
             const showSeparator = appendedAt !== null && index === appendedAt;
             return (
               <div key={tag}>
                 {showSeparator && <div className="my-1.5 h-px bg-muted/10" />}
                 <Link
-                  href={`/tags/${encodeURIComponent(tag)}`}
+                  href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
                   className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm no-underline transition-colors ${
                     isActive
                       ? 'bg-accent/10 text-accent font-medium'
