@@ -1,0 +1,9 @@
+Since the import script converts notes into URL-style filenames (using lowercase letters and hyphens instead of spaces, removing symbols, etc.), please modify the wiki-links to match those URLs or filenames when import it.
+
+---
+
+Since the import script converts notes into URL-style filenames (using lowercase letters and hyphens instead of spaces, removing symbols, etc.), please modify the wiki-links to match those URLs or filenames. what do you think?
+
+---
+
+I think fix problem 1 seems enough, add aliases seems redundant. what do you think?

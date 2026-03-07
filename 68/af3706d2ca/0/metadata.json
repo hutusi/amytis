@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "68af3706d2ca",
+  "session_id": "02eb13dc-16c2-437e-8490-b1aa62171dca",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T13:20:53.578312Z",
+  "branch": "fix-flow",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "scripts/import-obsidian.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "5a195b0c7fe0",
+  "checkpoint_transcript_start": 357,
+  "transcript_lines_at_start": 357,
+  "token_usage": {
+    "input_tokens": 39,
+    "cache_creation_tokens": 105505,
+    "cache_read_tokens": 1348954,
+    "output_tokens": 6668,
+    "api_call_count": 15
+  },
+  "session_metrics": {
+    "turn_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T13:20:53.37235Z",
+    "agent_lines": 22,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 22,
+    "agent_percentage": 100
+  }
+}
