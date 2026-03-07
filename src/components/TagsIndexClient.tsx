@@ -23,7 +23,7 @@ function getTagClasses(count: number, min: number, max: number): string {
 function TagLink({ tag, count, min, max }: { tag: string; count: number; min: number; max: number }) {
   return (
     <Link
-      href={`/tags/${encodeURIComponent(tag)}`}
+      href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
       className={`group inline-flex items-baseline gap-1.5 rounded-xl border border-muted/20 bg-muted/5 hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 no-underline transition-all duration-200 ${getTagClasses(count, min, max)}`}
     >
       <span className="text-foreground group-hover:text-accent transition-colors">{tag}</span>

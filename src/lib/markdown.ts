@@ -606,30 +606,39 @@ export function getAllTags(): Record<string, number> {
   const allPosts = getAllPosts();
   const allFlows = getAllFlows();
   const allNotes = getAllNotes();
-  const tags: Record<string, number> = {};
 
-  allPosts.forEach((post) => {
-    post.tags.forEach((tag) => {
-      const normalizedTag = tag.toLowerCase();
-      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
-    });
-  });
+  // counts keyed by lowercase for deduplication; display preserves first-seen casing
+  const counts: Record<string, number> = {};
+  const display: Record<string, string> = {};
 
-  allFlows.forEach((flow) => {
-    flow.tags.forEach((tag) => {
-      const normalizedTag = tag.toLowerCase();
-      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
-    });
-  });
+  const addTags = (tags: string[]) => {
+    // seen is per-document: prevents a single post with both "React" and
+    // "react" in its tags from being counted twice.
+    const seen = new Set<string>();
+    for (const tag of tags) {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      // First-seen casing wins globally. If post A uses "React" and post B
+      // uses "react", the display form will be whichever was processed first
+      // (typically alphabetical by filename). Authors should use consistent
+      // casing in frontmatter to avoid ambiguity.
+      if (!display[key]) display[key] = tag;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+  };
 
-  allNotes.forEach((note) => {
-    note.tags.forEach((tag) => {
-      const normalizedTag = tag.toLowerCase();
-      tags[normalizedTag] = (tags[normalizedTag] || 0) + 1;
-    });
-  });
+  allPosts.forEach((post) => { addTags(post.tags); });
+  allFlows.forEach((flow) => { addTags(flow.tags); });
+  allNotes.forEach((note) => { addTags(note.tags); });
 
-  return tags;
+  // Return with original-casing display form as key so consumers can show it correctly.
+  // Callers that use the key as a URL slug must call key.toLowerCase().
+  const result: Record<string, number> = {};
+  for (const [key, count] of Object.entries(counts)) {
+    result[display[key]] = count;
+  }
+  return result;
 }
 
 export function getPostsByAuthor(author: string): PostData[] {

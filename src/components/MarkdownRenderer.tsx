@@ -153,7 +153,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
         );
       }
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={imageSrc} alt={alt || ''} {...rest} className="max-w-full h-auto rounded-lg my-4" />;
+      return <img src={imageSrc} alt={alt || ''} {...rest} fetchPriority="low" className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
 

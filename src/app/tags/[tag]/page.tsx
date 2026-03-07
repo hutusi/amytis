@@ -11,7 +11,12 @@ export async function generateStaticParams() {
   const tags = getAllTags();
   const tagKeys = Object.keys(tags);
   if (tagKeys.length === 0) return [{ tag: '_' }];
-  return tagKeys.map((tag) => ({ tag }));
+  // Keys are display-cased; normalize to lowercase for URL slugs and deduplicate.
+  const seen = new Set<string>();
+  return tagKeys
+    .map(t => t.toLowerCase())
+    .filter(t => !seen.has(t) && seen.add(t))
+    .map(tag => ({ tag }));
 }
 
 export const dynamicParams = false;
