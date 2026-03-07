@@ -96,26 +96,21 @@ server {
     location ~ ^/atom/?$ { return 301 /feed.atom; }
 
     # --- Static file serving ---
-    # Choose ONE block below to match next.config.ts trailingSlash setting.
+    # next.config.ts uses trailingSlash: true, so pages export as slug/index.html.
+    # Nginx strips the trailing slash from the visible URL so browsers show /slug
+    # instead of /slug/. Client-side navigation is handled by the JS router and
+    # never hits Nginx, so the redirect has no cost for in-app link clicks.
     autoindex off;
 
-    # -- trailingSlash: true (default) --
-    # Pages export as slug/index.html. Nginx serves slug/ via the index
-    # directive; requests without trailing slash get a 301 automatically.
-    location / {
-        try_files $uri $uri/index.html $uri/ =404;
+    # Redirect /slug/ → /slug (removes trailing slash from visible URL)
+    location ~ ^(.+)/$ {
+        return 301 $1;
     }
 
-    # -- trailingSlash: false --
-    # Pages export as slug.html. Comment out the block above and uncomment
-    # below. The location block redirects /slug/ → /slug so trailing-slash
-    # requests from bookmarks or external links resolve correctly.
-    # location ~ ^(.+)/$ {
-    #     return 301 $1;
-    # }
-    # location / {
-    #     try_files $uri $uri.html =404;
-    # }
+    location / {
+        # $uri/index.html serves the trailingSlash: true export for clean /slug URLs
+        try_files $uri $uri/index.html =404;
+    }
 
     # --- SSL certificates (e.g. Let's Encrypt) ---
     ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
