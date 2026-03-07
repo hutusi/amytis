@@ -35,7 +35,6 @@ server {
     gzip_comp_level 6;
     gzip_min_length 1024;
     gzip_types
-        text/html
         text/css
         text/plain
         application/javascript
