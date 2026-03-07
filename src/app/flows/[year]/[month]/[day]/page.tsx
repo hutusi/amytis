@@ -8,6 +8,7 @@ import Tag from '@/components/Tag';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Backlinks from '@/components/Backlinks';
 import ShareBar from '@/components/ShareBar';
+import Comments from '@/components/Comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -89,7 +90,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
             {flow.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {flow.tags.map(tag => (
-                  <Tag key={tag} tag={tag} variant="compact" />
+                  <Tag key={tag} tag={tag} variant="default" />
                 ))}
               </div>
             )}
@@ -103,6 +104,8 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           <Backlinks backlinks={backlinks} />
 
           <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
+
+          <Comments slug={`flows/${slug}`} postUrl={flowUrl} />
 
           {/* Prev/Next navigation */}
           <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">

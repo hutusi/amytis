@@ -28,6 +28,7 @@ import { describe, test, expect, mock, beforeAll, beforeEach, afterAll, afterEac
 import * as realMarkdown from '../../src/lib/markdown';
 
 let mockedPosts: Array<{ slug: string }> = [];
+let mockedNotes: Array<{ slug: string }> = [];
 const originalNodeEnv = process.env.NODE_ENV;
 
 // ─── Next.js runtime stubs (module-level — safe) ─────────────────────────────
@@ -74,6 +75,7 @@ mock.module('@/components/Tag', () => Noop);
 mock.module('@/components/AuthorStats', () => Noop);
 mock.module('@/components/TranslatedText', () => Noop);
 mock.module('@/components/NoteSidebar', () => Noop);
+mock.module('@/components/Comments', () => Noop);
 mock.module('@/layouts/PostLayout', () => Noop);
 mock.module('@/layouts/SimpleLayout', () => Noop);
 mock.module('@/layouts/BookLayout', () => Noop);
@@ -84,7 +86,7 @@ mock.module('@/layouts/BookLayout', () => Noop);
 beforeAll(() => {
   mock.module('@/lib/markdown', () => ({
     getAllFlows: () => [],
-    getAllNotes: () => [],
+    getAllNotes: () => mockedNotes,
     getAllPosts: () => mockedPosts,
     getAllBooks: () => [],
     getAllSeries: () => ({}),
@@ -131,11 +133,13 @@ beforeAll(() => {
 
 beforeEach(() => {
   mockedPosts = [];
+  mockedNotes = [];
   process.env.NODE_ENV = originalNodeEnv;
 });
 
 afterEach(() => {
   mockedPosts = [];
+  mockedNotes = [];
   process.env.NODE_ENV = originalNodeEnv;
 });
 
@@ -176,6 +180,24 @@ describe('generateStaticParams — placeholder when content is empty', () => {
     test('notes/[slug] returns [{ slug: "_" }]', async () => {
       const { generateStaticParams } = await import('../../src/app/notes/[slug]/page');
       expect(generateStaticParams()).toEqual([{ slug: '_' }]);
+    });
+
+    test('notes/[slug] includes raw and encoded Unicode slug in non-production', async () => {
+      mockedNotes = [{ slug: '推理模型' }];
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/notes/[slug]/page');
+      const params = generateStaticParams();
+      expect(params).toContainEqual({ slug: '推理模型' });
+      expect(params).toContainEqual({ slug: '%E6%8E%A8%E7%90%86%E6%A8%A1%E5%9E%8B' });
+    });
+
+    test('notes/[slug] includes only raw Unicode slug in production', async () => {
+      mockedNotes = [{ slug: '推理模型' }];
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/notes/[slug]/page');
+      const params = generateStaticParams();
+      expect(params).toContainEqual({ slug: '推理模型' });
+      expect(params).not.toContainEqual({ slug: '%E6%8E%A8%E7%90%86%E6%A8%A1%E5%9E%8B' });
     });
 
     test('notes/page/[page] always returns at least [{ page: "2" }]', async () => {

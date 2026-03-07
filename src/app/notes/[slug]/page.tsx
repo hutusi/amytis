@@ -6,20 +6,35 @@ import { t, resolveLocale } from '@/lib/i18n';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import NoteSidebar from '@/components/NoteSidebar';
 import Tag from '@/components/Tag';
+import ShareBar from '@/components/ShareBar';
+import Comments from '@/components/Comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
   if (siteConfig.features?.flow?.enabled === false) return [{ slug: '_' }];
   const notes = getAllNotes();
   if (notes.length === 0) return [{ slug: '_' }];
-  return notes.map(note => ({ slug: note.slug }));
+  // Work around Next dev static-param checks for percent-encoded Unicode paths
+  // under `output: "export"` by including encoded variants only in development.
+  const slugs = new Set<string>();
+  for (const note of notes) {
+    slugs.add(note.slug);
+    if (process.env.NODE_ENV !== 'production') {
+      slugs.add(encodeURIComponent(note.slug));
+    }
+  }
+  return Array.from(slugs).map(slug => ({ slug }));
 }
 
 export const dynamicParams = false;
 
+function safeDecodeParam(param: string): string {
+  try { return decodeURIComponent(param); } catch { return param; }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const note = getNoteBySlug(slug);
+  const { slug: rawSlug } = await params;
+  const note = getNoteBySlug(safeDecodeParam(rawSlug)) ?? getNoteBySlug(rawSlug);
   if (!note) return { title: 'Not Found' };
   return {
     title: `${note.title} | ${resolveLocale(siteConfig.title)}`,
@@ -36,17 +51,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string }> }) {
   if (siteConfig.features?.flow?.enabled === false) notFound();
-  const { slug } = await params;
-  const note = getNoteBySlug(slug);
+  const { slug: rawSlug } = await params;
+  const slug = safeDecodeParam(rawSlug);
+  const note = getNoteBySlug(slug) ?? getNoteBySlug(rawSlug);
   if (!note) notFound();
 
   const slugRegistry = buildSlugRegistry();
-  const backlinks = getBacklinks(slug);
-  const { prev, next } = getAdjacentNotes(slug);
+  const backlinks = getBacklinks(note.slug);
+  const { prev, next } = getAdjacentNotes(note.slug);
 
   const showToc = note.toc !== false && note.headings.length > 0;
   const visibleBacklinks = note.backlinks !== false ? backlinks : [];
   const showSidebar = showToc || visibleBacklinks.length > 0;
+  const noteUrl = `${siteConfig.baseUrl}/notes/${note.slug}`;
 
   const breadcrumb = (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
@@ -99,6 +116,10 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
           </header>
 
           <MarkdownRenderer content={note.content} slug={`notes/${note.slug}`} slugRegistry={slugRegistry} />
+
+          <ShareBar url={noteUrl} title={note.title} className="mt-8 mb-2" />
+
+          <Comments slug={`notes/${note.slug}`} postUrl={noteUrl} />
 
           {/* Prev/Next navigation */}
           <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">

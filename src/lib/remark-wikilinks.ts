@@ -27,8 +27,8 @@ export default function remarkWikilinks({ slugRegistry }: WikilinksOptions) {
         }
 
         const slug = match[1].trim();
-        const display = match[2]?.trim() || slug;
         const entry = slugRegistry.get(slug);
+        const display = match[2]?.trim() || entry?.title || slug;
 
         if (entry) {
           newNodes.push({
