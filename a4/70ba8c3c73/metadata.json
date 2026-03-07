@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "a470ba8c3c73",
+  "strategy": "manual-commit",
+  "branch": "fix-flow",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "package.json",
+    "scripts/import-obsidian.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a4/70ba8c3c73/0/metadata.json",
+      "transcript": "/a4/70ba8c3c73/0/full.jsonl",
+      "content_hash": "/a4/70ba8c3c73/0/content_hash.txt",
+      "prompt": "/a4/70ba8c3c73/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 84103,
+    "cache_read_tokens": 1058169,
+    "output_tokens": 17270,
+    "api_call_count": 20
+  }
+}

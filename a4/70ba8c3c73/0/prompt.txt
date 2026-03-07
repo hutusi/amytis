@@ -1,0 +1,9 @@
+I want to export my journals and notes from Obsidian and import them as Flows and Notes. What do you think?
+
+---
+
+1. YYYY-MM-DD.md, 2. no fields 3. yes, extract to frontmatter 4. mostly text.
+
+---
+
+How can I specify the Obsidian vault directory?
