@@ -1,0 +1,1 @@
+In dev mode, the URLs of notes that contain Chinese characters show a runtime error: Page "/notes/[slug]/page" is missing param "/notes/[slug]" in "generateStaticParams()", which is required with "output: export" config.
