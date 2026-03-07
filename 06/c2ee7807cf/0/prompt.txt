@@ -23,3 +23,7 @@ On the mobile homepage, in the 'Latest Writings' section, the title and 'All Art
 ---
 
 does it need to update the mobile tests?
+
+---
+
+/commit
