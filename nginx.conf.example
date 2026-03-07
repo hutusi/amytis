@@ -9,6 +9,17 @@ server {
     root /var/www/your-site;
     index index.html;
 
+    # --- OS-level file serving optimizations ---
+    sendfile       on;   # Use kernel sendfile() to avoid user-space copy
+    tcp_nopush     on;   # Batch response headers + file start in one packet (requires sendfile)
+    tcp_nodelay    on;   # Disable Nagle's algorithm for faster small packet delivery
+
+    # --- File descriptor cache (avoids repeated stat() on every request) ---
+    open_file_cache          max=1000 inactive=20s;
+    open_file_cache_valid    30s;
+    open_file_cache_min_uses 2;
+    open_file_cache_errors   on;
+
     # --- Logging ---
     # error_log is always useful for diagnosing 502s, permission issues, etc.
     error_log /var/log/nginx/amytis.error.log warn;
@@ -32,6 +43,13 @@ server {
         application/xml
         image/svg+xml
         font/woff2;
+
+    # --- Security + HSTS ---
+    # HSTS: browsers skip the HTTP→HTTPS redirect on repeat visits (1 year)
+    # Only enable includeSubDomains if ALL subdomains serve HTTPS.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
 
     # --- Cache: Next.js static assets (content-hashed → cache forever) ---
     location /_next/static/ {
@@ -78,6 +96,13 @@ server {
     # --- SSL certificates (e.g. Let's Encrypt) ---
     ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    # --- OCSP stapling (Nginx pre-fetches cert revocation status so browsers don't have to) ---
+    ssl_stapling        on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/example.com/chain.pem;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
 
     # --- TLS hardening ---
     ssl_protocols TLSv1.2 TLSv1.3;
