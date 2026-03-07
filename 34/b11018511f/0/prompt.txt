@@ -18,3 +18,7 @@ Read the output file to retrieve the result: /private/tmp/claude-501/-Users-hutu
 ---
 
 /commit
+
+---
+
+git ignore and git commit --amend
