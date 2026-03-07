@@ -105,7 +105,7 @@ export default function PostList({
                     {post.tags.slice(0, 3).map(tag => (
                       <Link
                         key={tag}
-                        href={`/tags/${encodeURIComponent(tag)}`}
+                        href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
                         className="relative z-10 text-xs px-2 py-0.5 rounded-full bg-muted/10 text-muted/70 hover:bg-accent/10 hover:text-accent transition-colors no-underline"
                       >
                         {tag}
