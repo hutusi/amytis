@@ -1,0 +1,13 @@
+check about the new review comments by coderabbit PR #35
+
+---
+
+what is different posts use "React" and "react" ?
+
+---
+
+is the Post B also shows "React"? what do you think?
+
+---
+
+Ok, leave comments.
