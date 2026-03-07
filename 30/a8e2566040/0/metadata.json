@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "30a8e2566040",
+  "session_id": "c3ba90f3-2c1e-4799-8754-045c8c191639",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T10:15:40.981455Z",
+  "branch": "test-mobile",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/components/RecentNotesSection.tsx",
+    "src/components/SelectedBooksSection.tsx",
+    "src/components/CuratedSeriesSection.tsx",
+    "src/components/FeaturedStoriesSection.tsx",
+    "src/components/LatestWritingSection.tsx",
+    "src/components/Navbar.tsx",
+    "src/components/PostList.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "e0009e2d7e06",
+  "checkpoint_transcript_start": 164,
+  "transcript_lines_at_start": 164,
+  "token_usage": {
+    "input_tokens": 18,
+    "cache_creation_tokens": 4848,
+    "cache_read_tokens": 278101,
+    "output_tokens": 1347,
+    "api_call_count": 4
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T10:15:40.833506Z",
+    "agent_lines": 0,
+    "human_added": 1,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "agent_percentage": 0
+  }
+}
