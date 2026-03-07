@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "953cf5369fc8",
+  "strategy": "manual-commit",
+  "branch": "fix-warn",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "content/posts/2026-01-21-kitchen-sink/index.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/95/3cf5369fc8/0/metadata.json",
+      "transcript": "/95/3cf5369fc8/0/full.jsonl",
+      "content_hash": "/95/3cf5369fc8/0/content_hash.txt",
+      "prompt": "/95/3cf5369fc8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 35,
+    "cache_creation_tokens": 21041,
+    "cache_read_tokens": 2823485,
+    "output_tokens": 14279,
+    "api_call_count": 27
+  }
+}
