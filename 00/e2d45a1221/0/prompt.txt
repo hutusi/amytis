@@ -36,3 +36,7 @@ does it need to add or update some tests?
 ---
 
 all three
+
+---
+
+/commit
