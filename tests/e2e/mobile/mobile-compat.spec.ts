@@ -26,12 +26,6 @@ function isPhone(page: Page): boolean {
   return (page.viewportSize()?.width ?? 0) < 768;
 }
 
-/** Whether this device viewport is a tablet (768–1023px wide). */
-function isTablet(page: Page): boolean {
-  const w = page.viewportSize()?.width ?? 0;
-  return w >= 768 && w < 1024;
-}
-
 /** Whether this device viewport is considered mobile (phone or tablet, < 1024px). */
 function isMobileViewport(page: Page): boolean {
   return (page.viewportSize()?.width ?? 0) < 1024;
@@ -171,6 +165,8 @@ test.describe('Mobile Compatibility', () => {
 
       await page.goto('/posts/kitchen-sink');
       await page.waitForLoadState('networkidle');
+      // Wait for article to render before querying series navigation
+      await page.locator('article').waitFor({ state: 'visible' });
 
       // SeriesList renders below the post content on mobile as an alternative to the sidebar
       const seriesList = page.locator('[data-testid="series-list"], .lg\\:hidden nav[aria-label]');
@@ -232,6 +228,15 @@ test.describe('Mobile Compatibility', () => {
     test('images do not overflow their containers on a post page', async ({ page }) => {
       await page.goto('/posts/kitchen-sink');
       await page.waitForLoadState('networkidle');
+      // Wait for the article body to be present, then for all images to finish loading.
+      // The kitchen-sink post has async content (Mermaid, KaTeX, syntax highlighting)
+      // that can delay image layout settlement beyond networkidle.
+      await page.locator('article').waitFor({ state: 'visible' });
+      await page.waitForFunction(() =>
+        Array.from(document.querySelectorAll('img')).every(
+          (img) => img.complete && img.naturalWidth > 0,
+        ),
+      );
 
       const overflows = await page.evaluate(() => {
         const imgs = Array.from(document.querySelectorAll('img'));

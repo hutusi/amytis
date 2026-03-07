@@ -284,7 +284,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
           <div className="w-px h-4 bg-muted/20 mx-1 hidden md:block"></div>
           {/* Hamburger button - mobile only */}
           <button
-            className="md:hidden p-2 -mr-2 text-foreground/80 hover:text-heading transition-colors"
+            className="md:hidden p-3 -mr-3 text-foreground/80 hover:text-heading transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
