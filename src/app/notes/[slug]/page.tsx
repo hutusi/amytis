@@ -14,14 +14,27 @@ export function generateStaticParams() {
   if (siteConfig.features?.flow?.enabled === false) return [{ slug: '_' }];
   const notes = getAllNotes();
   if (notes.length === 0) return [{ slug: '_' }];
-  return notes.map(note => ({ slug: note.slug }));
+  // Work around Next dev static-param checks for percent-encoded Unicode paths
+  // under `output: "export"` by including encoded variants only in development.
+  const slugs = new Set<string>();
+  for (const note of notes) {
+    slugs.add(note.slug);
+    if (process.env.NODE_ENV !== 'production') {
+      slugs.add(encodeURIComponent(note.slug));
+    }
+  }
+  return Array.from(slugs).map(slug => ({ slug }));
 }
 
 export const dynamicParams = false;
 
+function safeDecodeParam(param: string): string {
+  try { return decodeURIComponent(param); } catch { return param; }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const note = getNoteBySlug(slug);
+  const { slug: rawSlug } = await params;
+  const note = getNoteBySlug(safeDecodeParam(rawSlug)) ?? getNoteBySlug(rawSlug);
   if (!note) return { title: 'Not Found' };
   return {
     title: `${note.title} | ${resolveLocale(siteConfig.title)}`,
@@ -38,13 +51,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string }> }) {
   if (siteConfig.features?.flow?.enabled === false) notFound();
-  const { slug } = await params;
-  const note = getNoteBySlug(slug);
+  const { slug: rawSlug } = await params;
+  const slug = safeDecodeParam(rawSlug);
+  const note = getNoteBySlug(slug) ?? getNoteBySlug(rawSlug);
   if (!note) notFound();
 
   const slugRegistry = buildSlugRegistry();
-  const backlinks = getBacklinks(slug);
-  const { prev, next } = getAdjacentNotes(slug);
+  const backlinks = getBacklinks(note.slug);
+  const { prev, next } = getAdjacentNotes(note.slug);
 
   const showToc = note.toc !== false && note.headings.length > 0;
   const visibleBacklinks = note.backlinks !== false ? backlinks : [];
