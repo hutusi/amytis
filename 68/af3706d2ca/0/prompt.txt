@@ -7,3 +7,7 @@ Since the import script converts notes into URL-style filenames (using lowercase
 ---
 
 I think fix problem 1 seems enough, add aliases seems redundant. what do you think?
+
+---
+
+/commit
