@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "b5b7fffa622d",
+  "strategy": "manual-commit",
+  "branch": "test-mobile",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "playwright.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b5/b7fffa622d/0/metadata.json",
+      "transcript": "/b5/b7fffa622d/0/full.jsonl",
+      "content_hash": "/b5/b7fffa622d/0/content_hash.txt",
+      "prompt": "/b5/b7fffa622d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2111,
+    "cache_creation_tokens": 542309,
+    "cache_read_tokens": 7173615,
+    "output_tokens": 38947,
+    "api_call_count": 100
+  }
+}

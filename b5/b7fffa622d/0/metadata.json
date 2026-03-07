@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "b5b7fffa622d",
+  "session_id": "24339b4a-cb92-4065-aa17-3444a97ad914",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T11:36:52.330388Z",
+  "branch": "test-mobile",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "playwright.config.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "cb44fac100a0",
+  "token_usage": {
+    "input_tokens": 2111,
+    "cache_creation_tokens": 542309,
+    "cache_read_tokens": 7173615,
+    "output_tokens": 38947,
+    "api_call_count": 100
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T11:36:52.045704Z",
+    "agent_lines": 0,
+    "human_added": 9,
+    "human_modified": 3,
+    "human_removed": 0,
+    "total_committed": 9,
+    "agent_percentage": 0
+  }
+}
