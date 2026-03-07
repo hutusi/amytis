@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "c52a9b1ce90c",
+  "strategy": "manual-commit",
+  "branch": "test-mobile",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/components/Navbar.tsx",
+    "tests/e2e/mobile/mobile-compat.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c5/2a9b1ce90c/0/metadata.json",
+      "transcript": "/c5/2a9b1ce90c/0/full.jsonl",
+      "content_hash": "/c5/2a9b1ce90c/0/content_hash.txt",
+      "prompt": "/c5/2a9b1ce90c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2013,
+    "cache_creation_tokens": 225563,
+    "cache_read_tokens": 4106052,
+    "output_tokens": 28578,
+    "api_call_count": 68
+  }
+}
