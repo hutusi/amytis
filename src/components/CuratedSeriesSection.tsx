@@ -42,7 +42,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
   return (
     <section id="featured-series" className="mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
         <div className="flex items-center gap-4">
           {allSeries.length > maxItems && (
             <button

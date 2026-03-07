@@ -58,16 +58,16 @@ export default function PostList({
               {/* Content */}
               <div className="flex-1 p-5 sm:p-6 flex flex-col overflow-hidden">
                 {/* Meta info */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted mb-3">
+                <div className="flex items-center gap-x-2 text-xs font-mono text-muted mb-3 overflow-hidden">
                   {post.category && (
                     <>
-                      <span className="text-accent uppercase tracking-wider">{post.category}</span>
-                      <span className="hidden sm:inline">•</span>
+                      <span className="text-accent uppercase tracking-wider truncate min-w-0">{post.category}</span>
+                      <span className="shrink-0">•</span>
                     </>
                   )}
-                  <span>{post.readingTime}</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>{post.date}</span>
+                  <span className="shrink-0 whitespace-nowrap">{post.readingTime}</span>
+                  <span className="shrink-0">•</span>
+                  <span className="shrink-0 whitespace-nowrap">{post.date}</span>
                   {post.draft && (
                     <span className="hidden sm:inline text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded tracking-wider">
                       DRAFT

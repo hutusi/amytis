@@ -29,7 +29,7 @@ export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBo
   return (
     <section id="featured-books" className="mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold text-heading">{t('selected_books')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('selected_books')}</h2>
         <Link href="/books" className="text-sm font-sans font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline hover:underline">
           {t('all_books')} →
         </Link>

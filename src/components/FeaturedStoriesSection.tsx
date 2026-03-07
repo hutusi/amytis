@@ -76,7 +76,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
   return (
     <section id="featured-posts" className="mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
         {canShuffle && (
           <button
             onClick={handleShuffle}
@@ -107,12 +107,12 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
               {/* Obi text band */}
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                <div className="flex items-center gap-2 text-xs font-mono text-white/60 mb-3">
-                  <span className="text-accent uppercase tracking-wider">{hero.category}</span>
-                  <span>·</span>
-                  <span>{hero.readingTime}</span>
-                  <span>·</span>
-                  <span>{hero.date}</span>
+                <div className="flex items-center gap-2 text-xs font-mono text-white/60 mb-3 overflow-hidden">
+                  <span className="text-accent uppercase tracking-wider truncate min-w-0">{hero.category}</span>
+                  <span className="shrink-0">·</span>
+                  <span className="shrink-0 whitespace-nowrap">{hero.readingTime}</span>
+                  <span className="shrink-0">·</span>
+                  <span className="shrink-0 whitespace-nowrap">{hero.date}</span>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-3 leading-snug group-hover:text-accent/90 transition-colors line-clamp-2">
                   {hero.title}

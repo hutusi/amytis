@@ -17,7 +17,7 @@ export default function LatestWritingSection({ posts, totalCount }: LatestWritin
   return (
     <section id="latest-posts">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-serif font-bold text-heading">{t('latest_writing')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('latest_writing')}</h2>
         <Link
           href={getPostsListUrl()}
           className="text-sm text-muted hover:text-accent transition-colors no-underline inline-flex items-center gap-1"
