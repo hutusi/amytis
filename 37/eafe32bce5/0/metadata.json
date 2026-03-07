@@ -3,35 +3,34 @@
   "checkpoint_id": "37eafe32bce5",
   "session_id": "0430fa98-1e3b-4b80-89b3-ddfd41747038",
   "strategy": "manual-commit",
-  "created_at": "2026-03-07T04:29:44.465362Z",
+  "created_at": "2026-03-07T04:33:07.231653Z",
   "branch": "fix-warn",
   "checkpoints_count": 0,
   "files_touched": [
-    "src/components/Footer.tsx",
-    "site.config.ts"
+    "site.config.example.ts"
   ],
   "agent": "Claude Code",
   "model": "claude-sonnet-4-6",
-  "turn_id": "e8d607f313ee",
-  "checkpoint_transcript_start": 570,
-  "transcript_lines_at_start": 570,
+  "turn_id": "dd0195b6bceb",
+  "checkpoint_transcript_start": 654,
+  "transcript_lines_at_start": 654,
   "token_usage": {
-    "input_tokens": 19,
-    "cache_creation_tokens": 12987,
-    "cache_read_tokens": 2146673,
-    "output_tokens": 7547,
-    "api_call_count": 17
+    "input_tokens": 10,
+    "cache_creation_tokens": 1596,
+    "cache_read_tokens": 808993,
+    "output_tokens": 1061,
+    "api_call_count": 6
   },
   "session_metrics": {
-    "turn_count": 13
+    "turn_count": 14
   },
   "initial_attribution": {
-    "calculated_at": "2026-03-07T04:29:44.116158Z",
-    "agent_lines": 2,
+    "calculated_at": "2026-03-07T04:33:06.877674Z",
+    "agent_lines": 1,
     "human_added": 0,
     "human_modified": 0,
     "human_removed": 0,
-    "total_committed": 2,
+    "total_committed": 1,
     "agent_percentage": 100
   }
 }

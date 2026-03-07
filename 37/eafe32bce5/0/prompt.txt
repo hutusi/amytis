@@ -1,8 +1,5 @@
-and there is another warning on some pages: it shows error : Failed to load resource:    
-  the server responded with a status of 404 () , about the AVIF cover image; and it shows a warning: The resource              
-  https://amytis.vercel.app/_next/static/chunks/0918b76712679407.css was preloaded using link preload but not used within a    
-  few seconds from the window's load event. Please make sure it has an appropri
+I think it is also need to update site.config.example.ts, right?
 
 ---
 
-and there is another warning on some pages: GET https://amytis.vercel.app/feed.xml/__next._tree.txt?_rsc=181li 404 (Not Found)
+git commit --amend
