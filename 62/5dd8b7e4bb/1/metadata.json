@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "625dd8b7e4bb",
+  "session_id": "f3e49d1d-8e26-43e3-a315-38a5adcd0580",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T03:38:13.968062Z",
+  "branch": "fix-warn",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/CuratedSeriesSection.tsx",
+    "src/components/FeaturedStoriesSection.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "c9c9a507ec01",
+  "token_usage": {
+    "input_tokens": 901,
+    "cache_creation_tokens": 817443,
+    "cache_read_tokens": 14991205,
+    "output_tokens": 74498,
+    "api_call_count": 188
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T03:38:12.652156Z",
+    "agent_lines": 0,
+    "human_added": 371,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 371,
+    "agent_percentage": 0
+  }
+}
