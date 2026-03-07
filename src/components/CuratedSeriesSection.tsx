@@ -56,7 +56,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
               </svg>
             </button>
           )}
-          <Link href="/series" className="text-sm font-sans font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline hover:underline focus:outline-none focus:text-accent">
+          <Link href="/series" className="text-sm text-muted hover:text-accent transition-colors no-underline">
             {t('all_series')} →
           </Link>
         </div>

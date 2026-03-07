@@ -156,7 +156,7 @@ export default function Home() {
         );
       case 'latest-posts':
         if (features?.posts?.enabled === false) return null;
-        return <LatestWritingSection key="latest-posts" posts={posts} totalCount={allPosts.length} />;
+        return <LatestWritingSection key="latest-posts" posts={posts} />;
       case 'recent-flows':
         if (features?.flow?.enabled === false) return null;
         return <RecentNotesSection key="recent-flows" notes={recentNoteItems} />;
@@ -192,7 +192,7 @@ export default function Home() {
           <div key="latest-flows-combined" className={`grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 ${divideBeforeSeries ? 'mb-8 sm:mb-16' : 'mb-12 sm:mb-24'}`}>
             {showLatest && (
               <div className="lg:col-span-7">
-                <LatestWritingSection posts={posts} totalCount={allPosts.length} />
+                <LatestWritingSection posts={posts} />
               </div>
             )}
             {showFlows && (

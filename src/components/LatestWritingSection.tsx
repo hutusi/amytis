@@ -8,11 +8,10 @@ import { getPostsListUrl } from '@/lib/urls';
 
 interface LatestWritingSectionProps {
   posts: PostData[];
-  totalCount: number;
 }
 
-export default function LatestWritingSection({ posts, totalCount }: LatestWritingSectionProps) {
-  const { t, tWith } = useLanguage();
+export default function LatestWritingSection({ posts }: LatestWritingSectionProps) {
+  const { t } = useLanguage();
 
   return (
     <section id="latest-posts">
@@ -20,12 +19,9 @@ export default function LatestWritingSection({ posts, totalCount }: LatestWritin
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('latest_writing')}</h2>
         <Link
           href={getPostsListUrl()}
-          className="text-sm text-muted hover:text-accent transition-colors no-underline inline-flex items-center gap-1"
+          className="text-sm text-muted hover:text-accent transition-colors no-underline"
         >
-          {tWith('view_all_posts', { count: totalCount })}
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
+          {t('all_posts')} →
         </Link>
       </div>
 
