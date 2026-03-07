@@ -74,7 +74,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
   const [hero, ...secondary] = displayed;
 
   return (
-    <section id="featured-posts" className="mb-24">
+    <section id="featured-posts" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
         {canShuffle && (
@@ -139,9 +139,9 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
                 {/* Text content */}
                 <div className="flex-1 p-4 flex flex-col min-w-0">
                   <div className="flex items-center gap-2 text-xs font-mono text-muted mb-2">
-                    <span className="text-accent uppercase tracking-wider truncate max-w-[5rem]">{post.category}</span>
-                    <span className="shrink-0">·</span>
-                    <span className="shrink-0">{post.readingTime}</span>
+                    <span className="text-accent uppercase tracking-wider truncate max-w-[4rem]">{post.category}</span>
+                    <span className="shrink-0 hidden sm:inline">·</span>
+                    <span className="shrink-0 hidden sm:inline">{post.readingTime}</span>
                     <span className="shrink-0">·</span>
                     <span className="shrink-0">{post.date}</span>
                   </div>

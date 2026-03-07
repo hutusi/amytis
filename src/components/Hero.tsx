@@ -61,10 +61,10 @@ export default function Hero({ tagline, title, subtitle, postCount, seriesCount,
       </p>
 
       {stats.length > 0 && (
-        <div className="mt-8 flex flex-wrap justify-center items-center gap-x-1 gap-y-2 text-sm font-mono animate-slide-up animation-delay-200">
+        <div className="mt-8 flex flex-wrap justify-center items-center gap-x-1 gap-y-2 text-xs sm:text-sm font-mono animate-slide-up animation-delay-200">
           {stats.map((stat, i) => (
             <span key={stat.href} className="inline-flex items-center gap-1">
-              {i > 0 && <span className="text-muted/30 mx-2" aria-hidden>·</span>}
+              {i > 0 && <span className="text-muted/30 mx-1 sm:mx-2" aria-hidden>·</span>}
               <Link href={stat.href} className="group no-underline">
                 <span className="font-semibold text-heading group-hover:text-accent transition-colors duration-200">{stat.count}</span>
                 <span className="text-muted ml-1 group-hover:text-accent/70 transition-colors duration-200">{stat.label}</span>

@@ -189,7 +189,7 @@ export default function Home() {
       const showFlows = features?.flow?.enabled !== false && recentNoteItems.length > 0;
       if (showLatest || showFlows) {
         renderList.push(
-          <div key="latest-flows-combined" className={`grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 ${divideBeforeSeries ? 'mb-16' : 'mb-24'}`}>
+          <div key="latest-flows-combined" className={`grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 ${divideBeforeSeries ? 'mb-8 sm:mb-16' : 'mb-12 sm:mb-24'}`}>
             {showLatest && (
               <div className="lg:col-span-7">
                 <LatestWritingSection posts={posts} totalCount={allPosts.length} />
@@ -204,7 +204,7 @@ export default function Home() {
         );
         if (divideBeforeSeries) {
           renderList.push(
-            <div key="series-divider" className="border-t border-muted/10 mb-16" />
+            <div key="series-divider" className="border-t border-muted/10 mb-8 sm:mb-16" />
           );
         }
       }
