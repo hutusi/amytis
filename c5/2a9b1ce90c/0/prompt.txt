@@ -57,3 +57,7 @@ bun run lint failed
 ---
 
 bun run lint has warning
+
+---
+
+/commit
