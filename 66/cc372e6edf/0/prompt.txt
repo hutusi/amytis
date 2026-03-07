@@ -1,0 +1,5 @@
+Update the Nginx config so that if a page is not found, it shows the custom 404 page instead of the default Nginx 'not found' error. What do you think?
+
+---
+
+Are there any other error pages that need handling?
