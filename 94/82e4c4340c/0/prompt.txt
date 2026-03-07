@@ -1,0 +1,5 @@
+Let's make page comments configurable. I think each page (like posts or book chapters) should have a comments true/false setting in its frontmatter. Additionally, categories (flows, notes, posts, series, book chapters, static pages, etc.) should be configurable in the site config, with the page-level frontmatter overriding the site-wide settings. What do you think?
+
+---
+
+1. Skip the series and book overviews; they don't need comments. 2. The default value for static pages can be false. 3. The name can be 'commentable' or whatever you recommend. 4. The defaults for flows, notes, posts, and book chapters should be true, while the static pages' comment setting should be false. What do you think?
