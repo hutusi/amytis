@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "ec7a86a502ff",
+  "strategy": "manual-commit",
+  "branch": "fix-flow",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "src/lib/remark-wikilinks.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ec/7a86a502ff/0/metadata.json",
+      "transcript": "/ec/7a86a502ff/0/full.jsonl",
+      "content_hash": "/ec/7a86a502ff/0/content_hash.txt",
+      "prompt": "/ec/7a86a502ff/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2735,
+    "cache_creation_tokens": 314911,
+    "cache_read_tokens": 6066696,
+    "output_tokens": 41660,
+    "api_call_count": 95
+  }
+}
