@@ -11,3 +11,7 @@ Why does the Latest Writing section show 'View all X articles' while other secti
 ---
 
 OK
+
+---
+
+does it need to add or update some mobile tests?
