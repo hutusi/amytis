@@ -27,6 +27,7 @@
     "new-flow": "bun scripts/new-flow.ts",
     "new-flow-from-chat": "bun scripts/new-flow-from-chat.ts",
     "new-note": "bun scripts/new-note.ts",
+    "import-obsidian": "bun scripts/import-obsidian.ts",
     "import-book": "bun scripts/import-book.ts",
     "sync-book": "bun scripts/sync-book-chapters.ts",
     "series-draft": "bun scripts/series-draft.ts",
