@@ -1,0 +1,5 @@
+If a tag name contains capital letters, the tag link shows a 404 error. Is it better to make the tags case-insensitive? What do you think?
+
+---
+
+OK
