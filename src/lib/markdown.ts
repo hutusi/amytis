@@ -611,15 +611,26 @@ export function getAllTags(): Record<string, number> {
   const counts: Record<string, number> = {};
   const display: Record<string, string> = {};
 
-  const add = (tag: string) => {
-    const key = tag.toLowerCase();
-    if (!display[key]) display[key] = tag;
-    counts[key] = (counts[key] || 0) + 1;
+  const addTags = (tags: string[]) => {
+    // seen is per-document: prevents a single post with both "React" and
+    // "react" in its tags from being counted twice.
+    const seen = new Set<string>();
+    for (const tag of tags) {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      // First-seen casing wins globally. If post A uses "React" and post B
+      // uses "react", the display form will be whichever was processed first
+      // (typically alphabetical by filename). Authors should use consistent
+      // casing in frontmatter to avoid ambiguity.
+      if (!display[key]) display[key] = tag;
+      counts[key] = (counts[key] || 0) + 1;
+    }
   };
 
-  allPosts.forEach((post) => { post.tags.forEach(add); });
-  allFlows.forEach((flow) => { flow.tags.forEach(add); });
-  allNotes.forEach((note) => { note.tags.forEach(add); });
+  allPosts.forEach((post) => { addTags(post.tags); });
+  allFlows.forEach((flow) => { addTags(flow.tags); });
+  allNotes.forEach((note) => { addTags(note.tags); });
 
   // Return with original-casing display form as key so consumers can show it correctly.
   // Callers that use the key as a URL slug must call key.toLowerCase().
