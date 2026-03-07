@@ -18,6 +18,7 @@ bun test                   # Run all tests
 bun run test:unit          # Run unit tests (src/)
 bun run test:int           # Run integration tests
 bun run test:e2e           # Run end-to-end tests
+bun run test:mobile        # Run Playwright mobile compatibility tests (requires dev server)
 bun test path/to/file.test.ts  # Run a single test file
 
 # Build

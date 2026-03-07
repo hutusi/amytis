@@ -95,8 +95,37 @@ bun test                   # Run all tests
 bun run test:unit          # Run unit tests
 bun run test:int           # Run integration tests
 bun run test:e2e           # Run end-to-end tests
+bun run test:mobile        # Run Playwright mobile compatibility tests
 bun run validate           # Lint + test + build:dev
 ```
+
+### Mobile Compatibility Tests
+
+`bun run test:mobile` uses [Playwright](https://playwright.dev/) to test the site across 17 real-device profiles:
+
+- **Apple:** iPhone SE, iPhone 14 Pro, iPhone 14 Pro Max, iPad Mini, iPad Pro 11
+- **Google:** Pixel 5, Pixel 7
+- **Samsung:** Galaxy S8, Galaxy S21
+- **Huawei:** P50 Pro, Mate 60
+- **Xiaomi:** Xiaomi 14, Redmi Note 13
+- **Oppo:** Find X7, Reno 11
+- **Vivo:** X100, Y100
+
+**First-time setup** — install the browser binaries once:
+
+```bash
+bunx playwright install chromium webkit
+```
+
+The test server starts automatically (`bun dev`) if one is not already running. Useful commands:
+
+```bash
+bunx playwright test --project="iPhone SE"          # Run one device
+bunx playwright test --project="iPhone SE" --headed # Headed (visible) browser
+bunx playwright show-report                         # Open HTML report
+```
+
+Tests cover: no horizontal overflow, navigation (hamburger on phones, desktop nav on tablets), mobile menu open/close, touch target sizing (≥44px), post sidebar visibility, scroll lock, font sizes, and image overflow.
 
 ## Building
 
