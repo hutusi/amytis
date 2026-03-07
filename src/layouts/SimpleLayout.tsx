@@ -7,6 +7,7 @@ import Comments from '@/components/Comments';
 import { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
 import { resolveCommentable } from '@/lib/comments';
+import { getStaticPageUrl } from '@/lib/urls';
 
 interface SimpleLayoutProps {
   post: PostData;
@@ -53,7 +54,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
   );
 
   const showComments = resolveCommentable(post.commentable, 'staticPages');
-  const pageUrl = `${siteConfig.baseUrl.replace(/\/+$/, '')}/${post.slug}`;
+  const pageUrl = `${siteConfig.baseUrl.replace(/\/+$/, '')}${getStaticPageUrl(post.slug)}`;
   const commentSlug = `pages/${post.slug}`;
 
   return (

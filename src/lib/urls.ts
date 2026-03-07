@@ -54,3 +54,8 @@ export function getBookChapterUrl(bookSlug: string, chapterSlug: string): string
 export function getFlowUrl(slug: string): string {
   return `/flows/${slug}`;
 }
+
+/** Returns the canonical URL path for a static page (e.g. /about, /subscribe). */
+export function getStaticPageUrl(slug: string): string {
+  return `/${slug}`;
+}

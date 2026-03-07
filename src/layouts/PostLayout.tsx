@@ -15,7 +15,7 @@ import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getStaticPageUrl } from '@/lib/urls';
 
 interface PostLayoutProps {
   post: PostData;
@@ -35,7 +35,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   const showSidebar = showToc || hasSeries;
   const isStaticPage = commentCategory === 'staticPages';
   const postUrl = isStaticPage
-    ? `${siteConfig.baseUrl.replace(/\/+$/, '')}/${post.slug}`
+    ? `${siteConfig.baseUrl.replace(/\/+$/, '')}${getStaticPageUrl(post.slug)}`
     : `${siteConfig.baseUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
 
