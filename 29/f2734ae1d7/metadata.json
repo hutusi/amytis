@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "29f2734ae1d7",
+  "strategy": "manual-commit",
+  "branch": "test-mobile",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/app/page.tsx",
+    "src/components/CuratedSeriesSection.tsx",
+    "src/components/FeaturedStoriesSection.tsx",
+    "src/components/Hero.tsx",
+    "src/components/LatestWritingSection.tsx",
+    "src/components/SelectedBooksSection.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/29/f2734ae1d7/0/metadata.json",
+      "transcript": "/29/f2734ae1d7/0/full.jsonl",
+      "content_hash": "/29/f2734ae1d7/0/content_hash.txt",
+      "prompt": "/29/f2734ae1d7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 33,
+    "cache_creation_tokens": 105954,
+    "cache_read_tokens": 1278153,
+    "output_tokens": 16113,
+    "api_call_count": 17
+  }
+}
