@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.9",
+  "checkpoint_id": "688f136b5aee",
+  "strategy": "manual-commit",
+  "branch": "perf",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "nginx.conf.example",
+    "src/app/layout.tsx",
+    "src/components/KatexStyles.tsx",
+    "src/components/MarkdownRenderer.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/68/8f136b5aee/0/metadata.json",
+      "transcript": "/68/8f136b5aee/0/full.jsonl",
+      "context": "/68/8f136b5aee/0/context.md",
+      "content_hash": "/68/8f136b5aee/0/content_hash.txt",
+      "prompt": "/68/8f136b5aee/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1231,
+    "cache_creation_tokens": 111984,
+    "cache_read_tokens": 758694,
+    "output_tokens": 12093,
+    "api_call_count": 32
+  }
+}
