@@ -1,0 +1,22 @@
+When running 'bun run dev' and inspecting the homepage in Chrome, there is one error and one warning. The error is: 'Content Security Policy of your site blocks the use of eval in JavaScript.' The warning is: 'Deprecated feature used; the Shared Storage API is deprecated and will be removed in a future release.'
+
+---
+
+you are right, please record a issue for this, to remind me next time.
+
+---
+
+I think it is better to also post a github issue, and update CLAUDE.md or something else, what do you think?
+
+---
+
+go ahead.
+
+---
+
+I think your suggestion is good, to add a Troubleshooting file, or update README, not CLAUDE.md
+
+---
+
+there is a warning of console when inspect the homepage: Image with src "/images/vibrant-waves.avif" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
