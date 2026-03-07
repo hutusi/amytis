@@ -1,0 +1,5 @@
+On the tags page and in the tags sidebar, tag names containing capital letters are showing as lowercase. Is this correct?
+
+---
+
+do you need to add or update some tests?

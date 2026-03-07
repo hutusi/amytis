@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "8766f3e40502",
+  "strategy": "manual-commit",
+  "branch": "fix-warn",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/app/tags/[tag]/page.tsx",
+    "src/components/MarkdownRenderer.test.tsx",
+    "src/components/TagSidebar.tsx",
+    "src/components/TagsIndexClient.tsx",
+    "src/lib/markdown.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/87/66f3e40502/0/metadata.json",
+      "transcript": "/87/66f3e40502/0/full.jsonl",
+      "content_hash": "/87/66f3e40502/0/content_hash.txt",
+      "prompt": "/87/66f3e40502/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 36,
+    "cache_creation_tokens": 97554,
+    "cache_read_tokens": 2177549,
+    "output_tokens": 10087,
+    "api_call_count": 22
+  }
+}
