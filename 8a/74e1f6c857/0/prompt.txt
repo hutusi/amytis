@@ -1,0 +1,50 @@
+Since the import script converts notes into URL-style filenames (using lowercase letters and hyphens instead of spaces, removing symbols, etc.), please modify the wiki-links to match those URLs or filenames when import it.
+
+---
+
+Since the import script converts notes into URL-style filenames (using lowercase letters and hyphens instead of spaces, removing symbols, etc.), please modify the wiki-links to match those URLs or filenames. what do you think?
+
+---
+
+I think fix problem 1 seems enough, add aliases seems redundant. what do you think?
+
+---
+
+/commit
+
+---
+
+I think it is better to show the title instead of the URL in the Wiki link; what do you think?
+
+---
+
+You misunderstood; please revert that. I don't mean the import script—the import script is fine. However, the Flow, Note, and other pages are displaying wiki-links as URL slugs, which isn't reader-friendly. I think they should show the title instead of the slug. What do you think?
+
+---
+
+/commit
+
+---
+
+bun run lint has a warning: /Users/hutusi/workspace/ai/naive/amytis-claude-review/scripts/import-obsidian.ts
+  301:7  warning  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+
+---
+
+does it need to add or update some tests?
+
+---
+
+all three
+
+---
+
+/commit
+
+---
+
+check about code reviews by coderabbit, PR #37
+
+---
+
+OK
