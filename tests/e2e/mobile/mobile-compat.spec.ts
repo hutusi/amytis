@@ -116,7 +116,7 @@ test.describe('Mobile Compatibility', () => {
       await page.goto('/');
 
       const hamburger = page.getByRole('button', { name: /open menu|close menu/i });
-      const desktopNavLinks = page.locator('nav .hidden.md\\:flex');
+      const desktopNavLinks = page.locator('[data-testid="desktop-nav"]');
 
       if (isPhone(page)) {
         // Phone: hamburger visible, desktop links hidden
@@ -139,7 +139,7 @@ test.describe('Mobile Compatibility', () => {
 
       // Open menu
       await hamburger.tap();
-      const mobilePanel = page.locator('nav .md\\:hidden.absolute');
+      const mobilePanel = page.locator('[data-testid="mobile-nav-panel"]');
       await expect(mobilePanel).toBeVisible();
 
       // Close via × button
@@ -154,7 +154,7 @@ test.describe('Mobile Compatibility', () => {
       await page.goto('/');
       await page.getByRole('button', { name: /open menu/i }).tap();
 
-      const mobilePanel = page.locator('nav .md\\:hidden.absolute');
+      const mobilePanel = page.locator('[data-testid="mobile-nav-panel"]');
       await expect(mobilePanel).toBeVisible();
 
       // Tap the first regular nav link inside the mobile panel
@@ -200,7 +200,7 @@ test.describe('Mobile Compatibility', () => {
       await page.waitForLoadState('networkidle');
 
       // PostSidebar is `hidden lg:block` – invisible below 1024px
-      const sidebar = page.locator('aside.hidden.lg\\:block');
+      const sidebar = page.locator('[data-testid="post-sidebar"]');
       await expect(sidebar.first()).toBeHidden();
     });
 

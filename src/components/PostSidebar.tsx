@@ -53,6 +53,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
   return (
     <aside
       ref={sidebarRef}
+      data-testid="post-sidebar"
       className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin"
     >
       {/* TOC — always at top */}

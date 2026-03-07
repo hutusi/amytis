@@ -129,7 +129,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
         </Link>
 
         <div className="flex items-center gap-4 md:gap-6 shrink-0">
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6" data-testid="desktop-nav">
             {navItems.map((item) => {
               const isExternal = !!('external' in item && item.external);
               const Component = isExternal ? 'a' : Link;
@@ -319,7 +319,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
             onClick={() => closeMenu()}
           />
           {/* Menu */}
-          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-muted/10 shadow-lg animate-slide-down">
+          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-muted/10 shadow-lg animate-slide-down" data-testid="mobile-nav-panel">
             <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
               {navItems.map((item) => {
                 const isExternal = !!('external' in item && item.external);
