@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "34b11018511f",
+  "strategy": "manual-commit",
+  "branch": "test-mobile",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "bun.lock",
+    "package.json",
+    "playwright.config.ts",
+    "tests/e2e/mobile/mobile-compat.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/34/b11018511f/0/metadata.json",
+      "transcript": "/34/b11018511f/0/full.jsonl",
+      "content_hash": "/34/b11018511f/0/content_hash.txt",
+      "prompt": "/34/b11018511f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1941,
+    "cache_creation_tokens": 116427,
+    "cache_read_tokens": 1288211,
+    "output_tokens": 15117,
+    "api_call_count": 30
+  }
+}
