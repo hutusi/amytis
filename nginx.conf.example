@@ -2,11 +2,20 @@
 # Copy this to /etc/nginx/sites-available/your-site and adjust as needed.
 
 server {
-    listen 443 ssl http2;
-    server_name example.com;
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
+    server_name example.com www.example.com;
 
     root /var/www/your-site;
     index index.html;
+
+    # --- Logging ---
+    # error_log is always useful for diagnosing 502s, permission issues, etc.
+    error_log /var/log/nginx/example.com.error.log warn;
+    # access_log generates significant I/O on busy sites. If you use an
+    # analytics tool (e.g. Umami), consider setting this to off.
+    # Buffering writes reduces disk pressure when keeping it enabled.
+    access_log /var/log/nginx/example.com.access.log combined buffer=16k flush=5s;
 
     # --- Compression ---
     gzip on;
@@ -51,14 +60,28 @@ server {
         try_files $uri $uri/ $uri.html =404;
     }
 
-    # SSL certificates (e.g. Let's Encrypt)
+    # --- SSL certificates (e.g. Let's Encrypt) ---
     ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    # --- TLS hardening ---
+    ssl_protocols TLSv1.2 TLSv1.3;
+    # Mozilla intermediate cipher list (broad compatibility, no known-weak ciphers)
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers on;  # Enforces order above for TLS 1.2; no-op for TLS 1.3
+
+    # --- SSL session resumption (avoids repeat full handshakes) ---
+    ssl_session_cache   shared:SSL:10m;  # ~40k sessions shared across workers
+    ssl_session_timeout 1d;
+
+    # --- Keep connections alive across multiple requests ---
+    keepalive_timeout 65;
 }
 
 # Redirect HTTP → HTTPS
 server {
-    listen 80;
-    server_name example.com;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name example.com www.example.com;
     return 301 https://$host$request_uri;
 }
