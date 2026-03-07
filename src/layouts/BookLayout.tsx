@@ -8,6 +8,7 @@ import Comments from '@/components/Comments';
 import { t } from '@/lib/i18n';
 import { getBookChapterUrl } from '@/lib/urls';
 import { siteConfig } from '../../site.config';
+import { resolveCommentable } from '@/lib/comments';
 
 interface BookLayoutProps {
   book: BookData;
@@ -67,10 +68,12 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
           <MarkdownRenderer content={chapter.content} latex={chapter.latex} slug={chapter.isFolder ? `books/${book.slug}/${chapter.slug}` : `books/${book.slug}`} />
 
           {/* Comments */}
-          <Comments
-            slug={`books/${book.slug}/${chapter.slug}`}
-            postUrl={`${siteConfig.baseUrl.replace(/\/+$/, '')}${getBookChapterUrl(book.slug, chapter.slug)}`}
-          />
+          {resolveCommentable(chapter.commentable, 'bookChapters') && (
+            <Comments
+              slug={`books/${book.slug}/${chapter.slug}`}
+              postUrl={`${siteConfig.baseUrl.replace(/\/+$/, '')}${getBookChapterUrl(book.slug, chapter.slug)}`}
+            />
+          )}
 
           {/* Prev/Next navigation */}
           <div className="mt-16 pt-8 border-t border-muted/10">

@@ -8,6 +8,7 @@ import NoteSidebar from '@/components/NoteSidebar';
 import Tag from '@/components/Tag';
 import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
+import { resolveCommentable } from '@/lib/comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -119,7 +120,9 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
 
           <ShareBar url={noteUrl} title={note.title} className="mt-8 mb-2" />
 
-          <Comments slug={`notes/${note.slug}`} postUrl={noteUrl} />
+          {resolveCommentable(note.commentable, 'notes') && (
+            <Comments slug={`notes/${note.slug}`} postUrl={noteUrl} />
+          )}
 
           {/* Prev/Next navigation */}
           <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">

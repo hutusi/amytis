@@ -205,7 +205,7 @@ export default async function Page({
   const layout = page.layout || 'simple';
 
   if (layout === 'post') {
-    return <PostLayout post={page} />;
+    return <PostLayout post={page} commentCategory="staticPages" />;
   }
 
   return <SimpleLayout post={page} />;

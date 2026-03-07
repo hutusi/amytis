@@ -9,6 +9,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Backlinks from '@/components/Backlinks';
 import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
+import { resolveCommentable } from '@/lib/comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -105,7 +106,9 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
           <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
 
-          <Comments slug={`flows/${slug}`} postUrl={flowUrl} />
+          {resolveCommentable(flow.commentable, 'flows') && (
+            <Comments slug={`flows/${slug}`} postUrl={flowUrl} />
+          )}
 
           {/* Prev/Next navigation */}
           <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">

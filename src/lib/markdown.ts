@@ -37,6 +37,7 @@ const PostSchema = z.object({
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
+  commentable: z.boolean().optional(),
   externalLinks: z.array(ExternalLinkSchema).optional().default([]),
 });
 
@@ -71,6 +72,7 @@ export interface PostData {
   draft?: boolean;
   latex?: boolean;
   toc?: boolean;
+  commentable?: boolean;
   externalLinks?: ExternalLink[];
   readingTime: string;
   content: string;
@@ -257,6 +259,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     draft: data.draft,
     latex: data.latex,
     toc: data.toc,
+    commentable: data.commentable,
     externalLinks: data.externalLinks,
     readingTime,
     content: contentWithoutH1,
@@ -855,6 +858,7 @@ export interface BookChapterData {
   headings: Heading[];
   excerpt?: string;
   latex: boolean;
+  commentable?: boolean;
   readingTime: string;
   isFolder: boolean;
   prevChapter: { title: string; id: string } | null;
@@ -890,6 +894,7 @@ const BookChapterSchema = z.object({
   excerpt: z.string().optional(),
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
+  commentable: z.boolean().optional(),
 });
 
 function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
@@ -1015,6 +1020,7 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
     headings,
     excerpt,
     latex: data.latex,
+    commentable: data.commentable,
     readingTime,
     isFolder,
     prevChapter: prevChapter ? { title: prevChapter.title, id: prevChapter.id } : null,
@@ -1056,6 +1062,7 @@ const FlowSchema = z.object({
   date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
   tags: z.array(z.string()).optional().default([]),
   draft: z.boolean().optional().default(false),
+  commentable: z.boolean().optional(),
 });
 
 export interface FlowData {
@@ -1064,6 +1071,7 @@ export interface FlowData {
   title: string;
   tags: string[];
   draft: boolean;
+  commentable?: boolean;
   content: string;
   excerpt: string;
   headings: Heading[];
@@ -1091,6 +1099,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
     title: data.title ?? date, // fall back to date string if no title in frontmatter
     tags: data.tags,
     draft: data.draft,
+    commentable: data.commentable,
     content: contentWithoutH1,
     excerpt,
     headings,
@@ -1219,6 +1228,7 @@ const NoteSchema = z.object({
   aliases: z.array(z.string()).optional().default([]),
   toc: z.boolean().optional().default(true),
   backlinks: z.boolean().optional().default(true),
+  commentable: z.boolean().optional(),
 });
 
 export interface NoteData {
@@ -1230,6 +1240,7 @@ export interface NoteData {
   aliases: string[];
   toc: boolean;
   backlinks: boolean;
+  commentable?: boolean;
   content: string;
   excerpt: string;
   headings: Heading[];
@@ -1262,6 +1273,7 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
     aliases: data.aliases,
     toc: data.toc,
     backlinks: data.backlinks,
+    commentable: data.commentable,
     content: contentWithoutH1,
     excerpt,
     headings,

@@ -3,8 +3,10 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
 import LocaleSwitch from '@/components/LocaleSwitch';
 import PostSidebar from '@/components/PostSidebar';
+import Comments from '@/components/Comments';
 import { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
+import { resolveCommentable } from '@/lib/comments';
 
 interface SimpleLayoutProps {
   post: PostData;
@@ -50,6 +52,9 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
     </>
   );
 
+  const showComments = resolveCommentable(post.commentable, 'staticPages');
+  const pageUrl = `${siteConfig.baseUrl.replace(/\/+$/, '')}/${post.slug}`;
+
   return (
     <div className="layout-main">
       {showToc ? (
@@ -57,11 +62,13 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
           <PostSidebar currentSlug={post.slug} headings={post.headings} localeHeadings={localeHeadings} />
           <article className="min-w-0 w-full max-w-3xl overflow-x-hidden">
             {articleContent}
+            {showComments && <Comments slug={post.slug} postUrl={pageUrl} />}
           </article>
         </div>
       ) : (
         <article className="w-full max-w-3xl mx-auto overflow-x-hidden">
           {articleContent}
+          {showComments && <Comments slug={post.slug} postUrl={pageUrl} />}
         </article>
       )}
     </div>

@@ -229,6 +229,15 @@ export const siteConfig = {
   // ── Comments ──────────────────────────────────────────────────────────────
   comments: {
     provider: null, // 'giscus' | 'disqus' | null
+    // Per-category defaults. Set false to disable comments for an entire content type.
+    // Individual pages can override with `commentable: true/false` in their frontmatter.
+    commentable: {
+      posts: true,
+      flows: true,
+      notes: true,
+      bookChapters: true,
+      staticPages: false,
+    },
     giscus: {
       repo: 'your-username/your-repo', // username/repo
       repoId: '',
