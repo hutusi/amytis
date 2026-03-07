@@ -56,9 +56,10 @@ interface CoverImageProps {
   slug: string;
   src?: string;
   className?: string;
+  loading?: 'eager' | 'lazy';
 }
 
-export default function CoverImage({ title, slug, src, className = "h-full w-full object-cover" }: CoverImageProps) {
+export default function CoverImage({ title, slug, src, className = "h-full w-full object-cover", loading }: CoverImageProps) {
   // Use text-based cover when no src or explicit "text:" prefix
   const isTextCover = !src || src.startsWith('text:');
   const coverText = !src
@@ -96,6 +97,7 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
       fill
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       unoptimized={isDev || !!isCdn}
+      loading={loading}
     />
   );
 }

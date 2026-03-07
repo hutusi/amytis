@@ -101,6 +101,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
                 title={hero.title}
                 slug={hero.slug}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="eager"
               />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />

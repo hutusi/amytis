@@ -66,7 +66,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
         scrollThreshold={scrollThreshold}
       >
         <div className={`flex gap-8 ${displayed.length > scrollThreshold ? 'pb-4' : ''}`}>
-          {displayed.map(series => (
+          {displayed.map((series, idx) => (
             <div
               key={series.name}
               className={`card-base group flex flex-col p-0 overflow-hidden snap-start ${
@@ -81,6 +81,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
                   title={series.title}
                   slug={series.name}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading={idx === 0 ? 'eager' : undefined}
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
               </Link>

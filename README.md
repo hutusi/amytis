@@ -236,6 +236,7 @@ amytis/
 - [Deployment Guide](docs/deployment.md)
 - [Digital Garden Guide](docs/DIGITAL_GARDEN.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ## License
 
