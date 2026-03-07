@@ -3,9 +3,16 @@
   "checkpoint_id": "b22d67707399",
   "strategy": "manual-commit",
   "branch": "test-mobile",
-  "checkpoints_count": 2,
+  "checkpoints_count": 4,
   "files_touched": [
-    "site.config.ts"
+    "site.config.ts",
+    "src/components/CuratedSeriesSection.tsx",
+    "src/components/FeaturedStoriesSection.tsx",
+    "src/components/LatestWritingSection.tsx",
+    "src/components/Navbar.tsx",
+    "src/components/PostList.tsx",
+    "src/components/RecentNotesSection.tsx",
+    "src/components/SelectedBooksSection.tsx"
   ],
   "sessions": [
     {
@@ -13,13 +20,19 @@
       "transcript": "/b2/2d67707399/0/full.jsonl",
       "content_hash": "/b2/2d67707399/0/content_hash.txt",
       "prompt": "/b2/2d67707399/0/prompt.txt"
+    },
+    {
+      "metadata": "/b2/2d67707399/1/metadata.json",
+      "transcript": "/b2/2d67707399/1/full.jsonl",
+      "content_hash": "/b2/2d67707399/1/content_hash.txt",
+      "prompt": "/b2/2d67707399/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2093,
-    "cache_creation_tokens": 424245,
-    "cache_read_tokens": 6141348,
-    "output_tokens": 33563,
-    "api_call_count": 90
+    "input_tokens": 2151,
+    "cache_creation_tokens": 541353,
+    "cache_read_tokens": 7347657,
+    "output_tokens": 53019,
+    "api_call_count": 120
   }
 }

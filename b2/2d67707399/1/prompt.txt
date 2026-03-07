@@ -1,0 +1,5 @@
+On some mobile devices, like the Samsung Galaxy S8+, the homepage isn't displaying correctly. If the site name is long, it wraps to a new line; the 'category - readtime - date' div in the post cards and section titles like 'Latest Writing' also break onto new lines, etc..
+
+---
+
+It doesn't look good; some items in the nav bar are hidden or partially obscured, the section titles are inconsistent in size, and several problems occur on the iPhone SE. I think you should approach this problem systematically rather than just fixing what I point out.
