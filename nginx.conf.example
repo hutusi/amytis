@@ -102,9 +102,10 @@ server {
     # never hits Nginx, so the redirect has no cost for in-app link clicks.
     autoindex off;
 
-    # Redirect /slug/ → /slug (removes trailing slash from visible URL)
+    # Redirect /slug/ → /slug (removes trailing slash from visible URL).
+    # $is_args$args preserves any query string (e.g. ?page=2) in the redirect.
     location ~ ^(.+)/$ {
-        return 301 $1;
+        return 301 $1$is_args$args;
     }
 
     location / {
