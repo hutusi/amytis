@@ -108,7 +108,11 @@ server {
     }
 
     location / {
-        # $uri/index.html serves the trailingSlash: true export for clean /slug URLs
+        # try_files is evaluated left-to-right:
+        #   $uri         — exact file match (images, feed.xml, etc.)
+        #   $uri/index.html — directly serves slug/index.html for /slug requests
+        #                     (no redirect; the index directive only activates for
+        #                      URIs already ending with '/', not via try_files)
         try_files $uri $uri/index.html =404;
     }
 
