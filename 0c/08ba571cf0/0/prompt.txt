@@ -1,0 +1,45 @@
+It is better now, but there are still things to improve. The flow, articles, series, and books link area in the hero section is wrapping onto new lines. The metainfo for the secondary featured article post card isn't displaying well, and the 'latest writing' section title is still breaking onto a new line. Additionally, the spacing between the featured article and latest writing, recent notes and curated series, and curated series and selected books seems too large. what do you think?
+
+---
+
+Why does the Latest Writing section show 'View all X articles' while other sections are simpler, like 'All Flows'? Also, why are 'All Series' and 'All Books' bold and a different size than the other sections? Wouldn't it be better to make them consistent? What do you think?
+
+---
+
+/commit
+
+---
+
+OK
+
+---
+
+does it need to add or update some mobile tests?
+
+---
+
+On the mobile homepage, in the 'Latest Writings' section, the title and 'All Articles' link appear on two lines. This is not the same style as the others. What do you think?
+
+---
+
+does it need to update the mobile tests?
+
+---
+
+/commit
+
+---
+
+check about code review comments by coderabbit, PR #36
+
+---
+
+/commit
+
+---
+
+what about data-testid selectors issues? is it a valid issue? what is your suggestion?
+
+---
+
+OK
