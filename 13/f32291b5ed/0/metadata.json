@@ -3,33 +3,32 @@
   "checkpoint_id": "13f32291b5ed",
   "session_id": "a74cbf2d-24be-4caf-93f5-f6ae7886aa9a",
   "strategy": "manual-commit",
-  "created_at": "2026-03-08T08:53:58.845643Z",
+  "created_at": "2026-03-08T08:55:01.375587Z",
   "branch": "fix-homepage",
-  "checkpoints_count": 5,
+  "checkpoints_count": 2,
   "files_touched": [
-    "src/app/[slug]/page.tsx",
-    "tests/unit/static-params.test.ts"
+    "content/posts/2026-01-12-the-art-of-algorithms.mdx"
   ],
   "agent": "Claude Code",
   "model": "claude-sonnet-4-6",
-  "turn_id": "02e304c663af",
+  "turn_id": "a3e5a9dda3ee",
   "token_usage": {
-    "input_tokens": 53,
-    "cache_creation_tokens": 89773,
-    "cache_read_tokens": 630521,
-    "output_tokens": 6182,
-    "api_call_count": 23
+    "input_tokens": 70,
+    "cache_creation_tokens": 94272,
+    "cache_read_tokens": 770787,
+    "output_tokens": 6616,
+    "api_call_count": 26
   },
   "session_metrics": {
-    "turn_count": 5
+    "turn_count": 6
   },
   "initial_attribution": {
-    "calculated_at": "2026-03-08T08:53:57.886812Z",
-    "agent_lines": 39,
+    "calculated_at": "2026-03-08T08:55:01.258299Z",
+    "agent_lines": 3,
     "human_added": 0,
     "human_modified": 0,
     "human_removed": 0,
-    "total_committed": 39,
+    "total_committed": 3,
     "agent_percentage": 100
   }
 }

@@ -3,10 +3,9 @@
   "checkpoint_id": "13f32291b5ed",
   "strategy": "manual-commit",
   "branch": "fix-homepage",
-  "checkpoints_count": 5,
+  "checkpoints_count": 2,
   "files_touched": [
-    "src/app/[slug]/page.tsx",
-    "tests/unit/static-params.test.ts"
+    "content/posts/2026-01-12-the-art-of-algorithms.mdx"
   ],
   "sessions": [
     {
@@ -17,10 +16,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 53,
-    "cache_creation_tokens": 89773,
-    "cache_read_tokens": 630521,
-    "output_tokens": 6182,
-    "api_call_count": 23
+    "input_tokens": 70,
+    "cache_creation_tokens": 94272,
+    "cache_read_tokens": 770787,
+    "output_tokens": 6616,
+    "api_call_count": 26
   }
 }
