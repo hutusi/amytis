@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "0fc35cb2a6fb",
+  "strategy": "manual-commit",
+  "branch": "fix-mobile",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "content/books/notes-on-thinking/cost-of-certainty.mdx",
+    "content/books/notes-on-thinking/index.mdx",
+    "content/books/notes-on-thinking/mental-models.mdx",
+    "content/books/the-pragmatic-writer/finding-your-voice.mdx",
+    "content/books/the-pragmatic-writer/index.mdx",
+    "content/books/the-pragmatic-writer/the-editing-loop.mdx",
+    "content/books/the-pragmatic-writer/why-writing-matters.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0f/c35cb2a6fb/0/metadata.json",
+      "transcript": "/0f/c35cb2a6fb/0/full.jsonl",
+      "content_hash": "/0f/c35cb2a6fb/0/content_hash.txt",
+      "prompt": "/0f/c35cb2a6fb/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 217,
+    "cache_creation_tokens": 243161,
+    "cache_read_tokens": 3127474,
+    "output_tokens": 21018,
+    "api_call_count": 61
+  }
+}

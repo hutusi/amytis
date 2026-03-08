@@ -1,0 +1,53 @@
+Is it a good idea to make the post card's cover image clickable and link it to the post page? I think it would be useful for mobile. What do you think?
+
+---
+
+The post card's image in the featured articles section is clickable, but others—like the latest writing, posts list page, and series page—are not clickable.
+
+---
+
+go ahead
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+the post card image in series page (post list of a series) is still not clickable.
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+On mobile, when there are only 2 featured series, the curated series section on the homepage looks odd. If there is 1 or more than 2, it looks okay.
+
+---
+
+I don't think this is ideal. It should follow the same layout pattern as when there are more than two series; otherwise, it isn't consistent. What do you think?
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+does the selected books has similar problems?
+
+---
+
+make two more sample books, I want to test.

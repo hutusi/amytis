@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "0fc35cb2a6fb",
+  "session_id": "f6077fc3-6b6e-4637-ab21-0f948f62df94",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-08T12:55:55.371643Z",
+  "branch": "fix-mobile",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "content/books/notes-on-thinking/cost-of-certainty.mdx",
+    "content/books/notes-on-thinking/index.mdx",
+    "content/books/notes-on-thinking/mental-models.mdx",
+    "content/books/the-pragmatic-writer/finding-your-voice.mdx",
+    "content/books/the-pragmatic-writer/index.mdx",
+    "content/books/the-pragmatic-writer/the-editing-loop.mdx",
+    "content/books/the-pragmatic-writer/why-writing-matters.mdx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "2d17cbad4449",
+  "token_usage": {
+    "input_tokens": 217,
+    "cache_creation_tokens": 243161,
+    "cache_read_tokens": 3127474,
+    "output_tokens": 21018,
+    "api_call_count": 61
+  },
+  "session_metrics": {
+    "turn_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-08T12:55:55.203627Z",
+    "agent_lines": 79,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 79,
+    "agent_percentage": 100
+  }
+}
