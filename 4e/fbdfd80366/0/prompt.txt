@@ -1,0 +1,21 @@
+Let's think about the post URL. Currently, posts in a series and posts outside a series use the same URL style. I think this might not be ideal; the URL for a post outside a series could be '/posts/[post]' (where '/posts' is configurable), while a post within a series should be '/[series]/[post]'. That would make more sense. What do you think?
+
+---
+
+Your suggestion is good; the 'AutoPath' option is a great idea, and I think the default should be true. You can suggest a better name for it. Users should be able to configure a custom path for a series regardless of whether it's true or false. For old URLs, we can add a redirect function for the posts. What do you think?
+
+---
+
+About the redirect: is it better to configure it in the post's meta info? We can implement it in the next step. What do you think?
+
+---
+
+for your question: Do you want a runtime warning for that? what does this mean?
+
+---
+
+I think it should throw an error at build time to alert the user to change the name of the series or modify the config. What do you think?
+
+---
+
+OK
