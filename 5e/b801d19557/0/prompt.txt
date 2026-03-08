@@ -1,0 +1,99 @@
+reply the comments
+
+---
+
+5 mobile tests failed: 1) [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:212:9 › Mobile Compatibility › Post sidebar and TOC › post sidebar is hidden on mobile and tablet viewports 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+
+      214 |
+      215 |       await page.goto(`/${getPostsBasePath()}/kitchen-sink`);
+    > 216 |       await page.waitForLoadState('networkidle');
+          |                  ^
+      217 |
+      218 |       // PostSidebar is `hidden lg:block` – invisible below 1024px
+      219 |       const sidebar = page.locator('[data-testid="post-sidebar"]');
+        at /Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:216:18
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-f1a46-mobile-and-tablet-viewports-iPhone-SE/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-f1a46-mobile-and-tablet-viewports-iPhone-SE/error-context.md
+
+  2) [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:223:9 › Mobile Compatibility › Post sidebar and TOC › SeriesList (mobile series nav) is visible on post pages on mobile 
+
+    Test timeout of 30000ms exceeded.
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-5b232-ble-on-post-pages-on-mobile-iPhone-SE/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-5b232-ble-on-post-pages-on-mobile-iPhone-SE/error-context.md
+
+  3) [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:212:9 › Mobile Compatibility › Post sidebar and TOC › post sidebar is hidden on mobile and tablet viewports 
+
+    Test timeout of 30000ms exceeded.
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-f1a46-mobile-and-tablet-viewports-Redmi-Note-13/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-f1a46-mobile-and-tablet-viewports-Redmi-Note-13/error-context.md
+
+  4) [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:223:9 › Mobile Compatibility › Post sidebar and TOC › SeriesList (mobile series nav) is visible on post pages on mobile 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.goto: Test timeout of 30000ms exceeded.
+    Call log:
+      - navigating to "http://localhost:3000/posts/kitchen-sink", waiting until "load"
+
+
+      224 |       if (!isMobileViewport(page)) test.skip();
+      225 |
+    > 226 |       await page.goto(`/${getPostsBasePath()}/kitchen-sink`);
+          |                  ^
+      227 |       await page.waitForLoadState('networkidle');
+      228 |       // Wait for article to render before querying series navigation
+      229 |       await page.locator('article').first().waitFor({ state: 'visible' });
+        at /Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:226:18
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-5b232-ble-on-post-pages-on-mobile-Redmi-Note-13/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-5b232-ble-on-post-pages-on-mobile-Redmi-Note-13/error-context.md
+
+  5) [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:291:9 › Mobile Compatibility › Images › images do not overflow their containers on a post page 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.goto: Test timeout of 30000ms exceeded.
+    Call log:
+      - navigating to "http://localhost:3000/posts/kitchen-sink", waiting until "load"
+
+
+      290 |
+      291 |     test('images do not overflow their containers on a post page', async ({ page }) => {
+    > 292 |       await page.goto(`/${getPostsBasePath()}/kitchen-sink`);
+          |                  ^
+      293 |       await page.waitForLoadState('networkidle');
+      294 |       // Wait for the article body to be present, then for all images to finish loading.
+      295 |       // The kitchen-sink post has async content (Mermaid, KaTeX, syntax highlighting)
+        at /Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:292:18
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-3a785-r-containers-on-a-post-page-Redmi-Note-13/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-3a785-r-containers-on-a-post-page-Redmi-Note-13/error-context.md
+
+  5 failed
+    [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:212:9 › Mobile Compatibility › Post sidebar and TOC › post sidebar is hidden on mobile and tablet viewports 
+    [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:223:9 › Mobile Compatibility › Post sidebar and TOC › SeriesList (mobile series nav) is visible on post pages on mobile 
+    [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:212:9 › Mobile Compatibility › Post sidebar and TOC › post sidebar is hidden on mobile and tablet viewports 
+    [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:223:9 › Mobile Compatibility › Post sidebar and TOC › SeriesList (mobile series nav) is visible on post pages on mobile 
+    [Redmi Note 13] › tests/e2e/mobile/mobile-compat.spec.ts:291:9 › Mobile Compatibility › Images › images do not overflow their containers on a post page
