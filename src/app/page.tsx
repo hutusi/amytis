@@ -156,10 +156,10 @@ export default function Home() {
         );
       case 'latest-posts':
         if (features?.posts?.enabled === false) return null;
-        return <LatestWritingSection key="latest-posts" posts={posts} />;
+        return <div key="latest-posts" className="mb-12 sm:mb-24"><LatestWritingSection posts={posts} /></div>;
       case 'recent-flows':
         if (features?.flow?.enabled === false) return null;
-        return <RecentNotesSection key="recent-flows" notes={recentNoteItems} />;
+        return <div key="recent-flows" className="mb-12 sm:mb-24"><RecentNotesSection notes={recentNoteItems} /></div>;
       default:
         return null;
     }
@@ -241,7 +241,7 @@ export default function Home() {
         />
       )}
 
-      <div className="layout-main pt-0 md:pt-0 [&>*:last-child]:mb-0">
+      <div className={`layout-main [&>*:last-child]:mb-0 ${has('hero') ? 'pt-0 md:pt-0' : ''}`}>
         {renderList}
       </div>
     </div>

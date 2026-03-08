@@ -55,14 +55,14 @@ test.describe('Mobile Compatibility', () => {
     for (const route of routes) {
       test(`${route} has no horizontal overflow`, async ({ page }) => {
         await page.goto(route);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         expect(await hasNoHorizontalOverflow(page)).toBe(true);
       });
     }
 
     test('post page has no horizontal overflow', async ({ page }) => {
       await page.goto(`/${getPostsBasePath()}/kitchen-sink`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
       expect(await hasNoHorizontalOverflow(page)).toBe(true);
     });
   });
@@ -108,6 +108,21 @@ test.describe('Mobile Compatibility', () => {
       expect(hamburgerBox).not.toBeNull();
       // Brand right edge must not overlap hamburger left edge
       expect(brandBox!.x + brandBox!.width).toBeLessThanOrEqual(hamburgerBox!.x + 1);
+    });
+
+    test('logo click scrolls to top when already on homepage', async ({ page }) => {
+      await page.goto('/');
+      await page.waitForLoadState('load');
+
+      // Scroll down so we are away from the top
+      await page.evaluate(() => window.scrollTo(0, 500));
+      await page.waitForFunction(() => window.scrollY > 0);
+
+      // Click the logo (plain left-click)
+      await page.locator('nav a[href="/"]').first().click();
+
+      // Smooth scroll should return to top within a reasonable time
+      await page.waitForFunction(() => window.scrollY === 0, { timeout: 5000 });
     });
   });
 
