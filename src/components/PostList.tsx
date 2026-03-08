@@ -57,12 +57,12 @@ export default function PostList({
                 <div className="flex items-center gap-x-2 text-xs font-mono text-muted mb-2 sm:mb-3 overflow-hidden">
                   {post.category && (
                     <>
-                      <span className="text-accent uppercase tracking-wider truncate min-w-0">{post.category}</span>
-                      <span className="shrink-0">•</span>
+                      <span className="text-accent uppercase tracking-wider truncate max-w-[4rem]">{post.category}</span>
+                      <span className="shrink-0">·</span>
                     </>
                   )}
-                  <span className="shrink-0 whitespace-nowrap">{post.readingTime}</span>
-                  <span className="shrink-0">•</span>
+                  <span className="shrink-0 hidden sm:inline">{post.readingTime}</span>
+                  <span className="shrink-0 hidden sm:inline">·</span>
                   <span className="shrink-0 whitespace-nowrap">{post.date}</span>
                   {post.draft && (
                     <span className="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded tracking-wider">
@@ -75,18 +75,6 @@ export default function PostList({
                 <h3 className="font-serif text-base sm:text-xl font-bold text-heading mb-1 sm:mb-2 leading-snug group-hover:text-accent transition-colors line-clamp-2">
                   {post.title}
                 </h3>
-
-                {/* Series indicator */}
-                {post.series && post.seriesTitle && (
-                  <p className="text-xs text-muted mb-2">
-                    <Link
-                      href={`/series/${post.series}`}
-                      className="relative z-10 hover:text-accent transition-colors no-underline"
-                    >
-                      {t('series')}: {post.seriesTitle}
-                    </Link>
-                  </p>
-                )}
 
                 {/* Excerpt */}
                 {showExcerpt && (post.subtitle || post.excerpt) && (
