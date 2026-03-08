@@ -6,7 +6,7 @@ import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded } from '@/lib/shuffle';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
 
 export interface SeriesItem {
   name: string;
@@ -55,7 +55,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSer
               </svg>
             </button>
           )}
-          <Link href="/series" className="text-sm text-muted hover:text-accent transition-colors no-underline">
+          <Link href={getSeriesListUrl()} className="text-sm text-muted hover:text-accent transition-colors no-underline">
             {t('all_series')} →
           </Link>
         </div>
