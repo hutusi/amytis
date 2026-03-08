@@ -23,3 +23,7 @@ the post card image in series page (post list of a series) is still not clickabl
 ---
 
 does it need to add or update some tests?
+
+---
+
+/commit
