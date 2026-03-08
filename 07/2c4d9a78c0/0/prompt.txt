@@ -206,3 +206,15 @@ Calling setState synchronously within an effect body causes cascading renders th
 
 error: script "lint" exited with code 1
 error: script "validate" exited with code 1
+
+---
+
+/commit
+
+---
+
+/commit
+
+---
+
+/commit
