@@ -107,3 +107,7 @@ go ahead
 ---
 
 the thumnail is not good, I think it can be similar as the secondary featured post card, but make the cover image at left. what do you think?
+
+---
+
+/commit
