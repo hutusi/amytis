@@ -1,0 +1,9 @@
+A minor improvement for the homepage: when a user is on the homepage and clicks the logo, it should scroll back to the top. What do you think, or should I leave it as it is?
+
+---
+
+/commit
+
+---
+
+go ahead

@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "bbe5ac82d131",
+  "strategy": "manual-commit",
+  "branch": "fix-homepage",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/components/Navbar.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/e5ac82d131/0/metadata.json",
+      "transcript": "/bb/e5ac82d131/0/full.jsonl",
+      "content_hash": "/bb/e5ac82d131/0/content_hash.txt",
+      "prompt": "/bb/e5ac82d131/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 29,
+    "cache_creation_tokens": 21257,
+    "cache_read_tokens": 212305,
+    "output_tokens": 1907,
+    "api_call_count": 11
+  }
+}
