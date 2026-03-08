@@ -34,7 +34,7 @@ export default function Footer() {
               </svg>
               <span className="font-serif font-bold text-lg text-heading">{resolveLocaleValue(siteConfig.title, language)}</span>
             </Link>
-            <p className="text-sm text-muted leading-relaxed max-w-sm text-center lg:text-left">
+            <p className="text-sm text-muted leading-relaxed max-w-sm mx-auto text-center lg:mx-0 lg:text-left">
               {resolveLocaleValue(siteConfig.description, language)}
             </p>
           </div>
