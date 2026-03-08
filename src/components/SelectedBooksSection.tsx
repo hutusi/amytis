@@ -44,7 +44,7 @@ export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBo
           {books.length > maxItems && (
             <button
               onClick={handleShuffle}
-              className="text-sm text-muted hover:text-accent transition-colors focus:outline-none"
+              className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
               aria-label={t('shuffle_books')}
               title={t('shuffle_books')}
             >
