@@ -1,0 +1,29 @@
+check about the new code reviews by coderabbit, PR #44, what is your opinion?
+
+---
+
+OK, then reply all the review comments of this PR.
+
+---
+
+what about the issues need to fix?
+
+---
+
+does they realy worth fix?
+
+---
+
+what is your opinion? real issues or not?
+
+---
+
+I think if two post config same redirectFrom url, the build should break, is it better? what do you think?
+
+---
+
+I think the build process should be strict to prevent runtime errors.
+
+---
+
+OK, you should add this rule into CLAUDE.md or memories.
