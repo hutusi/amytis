@@ -1,0 +1,25 @@
+Let's think about the Series feature. I want Series to support collections; a Series should be a collection of posts that might come from other Series or the posts folder. Considering SEO and comments, the post URL cannot change, but the sidebar needs to be the collection's Series menu. Even the post title might need to change to match the new collection. Is this a good idea? What is your opinion?
+
+---
+
+Your suggestion is good. Let's discuss it deeper. A collection is a type of series, so it should be placed in the content/series folder, right? And the query param slug can use the name of the collection file (just like using the series name as the series' URL). What about the posts list—what is the format? What do you think?
+
+---
+
+Yes, much better. Using 'slug' in the items list seems odd; would 'post' be better, or can you think of a better word? Also, what would the collection series and post URLs look like?
+
+---
+
+I agree with you; the post page's knowledge of the collection can be implemented later. besides, Currently, posts in a series and posts outside a series use the same URL style. We will refactor this later, but not right now; we can discuss it later. what do you think?
+
+---
+
+OK
+
+---
+
+now
+
+---
+
+add a collection sample to test it.

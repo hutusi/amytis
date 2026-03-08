@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "e1d60a8993a4",
+  "session_id": "368801ca-a471-4a08-89fb-332864d72c15",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-08T01:02:15.45881Z",
+  "branch": "fix-series",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "content/series/modern-web-dev/index.mdx",
+    "src/app/[slug]/[postSlug]/page.tsx",
+    "src/app/posts/[slug]/page.tsx",
+    "src/app/series/[slug]/page.tsx",
+    "src/app/series/[slug]/page/[page]/page.tsx",
+    "src/components/PostSidebar.tsx",
+    "src/components/SeriesCatalog.tsx",
+    "src/components/SeriesList.tsx",
+    "src/i18n/translations.ts",
+    "src/layouts/PostLayout.tsx",
+    "src/lib/markdown.ts",
+    "src/lib/urls.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "959095b12f86",
+  "token_usage": {
+    "input_tokens": 2326,
+    "cache_creation_tokens": 176719,
+    "cache_read_tokens": 5943965,
+    "output_tokens": 44253,
+    "api_call_count": 91
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-08T01:02:15.040288Z",
+    "agent_lines": 205,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 205,
+    "agent_percentage": 100
+  }
+}
