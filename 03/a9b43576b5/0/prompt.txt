@@ -1,0 +1,224 @@
+Is it a good idea to make the post card's cover image clickable and link it to the post page? I think it would be useful for mobile. What do you think?
+
+---
+
+The post card's image in the featured articles section is clickable, but others—like the latest writing, posts list page, and series page—are not clickable.
+
+---
+
+go ahead
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+the post card image in series page (post list of a series) is still not clickable.
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+On mobile, when there are only 2 featured series, the curated series section on the homepage looks odd. If there is 1 or more than 2, it looks okay.
+
+---
+
+I don't think this is ideal. It should follow the same layout pattern as when there are more than two series; otherwise, it isn't consistent. What do you think?
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+does the selected books has similar problems?
+
+---
+
+make two more sample books, I want to test.
+
+---
+
+/commit
+
+---
+
+I think the 'Selected Books' section should have the same style as the 'Curated Series' section. What do you think?
+
+---
+
+same shuffle as series, what do you think? if it more than 1 on mobile, more than 2 mo desktop. how to show them?
+
+---
+
+yes, so the site config need to update too, is it right?
+
+---
+
+but let think deeper, what is the "scrollThreshold" use for?
+
+---
+
+but if the items of featured series more than 2, it need to scroll, what does scrollThreshold used for in desktop?
+
+---
+
+no, you should not hard code to 2, the scroll button show or not should be decided by the items number and the screen size, right?
+
+---
+
+is the scrollThreshold option useless?
+
+---
+
+go ahead
+
+---
+
+/commit
+
+---
+
+does it need to add or update some tests?
+
+---
+
+On mobile, the post cards in the 'Latest Writing' section on the homepage seem too big. What do you think?
+
+---
+
+go ahead
+
+---
+
+the thumnail is not good, I think it can be similar as the secondary featured post card, but make the cover image at left. what do you think?
+
+---
+
+/commit
+
+---
+
+On a small phone, there are some display issues. I think the card's metadata should follow the style of the secondary featured post cards as well. Also, the series info should be removed. What do you think?
+
+---
+
+go ahead.
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+Let's take a look at the footer on mobile. Is it better to align it to the center? What do you think?
+
+---
+
+go ahead
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+check about the code reviews by coderabbit, PR #45
+
+---
+
+reply the comments
+
+---
+
+generate 4 more sample flows
+
+---
+
+/commit
+
+---
+
+check about the new code reviews by coderabbit, PR #45
+
+---
+
+lint faied: /Users/hutusi/workspace/ai/naive/amytis-claude-review/src/components/CuratedSeriesSection.tsx
+  37:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/hutusi/workspace/ai/naive/amytis-claude-review/src/components/CuratedSeriesSection.tsx:37:5
+  35 |   useEffect(() => {
+  36 |     const dailySeed = Math.floor(Date.now() / 86400000);
+> 37 |     setDisplayed(shuffleSeeded(allSeries, dailySeed).slice(0, maxItems));
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |   }, [allSeries, maxItems]);
+  39 |
+  40 |   const handleShuffle = useCallback(() => {  react-hooks/set-state-in-effect
+
+/Users/hutusi/workspace/ai/naive/amytis-claude-review/src/components/SelectedBooksSection.tsx
+  35:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/hutusi/workspace/ai/naive/amytis-claude-review/src/components/SelectedBooksSection.tsx:35:5
+  33 |   useEffect(() => {
+  34 |     const dailySeed = Math.floor(Date.now() / 86400000);
+> 35 |     setDisplayed(shuffleSeeded(books, dailySeed).slice(0, maxItems));
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |   }, [books, maxItems]);
+  37 |
+  38 |   const handleShuffle = useCallback(() => {  react-hooks/set-state-in-effect
+
+✖ 2 problems (2 errors, 0 warnings)
+
+error: script "lint" exited with code 1
+error: script "validate" exited with code 1
+
+---
+
+/commit
+
+---
+
+/commit
+
+---
+
+/commit
+
+---
+
+how about the code review by coderabbit? PR #45
