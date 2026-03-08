@@ -1,0 +1,20 @@
+I have config a redirectFrom for @content/posts/2026-01-12-the-art-of-algorithms.mdx but when I locate the redirect from url, it shows: Error: Page "/[slug]/page" is missing param "/[slug]" in "generateStaticParams()", which is required with "output: export" config.
+    at ignore-listed frames {
+  page: '/this-is-a-test-redirect-for-the-art-of-algorithms'
+}
+
+---
+
+how many segments supported?
+
+---
+
+why did 3+ segments not support?
+
+---
+
+OK
+
+---
+
+does it need add or update some tests?
