@@ -1,0 +1,16 @@
+"bun run validate" failed: ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/[slug]". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at Q (/Users/hutusi/workspace/ai/naive/amytis-claude-review/.next/server/chunks/ssr/ecda6_next_7618cdcc._.js:2:2111)
+    at o (/Users/hutusi/workspace/ai/naive/amytis-claude-review/.next/server/chunks/ssr/ecda6_next_7618cdcc._.js:4:5314)
+    at m (/Users/hutusi/workspace/ai/naive/amytis-claude-review/.next/server/chunks/ssr/src_components_aee36e37._.js:1:4422)
+    at an (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:84360)
+    at ai (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:86179)
+    at ai (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:104708)
+    at al (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:107953)
+    at as (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:105368)
+    at am (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:112882)
+    at au (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/next@16.1.6+0b46d155c3bc7d3e/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:109985)
+Error occurred prerendering page "/about". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /[slug]/page: /about, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null
+error: script "build:dev" exited with code 1
+error: script "validate" exited with code 1
