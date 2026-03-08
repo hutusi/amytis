@@ -1,0 +1,5 @@
+Please add a command to convert all the posts in a series when I want to configure 'autoPaths' to true, add 'redirectFrom' for them. is it a good idea? what do you think?
+
+---
+
+yes, also need to work for md post files.
