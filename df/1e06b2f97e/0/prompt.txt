@@ -1,0 +1,13 @@
+Is it worth adding this to all navigation menus when on that page? For example, on the posts page, if you click the 'Posts' menu in the navbar, it scrolls back to the top. What do you think?
+
+---
+
+To be honest, is it better to leave it as it is?
+
+---
+
+When I configure the hero as 'false' on the homepage, the featured articles section seems too close to the navbar; there is even no space between them. Other sections seem to have the same problem. What do you think?
+
+---
+
+When I configure the hero as 'false' on the homepage, the featured articles section seems too close to the navbar; there is even no space between them. Other sections seem to have the same problem. What do you think?
