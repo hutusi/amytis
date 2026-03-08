@@ -21,12 +21,15 @@ afterAll(() => {
 });
 
 describe('Tooling: add-series-redirects', () => {
+  // --auto-paths overrides site.config.ts so canonical URL becomes /[series]/[slug],
+  // which differs from the old /posts/[slug], triggering redirectFrom additions.
+
   test('adds redirectFrom to a flat .md series post', () => {
     fs.mkdirSync(SERIES_DIR, { recursive: true });
     const filePath = path.join(SERIES_DIR, 'flat-post.md');
     writePost(filePath, 'flat-post');
 
-    const result = spawnSync(['bun', SCRIPT, TEST_SERIES]);
+    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
     expect(result.exitCode).toBe(0);
 
     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
@@ -38,7 +41,7 @@ describe('Tooling: add-series-redirects', () => {
     const filePath = path.join(SERIES_DIR, 'flat-post.mdx');
     writePost(filePath, 'flat-post-mdx');
 
-    spawnSync(['bun', SCRIPT, TEST_SERIES]);
+    spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
 
     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
     expect(data.redirectFrom).toContain('/posts/flat-post');
@@ -50,7 +53,7 @@ describe('Tooling: add-series-redirects', () => {
     const filePath = path.join(postDir, 'index.md');
     writePost(filePath, 'folder-post');
 
-    spawnSync(['bun', SCRIPT, TEST_SERIES]);
+    spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
 
     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
     expect(data.redirectFrom).toContain('/posts/folder-post');
@@ -61,8 +64,8 @@ describe('Tooling: add-series-redirects', () => {
     const filePath = path.join(SERIES_DIR, 'idempotent-post.md');
     writePost(filePath, 'idempotent-post');
 
-    spawnSync(['bun', SCRIPT, TEST_SERIES]);
-    spawnSync(['bun', SCRIPT, TEST_SERIES]);
+    spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
+    spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
 
     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
     const entries = (data.redirectFrom ?? []).filter((e: string) => e === '/posts/idempotent-post');
@@ -75,7 +78,7 @@ describe('Tooling: add-series-redirects', () => {
     writePost(filePath, 'dryrun-post');
     const originalContent = fs.readFileSync(filePath, 'utf8');
 
-    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--dry-run']);
+    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths', '--dry-run']);
     expect(result.exitCode).toBe(0);
 
     const afterContent = fs.readFileSync(filePath, 'utf8');
@@ -87,20 +90,18 @@ describe('Tooling: add-series-redirects', () => {
     const filePath = path.join(SERIES_DIR, 'dryrun-mention.md');
     writePost(filePath, 'dryrun-mention');
 
-    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--dry-run']);
+    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths', '--dry-run']);
     const output = result.stdout.toString();
     expect(output).toContain('dryrun-mention');
     expect(output).toContain('/posts/dryrun-mention');
   });
 
-  test('skips posts whose canonical URL already matches /posts/[slug]', () => {
-    // A post without a series (added to content/posts/) is not affected.
-    // Simulate by writing a post with redirectFrom already set.
+  test('skips posts whose redirectFrom already contains the old path', () => {
     fs.mkdirSync(SERIES_DIR, { recursive: true });
     const filePath = path.join(SERIES_DIR, 'already-done.md');
     writePost(filePath, 'already-done', { redirectFrom: ['/posts/already-done'] });
 
-    const result = spawnSync(['bun', SCRIPT, TEST_SERIES]);
+    const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--auto-paths']);
     expect(result.exitCode).toBe(0);
     const output = result.stdout.toString();
     expect(output).toContain('[skip]');

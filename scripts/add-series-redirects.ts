@@ -6,19 +6,23 @@
  * post's `redirectFrom` frontmatter field so static redirect pages are generated.
  *
  * Usage:
- *   bun run add-series-redirects                  # all series
- *   bun run add-series-redirects my-series        # one specific series
- *   bun run add-series-redirects --dry-run        # preview without writing
+ *   bun run add-series-redirects                           # all series
+ *   bun run add-series-redirects my-series                 # one specific series
+ *   bun run add-series-redirects --dry-run                 # preview without writing
  *   bun run add-series-redirects my-series --dry-run
+ *   bun run add-series-redirects --auto-paths              # treat autoPaths as true regardless of config
  */
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { siteConfig } from '../site.config';
-import { getPostUrl, getPostsBasePath } from '../src/lib/urls';
+import { getPostUrl, getPostsBasePath, getSeriesCustomPaths } from '../src/lib/urls';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+// --auto-paths: override config and treat autoPaths as true for this run.
+// Useful when you want to preview/apply redirects before updating site.config.ts.
+const overrideAutoPaths = args.includes('--auto-paths');
 const targetSeries = args.find(a => !a.startsWith('--'));
 
 const postsDir = path.join(process.cwd(), 'content', 'posts');
@@ -91,11 +95,22 @@ function collectFromPostsDir(filterSeries?: string): PostFile[] {
   return results;
 }
 
+/** Returns the canonical URL for a post, respecting the --auto-paths override. */
+function computeCanonicalUrl(slug: string, seriesSlug: string): string {
+  if (overrideAutoPaths) {
+    const customPaths = getSeriesCustomPaths();
+    const customPath = customPaths[seriesSlug];
+    if (customPath) return `/${customPath}/${slug}`;
+    return `/${seriesSlug}/${slug}`;
+  }
+  return getPostUrl({ slug, series: seriesSlug });
+}
+
 /** Process one post file — add redirectFrom if needed. Returns true if the file was (or would be) updated. */
 function processPost({ filePath, slug, seriesSlug }: PostFile): boolean {
   const basePath = getPostsBasePath();
   const oldPath = `/${basePath}/${slug}`;
-  const canonicalUrl = getPostUrl({ slug, series: seriesSlug });
+  const canonicalUrl = computeCanonicalUrl(slug, seriesSlug);
 
   if (canonicalUrl === oldPath) {
     console.log(`  [skip] ${slug} — already at canonical path`);
