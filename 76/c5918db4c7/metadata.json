@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "76c5918db4c7",
+  "strategy": "manual-commit",
+  "branch": "fix-mobile",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "site.config.example.ts",
+    "site.config.ts",
+    "src/app/page.tsx",
+    "src/components/CuratedSeriesSection.tsx",
+    "src/components/HorizontalScroll.tsx",
+    "src/components/SelectedBooksSection.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/76/c5918db4c7/0/metadata.json",
+      "transcript": "/76/c5918db4c7/0/full.jsonl",
+      "content_hash": "/76/c5918db4c7/0/content_hash.txt",
+      "prompt": "/76/c5918db4c7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 286,
+    "cache_creation_tokens": 358549,
+    "cache_read_tokens": 5759136,
+    "output_tokens": 36840,
+    "api_call_count": 90
+  }
+}
