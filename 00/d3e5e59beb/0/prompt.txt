@@ -1,0 +1,13 @@
+Do you think the spacing between each adjacent section is appropriate?
+
+---
+
+is it worth to fix?
+
+---
+
+but may be the flow and the books is not be configured. some blog may not need them.
+
+---
+
+go ahead
