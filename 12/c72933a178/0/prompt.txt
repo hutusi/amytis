@@ -1,0 +1,13 @@
+Let's look at the plan for the next step.
+
+---
+
+what does this mean: A visible fallback link ?
+
+---
+
+OK, and is there any better name for "redirectFrom"?
+
+---
+
+OK

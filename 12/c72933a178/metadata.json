@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "12c72933a178",
+  "strategy": "manual-commit",
+  "branch": "fix-url",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "CLAUDE.md",
+    "src/app/[slug]/[postSlug]/page.tsx",
+    "src/app/posts/[slug]/page.tsx",
+    "src/components/RedirectPage.tsx",
+    "src/lib/markdown.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/12/c72933a178/0/metadata.json",
+      "transcript": "/12/c72933a178/0/full.jsonl",
+      "content_hash": "/12/c72933a178/0/content_hash.txt",
+      "prompt": "/12/c72933a178/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 800,
+    "cache_creation_tokens": 117468,
+    "cache_read_tokens": 2773168,
+    "output_tokens": 19456,
+    "api_call_count": 31
+  }
+}
