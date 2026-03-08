@@ -6,7 +6,7 @@ import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded } from '@/lib/shuffle';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
 
 export interface SeriesItem {
   name: string;
@@ -21,10 +21,9 @@ export interface SeriesItem {
 interface CuratedSeriesSectionProps {
   allSeries: SeriesItem[];
   maxItems: number;
-  scrollThreshold: number;
 }
 
-export default function CuratedSeriesSection({ allSeries, maxItems, scrollThreshold }: CuratedSeriesSectionProps) {
+export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
   // Use a daily seed so SSR and client hydration agree on the initial order,
   // preventing a visible reshuffle flash on page load.
@@ -47,7 +46,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
           {allSeries.length > maxItems && (
             <button
               onClick={handleShuffle}
-              className="text-sm text-muted hover:text-accent transition-colors focus:outline-none"
+              className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
               aria-label={t('shuffle_series')}
               title={t('shuffle_series')}
             >
@@ -56,21 +55,18 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
               </svg>
             </button>
           )}
-          <Link href="/series" className="text-sm text-muted hover:text-accent transition-colors no-underline">
+          <Link href={getSeriesListUrl()} className="text-sm text-muted hover:text-accent transition-colors no-underline">
             {t('all_series')} →
           </Link>
         </div>
       </div>
-      <HorizontalScroll
-        itemCount={displayed.length}
-        scrollThreshold={scrollThreshold}
-      >
-        <div className={`flex gap-8 ${displayed.length > scrollThreshold ? 'pb-4' : ''}`}>
+      <HorizontalScroll>
+        <div className={`flex gap-8 ${displayed.length > 1 ? 'pb-4' : ''}`}>
           {displayed.map((series, idx) => (
             <div
               key={series.name}
               className={`card-base group flex flex-col p-0 overflow-hidden snap-start ${
-                displayed.length > scrollThreshold
+                displayed.length > 1
                   ? 'w-[85vw] md:w-[calc(50%-1rem)] flex-shrink-0'
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}

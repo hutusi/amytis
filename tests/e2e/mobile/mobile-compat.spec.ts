@@ -404,4 +404,62 @@ test.describe('Mobile Compatibility', () => {
       expect(await hasNoHorizontalOverflow(page)).toBe(true);
     });
   });
+
+  // ── Post list cover image links ────────────────────────────────────────────
+  test.describe('Post list cover image links', () => {
+    test('cover image in post list is wrapped in a link', async ({ page }) => {
+      await page.goto('/posts');
+      await page.waitForLoadState('load');
+
+      // Find the first cover image inside the post list and check its parent link
+      const imageLink = page.locator('article a:has(img)').first();
+      await expect(imageLink).toHaveAttribute('href', /.+/);
+    });
+
+    test('clicking post list cover image navigates to post page', async ({ page }) => {
+      await page.goto('/posts');
+      await page.waitForLoadState('load');
+
+      const imageLink = page.locator('article a:has(img)').first();
+      const href = await imageLink.getAttribute('href');
+      if (!href) { test.skip(); return; }
+
+      await imageLink.click();
+      await page.waitForLoadState('domcontentloaded');
+      expect(page.url()).toContain(href);
+    });
+
+    test('cover image in series catalog is wrapped in a link', async ({ page }) => {
+      await page.goto('/series');
+      await page.waitForLoadState('load');
+      const seriesLink = page.locator('a[href^="/series/"]').first();
+      const seriesHref = await seriesLink.getAttribute('href');
+      if (!seriesHref) { test.skip(); return; }
+
+      await page.goto(seriesHref);
+      await page.waitForLoadState('load');
+
+      const imageLink = page.locator('article a:has(img)').first();
+      await expect(imageLink).toHaveAttribute('href', /.+/);
+    });
+
+    test('clicking series catalog cover image navigates to post page', async ({ page }) => {
+      await page.goto('/series');
+      await page.waitForLoadState('load');
+      const seriesLink = page.locator('a[href^="/series/"]').first();
+      const seriesHref = await seriesLink.getAttribute('href');
+      if (!seriesHref) { test.skip(); return; }
+
+      await page.goto(seriesHref);
+      await page.waitForLoadState('load');
+
+      const imageLink = page.locator('article a:has(img)').first();
+      const href = await imageLink.getAttribute('href');
+      if (!href) { test.skip(); return; }
+
+      await imageLink.click();
+      await page.waitForLoadState('domcontentloaded');
+      expect(page.url()).toContain(href);
+    });
+  });
 });

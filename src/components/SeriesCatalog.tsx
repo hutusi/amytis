@@ -46,14 +46,16 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, colle
                 <div className="flex flex-col sm:flex-row">
                   {/* Thumbnail */}
                   <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 overflow-hidden bg-muted/10">
-                    <CoverImage
-                      src={post.coverImage}
-                      title={post.title}
-                      slug={post.slug}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                    <Link href={postHref(post)} className="relative z-10 block h-full w-full" tabIndex={-1} aria-hidden>
+                      <CoverImage
+                        src={post.coverImage}
+                        title={post.title}
+                        slug={post.slug}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </Link>
                     {/* Mobile number badge */}
-                    <div className="absolute top-3 left-3 md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-background/90 backdrop-blur border border-muted/20">
+                    <div className="absolute top-3 left-3 z-10 md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-background/90 backdrop-blur border border-muted/20">
                       <span className="text-xs font-mono font-bold text-muted">
                         {padNumber(startIndex + index + 1)}
                       </span>

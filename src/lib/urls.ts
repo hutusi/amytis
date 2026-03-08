@@ -71,6 +71,11 @@ export function getPostsPageUrl(page: number): string {
   return `/${getPostsBasePath()}/page/${page}`;
 }
 
+/** Returns the series listing URL. */
+export function getSeriesListUrl(): string {
+  return '/series';
+}
+
 /** Returns the books listing URL. */
 export function getBooksListUrl(): string {
   return '/books';

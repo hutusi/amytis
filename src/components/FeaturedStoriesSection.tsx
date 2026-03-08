@@ -80,7 +80,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
         {canShuffle && (
           <button
             onClick={handleShuffle}
-            className="text-sm text-muted hover:text-accent transition-colors focus:outline-none"
+            className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
             aria-label={t('shuffle_posts')}
             title={t('shuffle_posts')}
           >

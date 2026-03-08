@@ -16,7 +16,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10 lg:mb-12">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4 group no-underline">
+            <Link href="/" className="flex items-center justify-center lg:justify-start gap-2 mb-4 group no-underline">
               <svg
                 viewBox="0 0 32 32"
                 className="w-6 h-6 text-accent group-hover:rotate-12 transition-transform duration-300"
@@ -34,13 +34,13 @@ export default function Footer() {
               </svg>
               <span className="font-serif font-bold text-lg text-heading">{resolveLocaleValue(siteConfig.title, language)}</span>
             </Link>
-            <p className="text-sm text-muted leading-relaxed max-w-sm">
+            <p className="text-sm text-muted leading-relaxed max-w-sm mx-auto text-center lg:mx-0 lg:text-left">
               {resolveLocaleValue(siteConfig.description, language)}
             </p>
           </div>
           
           {/* Navigation */}
-          <div>
+          <div className="text-center lg:text-left">
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('explore')}</h4>
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
@@ -59,7 +59,7 @@ export default function Footer() {
           </div>
 
           {/* Connect */}
-          <div>
+          <div className="text-center lg:text-left">
             <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('connect')}</h4>
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
@@ -67,7 +67,7 @@ export default function Footer() {
                 const key = item.name.toLowerCase() as TranslationKey;
                 const translated = t(key);
                 const label = translated !== key ? translated : item.name;
-                const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center gap-2";
+                const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center justify-center lg:justify-start gap-2";
                 return (
                   <li key={item.url}>
                     {isExternal ? (

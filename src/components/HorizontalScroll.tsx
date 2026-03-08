@@ -4,15 +4,11 @@ import { useRef, useState, useEffect, ReactNode, useCallback } from 'react';
 
 interface HorizontalScrollProps {
   children: ReactNode;
-  itemCount: number;
-  scrollThreshold: number;
   className?: string;
 }
 
 export default function HorizontalScroll({
   children,
-  itemCount,
-  scrollThreshold,
   className = ''
 }: HorizontalScrollProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -20,7 +16,7 @@ export default function HorizontalScroll({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const shouldShowArrows = itemCount > scrollThreshold;
+  const hasOverflow = canScrollLeft || canScrollRight;
 
   const updateScrollState = useCallback(() => {
     if (!scrollRef.current) return;
@@ -54,7 +50,6 @@ export default function HorizontalScroll({
     });
   }, []);
 
-  // Handle keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft' && canScrollLeft) {
       e.preventDefault();
@@ -65,10 +60,6 @@ export default function HorizontalScroll({
     }
   }, [canScrollLeft, canScrollRight, scroll]);
 
-  if (!shouldShowArrows) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
     <div
       ref={containerRef}
@@ -78,10 +69,10 @@ export default function HorizontalScroll({
       role="region"
       aria-label="Scrollable content"
     >
-      {/* Left Arrow - positioned outside content in margin area */}
+      {/* Left Arrow */}
       <button
         onClick={() => scroll('left')}
-        className={`absolute -left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute -left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 ${hasOverflow ? 'hidden md:flex' : 'hidden'} items-center justify-center ${
           canScrollLeft
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed opacity-50'
@@ -104,10 +95,10 @@ export default function HorizontalScroll({
         {children}
       </div>
 
-      {/* Right Arrow - positioned outside content in margin area */}
+      {/* Right Arrow */}
       <button
         onClick={() => scroll('right')}
-        className={`absolute -right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 hidden md:flex items-center justify-center ${
+        className={`absolute -right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-muted/20 rounded-full shadow-lg transition-all duration-200 ${hasOverflow ? 'hidden md:flex' : 'hidden'} items-center justify-center ${
           canScrollRight
             ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed opacity-50'
