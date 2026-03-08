@@ -59,3 +59,8 @@ export function getFlowUrl(slug: string): string {
 export function getStaticPageUrl(slug: string): string {
   return `/${slug}`;
 }
+
+/** Returns the post URL with a ?collection= query param to preserve collection navigation context. */
+export function getPostUrlInCollection(post: { slug: string; series?: string }, collectionSlug: string): string {
+  return `${getPostUrl(post)}?collection=${collectionSlug}`;
+}

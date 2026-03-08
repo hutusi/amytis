@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { PostData } from '@/lib/markdown';
 import CoverImage from './CoverImage';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';
 import { t } from '@/lib/i18n';
 
@@ -9,10 +9,13 @@ interface SeriesCatalogProps {
   posts: PostData[];
   startIndex?: number;
   totalPosts?: number;
+  collectionSlug?: string;
 }
 
-export default function SeriesCatalog({ posts, startIndex = 0, totalPosts }: SeriesCatalogProps) {
+export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, collectionSlug }: SeriesCatalogProps) {
   const total = totalPosts ?? posts.length;
+  const postHref = (post: PostData) =>
+    collectionSlug ? getPostUrlInCollection(post, collectionSlug) : getPostUrl(post);
   return (
     <div className="relative">
       {/* Timeline connector line */}
@@ -23,7 +26,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts }: Ser
           <article key={post.slug} className="group relative">
             {/* Cover link — sits above card content via z-index, tag links use z-10 to appear above it */}
             <Link
-              href={getPostUrl(post)}
+              href={postHref(post)}
               className="absolute inset-0 z-0 rounded-2xl"
               aria-label={post.title}
             />

@@ -1,4 +1,4 @@
-import { getSeriesData, getSeriesPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
@@ -46,7 +46,8 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const slug = decodeURIComponent(rawSlug);
   const page = parseInt(pageStr);
   const seriesData = getSeriesData(slug);
-  const allPosts = getSeriesPosts(slug);
+  const isCollection = seriesData?.type === 'collection';
+  const allPosts = isCollection ? getCollectionPosts(slug) : getSeriesPosts(slug);
 
   if ((!seriesData && allPosts.length === 0) || (process.env.NODE_ENV === 'production' && seriesData?.draft)) {
     notFound();
@@ -86,7 +87,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
         <div className="text-center max-w-2xl mx-auto">
           <span className="badge-accent mb-4">
-            {t('series')} • {allPosts.length} {t('parts')}
+            {isCollection ? t('collection') : t('series')} • {allPosts.length} {t('parts')}
           </span>
           <h1 className="page-title mb-2">{title}</h1>
           <p className="text-base text-muted font-sans mt-1 mb-4">{tWith('page_of_total', { page, total: totalPages })}</p>
@@ -115,7 +116,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
       </header>
 
       {/* Series Catalog */}
-      <SeriesCatalog posts={posts} startIndex={startIndex} totalPosts={allPosts.length} />
+      <SeriesCatalog posts={posts} startIndex={startIndex} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
 
       <div className="mt-12">
         <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { PostData, Heading } from '@/lib/markdown';
-import { getPostUrl } from '@/lib/urls';
+import { PostData, Heading, CollectionContext } from '@/lib/markdown';
+import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { useLanguage } from './LanguageProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
 import { padNumber } from '@/lib/format-utils';
@@ -15,6 +16,7 @@ interface PostSidebarProps {
   seriesSlug?: string;
   seriesTitle?: string;
   posts?: PostData[];
+  collectionContexts?: CollectionContext[];
   currentSlug: string;
   headings: Heading[];
   localeHeadings?: Record<string, Heading[]>;
@@ -35,16 +37,33 @@ function getVisibleIndices(total: number, current: number): (number | 'ellipsis'
   return result;
 }
 
-export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlug, headings, localeHeadings, shareUrl, shareTitle }: PostSidebarProps) {
+export default function PostSidebar({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug, headings, localeHeadings, shareUrl, shareTitle }: PostSidebarProps) {
   const { t, language } = useLanguage();
-  const activeHeadings = localeHeadings?.[language] ?? headings;
-  const hasSeries = !!(seriesSlug && posts && posts.length > 0);
-  const currentIndex = hasSeries ? posts!.findIndex(p => p.slug === currentSlug) : -1;
-  // Chronological sort (ascending date) — used for both progress counter and isPast styling
-  const sortedPosts = hasSeries
-    ? [...posts!].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const searchParams = useSearchParams();
+  const collectionParam = searchParams.get('collection');
+  const activeCollection = collectionParam
+    ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
     : null;
-  const progressIndex = hasSeries ? sortedPosts!.findIndex(p => p.slug === currentSlug) : -1;
+
+  const effectiveSlug = activeCollection?.slug ?? seriesSlug;
+  const effectiveTitle = activeCollection?.title ?? seriesTitle;
+  const effectivePosts = activeCollection?.posts ?? posts;
+  const isCollectionContext = !!activeCollection;
+
+  const postHref = (post: PostData) =>
+    isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
+
+  const activeHeadings = localeHeadings?.[language] ?? headings;
+  const hasSeries = !!(effectiveSlug && effectivePosts && effectivePosts.length > 0);
+  const currentIndex = hasSeries ? effectivePosts!.findIndex(p => p.slug === currentSlug) : -1;
+  // Chronological sort (ascending date) — used for progress counter and isPast styling in series mode.
+  // In collection mode, use the collection's defined order directly.
+  const sortedPosts = hasSeries && !isCollectionContext
+    ? [...effectivePosts!].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    : null;
+  const progressIndex = hasSeries
+    ? (sortedPosts ? sortedPosts.findIndex(p => p.slug === currentSlug) : currentIndex)
+    : -1;
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [seriesCollapsed, setSeriesCollapsed] = useState(false);
@@ -62,23 +81,23 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
         className={`mb-6 ${hasSeries ? 'pb-4 border-b border-muted/10' : ''}`}
       />
 
-      {/* Series section — below TOC */}
+      {/* Series / Collection section — below TOC */}
       {hasSeries && (
         <div>
           {/* Header — always visible */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
-                {t('series')}
+                {isCollectionContext ? t('collection') : t('series')}
               </span>
               <span className="text-[10px] font-mono text-muted/60">
-                {progressIndex >= 0 ? progressIndex + 1 : '?'} / {posts!.length}
+                {progressIndex >= 0 ? progressIndex + 1 : '?'} / {effectivePosts!.length}
               </span>
             </div>
             <div className="flex items-start justify-between gap-2">
-              <Link href={`/series/${seriesSlug}`} className="group block no-underline flex-1 min-w-0">
+              <Link href={`/series/${effectiveSlug}`} className="group block no-underline flex-1 min-w-0">
                 <h3 className="font-serif font-bold text-heading text-base leading-snug group-hover:text-accent transition-colors">
-                  {seriesTitle}
+                  {effectiveTitle}
                 </h3>
               </Link>
               <button
@@ -101,7 +120,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
             <>
               <nav aria-label="Series navigation" className="mb-4 animate-slide-down">
                 <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-muted/15">
-                  {getVisibleIndices(posts!.length, currentIndex).map((item, i) => {
+                  {getVisibleIndices(effectivePosts!.length, currentIndex).map((item, i) => {
                     if (item === 'ellipsis') {
                       return (
                         <li key={`ellipsis-${i}`} className="flex items-center py-1 pl-3">
@@ -109,7 +128,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                         </li>
                       );
                     }
-                    const post = posts![item];
+                    const post = effectivePosts![item];
                     const isCurrent = post.slug === currentSlug;
                     const chronoIndex = sortedPosts ? sortedPosts.findIndex(p => p.slug === post.slug) : item;
                     const isPast = chronoIndex < progressIndex;
@@ -117,7 +136,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
                     return (
                       <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
                         <Link
-                          href={getPostUrl(post)}
+                          href={postHref(post)}
                           className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
                             isCurrent ? 'bg-accent/5' : 'hover:bg-muted/5'
                           }`}
@@ -151,10 +170,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, currentSlu
               </nav>
 
               <Link
-                href={`/series/${seriesSlug}`}
+                href={`/series/${effectiveSlug}`}
                 className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
               >
-                {t('view_full_series')}
+                {isCollectionContext ? t('view_full_collection') : t('view_full_series')}
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>

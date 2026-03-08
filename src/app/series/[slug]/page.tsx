@@ -1,4 +1,4 @@
-import { getSeriesData, getSeriesPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
@@ -7,7 +7,7 @@ import { siteConfig } from '../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -65,7 +65,8 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
   const seriesData = getSeriesData(slug);
-  const allPosts = getSeriesPosts(slug);
+  const isCollection = seriesData?.type === 'collection';
+  const allPosts = isCollection ? getCollectionPosts(slug) : getSeriesPosts(slug);
 
   if ((!seriesData && allPosts.length === 0) || (process.env.NODE_ENV === 'production' && seriesData?.draft)) {
     notFound();
@@ -99,7 +100,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
         <div className="text-center max-w-2xl mx-auto">
           <span className="badge-accent mb-4">
-            {t('series')} • {allPosts.length} {t('parts')}
+            {isCollection ? t('collection') : t('series')} • {allPosts.length} {t('parts')}
           </span>
           <h1 className="page-title mb-4">
             {title}
@@ -112,12 +113,12 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
           {allPosts.length > 0 && (() => {
             // Pick the first installment respecting sort order:
             // date-desc (default) → oldest is last; date-asc/manual → oldest/first is [0]
-            const firstPost = (seriesData?.sort === 'date-asc' || seriesData?.sort === 'manual')
+            const firstPost = (seriesData?.sort === 'date-asc' || seriesData?.sort === 'manual' || isCollection)
               ? allPosts[0]
               : allPosts[allPosts.length - 1];
             return (
             <Link
-              href={getPostUrl(firstPost)}
+              href={isCollection ? getPostUrlInCollection(firstPost, slug) : getPostUrl(firstPost)}
               className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors no-underline"
             >
               {t('start_reading')}
@@ -147,7 +148,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
       </header>
 
       {/* Series Catalog */}
-      <SeriesCatalog posts={posts} totalPosts={allPosts.length} />
+      <SeriesCatalog posts={posts} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
 
       {totalPages > 1 && (
         <div className="mt-12">

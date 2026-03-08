@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, PostData } from '@/lib/markdown';
+import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, getCollectionsForPost, PostData } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -124,6 +124,7 @@ export default async function PostPage({
   const { prev, next } = getAdjacentPosts(slug);
   const slugRegistry = buildSlugRegistry();
   const backlinks = getBacklinks(slug);
+  const collectionContexts = getCollectionsForPost(slug);
   let seriesPosts: PostData[] = [];
   let seriesTitle: string | undefined;
 
@@ -136,7 +137,7 @@ export default async function PostPage({
   return (
     <>
       {jsonLdScript}
-      <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} prevPost={prev} nextPost={next} backlinks={backlinks} slugRegistry={slugRegistry} />
+      <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} collectionContexts={collectionContexts} prevPost={prev} nextPost={next} backlinks={backlinks} slugRegistry={slugRegistry} />
     </>
   );
 }

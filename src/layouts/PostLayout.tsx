@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { getAuthorSlug, PostData, BacklinkSource, SlugRegistryEntry } from '@/lib/markdown';
+import { Suspense } from 'react';
+import { getAuthorSlug, PostData, BacklinkSource, SlugRegistryEntry, CollectionContext } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
@@ -22,6 +23,7 @@ interface PostLayoutProps {
   relatedPosts?: PostData[];
   seriesPosts?: PostData[];
   seriesTitle?: string;
+  collectionContexts?: CollectionContext[];
   prevPost?: PostData | null;
   nextPost?: PostData | null;
   backlinks?: BacklinkSource[];
@@ -29,10 +31,11 @@ interface PostLayoutProps {
   commentCategory?: 'posts' | 'staticPages';
 }
 
-export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, prevPost, nextPost, backlinks, slugRegistry, commentCategory = 'posts' }: PostLayoutProps) {
+export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitle, collectionContexts, prevPost, nextPost, backlinks, slugRegistry, commentCategory = 'posts' }: PostLayoutProps) {
   const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
-  const showSidebar = showToc || hasSeries;
+  const hasCollections = !!(collectionContexts && collectionContexts.length > 0);
+  const showSidebar = showToc || hasSeries || hasCollections;
   const isStaticPage = commentCategory === 'staticPages';
   const postUrl = isStaticPage
     ? `${siteConfig.baseUrl.replace(/\/+$/, '')}${getStaticPageUrl(post.slug)}`
@@ -48,15 +51,18 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
       }>
         {/* Left sidebar: series nav + page TOC */}
         {showSidebar && (
-          <PostSidebar
-            seriesSlug={hasSeries ? post.series : undefined}
-            seriesTitle={hasSeries ? (seriesTitle || post.series) : undefined}
-            posts={hasSeries ? seriesPosts : undefined}
-            currentSlug={post.slug}
-            headings={showToc ? post.headings : []}
-            shareUrl={postUrl}
-            shareTitle={post.title}
-          />
+          <Suspense fallback={null}>
+            <PostSidebar
+              seriesSlug={hasSeries ? post.series : undefined}
+              seriesTitle={hasSeries ? (seriesTitle || post.series) : undefined}
+              posts={hasSeries ? seriesPosts : undefined}
+              collectionContexts={collectionContexts}
+              currentSlug={post.slug}
+              headings={showToc ? post.headings : []}
+              shareUrl={postUrl}
+              shareTitle={post.title}
+            />
+          </Suspense>
         )}
 
         <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
@@ -122,9 +128,11 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             )}
           </header>
 
-          {hasSeries && (
+          {(hasSeries || (collectionContexts && collectionContexts.length > 0)) && (
             <div className="lg:hidden mb-12">
-              <SeriesList seriesSlug={post.series!} seriesTitle={seriesTitle || post.series!} posts={seriesPosts!} currentSlug={post.slug} />
+              <Suspense fallback={null}>
+                <SeriesList seriesSlug={hasSeries ? post.series! : undefined} seriesTitle={hasSeries ? (seriesTitle || post.series!) : undefined} posts={hasSeries ? seriesPosts! : undefined} collectionContexts={collectionContexts} currentSlug={post.slug} />
+              </Suspense>
             </div>
           )}
 
