@@ -1,0 +1,46 @@
+2 mobile tests failed: 1) [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:56:11 › Mobile Compatibility › No horizontal overflow › /archive has no horizontal overflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.evaluate: Test timeout of 30000ms exceeded.
+
+       6 | /** Returns true if the page has no horizontal scrollbar (no overflow). */
+       7 | async function hasNoHorizontalOverflow(page: Page): Promise<boolean> {
+    >  8 |   return page.evaluate(
+         |               ^
+       9 |     () => document.documentElement.scrollWidth <= window.innerWidth,
+      10 |   );
+      11 | }
+        at hasNoHorizontalOverflow (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:8:15)
+        at /Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:59:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-caebe--has-no-horizontal-overflow-iPhone-SE/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-caebe--has-no-horizontal-overflow-iPhone-SE/error-context.md
+
+  2) [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:63:9 › Mobile Compatibility › No horizontal overflow › post page has no horizontal overflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+
+      63 |     test('post page has no horizontal overflow', async ({ page }) => {
+      64 |       await page.goto(`/${getPostsBasePath()}/kitchen-sink`);
+    > 65 |       await page.waitForLoadState('networkidle');
+         |                  ^
+      66 |       expect(await hasNoHorizontalOverflow(page)).toBe(true);
+      67 |     });
+      68 |   });
+        at /Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/e2e/mobile/mobile-compat.spec.ts:65:18
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/mobile-compat-Mobile-Compa-20feb--has-no-horizontal-overflow-iPhone-SE/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/mobile-compat-Mobile-Compa-20feb--has-no-horizontal-overflow-iPhone-SE/error-context.md
+
+  2 failed
+    [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:56:11 › Mobile Compatibility › No horizontal overflow › /archive has no horizontal overflow 
+    [iPhone SE] › tests/e2e/mobile/mobile-compat.spec.ts:63:9 › Mobile Compatibility › No horizontal overflow › post page has no horizontal overflow
