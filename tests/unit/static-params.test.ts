@@ -88,7 +88,7 @@ beforeAll(() => {
   mock.module('@/lib/markdown', () => ({
     getAllFlows: () => [],
     getAllNotes: () => mockedNotes,
-    getAllPosts: () => mockedPosts,
+    getAllPosts: () => mockedPosts.filter(p => !(process.env.NODE_ENV === 'production' && p.draft)),
     getAllBooks: () => [],
     getAllSeries: () => mockedSeries,
     getAllTags: () => ({}),
@@ -339,6 +339,14 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/[slug]/page');
       const params = await generateStaticParams();
       expect(params).not.toContainEqual({ slug: 'old-prefix' });
+    });
+
+    test('[slug]/page does not include single-segment redirectFrom for draft posts in production', async () => {
+      mockedPosts = [{ slug: 'my-post', draft: true, redirectFrom: ['/old-slug'] }];
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).not.toContainEqual({ slug: 'old-slug' });
     });
   });
 

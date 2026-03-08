@@ -77,21 +77,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  // Single-segment redirectFrom
+  const page = getPageBySlug(slug);
+  if (page) {
+    return {
+      title: `${page.title} | ${resolveLocale(siteConfig.title)}`,
+      description: page.excerpt,
+    };
+  }
+
+  // Single-segment redirectFrom — only if no real page exists for this slug
   const redirectPost = getAllPosts().find(p => p.redirectFrom?.includes(`/${slug}`));
   if (redirectPost) {
     return { title: redirectPost.title };
   }
 
-  const page = getPageBySlug(slug);
-  if (!page) {
-    return { title: 'Page Not Found' };
-  }
-
-  return {
-    title: `${page.title} | ${resolveLocale(siteConfig.title)}`,
-    description: page.excerpt,
-  };
+  return { title: 'Page Not Found' };
 }
 
 export default async function Page({
@@ -211,16 +211,15 @@ export default async function Page({
     );
   }
 
-  // Check if slug is a single-segment redirectFrom path
-  const redirectPost = getAllPosts().find(p => p.redirectFrom?.includes(`/${slug}`));
-  if (redirectPost) {
-    return <RedirectPage to={getPostUrl(redirectPost)} />;
-  }
-
-  // Default: static page
+  // Default: static page — check this before redirectFrom to prevent aliased slugs from hijacking real pages
   const page = getPageBySlug(slug);
 
   if (!page) {
+    // Single-segment redirectFrom — only if no real page exists for this slug
+    const redirectPost = getAllPosts().find(p => p.redirectFrom?.includes(`/${slug}`));
+    if (redirectPost) {
+      return <RedirectPage to={getPostUrl(redirectPost)} />;
+    }
     notFound();
   }
 
