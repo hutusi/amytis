@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "b2b90c180146",
+  "strategy": "manual-commit",
+  "branch": "fix-url",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "scripts/add-series-redirects.ts",
+    "tests/tooling/add-series-redirects.test.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b2/b90c180146/0/metadata.json",
+      "transcript": "/b2/b90c180146/0/full.jsonl",
+      "content_hash": "/b2/b90c180146/0/content_hash.txt",
+      "prompt": "/b2/b90c180146/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 52,
+    "cache_creation_tokens": 83016,
+    "cache_read_tokens": 1064522,
+    "output_tokens": 8626,
+    "api_call_count": 18
+  }
+}

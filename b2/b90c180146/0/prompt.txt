@@ -1,0 +1,60 @@
+5 tests failed: tests/tooling/add-series-redirects.test.ts:
+28 | 
+29 |     const result = spawnSync(['bun', SCRIPT, TEST_SERIES]);
+30 |     expect(result.exitCode).toBe(0);
+31 | 
+32 |     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
+33 |     expect(data.redirectFrom).toContain('/posts/flat-post');
+                                   ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/tooling/add-series-redirects.test.ts:33:31)
+✗ Tooling: add-series-redirects > adds redirectFrom to a flat .md series post [54.31ms]
+39 |     writePost(filePath, 'flat-post-mdx');
+40 | 
+41 |     spawnSync(['bun', SCRIPT, TEST_SERIES]);
+42 | 
+43 |     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
+44 |     expect(data.redirectFrom).toContain('/posts/flat-post');
+                                   ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/tooling/add-series-redirects.test.ts:44:31)
+✗ Tooling: add-series-redirects > adds redirectFrom to a flat .mdx series post [56.33ms]
+51 |     writePost(filePath, 'folder-post');
+52 | 
+53 |     spawnSync(['bun', SCRIPT, TEST_SERIES]);
+54 | 
+55 |     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
+56 |     expect(data.redirectFrom).toContain('/posts/folder-post');
+                                   ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/tooling/add-series-redirects.test.ts:56:31)
+✗ Tooling: add-series-redirects > adds redirectFrom to a folder-based series post (index.md) [42.88ms]
+64 |     spawnSync(['bun', SCRIPT, TEST_SERIES]);
+65 |     spawnSync(['bun', SCRIPT, TEST_SERIES]);
+66 | 
+67 |     const { data } = matter(fs.readFileSync(filePath, 'utf8'));
+68 |     const entries = (data.redirectFrom ?? []).filter((e: string) => e === '/posts/idempotent-post');
+69 |     expect(entries.length).toBe(1);
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/tooling/add-series-redirects.test.ts:69:28)
+✗ Tooling: add-series-redirects > is idempotent — does not add duplicate redirectFrom entries [81.67ms]
+✓ Tooling: add-series-redirects > --dry-run does not modify files [37.20ms]
+88 |     writePost(filePath, 'dryrun-mention');
+89 | 
+90 |     const result = spawnSync(['bun', SCRIPT, TEST_SERIES, '--dry-run']);
+91 |     const output = result.stdout.toString();
+92 |     expect(output).toContain('dryrun-mention');
+93 |     expect(output).toContain('/posts/dryrun-mention');
+                        ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "/posts/dryrun-mention"
+Received: "\nSeries: test-migration-series\n  [skip] flat-post — already at canonical path\n  [skip] dryrun-mention — already at canonical path\n  [skip] folder-post — already at canonical path\n  [skip] flat-post — already at canonical path\n  [skip] dryrun-post — already at canonical path\n  [skip] idempotent-post — already at canonical path\n\n[dry-run] Would update 0 file(s). 6 already up to date.\n"
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/tooling/add-series-redirects.test.ts:93:20)
+✗ Tooling: add-series-redirects > --dry-run output mentions the file that would be updated [43.70ms]
