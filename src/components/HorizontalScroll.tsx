@@ -66,7 +66,14 @@ export default function HorizontalScroll({
   }, [canScrollLeft, canScrollRight, scroll]);
 
   if (!shouldShowArrows) {
-    return <div className={className}>{children}</div>;
+    return (
+      <div
+        className={`overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory ${className}`}
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {children}
+      </div>
+    );
   }
 
   return (

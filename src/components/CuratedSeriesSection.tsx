@@ -65,12 +65,12 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
         itemCount={displayed.length}
         scrollThreshold={scrollThreshold}
       >
-        <div className={`flex gap-8 ${displayed.length > scrollThreshold ? 'pb-4' : ''}`}>
+        <div className={`flex gap-8 ${displayed.length > 1 ? 'pb-4' : ''}`}>
           {displayed.map((series, idx) => (
             <div
               key={series.name}
               className={`card-base group flex flex-col p-0 overflow-hidden snap-start ${
-                displayed.length > scrollThreshold
+                displayed.length > 1
                   ? 'w-[85vw] md:w-[calc(50%-1rem)] flex-shrink-0'
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}
