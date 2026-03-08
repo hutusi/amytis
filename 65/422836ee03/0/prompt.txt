@@ -1,0 +1,12 @@
+bun run lint failed: eslint
+
+/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/urls.test.ts
+    2:22  warning  'getPostsBasePath' is defined but never used  @typescript-eslint/no-unused-vars
+   65:46  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+   88:51  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+  111:51  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+
+✖ 4 problems (3 errors, 1 warning)
+
+error: script "lint" exited with code 1
+error: script "validate" exited with code 1
