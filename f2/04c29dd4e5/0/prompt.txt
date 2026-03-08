@@ -1,0 +1,141 @@
+Is it a good idea to make the post card's cover image clickable and link it to the post page? I think it would be useful for mobile. What do you think?
+
+---
+
+The post card's image in the featured articles section is clickable, but others—like the latest writing, posts list page, and series page—are not clickable.
+
+---
+
+go ahead
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+the post card image in series page (post list of a series) is still not clickable.
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+On mobile, when there are only 2 featured series, the curated series section on the homepage looks odd. If there is 1 or more than 2, it looks okay.
+
+---
+
+I don't think this is ideal. It should follow the same layout pattern as when there are more than two series; otherwise, it isn't consistent. What do you think?
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+does the selected books has similar problems?
+
+---
+
+make two more sample books, I want to test.
+
+---
+
+/commit
+
+---
+
+I think the 'Selected Books' section should have the same style as the 'Curated Series' section. What do you think?
+
+---
+
+same shuffle as series, what do you think? if it more than 1 on mobile, more than 2 mo desktop. how to show them?
+
+---
+
+yes, so the site config need to update too, is it right?
+
+---
+
+but let think deeper, what is the "scrollThreshold" use for?
+
+---
+
+but if the items of featured series more than 2, it need to scroll, what does scrollThreshold used for in desktop?
+
+---
+
+no, you should not hard code to 2, the scroll button show or not should be decided by the items number and the screen size, right?
+
+---
+
+is the scrollThreshold option useless?
+
+---
+
+go ahead
+
+---
+
+/commit
+
+---
+
+does it need to add or update some tests?
+
+---
+
+On mobile, the post cards in the 'Latest Writing' section on the homepage seem too big. What do you think?
+
+---
+
+go ahead
+
+---
+
+the thumnail is not good, I think it can be similar as the secondary featured post card, but make the cover image at left. what do you think?
+
+---
+
+/commit
+
+---
+
+On a small phone, there are some display issues. I think the card's metadata should follow the style of the secondary featured post cards as well. Also, the series info should be removed. What do you think?
+
+---
+
+go ahead.
+
+---
+
+does it need to add or update some tests?
+
+---
+
+/commit
+
+---
+
+Let's take a look at the footer on mobile. Is it better to align it to the center? What do you think?
+
+---
+
+go ahead
+
+---
+
+does it need to add or update some tests?
