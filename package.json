@@ -31,6 +31,7 @@
     "import-book": "bun scripts/import-book.ts",
     "sync-book": "bun scripts/sync-book-chapters.ts",
     "series-draft": "bun scripts/series-draft.ts",
+    "add-series-redirects": "bun scripts/add-series-redirects.ts",
     "deploy": "bun scripts/deploy.ts",
     "start": "next start",
     "lint": "eslint",

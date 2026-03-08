@@ -1,11 +1,12 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, getCollectionsForPost, PostData } from '@/lib/markdown';
+import { getPostBySlug, getAllPosts, getAllSeries, getAllPages, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, getCollectionsForPost, PostData } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
-import { getPostsBasePath, getSeriesCustomPaths, getPostUrl } from '@/lib/urls';
+import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths, validateSeriesAutoPaths, getPostUrl } from '@/lib/urls';
+import RedirectPage from '@/components/RedirectPage';
 import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
 
 function safeDecodeParam(param: string): string {
@@ -36,8 +37,32 @@ export async function generateStaticParams() {
   }
 
   // Series custom paths — only posts belonging to that series
-  for (const [seriesSlug, customPath] of Object.entries(getSeriesCustomPaths())) {
+  const customPaths = getSeriesCustomPaths();
+  for (const [seriesSlug, customPath] of Object.entries(customPaths)) {
     getSeriesPosts(seriesSlug).forEach(post => { params.push({ slug: customPath, postSlug: post.slug }); });
+  }
+
+  // Series auto-paths — use series slug as URL prefix for posts in that series
+  if (getSeriesAutoPaths()) {
+    const allSeriesMap = getAllSeries();
+    const allSeriesSlugs = Object.keys(allSeriesMap);
+    const pageSlugSet = getAllPages().map(p => p.slug);
+    validateSeriesAutoPaths(allSeriesSlugs, [...pageSlugSet, ...Object.values(customPaths)]); // Throws if any slug collides with a reserved route, static page, or customPaths prefix
+    for (const seriesSlug of allSeriesSlugs) {
+      if (seriesSlug in customPaths) continue; // Already handled by customPaths above
+      allSeriesMap[seriesSlug].forEach(post => { params.push({ slug: seriesSlug, postSlug: post.slug }); });
+    }
+  }
+
+  // redirectFrom entries — generate redirect pages for 2-segment old paths
+  for (const post of getAllPosts()) {
+    for (const from of post.redirectFrom ?? []) {
+      const segments = from.split('/').filter(Boolean);
+      if (segments.length !== 2) continue;
+      const [fromPrefix, fromPostSlug] = segments;
+      if (from === getPostUrl(post)) continue;   // skip if this is already the canonical path
+      params.push({ slug: fromPrefix, postSlug: fromPostSlug });
+    }
   }
 
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
@@ -52,11 +77,25 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string; postSlug: string }>;
 }): Promise<Metadata> {
-  const { postSlug: rawPostSlug } = await params;
-  const post = resolvePostFromParam(rawPostSlug);
+  const { slug: prefix, postSlug: rawPostSlug } = await params;
+  const currentPath = `/${safeDecodeParam(prefix)}/${safeDecodeParam(rawPostSlug)}`;
+  const post =
+    resolvePostFromParam(rawPostSlug) ??
+    getAllPosts().find(candidate => candidate.redirectFrom?.includes(currentPath));
 
   if (!post) {
     return { title: 'Post Not Found' };
+  }
+
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = getPostUrl(post);
+
+  // For redirect pages, return minimal metadata pointing to the canonical URL
+  if (canonicalUrl !== currentPath) {
+    return {
+      title: post.title,
+      alternates: { canonical: `${siteUrl}${canonicalUrl}` },
+    };
   }
 
   const ogImage =
@@ -98,20 +137,33 @@ export default async function PrefixPostPage({
   params: Promise<{ slug: string; postSlug: string }>;
 }) {
   const { slug: prefix, postSlug: rawPostSlug } = await params;
+  const currentPath = `/${safeDecodeParam(prefix)}/${safeDecodeParam(rawPostSlug)}`;
 
-  // Validate the prefix is a known custom path
+  // Resolve the post: first by slug, then fall back to redirectFrom lookup for renamed slugs.
+  const post =
+    resolvePostFromParam(rawPostSlug) ??
+    getAllPosts().find(candidate => candidate.redirectFrom?.includes(currentPath));
+  if (!post) {
+    notFound();
+  }
+
+  // Validate the prefix is a known path: custom basePath, series customPath, auto-path series slug,
+  // or a legacy redirectFrom path declared on the resolved post.
   const basePath = getPostsBasePath();
   const customPaths = getSeriesCustomPaths();
   const isValidBasePath = prefix === basePath && basePath !== 'posts';
   const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === prefix)?.[0];
+  const isAutoSeriesPath = getSeriesAutoPaths() && !(prefix in customPaths) && getSeriesData(prefix) !== null;
+  const isLegacyRedirect = post.redirectFrom?.includes(currentPath) ?? false;
 
-  if (!isValidBasePath && !matchedSeriesSlug) {
+  if (!isValidBasePath && !matchedSeriesSlug && !isAutoSeriesPath && !isLegacyRedirect) {
     notFound();
   }
 
-  const post = resolvePostFromParam(rawPostSlug);
-  if (!post) {
-    notFound();
+  // If the canonical URL differs from the current path, render a redirect page.
+  const canonicalUrl = getPostUrl(post);
+  if (canonicalUrl !== currentPath) {
+    return <RedirectPage to={canonicalUrl} />;
   }
 
   const layout = post.layout || 'post';

@@ -7,6 +7,7 @@ import { siteConfig } from '../../../../site.config';
 import { resolveLocale } from '@/lib/i18n';
 import { getPostsBasePath, getPostUrl } from '@/lib/urls';
 import { buildPostJsonLd, serializeJsonLd, resolveImageUrl } from '@/lib/json-ld';
+import RedirectPage from '@/components/RedirectPage';
 
 function safeDecodeParam(param: string): string {
   try {
@@ -33,12 +34,23 @@ function resolvePostFromParam(rawSlug: string) {
 export async function generateStaticParams() {
   if (getPostsBasePath() !== 'posts') return [{ slug: '_' }]; // Route disabled; custom path handles this
   const posts = getAllPosts();
-  if (posts.length === 0) return [{ slug: '_' }];
+
+  // Include a post if its canonical URL is /posts/[slug] (normal render),
+  // or if /posts/[slug] appears in its redirectFrom list (redirect page).
+  const basePath = getPostsBasePath();
+  const filtered = posts.filter(p => {
+    const canonical = getPostUrl(p);
+    if (canonical === `/${basePath}/${p.slug}`) return true;
+    // autoPaths or customPaths moved this post — include only if it opts into a redirect here
+    return (p.redirectFrom ?? []).includes(`/${basePath}/${p.slug}`);
+  });
+
+  if (filtered.length === 0) return [{ slug: '_' }];
   // Work around Next dev static-param checks for percent-encoded Unicode paths
   // under `output: "export"` by including encoded variants only in development.
   // Production export keeps raw segment values.
   const slugs = new Set<string>();
-  for (const post of posts) {
+  for (const post of filtered) {
     slugs.add(post.slug);
     if (process.env.NODE_ENV !== 'production') {
       slugs.add(encodeURIComponent(post.slug));
@@ -60,6 +72,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = getPostUrl(post);
+  const currentPath = `/${getPostsBasePath()}/${safeDecodeParam(rawSlug)}`;
+
+  // For redirect pages, return minimal metadata pointing to the canonical URL
+  if (canonicalUrl !== currentPath) {
+    return {
+      title: post.title,
+      alternates: { canonical: `${siteUrl}${canonicalUrl}` },
+    };
+  }
+
   const ogImage = resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl);
 
   return {
@@ -101,6 +124,14 @@ export default async function PostPage({
 
   if (!post) {
     notFound();
+  }
+
+  // If the canonical URL differs from the current path, render a redirect page.
+  // This handles posts moved by autoPaths or customPaths that opted in via redirectFrom.
+  const canonicalUrl = getPostUrl(post);
+  const currentPath = `/${getPostsBasePath()}/${slug}`;
+  if (canonicalUrl !== currentPath) {
+    return <RedirectPage to={canonicalUrl} />;
   }
 
   // Determine layout based on frontmatter
