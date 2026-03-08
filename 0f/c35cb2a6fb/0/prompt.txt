@@ -51,3 +51,7 @@ does the selected books has similar problems?
 ---
 
 make two more sample books, I want to test.
+
+---
+
+/commit
