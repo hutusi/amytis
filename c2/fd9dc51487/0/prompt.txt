@@ -1,0 +1,1 @@
+there are some things need to fix: the pre and next card seems not right, in series list page, the card of collection's parts count is zero.
