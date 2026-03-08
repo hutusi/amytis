@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9d0f15a8a805",
+  "strategy": "manual-commit",
+  "branch": "fix-mobile",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/9d/0f15a8a805/0/metadata.json",
+      "transcript": "/9d/0f15a8a805/0/full.jsonl",
+      "content_hash": "/9d/0f15a8a805/0/content_hash.txt",
+      "prompt": "/9d/0f15a8a805/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 454,
+    "cache_creation_tokens": 655080,
+    "cache_read_tokens": 13360538,
+    "output_tokens": 56121,
+    "api_call_count": 150
+  }
+}
