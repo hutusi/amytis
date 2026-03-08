@@ -34,7 +34,6 @@ type HomepageSection = {
   enabled?: boolean;
   weight: number;
   maxItems?: number;
-  scrollThreshold?: number;
 };
 
 export default function Home() {
@@ -133,7 +132,6 @@ export default function Home() {
             key="featured-series"
             allSeries={seriesItems}
             maxItems={section.maxItems ?? 6}
-            scrollThreshold={section.scrollThreshold ?? 2}
           />
         );
       case 'featured-books':

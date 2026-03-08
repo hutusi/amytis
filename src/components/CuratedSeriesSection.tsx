@@ -21,10 +21,9 @@ export interface SeriesItem {
 interface CuratedSeriesSectionProps {
   allSeries: SeriesItem[];
   maxItems: number;
-  scrollThreshold: number;
 }
 
-export default function CuratedSeriesSection({ allSeries, maxItems, scrollThreshold }: CuratedSeriesSectionProps) {
+export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
   // Use a daily seed so SSR and client hydration agree on the initial order,
   // preventing a visible reshuffle flash on page load.
@@ -61,10 +60,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, scrollThresh
           </Link>
         </div>
       </div>
-      <HorizontalScroll
-        itemCount={displayed.length}
-        scrollThreshold={scrollThreshold}
-      >
+      <HorizontalScroll>
         <div className={`flex gap-8 ${displayed.length > 1 ? 'pb-4' : ''}`}>
           {displayed.map((series, idx) => (
             <div
