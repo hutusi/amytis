@@ -871,14 +871,21 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   const data = getSeriesData(collectionSlug);
   if (data?.type !== 'collection' || !data.items) return [];
 
-  return data.items.flatMap(item => {
-    if ('series' in item) {
-      const posts = getSeriesPosts(item.series);
-      return item.exclude ? posts.filter(p => !item.exclude!.includes(p.slug)) : posts;
-    }
-    const post = getPostBySlug(item.post);
-    return post ? [post] : [];
-  });
+  const seen = new Set<string>();
+  return data.items
+    .flatMap(item => {
+      if ('series' in item) {
+        const posts = getSeriesPosts(item.series);
+        return item.exclude ? posts.filter(p => !item.exclude!.includes(p.slug)) : posts;
+      }
+      const post = getPostBySlug(item.post);
+      return post ? [post] : [];
+    })
+    .filter(post => {
+      if (seen.has(post.slug)) return false;
+      seen.add(post.slug);
+      return true;
+    });
 }
 
 export function getCollectionsForPost(postSlug: string): CollectionContext[] {
@@ -890,6 +897,7 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
     if (!folder.isDirectory()) continue;
     const data = getSeriesData(folder.name);
     if (data?.type !== 'collection') continue;
+    if (process.env.NODE_ENV === 'production' && data.draft) continue;
     const posts = getCollectionPosts(folder.name);
     if (posts.some(p => p.slug === postSlug)) {
       results.push({ slug: folder.name, title: data.title, posts });
