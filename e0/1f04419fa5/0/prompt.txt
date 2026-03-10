@@ -1,1 +1,22 @@
-There is a bug: when the image is located in content/posts/images, and the post file inside content/posts uses it as a coverImage or content image, the image appears broken.
+when I run "bun run dev",there are lots of errors like: Error: Can't resolve 'tailwindcss' in '/Users/hutusi/workspace/ai/naive'
+    [at finishWithoutResolve (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:565:18)]
+    [at /Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:657:14]
+    [at /Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:718:5]
+    [at eval (eval at create (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/tapable@2.3.0/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:15:1)]
+    [at /Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:718:5]
+    [at eval (eval at create (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/tapable@2.3.0/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:16:1)]
+    [at /Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:718:5]
+    [at eval (eval at create (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/tapable@2.3.0/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:15:1)]
+    [at /Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/enhanced-resolve@5.18.4/node_modules/enhanced-resolve/lib/Resolver.js:718:5]
+    [at eval (eval at create (/Users/hutusi/workspace/ai/naive/amytis-claude-review/node_modules/.bun/tapable@2.3.0/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:15:1)] {
+  details: "resolve 'tailwindcss' in '/Users/hutusi/workspace/ai/naive'\n" +
+    '  Parsed request is a module\n' +
+    '  No description file found in /Users/hutusi/workspace/ai/naive or above\n' +
+    '  resolve as module\n' +
+    "    /Users/hutusi/workspace/ai/naive/node_modules doesn't exist or is not a directory\n" +
+    "    /Users/hutusi/workspace/ai/node_modules doesn't exist or is not a directory\n" +
+    "    /Users/hutusi/workspace/node_modules doesn't exist or is not a directory\n" +
+    "    /Users/hutusi/node_modules doesn't exist or is not a directory\n" +
+    "    /Users/node_modules doesn't exist or is not a directory\n" +
+    "    /node_modules doesn't exist or is not a directory"
+}

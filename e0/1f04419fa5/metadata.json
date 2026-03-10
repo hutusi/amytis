@@ -3,8 +3,9 @@
   "checkpoint_id": "e01f04419fa5",
   "strategy": "manual-commit",
   "branch": "fix-images",
-  "checkpoints_count": 1,
+  "checkpoints_count": 0,
   "files_touched": [
+    "content/posts/images/vibrant-waves.jpg",
     "content/posts/welcome-to-amytis.mdx",
     "src/layouts/PostLayout.tsx",
     "src/layouts/SimpleLayout.tsx",
@@ -19,10 +20,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 1261,
-    "cache_creation_tokens": 112917,
-    "cache_read_tokens": 1575435,
-    "output_tokens": 19858,
-    "api_call_count": 40
+    "input_tokens": 17,
+    "cache_creation_tokens": 52791,
+    "cache_read_tokens": 136167,
+    "output_tokens": 478,
+    "api_call_count": 3
   }
 }
