@@ -1,0 +1,160 @@
+bun test test failed: 300 |
+301 |     test('posts/[slug] includes series posts when autoPaths is disabled (default)', async () => {
+302 |       mockedPosts = [{ slug: 'series-post', series: 'my-series' }];
+303 |       const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+304 |       const params = await generateStaticParams();
+305 |       expect(params).toContainEqual({ slug: 'series-post' });
+                           ^
+error: expect(received).toContainEqual(expected)
+
+Expected to contain: {
+  slug: "series-post",
+}
+Received: [
+  {
+    slug: "_",
+  }
+]
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/static-params.test.ts:305:22)
+✗ generateStaticParams — placeholder when content is empty > autoPaths series routing > posts/[slug] includes series posts when autoPaths is disabled (default) [2.15ms]
+307 |
+308 |     test('[slug]/[postSlug] does not include series auto-path params when autoPaths is disabled', async () => {
+309 |       mockedSeries = { 'my-series': [{ slug: 'my-post' }] };
+310 |       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+311 |       const params = await generateStaticParams();
+312 |       expect(params).not.toContainEqual({ slug: 'my-series', postSlug: 'my-post' });
+                               ^
+error: expect(received).not.toContainEqual(expected)
+
+Expected to not contain: {
+  slug: "my-series",
+  postSlug: "my-post",
+}
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/static-params.test.ts:312:26)
+✗ generateStaticParams — placeholder when content is empty > autoPaths series routing > [slug]/[postSlug] does not include series auto-path params when autoPaths is disabled [0.77ms]
+315 |     test('posts/[slug] includes series post when canonical matches /posts/[slug]', async () => {
+316 |       // With autoPaths: false, getPostUrl returns /posts/[slug] for series posts
+317 |       mockedPosts = [{ slug: 'my-post', series: 'my-series' }];
+318 |       const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+319 |       const params = await generateStaticParams();
+320 |       expect(params).toContainEqual({ slug: 'my-post' });
+                           ^
+error: expect(received).toContainEqual(expected)
+
+Expected to contain: {
+  slug: "my-post",
+}
+Received: [
+  {
+    slug: "_",
+  }
+]
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/static-params.test.ts:320:22)
+✗ generateStaticParams — placeholder when content is empty > autoPaths series routing > posts/[slug] includes series post when canonical matches /posts/[slug] [0.10ms]  tests/unit/urls.test.ts:
+1 | import { describe, test, expect } from 'bun:test';
+2 | import { getPostUrl, getSeriesAutoPaths, validateSeriesAutoPaths } from '../../src/lib/urls';
+3 |
+4 | describe('getSeriesAutoPaths', () => {
+5 |   test('returns false by default', () => {
+6 |     expect(getSeriesAutoPaths()).toBe(false);
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/urls.test.ts:6:34)
+✗ getSeriesAutoPaths > returns false by default [0.18ms]
+✓ getPostUrl — autoPaths disabled (default) > post with no series uses basePath [0.02ms]
+11 |   test('post with no series uses basePath', () => {
+12 |     expect(getPostUrl({ slug: 'hello' })).toBe('/posts/hello');
+13 |   });
+14 |
+15 |   test('post with series falls back to basePath when autoPaths is disabled', () => {
+16 |     expect(getPostUrl({ slug: 'hello', series: 'my-series' })).toBe('/posts/hello');
+                                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: "/posts/hello"
+Received: "/my-series/hello"
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/urls.test.ts:16:64)
+✗ getPostUrl — autoPaths disabled (default) > post with series falls back to basePath when autoPaths is disabled [0.49ms]
+19 |
+20 | describe('validateSeriesAutoPaths — autoPaths disabled (default)', () => {
+21 |   test('does not throw for any slug when autoPaths is false', () => {
+22 |     // validateSeriesAutoPaths is a no-op when autoPaths is disabled
+23 |     const reserved = ['tags', 'series', 'books', 'flows', 'archive', 'posts'];
+24 |     expect(() => validateSeriesAutoPaths(reserved)).not.toThrow();
+                                                             ^
+error: expect(received).not.toThrow()
+
+Error name: "Error"
+Error message: "[amytis] Series slug \"tags\" conflicts with the reserved route \"/tags\". Rename the series or add series.customPaths[\"tags\"] = \"...\" to use a different URL prefix."
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/urls.test.ts:24:57)
+✗ validateSeriesAutoPaths — autoPaths disabled (default) > does not throw for any slug when autoPaths is false [0.13ms]
+23 |     const reserved = ['tags', 'series', 'books', 'flows', 'archive', 'posts'];
+24 |     expect(() => validateSeriesAutoPaths(reserved)).not.toThrow();
+25 |   });
+26 |
+27 |   test('does not throw even with extraReserved slugs when autoPaths is false', () => {
+28 |     expect(() => validateSeriesAutoPaths(['about'], ['about'])).not.toThrow();
+                                                                         ^
+error: expect(received).not.toThrow()
+
+Error name: "Error"
+Error message: "[amytis] Series slug \"about\" conflicts with the reserved route \"/about\". Rename the series or add series.customPaths[\"about\"] = \"...\" to use a different URL prefix."
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/unit/urls.test.ts:28:69)
+✗ validateSeriesAutoPaths — autoPaths disabled (default) > does not throw even with extraReserved slugs when autoPaths is false [0.10ms]
+
+---
+
+test:int failed: bun test tests/integration
+bun test v1.3.9 (cf6cdbbb)
+
+tests/integration/markdown-features.test.ts:
+2 | import { getPostBySlug } from "../../src/lib/markdown";
+3 |
+4 | describe("Integration: Markdown Features", () => {
+5 |   test("should correctly load multilingual post", () => {
+6 |     const post = getPostBySlug("multilingual-test");
+7 |     expect(post).not.toBeNull();
+                         ^
+error: expect(received).not.toBeNull()
+
+Received: null
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/integration/markdown-features.test.ts:7:22)
+✗ Integration: Markdown Features > should correctly load multilingual post [4.79ms]
+ 9 |     expect(post?.latex).toBe(true);
+10 |   });
+11 |
+12 |   test("should generate correct Unicode IDs for TOC", () => {
+13 |     const post = getPostBySlug("multilingual-test");
+14 |     expect(post).not.toBeNull();
+                          ^
+error: expect(received).not.toBeNull()
+
+Received: null
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/integration/markdown-features.test.ts:14:22)
+✗ Integration: Markdown Features > should generate correct Unicode IDs for TOC [0.49ms]
+42 |     // mermaidHeading.id should be '复杂图表-mermaid'
+43 |   });
+44 |
+45 |   test("should correctly identify latex enabled posts", () => {
+46 |     const post = getPostBySlug("multilingual-test");
+47 |     expect(post?.latex).toBe(true);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: undefined
+
+      at <anonymous> (/Users/hutusi/workspace/ai/naive/amytis-claude-review/tests/integration/markdown-features.test.ts:47:25)
+✗ Integration: Markdown Features > should correctly identify latex enabled posts [0.79ms]
