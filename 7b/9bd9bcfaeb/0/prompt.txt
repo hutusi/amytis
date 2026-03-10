@@ -1,0 +1,9 @@
+If 'autoPaths' is set to true and we use the series path, the Chinese URL of the post breaks. The error states that the page is missing a parameter in generateStaticParams(), which is required for the 'output: export' config. Notably, Chinese URLs for posts in the /posts path work fine.
+
+---
+
+what is your opinion?
+
+---
+
+OK, I just misunderstood.
