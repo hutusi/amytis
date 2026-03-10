@@ -3,7 +3,7 @@
   "checkpoint_id": "7b9bd9bcfaeb",
   "strategy": "manual-commit",
   "branch": "fix-images",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "content/posts/multilingual-test.mdx",
     "content/posts/中文测试文章.mdx",
@@ -17,13 +17,19 @@
       "transcript": "/7b/9bd9bcfaeb/0/full.jsonl",
       "content_hash": "/7b/9bd9bcfaeb/0/content_hash.txt",
       "prompt": "/7b/9bd9bcfaeb/0/prompt.txt"
+    },
+    {
+      "metadata": "/7b/9bd9bcfaeb/1/metadata.json",
+      "transcript": "/7b/9bd9bcfaeb/1/full.jsonl",
+      "content_hash": "/7b/9bd9bcfaeb/1/content_hash.txt",
+      "prompt": "/7b/9bd9bcfaeb/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 58,
-    "cache_creation_tokens": 94955,
-    "cache_read_tokens": 494780,
-    "output_tokens": 6003,
-    "api_call_count": 11
+    "input_tokens": 673,
+    "cache_creation_tokens": 1043939,
+    "cache_read_tokens": 21269594,
+    "output_tokens": 83908,
+    "api_call_count": 255
   }
 }
