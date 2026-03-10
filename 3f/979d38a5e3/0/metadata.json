@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "3f979d38a5e3",
+  "session_id": "e3714eda-1ed1-4fab-b9ae-d59bb23a0966",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-10T10:52:28.415324Z",
+  "branch": "fix-images",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/[slug]/page.tsx",
+    "src/app/[slug]/page/[page]/page.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "dfc223d70eff",
+  "token_usage": {
+    "input_tokens": 70,
+    "cache_creation_tokens": 90997,
+    "cache_read_tokens": 604984,
+    "output_tokens": 13966,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-10T10:52:28.256108Z",
+    "agent_lines": 43,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 43,
+    "agent_percentage": 100
+  }
+}

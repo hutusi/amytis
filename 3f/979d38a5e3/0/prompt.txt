@@ -1,0 +1,1 @@
+There is a bug in the series URL: if 'customPaths' is empty, the 'autoPaths: true' configuration doesn't seem to work.
