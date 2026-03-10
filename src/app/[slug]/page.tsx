@@ -1,4 +1,4 @@
-import { getPageBySlug, getAllPages, getAllPosts, getListingPosts, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getPageBySlug, getAllPages, getAllPosts, getAllSeries, getListingPosts, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -11,7 +11,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale, t } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
-import { getPostsBasePath, getSeriesCustomPaths, getPostUrl } from '@/lib/urls';
+import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths, getPostUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
@@ -32,8 +32,19 @@ export async function generateStaticParams() {
   }
 
   // Add series custom path listings (e.g. /weeklies)
-  for (const customPath of Object.values(getSeriesCustomPaths())) {
+  const customPaths = getSeriesCustomPaths();
+  for (const customPath of Object.values(customPaths)) {
     params.push({ slug: customPath });
+  }
+
+  // Add series auto-path listings (e.g. /my-series) when autoPaths is enabled
+  const autoPathSlugs: string[] = [];
+  if (getSeriesAutoPaths()) {
+    for (const seriesSlug of Object.keys(getAllSeries())) {
+      if (seriesSlug in customPaths) continue; // has a customPaths override — skip
+      autoPathSlugs.push(seriesSlug);
+      params.push({ slug: seriesSlug });
+    }
   }
 
   // Add single-segment redirectFrom paths (e.g. /old-slug).
@@ -42,7 +53,8 @@ export async function generateStaticParams() {
   const reservedSlugs = new Set([
     ...pages.map(p => p.slug),
     basePath,
-    ...Object.values(getSeriesCustomPaths()),
+    ...Object.values(customPaths),
+    ...autoPathSlugs,
     // Hardcoded top-level routes that have their own app/ directories
     'posts', 'series', 'tags', 'authors', 'archive', 'books', 'flows', 'notes', 'search', 'page',
   ]);
@@ -82,7 +94,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   // Series custom paths
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === slug)?.[0];
+  const matchedSeriesSlug =
+    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
+    (getSeriesAutoPaths() && !(slug in customPaths) && getSeriesData(slug) ? slug : undefined);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     if (seriesData) {
@@ -145,7 +159,9 @@ export default async function Page({
 
   // Check if slug matches a series custom path
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === slug)?.[0];
+  const matchedSeriesSlug =
+    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
+    (getSeriesAutoPaths() && !(slug in customPaths) && getSeriesData(slug) ? slug : undefined);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     const allPosts = getSeriesPosts(matchedSeriesSlug);
