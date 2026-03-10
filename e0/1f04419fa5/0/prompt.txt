@@ -1,0 +1,1 @@
+There is a bug: when the image is located in content/posts/images, and the post file inside content/posts uses it as a coverImage or content image, the image appears broken.
