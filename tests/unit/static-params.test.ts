@@ -22,10 +22,19 @@
  */
 import { describe, test, expect, mock, beforeAll, beforeEach, afterAll, afterEach } from 'bun:test';
 
-// ─── Capture real markdown module ────────────────────────────────────────────
+// ─── Capture real modules ─────────────────────────────────────────────────────
 // Static imports are hoisted and resolved before any executable code (including
 // beforeAll / mock.module calls), so this always captures the real module.
 import * as realMarkdown from '../../src/lib/markdown';
+import * as realUrls from '../../src/lib/urls';
+
+// `import * as ns` creates a live namespace — its properties update when
+// mock.module() patches the registry.  Spread into a plain object here
+// (before any mocking) to get a shallow snapshot of the real exports so
+// restore calls always put back the originals, not the current mock state.
+// Note: nested objects (e.g. RESERVED_ROUTE_SEGMENTS Set) share the same
+// reference, but they are never mutated during tests so this is safe.
+const snapshotUrls = { ...realUrls };
 
 let mockedPosts: Array<{ slug: string; series?: string; redirectFrom?: string[] }> = [];
 let mockedNotes: Array<{ slug: string }> = [];
@@ -146,9 +155,10 @@ afterEach(() => {
   process.env.NODE_ENV = originalNodeEnv;
 });
 
-// ─── Restore real markdown module ─────────────────────────────────────────────
+// ─── Restore real modules ─────────────────────────────────────────────────────
 afterAll(() => {
   mock.module('@/lib/markdown', () => realMarkdown);
+  mock.module('@/lib/urls', () => snapshotUrls);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -363,6 +373,69 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/[slug]/page');
       expect(() => generateStaticParams()).toThrow('[amytis] redirectFrom "/old-slug"');
     });
+
+    test('[slug]/page throws when redirectFrom alias conflicts with "posts" (RESERVED_ROUTE_SEGMENTS)', async () => {
+      mockedPosts = [{ slug: 'my-post', redirectFrom: ['/posts'] }];
+      const { generateStaticParams } = await import('../../src/app/[slug]/page');
+      expect(() => generateStaticParams()).toThrow('[amytis] redirectFrom "/posts"');
+    });
+
+    test('[slug]/page includes Unicode single-segment redirectFrom slug as param', async () => {
+      mockedPosts = [{ slug: 'my-post', redirectFrom: ['/中文路由'] }];
+      const { generateStaticParams } = await import('../../src/app/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '中文路由' });
+    });
+
+    describe('autoPaths enabled', () => {
+      // Use beforeEach (not beforeAll) so each test starts with a clean base mock,
+      // preventing stale state from tests that inline-override the mock.
+      beforeEach(() => {
+        mock.module('@/lib/urls', () => ({
+          ...snapshotUrls,
+          getSeriesAutoPaths: () => true,
+          getSeriesCustomPaths: () => ({}),
+          getPostUrl: (post: { slug: string; series?: string }) =>
+            post.series ? `/${post.series}/${post.slug}` : `/posts/${post.slug}`,
+          validateSeriesAutoPaths: () => {},
+        }));
+      });
+
+      afterEach(() => {
+        mock.module('@/lib/urls', () => snapshotUrls);
+      });
+
+      test('[slug]/page includes auto-path series slug when autoPaths enabled', async () => {
+        mockedSeries = { 'my-series': [{ slug: 'my-post' }] };
+        const { generateStaticParams } = await import('../../src/app/[slug]/page');
+        const params = await generateStaticParams();
+        expect(params).toContainEqual({ slug: 'my-series' });
+      });
+
+      test('[slug]/page includes Unicode auto-path series slug when autoPaths enabled', async () => {
+        mockedSeries = { '中文系列': [{ slug: 'post-one' }] };
+        const { generateStaticParams } = await import('../../src/app/[slug]/page');
+        const params = await generateStaticParams();
+        expect(params).toContainEqual({ slug: '中文系列' });
+      });
+
+      test('[slug]/page uses customPaths prefix for series with override, not the series slug', async () => {
+        // Override the base mock to add a customPaths entry for this test.
+        mock.module('@/lib/urls', () => ({
+          ...snapshotUrls,
+          getSeriesAutoPaths: () => true,
+          getSeriesCustomPaths: () => ({ 'my-series': 'articles' }),
+          getPostUrl: (post: { slug: string; series?: string }) =>
+            post.series === 'my-series' ? `/articles/${post.slug}` : `/posts/${post.slug}`,
+          validateSeriesAutoPaths: () => {},
+        }));
+        mockedSeries = { 'my-series': [{ slug: 'my-post' }] };
+        const { generateStaticParams } = await import('../../src/app/[slug]/page');
+        const params = await generateStaticParams();
+        expect(params).toContainEqual({ slug: 'articles' });
+        expect(params).not.toContainEqual({ slug: 'my-series' });
+      });
+    });
   });
 
   describe('custom path routes', () => {
@@ -378,6 +451,25 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_', postSlug: '_' }]);
+    });
+
+    test('[slug]/[postSlug] includes encoded Unicode postSlug variants in non-production', async () => {
+      // Use redirectFrom to place a Unicode postSlug at a 2-segment path — no url mock needed.
+      mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'old-prefix', postSlug: '中文文章' });
+      expect(params).toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
+    });
+
+    test('[slug]/[postSlug] does not include encoded Unicode postSlug variants in production', async () => {
+      mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'old-prefix', postSlug: '中文文章' });
+      expect(params).not.toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
     });
 
     test('[slug]/page/[page]/page returns placeholder when no custom paths', async () => {

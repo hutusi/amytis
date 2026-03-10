@@ -63,9 +63,9 @@ describe("Integration: Reading Time & Headings", () => {
   });
 
   test("multilingual post has headings with correct IDs", () => {
-    const post = getPostBySlug("multilingual-test");
+    const post = getPostBySlug("multilingual-test-中文长标题");
     if (!post) {
-      console.warn("Skipping: multilingual-test post not found");
+      console.warn("Skipping: multilingual-test-中文长标题 post not found");
       return;
     }
 

@@ -6,8 +6,8 @@ function normalizeSegment(segment: string): string {
 }
 
 // Top-level route segments reserved by the app — series slugs must not collide with these.
-const RESERVED_ROUTE_SEGMENTS = new Set([
-  'series', 'books', 'flows', 'tags', 'authors', 'archive', 'notes', 'graph', 'page', 'api',
+export const RESERVED_ROUTE_SEGMENTS = new Set([
+  'posts', 'series', 'books', 'flows', 'tags', 'authors', 'archive', 'notes', 'graph', 'search', 'page', 'api',
 ]);
 
 export function getPostsBasePath(): string {
@@ -41,7 +41,7 @@ export function validateSeriesAutoPaths(seriesSlugs: string[], extraReserved: st
   const reserved = new Set([...RESERVED_ROUTE_SEGMENTS, basePath, ...extraReserved]);
 
   for (const slug of seriesSlugs) {
-    if (slug in customPaths) continue; // Has an explicit override — skip
+    if (Object.hasOwn(customPaths, slug)) continue; // Has an explicit override — skip
     if (reserved.has(slug)) {
       throw new Error(
         `[amytis] Series slug "${slug}" conflicts with the reserved route "/${slug}". ` +

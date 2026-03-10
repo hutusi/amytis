@@ -121,6 +121,8 @@ export interface PostData {
   content: string;
   headings: Heading[];
   contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
+  /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
+  imageBaseSlug: string;
 }
 
 export function calculateReadingTime(content: string): string {
@@ -235,6 +237,12 @@ function getSeriesTitle(slug: string): string | undefined {
 function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data: rawData, content } = matter(fileContents);
+  // Flat files directly in content/posts/ share the posts root public directory for images.
+  // Folder-based posts and series posts each have their own public subdirectory.
+  const isRootFlatPost = path.basename(fullPath) !== 'index.mdx' &&
+    path.basename(fullPath) !== 'index.md' &&
+    path.dirname(fullPath) === contentDirectory;
+  const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
 
   const parsed = PostSchema.safeParse(rawData);
   if (!parsed.success) {
@@ -279,7 +287,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   let coverImage = data.coverImage;
   if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
     const cleanPath = coverImage.replace(/^\.\//, '');
-    coverImage = `/posts/${slug}/${cleanPath}`;
+    coverImage = `/${imageBaseSlug}/${cleanPath}`;
   }
 
   return {
@@ -310,6 +318,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     readingTime,
     content: contentWithoutH1,
     headings,
+    imageBaseSlug,
   };
 }
 

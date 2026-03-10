@@ -40,16 +40,16 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       {localeEntries.length > 0 ? (
         <LocaleSwitch>
           <div data-locale={defaultLocale}>
-            <MarkdownRenderer content={post.content} latex={post.latex} slug={`posts/${post.slug}`} />
+            <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />
           </div>
           {localeEntries.map(([locale, data]) => (
             <div key={locale} data-locale={locale} style={{ display: 'none' }}>
-              <MarkdownRenderer content={data.content} latex={post.latex} slug={`posts/${post.slug}`} />
+              <MarkdownRenderer content={data.content} latex={post.latex} slug={post.imageBaseSlug} />
             </div>
           ))}
         </LocaleSwitch>
       ) : (
-        <MarkdownRenderer content={post.content} latex={post.latex} slug={`posts/${post.slug}`} />
+        <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />
       )}
     </>
   );

@@ -136,7 +136,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             </div>
           )}
 
-          <MarkdownRenderer content={post.content} latex={post.latex} slug={`posts/${post.slug}`} slugRegistry={slugRegistry} />
+          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
 
           {siteConfig.posts?.authors?.showAuthorCard !== false && (
             <AuthorCard authors={post.authors} />

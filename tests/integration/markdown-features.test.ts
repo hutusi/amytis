@@ -3,14 +3,14 @@ import { getPostBySlug } from "../../src/lib/markdown";
 
 describe("Integration: Markdown Features", () => {
   test("should correctly load multilingual post", () => {
-    const post = getPostBySlug("multilingual-test");
+    const post = getPostBySlug("multilingual-test-中文长标题");
     expect(post).not.toBeNull();
     expect(post?.title).toContain("多语言测试");
     expect(post?.latex).toBe(true);
   });
 
   test("should generate correct Unicode IDs for TOC", () => {
-    const post = getPostBySlug("multilingual-test");
+    const post = getPostBySlug("multilingual-test-中文长标题");
     expect(post).not.toBeNull();
     
     // Check headings
@@ -43,7 +43,7 @@ describe("Integration: Markdown Features", () => {
   });
 
   test("should correctly identify latex enabled posts", () => {
-    const post = getPostBySlug("multilingual-test");
+    const post = getPostBySlug("multilingual-test-中文长标题");
     expect(post?.latex).toBe(true);
 
     const otherPost = getPostBySlug("hello-world"); // Assuming this doesn't exist or doesn't have latex
