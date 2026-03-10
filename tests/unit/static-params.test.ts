@@ -30,8 +30,10 @@ import * as realUrls from '../../src/lib/urls';
 
 // `import * as ns` creates a live namespace — its properties update when
 // mock.module() patches the registry.  Spread into a plain object here
-// (before any mocking) to get a frozen snapshot of the real exports so
+// (before any mocking) to get a shallow snapshot of the real exports so
 // restore calls always put back the originals, not the current mock state.
+// Note: nested objects (e.g. RESERVED_ROUTE_SEGMENTS Set) share the same
+// reference, but they are never mutated during tests so this is safe.
 const snapshotUrls = { ...realUrls };
 
 let mockedPosts: Array<{ slug: string; series?: string; redirectFrom?: string[] }> = [];

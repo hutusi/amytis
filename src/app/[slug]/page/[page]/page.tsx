@@ -14,6 +14,13 @@ import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths } from '@/li
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
 
+function resolveSeriesSlug(prefix: string, customPaths: Record<string, string>): string | undefined {
+  return (
+    Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined)
+  );
+}
+
 export async function generateStaticParams() {
   const params: { slug: string; page: string }[] = [];
 
@@ -63,9 +70,7 @@ export async function generateMetadata({
   const { slug: prefix, page } = await params;
   const basePath = getPostsBasePath();
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug =
-    Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined);
+  const matchedSeriesSlug = resolveSeriesSlug(prefix, customPaths);
 
   if (prefix === basePath && basePath !== 'posts') {
     return {
@@ -96,9 +101,7 @@ export default async function PrefixPageRoute({
 
   const basePath = getPostsBasePath();
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug =
-    Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined);
+  const matchedSeriesSlug = resolveSeriesSlug(prefix, customPaths);
 
   // Custom posts basePath listing
   if (prefix === basePath && basePath !== 'posts') {

@@ -17,6 +17,13 @@ import RedirectPage from '@/components/RedirectPage';
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
 
+function resolveSeriesSlug(slug: string, customPaths: Record<string, string>): string | undefined {
+  return (
+    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined)
+  );
+}
+
 /**
  * Generates the static paths for all top-level pages at build time,
  * plus any custom URL prefixes configured for posts or series.
@@ -93,9 +100,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   // Series custom paths
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug =
-    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined);
+  const matchedSeriesSlug = resolveSeriesSlug(slug, customPaths);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     if (seriesData) {
@@ -158,9 +163,7 @@ export default async function Page({
 
   // Check if slug matches a series custom path
   const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug =
-    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined);
+  const matchedSeriesSlug = resolveSeriesSlug(slug, customPaths);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     const allPosts = getSeriesPosts(matchedSeriesSlug);
