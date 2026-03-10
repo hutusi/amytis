@@ -1,0 +1,9 @@
+check about the recent new code review comments by coderabbit, PR #46, why reivew more and more, and more critical?
+
+---
+
+if that are real bugs, and worth fix, I think we need take them seriously and fix them. What do you think?
+
+---
+
+If there are conflicts, it is better to fail at build time than at runtime.

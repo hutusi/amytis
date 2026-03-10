@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9eddbcd2a4b0",
+  "strategy": "manual-commit",
+  "branch": "fix-images",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "src/app/[slug]/page.tsx",
+    "src/app/[slug]/page/[page]/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9e/ddbcd2a4b0/0/metadata.json",
+      "transcript": "/9e/ddbcd2a4b0/0/full.jsonl",
+      "content_hash": "/9e/ddbcd2a4b0/0/content_hash.txt",
+      "prompt": "/9e/ddbcd2a4b0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 13800,
+    "cache_read_tokens": 773543,
+    "output_tokens": 10473,
+    "api_call_count": 10
+  }
+}
