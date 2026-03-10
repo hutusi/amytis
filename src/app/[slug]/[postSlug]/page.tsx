@@ -65,6 +65,21 @@ export async function generateStaticParams() {
     }
   }
 
+  // Work around Next dev static-param checks for percent-encoded Unicode postSlugs
+  // under `output: "export"` — dev server may receive percent-encoded forms of Unicode paths.
+  // Include encoded variants in development only; production export keeps raw segment values.
+  if (process.env.NODE_ENV !== 'production') {
+    const existing = new Set(params.map(p => `${p.slug}/${p.postSlug}`));
+    for (const p of [...params]) {
+      const encodedPostSlug = encodeURIComponent(p.postSlug);
+      const key = `${p.slug}/${encodedPostSlug}`;
+      if (!existing.has(key)) {
+        existing.add(key);
+        params.push({ slug: p.slug, postSlug: encodedPostSlug });
+      }
+    }
+  }
+
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
   // dynamicParams = false ensures any unrecognised slug/postSlug combo returns 404.
   return params.length > 0 ? params : [{ slug: '_', postSlug: '_' }];

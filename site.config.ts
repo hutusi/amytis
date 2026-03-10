@@ -179,7 +179,7 @@ export const siteConfig = {
     // instead of the default posts basePath. Defaults to false to avoid breaking
     // existing deployments — enable explicitly and run `add-series-redirects` first.
     // customPaths entries always take precedence over autoPaths.
-    autoPaths: false,
+    autoPaths: true,
     // Per-series custom URL prefix for posts within that series.
     // Overrides autoPaths for the specified series.
     // e.g., { 'weeklies': 'weeklies' } → posts served at /weeklies/[slug]
