@@ -1,0 +1,13 @@
+check about the new code review comments by coderabbit, PR #46
+
+---
+
+what is your opinion?
+
+---
+
+if test coverage is valuable, why not fix?
+
+---
+
+continue
