@@ -49,7 +49,7 @@ export async function generateStaticParams() {
     const pageSlugSet = getAllPages().map(p => p.slug);
     validateSeriesAutoPaths(allSeriesSlugs, [...pageSlugSet, ...Object.values(customPaths)]); // Throws if any slug collides with a reserved route, static page, or customPaths prefix
     for (const seriesSlug of allSeriesSlugs) {
-      if (seriesSlug in customPaths) continue; // Already handled by customPaths above
+      if (Object.hasOwn(customPaths, seriesSlug)) continue; // Already handled by customPaths above
       allSeriesMap[seriesSlug].forEach(post => { params.push({ slug: seriesSlug, postSlug: post.slug }); });
     }
   }
@@ -168,7 +168,7 @@ export default async function PrefixPostPage({
   const customPaths = getSeriesCustomPaths();
   const isValidBasePath = prefix === basePath && basePath !== 'posts';
   const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === prefix)?.[0];
-  const isAutoSeriesPath = getSeriesAutoPaths() && !(prefix in customPaths) && getSeriesData(prefix) !== null;
+  const isAutoSeriesPath = getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) !== null;
   const isLegacyRedirect = post.redirectFrom?.includes(currentPath) ?? false;
 
   if (!isValidBasePath && !matchedSeriesSlug && !isAutoSeriesPath && !isLegacyRedirect) {

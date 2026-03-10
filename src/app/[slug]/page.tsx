@@ -41,7 +41,7 @@ export async function generateStaticParams() {
   const autoPathSlugs: string[] = [];
   if (getSeriesAutoPaths()) {
     for (const seriesSlug of Object.keys(getAllSeries())) {
-      if (seriesSlug in customPaths) continue; // has a customPaths override — skip
+      if (Object.hasOwn(customPaths, seriesSlug)) continue; // has a customPaths override — skip
       autoPathSlugs.push(seriesSlug);
       params.push({ slug: seriesSlug });
     }
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const customPaths = getSeriesCustomPaths();
   const matchedSeriesSlug =
     Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
-    (getSeriesAutoPaths() && !(slug in customPaths) && getSeriesData(slug) ? slug : undefined);
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     if (seriesData) {
@@ -160,7 +160,7 @@ export default async function Page({
   const customPaths = getSeriesCustomPaths();
   const matchedSeriesSlug =
     Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
-    (getSeriesAutoPaths() && !(slug in customPaths) && getSeriesData(slug) ? slug : undefined);
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined);
   if (matchedSeriesSlug) {
     const seriesData = getSeriesData(matchedSeriesSlug);
     const allPosts = getSeriesPosts(matchedSeriesSlug);

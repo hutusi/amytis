@@ -40,7 +40,7 @@ export async function generateStaticParams() {
   // Series auto-paths — paginated series listing (page 2+)
   if (getSeriesAutoPaths()) {
     for (const [seriesSlug, posts] of Object.entries(getAllSeries())) {
-      if (seriesSlug in customPaths) continue; // has a customPaths override — skip
+      if (Object.hasOwn(customPaths, seriesSlug)) continue; // has a customPaths override — skip
       const totalPages = Math.ceil(posts.length / SERIES_PAGE_SIZE);
       for (let i = 2; i <= totalPages; i++) {
         params.push({ slug: seriesSlug, page: i.toString() });
@@ -65,7 +65,7 @@ export async function generateMetadata({
   const customPaths = getSeriesCustomPaths();
   const matchedSeriesSlug =
     Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
-    (getSeriesAutoPaths() && !(prefix in customPaths) && getSeriesData(prefix) ? prefix : undefined);
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined);
 
   if (prefix === basePath && basePath !== 'posts') {
     return {
@@ -98,7 +98,7 @@ export default async function PrefixPageRoute({
   const customPaths = getSeriesCustomPaths();
   const matchedSeriesSlug =
     Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
-    (getSeriesAutoPaths() && !(prefix in customPaths) && getSeriesData(prefix) ? prefix : undefined);
+    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined);
 
   // Custom posts basePath listing
   if (prefix === basePath && basePath !== 'posts') {
