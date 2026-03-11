@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "38fe16c7b0e5",
+  "strategy": "manual-commit",
+  "branch": "fix-redirect",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "content/series/markdown-showcase/index.mdx",
+    "content/series/markdown-showcase/mathematical-notation.mdx",
+    "content/series/markdown-showcase/syntax-highlighting.mdx",
+    "content/series/markdown-showcase/visuals-and-diagrams.mdx",
+    "content/series/markdown-showcase/中文测试文章.mdx",
+    "public/next-image-export-optimizer-hashes.json",
+    "site.config.example.ts",
+    "site.config.ts",
+    "src/lib/urls.ts",
+    "tests/unit/static-params.test.ts",
+    "tests/unit/urls.test.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/38/fe16c7b0e5/0/metadata.json",
+      "transcript": "/38/fe16c7b0e5/0/full.jsonl",
+      "content_hash": "/38/fe16c7b0e5/0/content_hash.txt",
+      "prompt": "/38/fe16c7b0e5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4081,
+    "cache_creation_tokens": 425256,
+    "cache_read_tokens": 4534050,
+    "output_tokens": 45636,
+    "api_call_count": 64
+  }
+}
