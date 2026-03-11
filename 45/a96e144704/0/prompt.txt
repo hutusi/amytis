@@ -1,0 +1,1 @@
+I want to make redirectFrom more flexible. If I change a post's name, which makes the URL change, I want to use redirectFrom to redirect from the old URL. what do you think? now it shows Error: Page "/posts/[slug]/page" is missing param "/posts/[slug]" in "generateStaticParams()", which is required with "output: export" config.
