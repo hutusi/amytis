@@ -7,3 +7,7 @@ I want to make redirectFrom more flexible. If I change a post's name, which make
 ---
 
 I want to make redirectFrom work for the series index page. What do you think?
+
+---
+
+/commit
