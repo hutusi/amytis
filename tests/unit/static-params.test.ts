@@ -39,6 +39,7 @@ const snapshotUrls = { ...realUrls };
 let mockedPosts: Array<{ slug: string; series?: string; redirectFrom?: string[] }> = [];
 let mockedNotes: Array<{ slug: string }> = [];
 let mockedSeries: Record<string, Array<{ slug: string }>> = {};
+let mockedSeriesData: Record<string, { redirectFrom?: string[]; title?: string }> = {};
 const originalNodeEnv = process.env.NODE_ENV;
 
 // ─── Next.js runtime stubs (module-level — safe) ─────────────────────────────
@@ -127,7 +128,7 @@ beforeAll(() => {
     getBookChapter: () => null,
     getBooksByAuthor: () => [],
 
-    getSeriesData: () => null,
+    getSeriesData: (slug: string) => mockedSeriesData[slug] ?? null,
     getSeriesPosts: () => [],
     getSeriesAuthors: () => [],
 
@@ -145,6 +146,7 @@ beforeEach(() => {
   mockedPosts = [];
   mockedNotes = [];
   mockedSeries = {};
+  mockedSeriesData = {};
   process.env.NODE_ENV = originalNodeEnv;
 });
 
@@ -152,6 +154,7 @@ afterEach(() => {
   mockedPosts = [];
   mockedNotes = [];
   mockedSeries = {};
+  mockedSeriesData = {};
   process.env.NODE_ENV = originalNodeEnv;
 });
 
@@ -240,6 +243,15 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_' }]);
+    });
+
+    test('series/[slug] includes redirectFrom slug when series is renamed', async () => {
+      mockedSeries = { 'new-name': [] };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'new-name' });
+      expect(params).toContainEqual({ slug: 'old-name' });
     });
 
     test('series/[slug]/page/[page] returns [{ slug: "_", page: "2" }]', async () => {

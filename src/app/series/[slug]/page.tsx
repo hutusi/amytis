@@ -8,14 +8,38 @@ import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
+import RedirectPage from '@/components/RedirectPage';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
+/** Returns the series whose index.mdx lists `path` in its redirectFrom array, or null. */
+function findSeriesByRedirectFrom(path: string) {
+  for (const seriesSlug of Object.keys(getAllSeries())) {
+    const data = getSeriesData(seriesSlug);
+    if (data?.redirectFrom?.includes(path)) {
+      return { slug: seriesSlug, data };
+    }
+  }
+  return null;
+}
+
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
-  const slugs = Object.keys(allSeries);
-  if (slugs.length === 0) return [{ slug: '_' }];
-  return slugs.map((slug) => ({ slug }));
+  const slugs = new Set(Object.keys(allSeries));
+
+  // Also include old slugs from redirectFrom entries at /series/[old-slug].
+  for (const seriesSlug of Object.keys(allSeries)) {
+    const data = getSeriesData(seriesSlug);
+    for (const from of data?.redirectFrom ?? []) {
+      const segments = from.split('/').filter(Boolean);
+      if (segments.length !== 2 || segments[0] !== 'series') continue;
+      if (from === `/series/${seriesSlug}`) continue;
+      slugs.add(segments[1]);
+    }
+  }
+
+  if (slugs.size === 0) return [{ slug: '_' }];
+  return Array.from(slugs).map((slug) => ({ slug }));
 }
 
 export const dynamicParams = false;
@@ -23,8 +47,19 @@ export const dynamicParams = false;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
+  const currentPath = `/series/${slug}`;
+
+  const redirect = findSeriesByRedirectFrom(currentPath);
+  if (redirect) {
+    const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+    return {
+      title: redirect.data.title,
+      alternates: { canonical: `${siteUrl}/series/${redirect.slug}` },
+    };
+  }
+
   const seriesData = getSeriesData(slug);
-  
+
   if (!seriesData) {
     // If no explicit series metadata, try to infer from posts or return default
     const posts = getSeriesPosts(slug);
@@ -64,6 +99,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
+  const currentPath = `/series/${slug}`;
+
+  const redirect = findSeriesByRedirectFrom(currentPath);
+  if (redirect) {
+    return <RedirectPage to={`/series/${redirect.slug}`} />;
+  }
+
   const seriesData = getSeriesData(slug);
   const isCollection = seriesData?.type === 'collection';
   const allPosts = isCollection ? getCollectionPosts(slug) : getSeriesPosts(slug);
