@@ -61,6 +61,8 @@ export async function generateStaticParams() {
       if (segments.length !== 2) continue;
       const [fromPrefix, fromPostSlug] = segments;
       if (from === getPostUrl(post)) continue;   // skip if this is already the canonical path
+      // Skip /posts/* entries when basePath is 'posts' — handled by posts/[slug]/page.tsx instead
+      if (fromPrefix === 'posts' && basePath === 'posts') continue;
       params.push({ slug: fromPrefix, postSlug: fromPostSlug });
     }
   }

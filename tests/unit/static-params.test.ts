@@ -39,6 +39,7 @@ const snapshotUrls = { ...realUrls };
 let mockedPosts: Array<{ slug: string; series?: string; redirectFrom?: string[] }> = [];
 let mockedNotes: Array<{ slug: string }> = [];
 let mockedSeries: Record<string, Array<{ slug: string }>> = {};
+let mockedSeriesData: Record<string, { redirectFrom?: string[]; title?: string }> = {};
 const originalNodeEnv = process.env.NODE_ENV;
 
 // ─── Next.js runtime stubs (module-level — safe) ─────────────────────────────
@@ -127,7 +128,7 @@ beforeAll(() => {
     getBookChapter: () => null,
     getBooksByAuthor: () => [],
 
-    getSeriesData: () => null,
+    getSeriesData: (slug: string) => mockedSeriesData[slug] ?? null,
     getSeriesPosts: () => [],
     getSeriesAuthors: () => [],
 
@@ -145,6 +146,7 @@ beforeEach(() => {
   mockedPosts = [];
   mockedNotes = [];
   mockedSeries = {};
+  mockedSeriesData = {};
   process.env.NODE_ENV = originalNodeEnv;
 });
 
@@ -152,6 +154,7 @@ afterEach(() => {
   mockedPosts = [];
   mockedNotes = [];
   mockedSeries = {};
+  mockedSeriesData = {};
   process.env.NODE_ENV = originalNodeEnv;
 });
 
@@ -242,6 +245,15 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toEqual([{ slug: '_' }]);
     });
 
+    test('series/[slug] includes redirectFrom slug when series is renamed', async () => {
+      mockedSeries = { 'new-name': [] };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'new-name' });
+      expect(params).toContainEqual({ slug: 'old-name' });
+    });
+
     test('series/[slug]/page/[page] returns [{ slug: "_", page: "2" }]', async () => {
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
       const params = await generateStaticParams();
@@ -306,28 +318,42 @@ describe('generateStaticParams — placeholder when content is empty', () => {
   });
 
   describe('autoPaths series routing', () => {
-    // autoPaths defaults to false — series posts are served at /posts/[slug] unless explicitly enabled
+    // autoPaths defaults to true — series posts are served at /[series-slug]/[post-slug]
 
-    test('posts/[slug] includes series posts when autoPaths is disabled (default)', async () => {
-      mockedPosts = [{ slug: 'series-post', series: 'my-series' }];
-      const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
-      const params = await generateStaticParams();
-      expect(params).toContainEqual({ slug: 'series-post' });
-    });
+    describe('autoPaths disabled', () => {
+      // Override getSeriesAutoPaths to false and use /posts/[slug] as canonical URL.
+      beforeEach(() => {
+        mock.module('@/lib/urls', () => ({
+          ...snapshotUrls,
+          getSeriesAutoPaths: () => false,
+          getPostUrl: (post: { slug: string; series?: string }) => `/posts/${post.slug}`,
+        }));
+      });
 
-    test('[slug]/[postSlug] does not include series auto-path params when autoPaths is disabled', async () => {
-      mockedSeries = { 'my-series': [{ slug: 'my-post' }] };
-      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
-      const params = await generateStaticParams();
-      expect(params).not.toContainEqual({ slug: 'my-series', postSlug: 'my-post' });
-    });
+      afterEach(() => {
+        mock.module('@/lib/urls', () => snapshotUrls);
+      });
 
-    test('posts/[slug] includes series post when canonical matches /posts/[slug]', async () => {
-      // With autoPaths: false, getPostUrl returns /posts/[slug] for series posts
-      mockedPosts = [{ slug: 'my-post', series: 'my-series' }];
-      const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
-      const params = await generateStaticParams();
-      expect(params).toContainEqual({ slug: 'my-post' });
+      test('posts/[slug] includes series posts when autoPaths is disabled', async () => {
+        mockedPosts = [{ slug: 'series-post', series: 'my-series' }];
+        const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+        const params = await generateStaticParams();
+        expect(params).toContainEqual({ slug: 'series-post' });
+      });
+
+      test('[slug]/[postSlug] does not include series auto-path params when autoPaths is disabled', async () => {
+        mockedSeries = { 'my-series': [{ slug: 'my-post' }] };
+        const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+        const params = await generateStaticParams();
+        expect(params).not.toContainEqual({ slug: 'my-series', postSlug: 'my-post' });
+      });
+
+      test('posts/[slug] includes series post when canonical matches /posts/[slug]', async () => {
+        mockedPosts = [{ slug: 'my-post', series: 'my-series' }];
+        const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+        const params = await generateStaticParams();
+        expect(params).toContainEqual({ slug: 'my-post' });
+      });
     });
 
     test('[slug]/[postSlug] includes redirectFrom paths as additional params', async () => {
@@ -335,6 +361,21 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: 'my-post' });
+    });
+
+    test('[slug]/[postSlug] does not include /posts/* redirectFrom when basePath is "posts"', async () => {
+      mockedPosts = [{ slug: 'new-name', redirectFrom: ['/posts/old-name'] }];
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).not.toContainEqual({ slug: 'posts', postSlug: 'old-name' });
+    });
+
+    test('posts/[slug] includes redirectFrom slug when post is renamed within /posts/', async () => {
+      mockedPosts = [{ slug: 'new-name', redirectFrom: ['/posts/old-name'] }];
+      const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'new-name' });
+      expect(params).toContainEqual({ slug: 'old-name' });
     });
 
     test('[slug]/page includes single-segment redirectFrom paths as additional params', async () => {

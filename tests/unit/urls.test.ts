@@ -2,29 +2,27 @@ import { describe, test, expect } from 'bun:test';
 import { getPostUrl, getSeriesAutoPaths, validateSeriesAutoPaths } from '../../src/lib/urls';
 
 describe('getSeriesAutoPaths', () => {
-  test('returns false by default', () => {
-    expect(getSeriesAutoPaths()).toBe(false);
+  test('returns true by default', () => {
+    expect(getSeriesAutoPaths()).toBe(true);
   });
 });
 
-describe('getPostUrl — autoPaths disabled (default)', () => {
+describe('getPostUrl — autoPaths enabled (default)', () => {
   test('post with no series uses basePath', () => {
     expect(getPostUrl({ slug: 'hello' })).toBe('/posts/hello');
   });
 
-  test('post with series falls back to basePath when autoPaths is disabled', () => {
-    expect(getPostUrl({ slug: 'hello', series: 'my-series' })).toBe('/posts/hello');
+  test('post with series uses series slug as prefix when autoPaths is enabled', () => {
+    expect(getPostUrl({ slug: 'hello', series: 'my-series' })).toBe('/my-series/hello');
   });
 });
 
-describe('validateSeriesAutoPaths — autoPaths disabled (default)', () => {
-  test('does not throw for any slug when autoPaths is false', () => {
-    // validateSeriesAutoPaths is a no-op when autoPaths is disabled
-    const reserved = ['tags', 'series', 'books', 'flows', 'archive', 'posts'];
-    expect(() => validateSeriesAutoPaths(reserved)).not.toThrow();
+describe('validateSeriesAutoPaths — autoPaths enabled (default)', () => {
+  test('throws for a reserved route slug', () => {
+    expect(() => validateSeriesAutoPaths(['tags'])).toThrow('[amytis]');
   });
 
-  test('does not throw even with extraReserved slugs when autoPaths is false', () => {
-    expect(() => validateSeriesAutoPaths(['about'], ['about'])).not.toThrow();
+  test('throws for an extra reserved slug', () => {
+    expect(() => validateSeriesAutoPaths(['about'], ['about'])).toThrow('[amytis]');
   });
 });

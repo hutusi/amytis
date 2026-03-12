@@ -22,7 +22,7 @@ export function getSeriesCustomPaths(): Record<string, string> {
 }
 
 export function getSeriesAutoPaths(): boolean {
-  return siteConfig.series?.autoPaths ?? false;
+  return siteConfig.series?.autoPaths ?? true;
 }
 
 /**

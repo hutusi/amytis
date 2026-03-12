@@ -45,10 +45,6 @@ export async function generateStaticParams() {
     return (p.redirectFrom ?? []).includes(`/${basePath}/${p.slug}`);
   });
 
-  if (filtered.length === 0) return [{ slug: '_' }];
-  // Work around Next dev static-param checks for percent-encoded Unicode paths
-  // under `output: "export"` by including encoded variants only in development.
-  // Production export keeps raw segment values.
   const slugs = new Set<string>();
   for (const post of filtered) {
     slugs.add(post.slug);
@@ -56,6 +52,22 @@ export async function generateStaticParams() {
       slugs.add(encodeURIComponent(post.slug));
     }
   }
+
+  // Also include redirectFrom slugs at this basePath (e.g. /posts/old-name → /posts/new-name).
+  for (const post of posts) {
+    for (const from of post.redirectFrom ?? []) {
+      const segments = from.split('/').filter(Boolean);
+      if (segments.length !== 2 || segments[0] !== basePath) continue;
+      if (from === getPostUrl(post)) continue;
+      const fromSlug = segments[1];
+      slugs.add(fromSlug);
+      if (process.env.NODE_ENV !== 'production') {
+        slugs.add(encodeURIComponent(fromSlug));
+      }
+    }
+  }
+
+  if (slugs.size === 0) return [{ slug: '_' }];
   return Array.from(slugs).map((slug) => ({ slug }));
 }
 
@@ -63,7 +75,12 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const post = resolvePostFromParam(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
+  const basePath = getPostsBasePath();
+  const currentPath = `/${basePath}/${slug}`;
+  const post =
+    resolvePostFromParam(rawSlug) ??
+    getAllPosts().find(p => p.redirectFrom?.includes(currentPath));
 
   if (!post) {
     return {
@@ -73,7 +90,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const canonicalUrl = getPostUrl(post);
-  const currentPath = `/${getPostsBasePath()}/${safeDecodeParam(rawSlug)}`;
 
   // For redirect pages, return minimal metadata pointing to the canonical URL
   if (canonicalUrl !== currentPath) {
@@ -120,16 +136,19 @@ export default async function PostPage({
 }) {
   const { slug: rawSlug } = await params;
   const slug = safeDecodeParam(rawSlug);
-  const post = resolvePostFromParam(rawSlug);
+  const basePath = getPostsBasePath();
+  const currentPath = `/${basePath}/${slug}`;
+  const post =
+    resolvePostFromParam(rawSlug) ??
+    getAllPosts().find(p => p.redirectFrom?.includes(currentPath));
 
   if (!post) {
     notFound();
   }
 
   // If the canonical URL differs from the current path, render a redirect page.
-  // This handles posts moved by autoPaths or customPaths that opted in via redirectFrom.
+  // This handles posts moved by autoPaths or customPaths, or renamed within the same prefix.
   const canonicalUrl = getPostUrl(post);
-  const currentPath = `/${getPostsBasePath()}/${slug}`;
   if (canonicalUrl !== currentPath) {
     return <RedirectPage to={canonicalUrl} />;
   }
