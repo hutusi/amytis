@@ -33,7 +33,7 @@ export const siteConfig = {
     favicon: "/icon.svg",
   },
   description: { en: "Amytis — an elegant open-source framework for building your personal digital garden.", zh: "Amytis — 优雅的开源数字花园框架。" },
-  baseUrl: "https://example.com", // Replace with your actual domain
+  baseUrl: "https://amytis.vercel.app", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
 
