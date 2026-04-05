@@ -1194,7 +1194,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   return {
     slug,
     date,
-    title: data.title ?? h1Match?.[1]?.trim() ?? date, // frontmatter → H1 → date
+    title: data.title?.trim() || h1Match?.[1]?.trim() || date, // frontmatter(non-empty) → H1 → date
     tags: data.tags,
     draft: data.draft,
     commentable: data.commentable,
