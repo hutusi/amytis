@@ -6,6 +6,7 @@ import { useLanguage } from './LanguageProvider';
 export interface RecentNoteItem {
   slug: string;
   date: string;
+  title?: string;
   excerpt: string;
 }
 
@@ -36,6 +37,9 @@ export default function RecentNotesSection({ notes }: RecentNotesSectionProps) {
             <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent" />
             <Link href={`/flows/${note.slug}`} className="no-underline group">
               <time className="text-sm font-mono text-accent group-hover:text-accent/70 transition-colors">{note.date}</time>
+              {note.title && note.title !== note.date && (
+                <h3 className="mt-0.5 text-sm font-semibold text-heading group-hover:text-accent transition-colors">{note.title}</h3>
+              )}
             </Link>
             {note.excerpt && (
               <p className="mt-1.5 text-sm text-muted line-clamp-2">{note.excerpt}</p>

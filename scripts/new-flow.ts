@@ -33,6 +33,7 @@ if (!fs.existsSync(dirPath)) {
 }
 
 const content = `---
+# title: ""
 tags: []
 ---
 

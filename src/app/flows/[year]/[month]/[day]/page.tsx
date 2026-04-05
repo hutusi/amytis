@@ -88,6 +88,9 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           {/* Header */}
           <header className="mb-8">
             <time className="text-base font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
+            {flow.title !== flow.date && (
+              <h1 className="mt-2 text-xl sm:text-2xl font-serif font-bold text-heading">{flow.title}</h1>
+            )}
             {flow.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {flow.tags.map(tag => (
@@ -121,6 +124,11 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
                 <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
                   {prev.date}
                 </div>
+                {prev.title !== prev.date && (
+                  <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
+                    {prev.title}
+                  </div>
+                )}
               </Link>
             ) : <div />}
             {next ? (
@@ -132,6 +140,11 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
                 <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
                   {next.date}
                 </div>
+                {next.title !== next.date && (
+                  <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
+                    {next.title}
+                  </div>
+                )}
               </Link>
             ) : <div />}
           </nav>

@@ -9,7 +9,7 @@ import Pagination from '@/components/Pagination';
 interface FlowItem {
   slug: string;
   date: string;
-  title: string;
+  title?: string;
   excerpt: string;
   tags: string[];
 }
@@ -102,6 +102,7 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
               <FlowTimelineEntry
                 key={flow.slug}
                 date={flow.date}
+                title={flow.title}
                 excerpt={flow.excerpt}
                 tags={flow.tags}
                 slug={flow.slug}

@@ -96,6 +96,7 @@ export default function Home() {
     ? recentFlows.map(f => ({
         slug: f.slug,
         date: f.date,
+        title: f.title,
         excerpt: f.excerpt,
       }))
     : [];
