@@ -70,7 +70,7 @@ Further reading: [How to Get AI to Write Better Code](https://hutusi.com/weeklie
   - Fully static export with optimized WebP images.
   - Open Graph and Twitter card metadata for every content type.
   - JSON-LD structured data (`BlogPosting`, `Book`, `Article`) for Google rich results.
-  - RSS/Atom feed with configurable format (`rss` | `atom` | `both`) and content depth (`full` | `excerpt`).
+  - RSS/Atom feeds including a main curated feed (`feed.xml`), plus type-specific feeds (`/posts/feed.xml`, `/flows/feed.xml`, `/all.xml`). Configurable format (`rss` | `atom` | `both`) and content depth (`full` | `excerpt`).
   - Feed auto-discovery links in `<head>`, native sitemap generation.
   - Multilingual reading time estimate (supports Latin and CJK).
 - **Integrations:**
