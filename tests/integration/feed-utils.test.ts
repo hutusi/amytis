@@ -142,4 +142,47 @@ describe("Integration: Feed Utils", () => {
       }
     });
   });
+
+  test("feedType 'posts' returns only post items", () => {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      const items = getFeedItems('posts');
+      const allPosts = getAllPosts();
+      expect(items.length).toBe(allPosts.length);
+      items.forEach(item => {
+        expect(item.url).not.toContain('/flows/');
+      });
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  });
+
+  test("feedType 'flows' returns only flow items", () => {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      const items = getFeedItems('flows');
+      const allFlows = getAllFlows();
+      expect(items.length).toBe(allFlows.length);
+      items.forEach(item => {
+        expect(item.url).toContain('/flows/');
+      });
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  });
+
+  test("feedType 'all' returns both post and flow items", () => {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      const items = getFeedItems('all');
+      const allPosts = getAllPosts();
+      const allFlows = getAllFlows();
+      expect(items.length).toBe(allPosts.length + allFlows.length);
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  });
 });

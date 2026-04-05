@@ -127,18 +127,18 @@ export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Respon
     })
     .join('');
 
-  const rssXml = \`<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"\${contentNs}>
+  const rssXml = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"${contentNs}>
   <channel>
-    <title><![CDATA[\${escapeCdata(siteTitle)}]]></title>
-    <link>\${escapeXml(baseUrl)}</link>
-    <description><![CDATA[\${escapeCdata(resolveLocale(siteConfig.description))}]]></description>
-    <language>\${siteConfig.i18n.defaultLocale}</language>
-    <lastBuildDate>\${lastBuildDate}</lastBuildDate>
-    <atom:link href="\${escapeXml(selfUrl)}" rel="self" type="application/rss+xml" />\${imageXml}
-    \${rssItemsXml}
+    <title><![CDATA[${escapeCdata(siteTitle)}]]></title>
+    <link>${escapeXml(baseUrl)}</link>
+    <description><![CDATA[${escapeCdata(resolveLocale(siteConfig.description))}]]></description>
+    <language>${siteConfig.i18n.defaultLocale}</language>
+    <lastBuildDate>${lastBuildDate}</lastBuildDate>
+    <atom:link href="${escapeXml(selfUrl)}" rel="self" type="application/rss+xml" />${imageXml}
+    ${rssItemsXml}
   </channel>
-</rss>\`;
+</rss>`;
 
   return new Response(rssXml, {
     headers: {
@@ -182,16 +182,16 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
     })
     .join('');
 
-  const atomXml = \`<?xml version="1.0" encoding="UTF-8" ?>
+  const atomXml = `<?xml version="1.0" encoding="UTF-8" ?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title><![CDATA[\${escapeCdata(resolveLocale(siteConfig.title))}]]></title>
-  <link href="\${escapeXml(baseUrl)}" />
-  <link href="\${escapeXml(selfUrl)}" rel="self" type="application/atom+xml" />
-  <id>\${escapeXml(selfUrl)}</id>
-  <updated>\${feedUpdated}</updated>
-  <subtitle><![CDATA[\${escapeCdata(resolveLocale(siteConfig.description))}]]></subtitle>
-\${entriesXml}
-</feed>\`;
+  <title><![CDATA[${escapeCdata(resolveLocale(siteConfig.title))}]]></title>
+  <link href="${escapeXml(baseUrl)}" />
+  <link href="${escapeXml(selfUrl)}" rel="self" type="application/atom+xml" />
+  <id>${escapeXml(selfUrl)}</id>
+  <updated>${feedUpdated}</updated>
+  <subtitle><![CDATA[${escapeCdata(resolveLocale(siteConfig.description))}]]></subtitle>
+${entriesXml}
+</feed>`;
 
   return new Response(atomXml, {
     headers: {

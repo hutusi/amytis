@@ -62,4 +62,23 @@ describe("E2E: Navigation & Assets", () => {
     expect(text).toContain('xmlns="http://www.w3.org/2005/Atom"');
     expect(text).toContain("<entry>");
   });
+
+  test("type-specific feeds should be accessible", async () => {
+    if (!(await isServerRunning())) return;
+
+    const feedUrls = [
+      "/posts/feed.xml",
+      "/posts/feed.atom",
+      "/flows/feed.xml",
+      "/flows/feed.atom",
+      "/all.xml",
+      "/all.atom",
+    ];
+
+    for (const url of feedUrls) {
+      const response = await fetch(`${BASE_URL}${url}`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("xml");
+    }
+  });
 });
