@@ -1185,6 +1185,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   }
   const data = parsed.data;
 
+  const h1Match = content.match(/^\s*#\s+(.+)/);
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
   const date = data.date || slug.replace(/\//g, '-'); // slug is YYYY/MM/DD, convert to YYYY-MM-DD
   const excerpt = generateExcerpt(contentWithoutH1);
@@ -1193,7 +1194,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   return {
     slug,
     date,
-    title: data.title ?? date, // fall back to date string if no title in frontmatter
+    title: data.title ?? h1Match?.[1]?.trim() ?? date, // frontmatter → H1 → date
     tags: data.tags,
     draft: data.draft,
     commentable: data.commentable,
