@@ -43,6 +43,7 @@ Flows are a stream-style collection of daily notes, micro-blogging, or imported 
 - **Location:** `content/flows/YYYY/MM/DD.mdx`
 - **Navigation:** Grouped by date in a timeline view.
 - **Importing:** Use `bun run new-flow-from-chat` to bring in external conversations.
+- **Optional Title:** Set `title` in frontmatter or use an `# Heading` in the content to display a title alongside the date.
 
 ## How to Use
 

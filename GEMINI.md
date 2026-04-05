@@ -57,7 +57,7 @@ bun test
 
 ### Advanced Content Management
 - **Posts**: Supports both flat files (`.mdx`) and nested folders (`/index.mdx`) with co-located assets.
-- **Flows**: Daily notes or micro-posts organized by date (`YYYY/MM/DD`). Designed for quick thoughts and stream-of-consciousness updates.
+- **Flows**: Daily notes or micro-posts organized by date (`YYYY/MM/DD`). Designed for quick thoughts and stream-of-consciousness updates. Supports optional titles via frontmatter or H1 headings.
 - **Series**: 
   - Robust grouping with folder-based or file-based entries.
   - Configurable sorting: `date-asc`, `date-desc`, or `manual` (explicit list of slugs).

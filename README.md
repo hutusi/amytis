@@ -231,6 +231,7 @@ Create daily notes in `content/flows/YYYY/MM/DD.md` or `.mdx`.
 
 - CLI: `bun run new-flow` creates today’s entry
 - Chat import: put exports in `imports/chats/` and run `bun run new-flow-from-chat`
+- Optional Title: Set `title` in frontmatter or use an `# Heading` in the content to display a title alongside the date.
 
 ### Series
 
