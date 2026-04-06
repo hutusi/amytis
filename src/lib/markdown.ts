@@ -6,6 +6,7 @@ import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
 import { parseRstDocument } from './rst';
+import { renderRstFile } from './rst-renderer';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -120,6 +121,8 @@ export interface PostData {
   redirectFrom?: string[];
   readingTime: string;
   content: string;
+  renderedHtml?: string;
+  plainText?: string;
   headings: Heading[];
   contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
   /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
@@ -157,6 +160,7 @@ const allSeriesCache = new Map<string, Record<string, PostData[]>>();
 const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
 const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
 const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
+let pythonRstRendererAvailable: boolean | null = null;
 
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
@@ -511,13 +515,47 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
 }
 
 function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const parsed = parseRstDocument(fileContents);
-  const data = parsed.metadata;
-
   const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
     path.dirname(fullPath) === contentDirectory;
   const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+
+  let parsedTitle: string;
+  let parsedBody: string;
+  let parsedText: string | undefined;
+  let parsedHeadings: Heading[];
+  let parsedExcerpt: string;
+  let parsedReadingTime: string;
+  let parsedHtml: string | undefined;
+  let data: ReturnType<typeof parseRstDocument>['metadata'];
+
+  try {
+    if (pythonRstRendererAvailable !== false) {
+      const rendered = renderRstFile(fullPath, imageBaseSlug);
+      pythonRstRendererAvailable = true;
+      parsedTitle = rendered.title;
+      parsedBody = fileContents;
+      parsedText = rendered.text;
+      parsedHeadings = rendered.headings;
+      parsedExcerpt = rendered.excerpt;
+      parsedReadingTime = rendered.readingTime;
+      parsedHtml = rendered.html;
+      data = rendered.metadata;
+    } else {
+      throw new Error('__RST_FALLBACK__');
+    }
+  } catch (error) {
+    if (pythonRstRendererAvailable !== false && error instanceof Error && /docutils/i.test(error.message)) {
+      pythonRstRendererAvailable = false;
+    }
+    const parsed = parseRstDocument(fileContents);
+    parsedTitle = parsed.title;
+    parsedBody = parsed.body;
+    parsedHeadings = parsed.headings;
+    parsedExcerpt = parsed.excerpt;
+    parsedReadingTime = parsed.readingTime;
+    data = parsed.metadata;
+  }
 
   const effectiveSeriesSlug = data.series || seriesName;
   let authors: string[] = [];
@@ -550,10 +588,10 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
 
   return {
     slug,
-    title: parsed.title,
+    title: parsedTitle,
     subtitle: data.subtitle,
     date,
-    excerpt: data.excerpt || parsed.excerpt,
+    excerpt: data.excerpt || parsedExcerpt,
     category: data.category ?? 'Uncategorized',
     tags: data.tags ?? [],
     authors,
@@ -571,9 +609,11 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
     toc: data.toc ?? true,
     commentable: data.commentable,
     redirectFrom: data.redirectFrom ?? [],
-    readingTime: parsed.readingTime,
-    content: parsed.body,
-    headings: parsed.headings,
+    readingTime: parsedReadingTime,
+    content: parsedBody,
+    renderedHtml: parsedHtml,
+    plainText: parsedText,
+    headings: parsedHeadings,
     imageBaseSlug,
     sourceFormat: 'rst',
   };
