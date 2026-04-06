@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "public/pagefind/**",
     // Package compiled output — not authored code
     "packages/*/dist/**",
+    // Local Python renderer virtualenv
+    ".venv-rst/**",
   ]),
 ]);
 

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { RstMetadata, RstParseError } from './rst';
@@ -34,6 +35,11 @@ export interface RenderedRstDocument {
   readingTime: string;
   assets: PythonRstAsset[];
   warnings: string[];
+}
+
+function getPythonExecutableForRstRenderer(): string {
+  const localVenvPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
+  return fs.existsSync(localVenvPython) ? localVenvPython : 'python3';
 }
 
 function parseBoolean(field: string, value: unknown): boolean {
@@ -233,7 +239,8 @@ export function validatePythonRstResult(result: PythonRstRenderResult, filePath:
 
 export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): PythonRstRenderResult {
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
-  const result = spawnSync('python3', [
+  const pythonExecutable = getPythonExecutableForRstRenderer();
+  const result = spawnSync(pythonExecutable, [
     scriptPath,
     '--file',
     filePath,

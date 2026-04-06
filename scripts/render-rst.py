@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
+import html
 import json
 import posixpath
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -153,6 +155,23 @@ def extract_assets(document: Any, source_file: Path, image_base_slug: str) -> li
     return assets
 
 
+def rewrite_html_assets(rendered_html: str, assets: list[dict[str, Any]]) -> str:
+    rewritten = rendered_html
+
+    for asset in assets:
+        original = asset["original"]
+        resolved = asset["resolved"]
+        escaped_original = re.escape(html.escape(original, quote=True))
+
+        rewritten = re.sub(
+            rf'(\s(?:src|href)=["\']){escaped_original}(["\'])',
+            rf'\1{html.escape(resolved, quote=True)}\2',
+            rewritten,
+        )
+
+    return rewritten
+
+
 def extract_headings(document: Any) -> list[dict[str, Any]]:
     from docutils import nodes
 
@@ -199,13 +218,16 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
         },
     )
 
+    assets = extract_assets(document, source_file, image_base_slug)
+    html_body = parts.get("html_body", "").strip() or parts.get("fragment", "").strip()
+
     return {
         "title": title_node.astext().strip(),
-        "html": parts.get("html_body", "").strip() or parts.get("fragment", "").strip(),
+        "html": rewrite_html_assets(html_body, assets),
         "text": document.astext().strip(),
         "headings": extract_headings(document),
         "metadata": extract_metadata(document),
-        "assets": extract_assets(document, source_file, image_base_slug),
+        "assets": assets,
         "warnings": [],
     }
 
