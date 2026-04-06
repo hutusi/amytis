@@ -140,6 +140,24 @@ interface SeriesContentEntry {
   dateFromFileName?: string;
 }
 
+function getCacheEnvKey(): string {
+  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
+}
+
+const postsCache = new Map<string, PostData[]>();
+const pagesCache = new Map<string, PostData[]>();
+const tagsCache = new Map<string, Record<string, number>>();
+const authorsCache = new Map<string, Record<string, number>>();
+const featuredPostsCache = new Map<string, PostData[]>();
+const adjacentPostsCache = new Map<string, Map<string, { prev: PostData | null; next: PostData | null }>>();
+const relatedPostsCache = new Map<string, Map<string, PostData[]>>();
+const seriesDataCache = new Map<string, Map<string, PostData | null>>();
+const seriesPostsCache = new Map<string, Map<string, PostData[]>>();
+const allSeriesCache = new Map<string, Record<string, PostData[]>>();
+const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
+const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
+const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
+
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
   const hanCharsPerMinute = 300;
@@ -548,6 +566,10 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
 }
 
 export function getAllPosts(): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  const cached = postsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPostsData: PostData[] = [];
 
   // Helper to process a directory
@@ -602,7 +624,7 @@ export function getAllPosts(): PostData[] {
   processDirectory(contentDirectory);
   processDirectory(seriesDirectory, true);
 
-  return allPostsData
+  const result = allPostsData
     .filter(post => {
       if (post.category === 'Page') return false;
       
@@ -618,6 +640,8 @@ export function getAllPosts(): PostData[] {
       return true;
     })
     .sort((a, b) => (a.date < b.date ? 1 : -1));
+  postsCache.set(cacheKey, result);
+  return result;
 }
 
 /**
@@ -688,8 +712,12 @@ export function getPageBySlug(slug: string): PostData | null {
 }
 
 export function getAllPages(): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  const cached = pagesCache.get(cacheKey);
+  if (cached) return cached;
+
   const items = fs.readdirSync(pagesDirectory, { withFileTypes: true });
-  return items
+  const result = items
     .filter(item => {
       if (!item.isFile()) return false;
       if (!item.name.endsWith('.mdx') && !item.name.endsWith('.md')) return false;
@@ -706,6 +734,8 @@ export function getAllPages(): PostData[] {
       const fullPath = path.join(pagesDirectory, item.name);
       return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
     });
+  pagesCache.set(cacheKey, result);
+  return result;
 }
 
 export function getPostsByTag(tag: string): PostData[] {
@@ -728,6 +758,10 @@ export function getFlowTags(): Record<string, number> {
 }
 
 export function getAllTags(): Record<string, number> {
+  const cacheKey = getCacheEnvKey();
+  const cached = tagsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const allFlows = getAllFlows();
   const allNotes = getAllNotes();
@@ -763,6 +797,7 @@ export function getAllTags(): Record<string, number> {
   for (const [key, count] of Object.entries(counts)) {
     result[display[key]] = count;
   }
+  tagsCache.set(cacheKey, result);
   return result;
 }
 
@@ -784,6 +819,10 @@ export function getAuthorSlug(author: string): string {
 }
 
 export function getAllAuthors(): Record<string, number> {
+  const cacheKey = getCacheEnvKey();
+  const cached = authorsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const authors: Record<string, number> = {};
 
@@ -796,7 +835,7 @@ export function getAllAuthors(): Record<string, number> {
       }
     });
   });
-
+  authorsCache.set(cacheKey, authors);
   return authors;
 }
 
@@ -814,6 +853,16 @@ export function resolveAuthorParam(authorParam: string): string | null {
 }
 
 export function getRelatedPosts(currentSlug: string, limit: number = 3): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = relatedPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    relatedPostsCache.set(cacheKey, bySlug);
+  }
+  const cacheId = `${currentSlug}:${limit}`;
+  const cached = bySlug.get(cacheId);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const currentPost = allPosts.find(p => p.slug === currentSlug);
 
@@ -837,10 +886,20 @@ export function getRelatedPosts(currentSlug: string, limit: number = 3): PostDat
     .slice(0, limit)
     .map(item => item.post);
 
+  bySlug.set(cacheId, related);
   return related;
 }
 
 export function getSeriesPosts(seriesName: string): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySeries = seriesPostsCache.get(cacheKey);
+  if (!bySeries) {
+    bySeries = new Map();
+    seriesPostsCache.set(cacheKey, bySeries);
+  }
+  const cached = bySeries.get(seriesName);
+  if (cached) return cached;
+
   const seriesSlug = seriesName;
   const seriesData = getSeriesData(seriesSlug);
   
@@ -865,10 +924,15 @@ export function getSeriesPosts(seriesName: string): PostData[] {
       }
   }
   
+  bySeries.set(seriesName, posts);
   return posts;
 }
 
 export function getAllSeries(): Record<string, PostData[]> {
+  const cacheKey = getCacheEnvKey();
+  const cached = allSeriesCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const series: Record<string, PostData[]> = {};
   const seriesSet = new Set<string>();
@@ -901,25 +965,49 @@ export function getAllSeries(): Record<string, PostData[]> {
       : getSeriesPosts(slug);
   });
 
+  allSeriesCache.set(cacheKey, series);
   return series;
 }
 
 export function getFeaturedPosts(): PostData[] {
-  const allPosts = getAllPosts();
-  return allPosts.filter(post => post.featured);
+  const cacheKey = getCacheEnvKey();
+  const cached = featuredPostsCache.get(cacheKey);
+  if (cached) return cached;
+  const result = getAllPosts().filter(post => post.featured);
+  featuredPostsCache.set(cacheKey, result);
+  return result;
 }
 
 export function getAdjacentPosts(slug: string): { prev: PostData | null; next: PostData | null } {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = adjacentPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    adjacentPostsCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(slug);
+  if (cached) return cached;
+
   const allPosts = getAllPosts(); // sorted desc by date (newest first)
   const index = allPosts.findIndex(p => p.slug === slug);
-  if (index === -1) return { prev: null, next: null };
-  return {
+  if (index === -1) {
+    const empty = { prev: null, next: null };
+    bySlug.set(slug, empty);
+    return empty;
+  }
+  const result = {
     prev: index < allPosts.length - 1 ? allPosts[index + 1] : null, // older post
     next: index > 0 ? allPosts[index - 1] : null,                   // newer post
   };
+  bySlug.set(slug, result);
+  return result;
 }
 
 export function getFeaturedSeries(): Record<string, PostData[]> {
+  const cacheKey = getCacheEnvKey();
+  const cached = featuredSeriesCache.get(cacheKey);
+  if (cached) return cached;
+
   const allSeries = getAllSeries();
   const featuredSeries: Record<string, PostData[]> = {};
   
@@ -930,21 +1018,47 @@ export function getFeaturedSeries(): Record<string, PostData[]> {
     }
   });
   
+  featuredSeriesCache.set(cacheKey, featuredSeries);
   return featuredSeries;
 }
 
 export function getSeriesData(slug: string): PostData | null {
-  const indexInfo = resolveSeriesIndexInfo(slug);
-  if (!indexInfo) return null;
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesDataCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesDataCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(slug)) return bySlug.get(slug) ?? null;
 
-  return indexInfo.format === 'rst'
+  const indexInfo = resolveSeriesIndexInfo(slug);
+  if (!indexInfo) {
+    bySlug.set(slug, null);
+    return null;
+  }
+
+  const result = indexInfo.format === 'rst'
     ? parseRstFile(indexInfo.fullPath, slug, undefined, slug)
     : parseMarkdownFile(indexInfo.fullPath, slug, undefined, slug);
+  bySlug.set(slug, result);
+  return result;
 }
 
 export function getCollectionPosts(collectionSlug: string): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = collectionPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    collectionPostsCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(collectionSlug);
+  if (cached) return cached;
+
   const data = getSeriesData(collectionSlug);
-  if (data?.type !== 'collection' || !data.items) return [];
+  if (data?.type !== 'collection' || !data.items) {
+    bySlug.set(collectionSlug, []);
+    return [];
+  }
 
   const getCollectionKey = (post: PostData) =>
     post.series ? `${post.series}/${post.slug}` : `posts/${post.slug}`;
@@ -953,7 +1067,7 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   const postIndex = new Map(allPosts.map((post) => [getCollectionKey(post), post]));
   const seen = new Set<string>();
 
-  return data.items
+  const result = data.items
     .flatMap(item => {
       if ('series' in item) {
         const posts = getSeriesPosts(item.series);
@@ -972,9 +1086,20 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
       seen.add(key);
       return true;
     });
+  bySlug.set(collectionSlug, result);
+  return result;
 }
 
 export function getCollectionsForPost(postSlug: string): CollectionContext[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = collectionsForPostCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    collectionsForPostCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(postSlug);
+  if (cached) return cached;
+
   if (!fs.existsSync(seriesDirectory)) return [];
   const seriesFolders = fs.readdirSync(seriesDirectory, { withFileTypes: true });
   const results: CollectionContext[] = [];
@@ -990,6 +1115,7 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
     }
   }
 
+  bySlug.set(postSlug, results);
   return results;
 }
 
