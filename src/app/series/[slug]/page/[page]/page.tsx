@@ -23,6 +23,14 @@ export async function generateStaticParams() {
         }
     }
   });
+
+  if (process.env.NODE_ENV !== 'production') {
+    const encodedParams = params
+      .filter(param => encodeURIComponent(param.slug) !== param.slug)
+      .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }));
+    params.push(...encodedParams);
+  }
+
   if (params.length === 0) return [{ slug: '_', page: '2' }];
   return params;
 }

@@ -254,10 +254,37 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toContainEqual({ slug: 'old-name' });
     });
 
+    test('series/[slug] includes raw and encoded Unicode slug in non-production', async () => {
+      mockedSeries = { '软件构架设计': [] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计' });
+      expect(params).toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1' });
+    });
+
+    test('series/[slug] includes only raw Unicode slug in production', async () => {
+      mockedSeries = { '软件构架设计': [] };
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计' });
+      expect(params).not.toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1' });
+    });
+
     test('series/[slug]/page/[page] returns [{ slug: "_", page: "2" }]', async () => {
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_', page: '2' }]);
+    });
+
+    test('series/[slug]/page/[page] includes encoded Unicode slug in non-production', async () => {
+      mockedSeries = { '软件构架设计': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', page: '2' });
+      expect(params).toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1', page: '2' });
     });
   });
 

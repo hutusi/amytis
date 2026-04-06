@@ -38,6 +38,14 @@ export async function generateStaticParams() {
     }
   }
 
+  // Work around Next dev static-param checks for percent-encoded Unicode paths
+  // under `output: "export"` — dev server may receive encoded forms of Unicode slugs.
+  if (process.env.NODE_ENV !== 'production') {
+    for (const slug of [...slugs]) {
+      slugs.add(encodeURIComponent(slug));
+    }
+  }
+
   if (slugs.size === 0) return [{ slug: '_' }];
   return Array.from(slugs).map((slug) => ({ slug }));
 }
