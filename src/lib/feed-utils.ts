@@ -40,7 +40,7 @@ export type FeedType = 'main' | 'posts' | 'flows' | 'all';
  * - 'flows': Only flows
  * - 'all': Both posts and flows, ignoring `includeFlows`
  */
-export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
+export function getFeedItems(feedType: FeedType = 'main', includeFullContent: boolean = false): FeedItem[] {
   const { maxItems, includeFlows } = siteConfig.feed;
   const baseUrl = siteConfig.baseUrl.replace(/\/+$/, '');
 
@@ -51,7 +51,7 @@ export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
     url: `${baseUrl}${getPostUrl(post)}`,
     date: new Date(post.date),
     excerpt: post.excerpt,
-    content: markdownToHtml(post.content),
+    content: includeFullContent ? markdownToHtml(post.content) : '',
     tags: post.tags || [],
     authors: post.authors,
   }));
@@ -61,7 +61,7 @@ export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
     url: `${baseUrl}${getFlowUrl(flow.slug)}`,
     date: new Date(flow.date),
     excerpt: flow.excerpt,
-    content: markdownToHtml(flow.content),
+    content: includeFullContent ? markdownToHtml(flow.content) : '',
     tags: flow.tags || [],
   }));
 
@@ -95,8 +95,8 @@ export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Respon
   }
 
   const baseUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-  const items = getFeedItems(feedType);
   const useFullContent = contentMode === 'full';
+  const items = getFeedItems(feedType, useFullContent);
   const contentNs = useFullContent ? ' xmlns:content="http://purl.org/rss/modules/content/"' : '';
   const siteTitle = resolveLocale(siteConfig.title);
   const lastBuildDate = items[0]?.date.toUTCString() ?? new Date().toUTCString();
@@ -155,8 +155,8 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
   }
 
   const baseUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-  const items = getFeedItems(feedType);
   const useFullContent = contentMode === 'full';
+  const items = getFeedItems(feedType, useFullContent);
   const feedUpdated = items[0]?.date.toISOString() ?? new Date().toISOString();
 
   const selfUrl = `${baseUrl}${selfUrlPath}`;
