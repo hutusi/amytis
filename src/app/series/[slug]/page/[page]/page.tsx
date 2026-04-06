@@ -7,6 +7,7 @@ import { siteConfig } from '../../../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
+import RedirectPage from '@/components/RedirectPage';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -18,22 +19,49 @@ function safeDecodeParam(param: string): string {
   }
 }
 
+function findSeriesByRedirectFrom(path: string) {
+  for (const seriesSlug of Object.keys(getAllSeries())) {
+    const data = getSeriesData(seriesSlug);
+    if (data?.redirectFrom?.includes(path)) {
+      return { slug: seriesSlug, data };
+    }
+  }
+  return null;
+}
+
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
+  const seen = new Set<string>();
   const params: { slug: string; page: string }[] = [];
-  
+  const pushParam = (slug: string, page: string) => {
+    const key = `${slug}:${page}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    params.push({ slug, page });
+  };
+
   Object.keys(allSeries).forEach(slug => {
     const posts = allSeries[slug];
     const totalPages = Math.ceil(posts.length / PAGE_SIZE);
     if (totalPages > 1) {
-        for (let i = 2; i <= totalPages; i++) {
-            params.push({ slug, page: i.toString() });
-        }
+      for (let i = 2; i <= totalPages; i++) {
+        pushParam(slug, i.toString());
+      }
+    }
+
+    const data = getSeriesData(slug);
+    for (const from of data?.redirectFrom ?? []) {
+      const segments = from.split('/').filter(Boolean);
+      if (segments.length !== 2 || segments[0] !== 'series') continue;
+      const aliasSlug = segments[1];
+      if (aliasSlug === slug || totalPages <= 1) continue;
+      for (let i = 2; i <= totalPages; i++) {
+        pushParam(aliasSlug, i.toString());
+      }
     }
   });
 
   if (process.env.NODE_ENV !== 'production') {
-    const seen = new Set(params.map(param => `${param.slug}:${param.page}`));
     const encodedParams = params
       .filter(param => encodeURIComponent(param.slug) !== param.slug)
       .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }))
@@ -55,6 +83,16 @@ export const dynamicParams = false;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; page: string }> }): Promise<Metadata> {
   const { slug: rawSlug, page } = await params;
   const slug = safeDecodeParam(rawSlug);
+  const currentPath = `/series/${slug}`;
+  const redirect = findSeriesByRedirectFrom(currentPath);
+  if (redirect) {
+    const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+    return {
+      title: redirect.data.title,
+      alternates: { canonical: `${siteUrl}/series/${redirect.slug}/page/${page}` },
+    };
+  }
+
   const seriesData = getSeriesData(slug);
   const title = seriesData?.title || slug;
   const allPosts = seriesData?.type === 'collection' ? getCollectionPosts(slug) : getSeriesPosts(slug);
@@ -68,6 +106,12 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const { slug: rawSlug, page: pageStr } = await params;
   const slug = safeDecodeParam(rawSlug);
   const page = parseInt(pageStr);
+  const currentPath = `/series/${slug}`;
+  const redirect = findSeriesByRedirectFrom(currentPath);
+  if (redirect) {
+    return <RedirectPage to={`/series/${redirect.slug}/page/${page}`} />;
+  }
+
   const seriesData = getSeriesData(slug);
   const isCollection = seriesData?.type === 'collection';
   const allPosts = isCollection ? getCollectionPosts(slug) : getSeriesPosts(slug);

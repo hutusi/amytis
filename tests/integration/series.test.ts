@@ -50,6 +50,11 @@ describe("Integration: Series", () => {
     expect(data!.posts).toEqual(["readme-index-post"]);
   });
 
+  test("getSeriesData rejects unsafe series slugs", () => {
+    expect(() => getSeriesData("../etc/passwd")).toThrow();
+    expect(() => getSeriesData("nested/slug")).toThrow();
+  });
+
   test("rST series indexes reject impossible dates", () => {
     expect(() => parseRstDocument([
       "Broken rST Series",

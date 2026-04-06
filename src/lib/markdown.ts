@@ -281,7 +281,19 @@ function isRstFilename(name: string): boolean {
   return name.endsWith('.rst');
 }
 
+function assertSafeSeriesSlug(seriesSlug: string): void {
+  if (!seriesSlug || path.isAbsolute(seriesSlug)) {
+    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
+  }
+
+  const segments = seriesSlug.split(/[\\/]/);
+  if (segments.length !== 1 || segments[0] === '.' || segments[0] === '..') {
+    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
+  }
+}
+
 function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesFormat): string | null {
+  assertSafeSeriesSlug(seriesSlug);
   const seriesPath = path.join(seriesDirectory, seriesSlug);
   const candidates = format === 'rst'
     ? ['index.rst', 'README.rst']
@@ -301,6 +313,7 @@ function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesFormat): str
 }
 
 function resolveSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
+  assertSafeSeriesSlug(slug);
   if (!fs.existsSync(seriesDirectory)) return null;
   const seriesPath = path.join(seriesDirectory, slug);
   if (!fs.existsSync(seriesPath) || !fs.statSync(seriesPath).isDirectory()) return null;

@@ -287,6 +287,24 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toContainEqual({ slug: '软件构架设计', page: '2' });
       expect(params).toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1', page: '2' });
     });
+
+    test('series/[slug]/page/[page] includes redirectFrom slug when series is renamed', async () => {
+      mockedSeries = { 'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'new-name', page: '2' });
+      expect(params).toContainEqual({ slug: 'old-name', page: '2' });
+    });
+
+    test('series/[slug]/page/[page] redirects old alias slugs to the canonical paginated path', async () => {
+      mockedSeries = { 'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const page = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(page.default({
+        params: Promise.resolve({ slug: 'old-name', page: '2' }),
+      })).resolves.toBeDefined();
+    });
   });
 
   describe('posts routes', () => {
