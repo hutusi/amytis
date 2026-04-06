@@ -45,6 +45,19 @@ describe("Integration: Feed Utils", () => {
     }
   });
 
+  test("feed items have valid dates", () => {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      const items = getFeedItems();
+      items.forEach((item) => {
+        expect(Number.isNaN(item.date.getTime())).toBe(false);
+      });
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  });
+
   test("maxItems = 0 returns all posts", () => {
     const originalMaxItems = siteConfig.feed.maxItems;
     const originalIncludeFlows = siteConfig.feed.includeFlows;
