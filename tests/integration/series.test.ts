@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { parseRstDocument, RstParseError } from "../../src/lib/rst";
 import {
   getAllSeries,
   getSeriesData,
@@ -13,6 +14,8 @@ describe("Integration: Series", () => {
     expect(Object.keys(series).length).toBeGreaterThan(0);
     expect(series).toHaveProperty("nextjs-deep-dive");
     expect(series).toHaveProperty("digital-garden");
+    expect(series).toHaveProperty("rst-legacy");
+    expect(series).toHaveProperty("rst-readme");
   });
 
   test("getSeriesData returns metadata with correct fields", () => {
@@ -28,6 +31,40 @@ describe("Integration: Series", () => {
   test("getSeriesData returns null for nonexistent slug", () => {
     const data = getSeriesData("nonexistent-series-slug");
     expect(data).toBeNull();
+  });
+
+  test("getSeriesData loads rST series metadata", () => {
+    const data = getSeriesData("rst-legacy");
+    expect(data).not.toBeNull();
+    expect(data!.title).toBe("Rst Legacy Series");
+    expect(data!.sourceFormat).toBe("rst");
+    expect(data!.sort).toBe("manual");
+    expect(data!.posts).toEqual(["getting-started", "deeper-notes"]);
+  });
+
+  test("getSeriesData accepts README.rst as the series index", () => {
+    const data = getSeriesData("rst-readme");
+    expect(data).not.toBeNull();
+    expect(data!.title).toBe("Rst README Series");
+    expect(data!.sourceFormat).toBe("rst");
+    expect(data!.posts).toEqual(["readme-index-post"]);
+  });
+
+  test("getSeriesData rejects unsafe series slugs", () => {
+    expect(() => getSeriesData("../etc/passwd")).toThrow();
+    expect(() => getSeriesData("nested/slug")).toThrow();
+  });
+
+  test("rST series indexes reject impossible dates", () => {
+    expect(() => parseRstDocument([
+      "Broken rST Series",
+      "=================",
+      "",
+      ":date: 2021-16-15",
+      "",
+      "Body.",
+      "",
+    ].join("\n"))).toThrow(RstParseError);
   });
 
   test("getSeriesPosts returns posts in manual order for manual series", () => {
@@ -60,6 +97,18 @@ describe("Integration: Series", () => {
   test("getSeriesPosts returns empty array for nonexistent series", () => {
     const posts = getSeriesPosts("nonexistent-series-slug");
     expect(posts).toEqual([]);
+  });
+
+  test("getSeriesPosts returns rST posts in manual order", () => {
+    const posts = getSeriesPosts("rst-legacy");
+    expect(posts.map(post => post.slug)).toEqual(["getting-started", "deeper-notes"]);
+    expect(posts.every(post => post.sourceFormat === "rst")).toBe(true);
+  });
+
+  test("getSeriesPosts loads posts for README.rst-based series", () => {
+    const posts = getSeriesPosts("rst-readme");
+    expect(posts.map(post => post.slug)).toEqual(["readme-index-post"]);
+    expect(posts[0]?.sourceFormat).toBe("rst");
   });
 
   test("getFeaturedPosts returns only posts with featured: true", () => {

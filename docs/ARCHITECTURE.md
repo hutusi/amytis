@@ -1,10 +1,10 @@
 # Architecture Overview
 
-Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX publishing across posts, series, books, flows, and notes.
+Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX publishing across posts, series, books, flows, and notes, with optional series-scoped rST support for legacy content.
 
 ## Core Stack
 
-- Framework: Next.js 16.1.6 + React 19
+- Framework: Next.js 16.2.1 + React 19
 - Runtime/tooling: Bun
 - Styling: Tailwind CSS v4 + CSS variables + `next-themes`
 - Content parsing: `gray-matter` + Zod validation in `src/lib/markdown.ts`
@@ -14,7 +14,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 ## Content Model
 
 - `content/posts/`: standalone posts (`.md/.mdx`) and folder posts (`index.mdx`)
-- `content/series/<slug>/`: series metadata (`index.mdx`) + series posts
+- `content/series/<slug>/`: series metadata (`index.mdx` / `index.md` / `README.mdx` / `README.md` / `index.rst` / `README.rst`) + series posts in the same format
 - `content/books/<slug>/`: book metadata + chapter files
 - `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
 - `content/notes/`: evergreen notes
@@ -27,6 +27,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 3. Draft/future filtering and sorting are applied (based on `site.config.ts`).
 4. Route files consume typed helpers (`getAllPosts`, `getBookData`, `getAllFlows`, `getAllNotes`, etc.).
 5. `generateStaticParams()` precomputes dynamic routes for static export.
+6. Series content format is inferred from the series index file; ambiguous or mixed-format series fail fast during content loading.
 
 ## Route Map (App Router)
 
@@ -75,10 +76,16 @@ src/app/
 ## URL Routing Rules
 
 - `next.config.ts` sets `output: "export"` and `trailingSlash: true`.
+- Series format is inferred from the index file:
+  - Markdown series: `index.md`, `index.mdx`, `README.md`, or `README.mdx`
+  - rST series: `index.rst` or `README.rst`
+- A series may not mix Markdown and rST content files; ambiguous or mixed layouts are treated as build errors.
 - Post URLs use `getPostUrl()` in `src/lib/urls.ts`:
   - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)
   - Series auto path: `/<series.slug>/<post.slug>` when `series.autoPaths` is enabled
   - Series override: `/<series.customPaths[seriesSlug]>/<post.slug>`
+- Legacy aliases declared in frontmatter `redirectFrom` are emitted as static redirect pages, so old URLs can continue resolving after a rename or path migration.
+- Dynamic route handlers validate whether a request is canonical or legacy, then either render the content or return `RedirectPage`.
 - Dynamic route params should return raw segment values from `generateStaticParams()` (do not pre-encode values).
 - Links should always target concrete paths, not route placeholders such as `/posts/[slug]`.
 - When moving series posts off the default posts path, `scripts/add-series-redirects.ts` updates frontmatter `redirectFrom` entries so static redirect pages can be generated.

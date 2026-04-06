@@ -9,19 +9,9 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
+import { findSeriesByRedirectFrom, safeDecodeParam } from '@/lib/series-redirects';
 
 const PAGE_SIZE = siteConfig.pagination.series;
-
-/** Returns the series whose index.mdx lists `path` in its redirectFrom array, or null. */
-function findSeriesByRedirectFrom(path: string) {
-  for (const seriesSlug of Object.keys(getAllSeries())) {
-    const data = getSeriesData(seriesSlug);
-    if (data?.redirectFrom?.includes(path)) {
-      return { slug: seriesSlug, data };
-    }
-  }
-  return null;
-}
 
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
@@ -38,6 +28,14 @@ export async function generateStaticParams() {
     }
   }
 
+  // Work around Next dev static-param checks for percent-encoded Unicode paths
+  // under `output: "export"` — dev server may receive encoded forms of Unicode slugs.
+  if (process.env.NODE_ENV !== 'production') {
+    for (const slug of [...slugs]) {
+      slugs.add(encodeURIComponent(slug));
+    }
+  }
+
   if (slugs.size === 0) return [{ slug: '_' }];
   return Array.from(slugs).map((slug) => ({ slug }));
 }
@@ -46,7 +44,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const currentPath = `/series/${slug}`;
 
   const redirect = findSeriesByRedirectFrom(currentPath);
@@ -98,7 +96,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const currentPath = `/series/${slug}`;
 
   const redirect = findSeriesByRedirectFrom(currentPath);

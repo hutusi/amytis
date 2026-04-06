@@ -5,6 +5,7 @@ import { siteConfig } from '../../site.config';
 import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
+import { parseRstDocument } from './rst';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -123,7 +124,39 @@ export interface PostData {
   contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
   /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
   imageBaseSlug: string;
+  sourceFormat?: 'markdown' | 'rst';
 }
+
+type SeriesFormat = 'markdown' | 'rst';
+
+interface SeriesIndexInfo {
+  format: SeriesFormat;
+  fullPath: string;
+}
+
+interface SeriesContentEntry {
+  fullPath: string;
+  slug: string;
+  dateFromFileName?: string;
+}
+
+function getCacheEnvKey(): string {
+  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
+}
+
+const postsCache = new Map<string, PostData[]>();
+const pagesCache = new Map<string, PostData[]>();
+const tagsCache = new Map<string, Record<string, number>>();
+const authorsCache = new Map<string, Record<string, number>>();
+const featuredPostsCache = new Map<string, PostData[]>();
+const adjacentPostsCache = new Map<string, Map<string, { prev: PostData | null; next: PostData | null }>>();
+const relatedPostsCache = new Map<string, Map<string, PostData[]>>();
+const seriesDataCache = new Map<string, Map<string, PostData | null>>();
+const seriesPostsCache = new Map<string, Map<string, PostData[]>>();
+const allSeriesCache = new Map<string, Record<string, PostData[]>>();
+const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
+const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
+const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
 
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
@@ -183,21 +216,26 @@ export function getHeadings(content: string): Heading[] {
  * Returns null if no authors are configured (as opposed to the default fallback).
  */
 export function getSeriesAuthors(seriesSlug: string): string[] | null {
-  if (!fs.existsSync(seriesDirectory)) return null;
-  const indexPathMdx = path.join(seriesDirectory, seriesSlug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, seriesSlug, 'index.md');
+  const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+  if (!indexInfo) return null;
 
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return null;
+  if (indexInfo.format === 'rst') {
+    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    if (parsed.metadata.authors && parsed.metadata.authors.length > 0) {
+      return parsed.metadata.authors;
+    }
+    if (parsed.metadata.author && typeof parsed.metadata.author === 'string') {
+      return [parsed.metadata.author];
+    }
+    return null;
+  }
 
-  const { data } = matter(fs.readFileSync(fullPath, 'utf8'));
+  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.authors && Array.isArray(data.authors) && data.authors.length > 0) {
-    return data.authors;
+    return data.authors as string[];
   }
   if (data.author && typeof data.author === 'string') {
-    return [data.author];
+    return [data.author as string];
   }
   return null;
 }
@@ -221,15 +259,164 @@ export function resolveSeriesAuthors(slug: string, posts: PostData[]): string[] 
     .map(([name]) => name);
 }
 
+function parseSlugAndDate(rawName: string): { slug: string; dateFromFileName?: string } {
+  const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+  const match = rawName.match(dateRegex);
+
+  if (match) {
+    return {
+      dateFromFileName: match[1],
+      slug: siteConfig.posts?.includeDateInUrl ? rawName : match[2],
+    };
+  }
+
+  return { slug: rawName };
+}
+
+function isMarkdownFilename(name: string): boolean {
+  return name.endsWith('.md') || name.endsWith('.mdx');
+}
+
+function isRstFilename(name: string): boolean {
+  return name.endsWith('.rst');
+}
+
+function assertSafeSeriesSlug(seriesSlug: string): void {
+  if (!seriesSlug || path.isAbsolute(seriesSlug)) {
+    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
+  }
+
+  const segments = seriesSlug.split(/[\\/]/);
+  if (segments.length !== 1 || segments[0] === '.' || segments[0] === '..') {
+    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
+  }
+}
+
+function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesFormat): string | null {
+  assertSafeSeriesSlug(seriesSlug);
+  const seriesPath = path.join(seriesDirectory, seriesSlug);
+  const candidates = format === 'rst'
+    ? ['index.rst', 'README.rst']
+    : ['index.mdx', 'index.md', 'README.mdx', 'README.md'];
+
+  const matches = candidates
+    .map(name => path.join(seriesPath, name))
+    .filter(fullPath => fs.existsSync(fullPath));
+
+  if (matches.length > 1) {
+    throw new Error(
+      `[amytis] Series "${seriesSlug}" has multiple ${format} index files: ${matches.map(match => path.basename(match)).join(', ')}.`
+    );
+  }
+
+  return matches[0] ?? null;
+}
+
+function resolveSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
+  assertSafeSeriesSlug(slug);
+  if (!fs.existsSync(seriesDirectory)) return null;
+  const seriesPath = path.join(seriesDirectory, slug);
+  if (!fs.existsSync(seriesPath) || !fs.statSync(seriesPath).isDirectory()) return null;
+
+  const rstIndex = resolveUniqueSeriesIndex(slug, 'rst');
+  const markdownIndex = resolveUniqueSeriesIndex(slug, 'markdown');
+
+  if (rstIndex && markdownIndex) {
+    throw new Error(
+      `[amytis] Series "${slug}" cannot contain both rST and Markdown index files (${path.basename(rstIndex)} and ${path.basename(markdownIndex)}).`
+    );
+  }
+  if (rstIndex) return { format: 'rst', fullPath: rstIndex };
+  if (markdownIndex) return { format: 'markdown', fullPath: markdownIndex };
+  return null;
+}
+
+function getSeriesContentEntries(seriesSlug: string): SeriesContentEntry[] {
+  const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+  if (!indexInfo) return [];
+
+  const seriesPath = path.join(seriesDirectory, seriesSlug);
+  const seriesItems = fs.readdirSync(seriesPath, { withFileTypes: true });
+  const entries: SeriesContentEntry[] = [];
+  const seenSlugs = new Map<string, string>();
+  const seriesIndexBasenames = new Set(['index.rst', 'README.rst', 'index.md', 'index.mdx', 'README.md', 'README.mdx']);
+
+  for (const item of seriesItems) {
+    if (seriesIndexBasenames.has(item.name)) continue;
+
+    if (item.isFile()) {
+      const isMarkdown = isMarkdownFilename(item.name);
+      const isRst = isRstFilename(item.name);
+      if (!isMarkdown && !isRst) continue;
+
+      const itemFormat: SeriesFormat = isRst ? 'rst' : 'markdown';
+      if (itemFormat !== indexInfo.format) {
+        throw new Error(`[amytis] Series "${seriesSlug}" mixes ${indexInfo.format} and ${itemFormat} files. Offending file: ${item.name}`);
+      }
+
+      const rawName = item.name.replace(/\.(mdx?|rst)$/, '');
+      const { slug, dateFromFileName } = parseSlugAndDate(rawName);
+      const prior = seenSlugs.get(slug);
+      if (prior) {
+        throw new Error(`[amytis] Series "${seriesSlug}" contains duplicate post slug "${slug}" from "${prior}" and "${item.name}".`);
+      }
+      seenSlugs.set(slug, item.name);
+      entries.push({ fullPath: path.join(seriesPath, item.name), slug, dateFromFileName });
+      continue;
+    }
+
+    if (item.isDirectory()) {
+      const folderPath = path.join(seriesPath, item.name);
+      const folderIndexRst = path.join(folderPath, 'index.rst');
+      const folderIndexMdx = path.join(folderPath, 'index.mdx');
+      const folderIndexMd = path.join(folderPath, 'index.md');
+      const hasRst = fs.existsSync(folderIndexRst);
+      const hasMdx = fs.existsSync(folderIndexMdx);
+      const hasMd = fs.existsSync(folderIndexMd);
+      const markdownCount = Number(hasMdx) + Number(hasMd);
+      const totalIndexCount = Number(hasRst) + markdownCount;
+
+      if (totalIndexCount === 0) continue;
+      if (hasRst && markdownCount > 0) {
+        throw new Error(`[amytis] Series "${seriesSlug}" post folder "${item.name}" cannot contain both index.rst and Markdown index files.`);
+      }
+      if (markdownCount > 1) {
+        throw new Error(`[amytis] Series "${seriesSlug}" post folder "${item.name}" cannot contain both index.md and index.mdx.`);
+      }
+
+      const itemFormat: SeriesFormat = hasRst ? 'rst' : 'markdown';
+      if (itemFormat !== indexInfo.format) {
+        throw new Error(`[amytis] Series "${seriesSlug}" mixes ${indexInfo.format} and ${itemFormat} files. Offending folder: ${item.name}`);
+      }
+
+      const { slug, dateFromFileName } = parseSlugAndDate(item.name);
+      const prior = seenSlugs.get(slug);
+      if (prior) {
+        throw new Error(`[amytis] Series "${seriesSlug}" contains duplicate post slug "${slug}" from "${prior}" and "${item.name}".`);
+      }
+      seenSlugs.set(slug, item.name);
+      entries.push({
+        fullPath: hasRst ? folderIndexRst : (hasMdx ? folderIndexMdx : folderIndexMd),
+        slug,
+        dateFromFileName,
+      });
+    }
+  }
+
+  return entries;
+}
+
 function getSeriesTitle(slug: string): string | undefined {
-  if (!fs.existsSync(seriesDirectory)) return undefined;
-  const indexPathMdx = path.join(seriesDirectory, slug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, slug, 'index.md');
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return undefined;
-  const { data } = matter(fs.readFileSync(fullPath, 'utf8'));
+  const indexInfo = resolveSeriesIndexInfo(slug);
+  if (!indexInfo) return undefined;
+
+  if (indexInfo.format === 'rst') {
+    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    if (parsed.metadata.draft === true) return undefined;
+    return parsed.title;
+  }
+
+  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.draft === true) return undefined;
   return typeof data.title === 'string' ? data.title : undefined;
 }
@@ -319,10 +506,84 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     content: contentWithoutH1,
     headings,
     imageBaseSlug,
+    sourceFormat: 'markdown',
+  };
+}
+
+function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const parsed = parseRstDocument(fileContents);
+  const data = parsed.metadata;
+
+  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
+    path.dirname(fullPath) === contentDirectory;
+  const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+
+  const effectiveSeriesSlug = data.series || seriesName;
+  let authors: string[] = [];
+  if (data.authors && data.authors.length > 0) {
+    authors = data.authors;
+  } else if (data.author) {
+    authors = [data.author];
+  } else {
+    if (effectiveSeriesSlug) {
+      const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
+      if (seriesAuthors) authors = seriesAuthors;
+    }
+    if (authors.length === 0) {
+      const defaultAuthors = siteConfig.posts?.authors?.default;
+      if (defaultAuthors && defaultAuthors.length > 0) {
+        authors = defaultAuthors;
+      }
+    }
+  }
+
+  let date = data.date;
+  if (!date && dateFromFileName) date = dateFromFileName;
+  if (!date) date = new Date().toISOString().split('T')[0];
+
+  let coverImage = data.coverImage;
+  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
+    const cleanPath = coverImage.replace(/^\.\//, '');
+    coverImage = `/${imageBaseSlug}/${cleanPath}`;
+  }
+
+  return {
+    slug,
+    title: parsed.title,
+    subtitle: data.subtitle,
+    date,
+    excerpt: data.excerpt || parsed.excerpt,
+    category: data.category ?? 'Uncategorized',
+    tags: data.tags ?? [],
+    authors,
+    layout: data.layout ?? 'post',
+    series: effectiveSeriesSlug,
+    seriesTitle: effectiveSeriesSlug ? getSeriesTitle(effectiveSeriesSlug) : undefined,
+    coverImage,
+    sort: data.sort ?? 'date-desc',
+    posts: data.posts,
+    type: data.type,
+    featured: data.featured ?? false,
+    pinned: data.pinned ?? false,
+    draft: data.draft ?? false,
+    latex: data.latex ?? false,
+    toc: data.toc ?? true,
+    commentable: data.commentable,
+    redirectFrom: data.redirectFrom ?? [],
+    readingTime: parsed.readingTime,
+    content: parsed.body,
+    headings: parsed.headings,
+    imageBaseSlug,
+    sourceFormat: 'rst',
   };
 }
 
 export function getAllPosts(): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  const cached = postsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPostsData: PostData[] = [];
 
   // Helper to process a directory
@@ -336,81 +597,24 @@ export function getAllPosts(): PostData[] {
       let slug = '';
       let dateFromFileName = undefined;
 
-      const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
       const rawName = item.name.replace(/\.mdx?$/, '');
-      const match = rawName.match(dateRegex);
-      
-      if (match) {
-        dateFromFileName = match[1];
-        if (siteConfig.posts?.includeDateInUrl) {
-          slug = rawName;
-        } else {
-          slug = match[2];
-        }
-      } else {
-        slug = rawName;
-      }
+      ({ slug, dateFromFileName } = parseSlugAndDate(rawName));
 
       // Handle Series Directory logic
       if (isSeriesDir) {
         if (item.isDirectory()) {
-           const seriesSlug = item.name; // Folder name is series slug
-           const seriesPath = path.join(dir, item.name);
-           const seriesItems = fs.readdirSync(seriesPath, { withFileTypes: true });
-           
-           seriesItems.forEach(sItem => {
-             // Skip series metadata file itself
-             if (sItem.name === 'index.md' || sItem.name === 'index.mdx') return;
+          const seriesSlug = item.name;
+          const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+          if (!indexInfo) return;
 
-             // 1. File-based posts: series/slug/post.mdx
-             if (sItem.isFile() && (sItem.name.endsWith('.md') || sItem.name.endsWith('.mdx'))) {
-               const sRawName = sItem.name.replace(/\.mdx?$/, '');
-               const sMatch = sRawName.match(dateRegex);
-               let sSlug = sRawName;
-               let sDate = undefined;
-               if (sMatch) {
-                 sDate = sMatch[1];
-                 sSlug = siteConfig.posts?.includeDateInUrl ? sRawName : sMatch[2];
-               }
-               
-               allPostsData.push(parseMarkdownFile(
-                 path.join(seriesPath, sItem.name), 
-                 sSlug, 
-                 sDate, 
-                 seriesSlug 
-               ));
-             } 
-             // 2. Folder-based posts: series/slug/post-folder/index.mdx
-             else if (sItem.isDirectory()) {
-                 const postFolder = path.join(seriesPath, sItem.name);
-                 const postIndexMdx = path.join(postFolder, 'index.mdx');
-                 const postIndexMd = path.join(postFolder, 'index.md');
-                 let postFullPath = '';
-                 
-                 if (fs.existsSync(postIndexMdx)) postFullPath = postIndexMdx;
-                 else if (fs.existsSync(postIndexMd)) postFullPath = postIndexMd;
-                 
-                 if (postFullPath) {
-                     // Handle date prefix in folder name
-                     const sMatch = sItem.name.match(dateRegex);
-                     let sSlug = sItem.name;
-                     let sDate = undefined;
-                     
-                     if (sMatch) {
-                       sDate = sMatch[1];
-                       sSlug = siteConfig.posts?.includeDateInUrl ? sItem.name : sMatch[2];
-                     }
-
-                     allPostsData.push(parseMarkdownFile(
-                       postFullPath, 
-                       sSlug, 
-                       sDate, 
-                       seriesSlug 
-                     ));
-                 }
-             }
-           });
-           return; // Processed this series folder
+          getSeriesContentEntries(seriesSlug).forEach(entry => {
+            allPostsData.push(
+              indexInfo.format === 'rst'
+                ? parseRstFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
+                : parseMarkdownFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
+            );
+          });
+          return;
         }
       }
 
@@ -434,7 +638,7 @@ export function getAllPosts(): PostData[] {
   processDirectory(contentDirectory);
   processDirectory(seriesDirectory, true);
 
-  return allPostsData
+  const result = allPostsData
     .filter(post => {
       if (post.category === 'Page') return false;
       
@@ -450,6 +654,8 @@ export function getAllPosts(): PostData[] {
       return true;
     })
     .sort((a, b) => (a.date < b.date ? 1 : -1));
+  postsCache.set(cacheKey, result);
+  return result;
 }
 
 /**
@@ -463,109 +669,8 @@ export function getListingPosts(): PostData[] {
   return getAllPosts().filter(p => !p.series || !excluded.has(p.series));
 }
 
-function findPostFile(name: string, targetSlug: string): PostData | null {
-  // Check standard posts
-  let fullPath = path.join(contentDirectory, `${name}.mdx`);
-  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-  
-  fullPath = path.join(contentDirectory, `${name}.md`);
-  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-
-  if (fs.existsSync(path.join(contentDirectory, name))) {
-    fullPath = path.join(contentDirectory, name, 'index.mdx');
-    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-    
-    fullPath = path.join(contentDirectory, name, 'index.md');
-    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-  }
-
-  // Check series posts
-  if (fs.existsSync(seriesDirectory)) {
-    const seriesFolders = fs.readdirSync(seriesDirectory);
-    for (const folder of seriesFolders) {
-      const folderPath = path.join(seriesDirectory, folder);
-      if (!fs.statSync(folderPath).isDirectory()) continue;
-
-      // Check file-based
-      fullPath = path.join(folderPath, `${name}.mdx`);
-      if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-
-      fullPath = path.join(folderPath, `${name}.md`);
-      if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-
-      // Check folder-based
-      const postFolderPath = path.join(folderPath, name);
-      if (fs.existsSync(postFolderPath) && fs.statSync(postFolderPath).isDirectory()) {
-         fullPath = path.join(postFolderPath, 'index.mdx');
-         if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-         
-         fullPath = path.join(postFolderPath, 'index.md');
-         if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-      }
-    }
-  }
-
-  return null;
-}
-
 export function getPostBySlug(slug: string): PostData | null {
-  let post: PostData | null = null;
-
-  if (siteConfig.posts?.includeDateInUrl) {
-    post = findPostFile(slug, slug);
-  } else {
-    post = findPostFile(slug, slug);
-    if (!post) {
-        // Search in content/posts
-        const items = fs.existsSync(contentDirectory) ? fs.readdirSync(contentDirectory) : [];
-        for (const item of items) {
-          const rawName = item.replace(/\.mdx?$/, '');
-          const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
-          const match = rawName.match(dateRegex);
-          
-          if (match && match[2] === slug) {
-            post = findPostFile(rawName, slug);
-            break;
-          }
-        }
-
-        // If not found, search in series folders
-        if (!post && fs.existsSync(seriesDirectory)) {
-           const seriesFolders = fs.readdirSync(seriesDirectory);
-           for (const folder of seriesFolders) {
-             const folderPath = path.join(seriesDirectory, folder);
-             if (!fs.statSync(folderPath).isDirectory()) continue;
-             
-             const sItems = fs.readdirSync(folderPath);
-             for (const sItem of sItems) {
-                const sRawName = sItem.replace(/\.mdx?$/, '');
-                // Also check folders
-                const sDateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
-                const sMatch = sRawName.match(sDateRegex);
-                
-                if (sMatch && sMatch[2] === slug) {
-                  post = findPostFile(sRawName, slug);
-                  break;
-                }
-             }
-             if (post) break;
-           }
-        }
-    }
-  }
-
-  if (!post) return null;
-
-  if (process.env.NODE_ENV === 'production' && post.draft) {
-    return null;
-  }
-
-  if (!siteConfig.posts?.showFuturePosts) {
-      const postDate = new Date(post.date);
-      const now = new Date();
-      if (postDate > now) return null;
-  }
-  return post;
+  return getAllPosts().find(post => post.slug === slug) ?? null;
 }
 
 /**
@@ -621,8 +726,12 @@ export function getPageBySlug(slug: string): PostData | null {
 }
 
 export function getAllPages(): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  const cached = pagesCache.get(cacheKey);
+  if (cached) return cached;
+
   const items = fs.readdirSync(pagesDirectory, { withFileTypes: true });
-  return items
+  const result = items
     .filter(item => {
       if (!item.isFile()) return false;
       if (!item.name.endsWith('.mdx') && !item.name.endsWith('.md')) return false;
@@ -639,6 +748,8 @@ export function getAllPages(): PostData[] {
       const fullPath = path.join(pagesDirectory, item.name);
       return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
     });
+  pagesCache.set(cacheKey, result);
+  return result;
 }
 
 export function getPostsByTag(tag: string): PostData[] {
@@ -661,6 +772,10 @@ export function getFlowTags(): Record<string, number> {
 }
 
 export function getAllTags(): Record<string, number> {
+  const cacheKey = getCacheEnvKey();
+  const cached = tagsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const allFlows = getAllFlows();
   const allNotes = getAllNotes();
@@ -696,6 +811,7 @@ export function getAllTags(): Record<string, number> {
   for (const [key, count] of Object.entries(counts)) {
     result[display[key]] = count;
   }
+  tagsCache.set(cacheKey, result);
   return result;
 }
 
@@ -717,6 +833,10 @@ export function getAuthorSlug(author: string): string {
 }
 
 export function getAllAuthors(): Record<string, number> {
+  const cacheKey = getCacheEnvKey();
+  const cached = authorsCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const authors: Record<string, number> = {};
 
@@ -729,7 +849,7 @@ export function getAllAuthors(): Record<string, number> {
       }
     });
   });
-
+  authorsCache.set(cacheKey, authors);
   return authors;
 }
 
@@ -747,6 +867,16 @@ export function resolveAuthorParam(authorParam: string): string | null {
 }
 
 export function getRelatedPosts(currentSlug: string, limit: number = 3): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = relatedPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    relatedPostsCache.set(cacheKey, bySlug);
+  }
+  const cacheId = `${currentSlug}:${limit}`;
+  const cached = bySlug.get(cacheId);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const currentPost = allPosts.find(p => p.slug === currentSlug);
 
@@ -770,10 +900,20 @@ export function getRelatedPosts(currentSlug: string, limit: number = 3): PostDat
     .slice(0, limit)
     .map(item => item.post);
 
+  bySlug.set(cacheId, related);
   return related;
 }
 
 export function getSeriesPosts(seriesName: string): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySeries = seriesPostsCache.get(cacheKey);
+  if (!bySeries) {
+    bySeries = new Map();
+    seriesPostsCache.set(cacheKey, bySeries);
+  }
+  const cached = bySeries.get(seriesName);
+  if (cached) return cached;
+
   const seriesSlug = seriesName;
   const seriesData = getSeriesData(seriesSlug);
   
@@ -798,10 +938,15 @@ export function getSeriesPosts(seriesName: string): PostData[] {
       }
   }
   
+  bySeries.set(seriesName, posts);
   return posts;
 }
 
 export function getAllSeries(): Record<string, PostData[]> {
+  const cacheKey = getCacheEnvKey();
+  const cached = allSeriesCache.get(cacheKey);
+  if (cached) return cached;
+
   const allPosts = getAllPosts();
   const series: Record<string, PostData[]> = {};
   const seriesSet = new Set<string>();
@@ -834,25 +979,49 @@ export function getAllSeries(): Record<string, PostData[]> {
       : getSeriesPosts(slug);
   });
 
+  allSeriesCache.set(cacheKey, series);
   return series;
 }
 
 export function getFeaturedPosts(): PostData[] {
-  const allPosts = getAllPosts();
-  return allPosts.filter(post => post.featured);
+  const cacheKey = getCacheEnvKey();
+  const cached = featuredPostsCache.get(cacheKey);
+  if (cached) return cached;
+  const result = getAllPosts().filter(post => post.featured);
+  featuredPostsCache.set(cacheKey, result);
+  return result;
 }
 
 export function getAdjacentPosts(slug: string): { prev: PostData | null; next: PostData | null } {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = adjacentPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    adjacentPostsCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(slug);
+  if (cached) return cached;
+
   const allPosts = getAllPosts(); // sorted desc by date (newest first)
   const index = allPosts.findIndex(p => p.slug === slug);
-  if (index === -1) return { prev: null, next: null };
-  return {
+  if (index === -1) {
+    const empty = { prev: null, next: null };
+    bySlug.set(slug, empty);
+    return empty;
+  }
+  const result = {
     prev: index < allPosts.length - 1 ? allPosts[index + 1] : null, // older post
     next: index > 0 ? allPosts[index - 1] : null,                   // newer post
   };
+  bySlug.set(slug, result);
+  return result;
 }
 
 export function getFeaturedSeries(): Record<string, PostData[]> {
+  const cacheKey = getCacheEnvKey();
+  const cached = featuredSeriesCache.get(cacheKey);
+  if (cached) return cached;
+
   const allSeries = getAllSeries();
   const featuredSeries: Record<string, PostData[]> = {};
   
@@ -863,25 +1032,47 @@ export function getFeaturedSeries(): Record<string, PostData[]> {
     }
   });
   
+  featuredSeriesCache.set(cacheKey, featuredSeries);
   return featuredSeries;
 }
 
 export function getSeriesData(slug: string): PostData | null {
-  if (!fs.existsSync(seriesDirectory)) return null;
-  const indexPathMdx = path.join(seriesDirectory, slug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, slug, 'index.md');
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesDataCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesDataCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(slug)) return bySlug.get(slug) ?? null;
 
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return null;
+  const indexInfo = resolveSeriesIndexInfo(slug);
+  if (!indexInfo) {
+    bySlug.set(slug, null);
+    return null;
+  }
 
-  return parseMarkdownFile(fullPath, slug, undefined, slug);
+  const result = indexInfo.format === 'rst'
+    ? parseRstFile(indexInfo.fullPath, slug, undefined, slug)
+    : parseMarkdownFile(indexInfo.fullPath, slug, undefined, slug);
+  bySlug.set(slug, result);
+  return result;
 }
 
 export function getCollectionPosts(collectionSlug: string): PostData[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = collectionPostsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    collectionPostsCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(collectionSlug);
+  if (cached) return cached;
+
   const data = getSeriesData(collectionSlug);
-  if (data?.type !== 'collection' || !data.items) return [];
+  if (data?.type !== 'collection' || !data.items) {
+    bySlug.set(collectionSlug, []);
+    return [];
+  }
 
   const getCollectionKey = (post: PostData) =>
     post.series ? `${post.series}/${post.slug}` : `posts/${post.slug}`;
@@ -890,7 +1081,7 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   const postIndex = new Map(allPosts.map((post) => [getCollectionKey(post), post]));
   const seen = new Set<string>();
 
-  return data.items
+  const result = data.items
     .flatMap(item => {
       if ('series' in item) {
         const posts = getSeriesPosts(item.series);
@@ -909,9 +1100,20 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
       seen.add(key);
       return true;
     });
+  bySlug.set(collectionSlug, result);
+  return result;
 }
 
 export function getCollectionsForPost(postSlug: string): CollectionContext[] {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = collectionsForPostCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    collectionsForPostCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(postSlug);
+  if (cached) return cached;
+
   if (!fs.existsSync(seriesDirectory)) return [];
   const seriesFolders = fs.readdirSync(seriesDirectory, { withFileTypes: true });
   const results: CollectionContext[] = [];
@@ -927,6 +1129,7 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
     }
   }
 
+  bySlug.set(postSlug, results);
   return results;
 }
 

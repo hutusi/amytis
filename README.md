@@ -44,6 +44,7 @@ Further reading: [How to Get AI to Write Better Code](https://hutusi.com/weeklie
 - **Full-text Search:** Fast, static client-side search across all content (Cmd/Ctrl+K) powered by Pagefind.
 - **Structured Content:**
   - **Series:** Multi-part content organization with manual or automatic ordering.
+  - **Legacy rST Series:** A series can opt into reStructuredText by using `index.rst` or `README.rst`; mixed Markdown and rST files in the same series fail the build.
   - **Books:** Long-form content with explicit chapters, parts, and a dedicated reading interface.
   - **Notes:** Atomic, evergreen concepts for personal knowledge management.
   - **Flows:** Stream-style daily notes or micro-blogging for quick thoughts.
@@ -213,6 +214,8 @@ Amytis is built around Next.js static export with `output: "export"` and `traili
 - Posts default to `/<posts.basePath>/<slug>` and `posts.basePath` defaults to `/posts`.
 - If `series.autoPaths` is enabled, series posts move to `/<series-slug>/<post-slug>`.
 - If `series.customPaths` is configured, those custom prefixes override `autoPaths`.
+- Frontmatter `redirectFrom` entries are exported as static redirect pages so legacy URLs can keep working.
+- Prefer URL helpers over hardcoded post paths, because a canonical post URL may live under `/posts`, a series slug, or a custom prefix depending on config.
 - Before moving series posts off the default posts path, run `bun run add-series-redirects --dry-run` and then `bun run add-series-redirects` so legacy URLs still resolve.
 
 ## Writing Content
@@ -236,7 +239,12 @@ Create daily notes in `content/flows/YYYY/MM/DD.md` or `.mdx`.
 
 ### Series
 
-Create a directory in `content/series/<slug>/` with an `index.mdx`, then add posts as sibling files or folders.
+Create a directory in `content/series/<slug>/` with either:
+
+- `index.mdx` or `index.md` for a Markdown series
+- `index.rst` or `README.rst` for an rST series
+
+`README.mdx` and `README.md` are also accepted as Markdown series indexes. Then add posts as sibling files or folders using the same format as the series index. Mixed Markdown and rST files in one series are rejected at build time.
 
 - CLI: `bun run new-series "Series Name"`
 - You can also create a post directly inside an existing series with `bun run new "Post Title" --series <series-slug>`

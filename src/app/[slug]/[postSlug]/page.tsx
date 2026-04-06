@@ -67,17 +67,26 @@ export async function generateStaticParams() {
     }
   }
 
-  // Work around Next dev static-param checks for percent-encoded Unicode postSlugs
-  // under `output: "export"` — dev server may receive percent-encoded forms of Unicode paths.
+  // Work around Next dev static-param checks for percent-encoded Unicode slugs
+  // under `output: "export"` — dev server may receive encoded forms of either segment.
   // Include encoded variants in development only; production export keeps raw segment values.
   if (process.env.NODE_ENV !== 'production') {
     const existing = new Set(params.map(p => `${p.slug}/${p.postSlug}`));
     for (const p of [...params]) {
+      const encodedSlug = encodeURIComponent(p.slug);
       const encodedPostSlug = encodeURIComponent(p.postSlug);
-      const key = `${p.slug}/${encodedPostSlug}`;
-      if (!existing.has(key)) {
-        existing.add(key);
-        params.push({ slug: p.slug, postSlug: encodedPostSlug });
+      const variants = [
+        { slug: p.slug, postSlug: encodedPostSlug },
+        { slug: encodedSlug, postSlug: p.postSlug },
+        { slug: encodedSlug, postSlug: encodedPostSlug },
+      ];
+
+      for (const variant of variants) {
+        const key = `${variant.slug}/${variant.postSlug}`;
+        if (!existing.has(key)) {
+          existing.add(key);
+          params.push(variant);
+        }
       }
     }
   }
@@ -154,7 +163,8 @@ export default async function PrefixPostPage({
   params: Promise<{ slug: string; postSlug: string }>;
 }) {
   const { slug: prefix, postSlug: rawPostSlug } = await params;
-  const currentPath = `/${safeDecodeParam(prefix)}/${safeDecodeParam(rawPostSlug)}`;
+  const decodedPrefix = safeDecodeParam(prefix);
+  const currentPath = `/${decodedPrefix}/${safeDecodeParam(rawPostSlug)}`;
 
   // Resolve the post: first by slug, then fall back to redirectFrom lookup for renamed slugs.
   const post =
@@ -168,9 +178,9 @@ export default async function PrefixPostPage({
   // or a legacy redirectFrom path declared on the resolved post.
   const basePath = getPostsBasePath();
   const customPaths = getSeriesCustomPaths();
-  const isValidBasePath = prefix === basePath && basePath !== 'posts';
-  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === prefix)?.[0];
-  const isAutoSeriesPath = getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) !== null;
+  const isValidBasePath = decodedPrefix === basePath && basePath !== 'posts';
+  const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === decodedPrefix)?.[0];
+  const isAutoSeriesPath = getSeriesAutoPaths() && !Object.hasOwn(customPaths, decodedPrefix) && getSeriesData(decodedPrefix) !== null;
   const isLegacyRedirect = post.redirectFrom?.includes(currentPath) ?? false;
 
   if (!isValidBasePath && !matchedSeriesSlug && !isAutoSeriesPath && !isLegacyRedirect) {

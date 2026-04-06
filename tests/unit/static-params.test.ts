@@ -131,6 +131,7 @@ beforeAll(() => {
     getSeriesData: (slug: string) => mockedSeriesData[slug] ?? null,
     getSeriesPosts: () => [],
     getSeriesAuthors: () => [],
+    getCollectionsForPost: () => [],
 
     getAuthorSlug: (name: string) =>
       name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
@@ -254,10 +255,100 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toContainEqual({ slug: 'old-name' });
     });
 
+    test('series/[slug] includes raw and encoded Unicode slug in non-production', async () => {
+      mockedSeries = { '软件构架设计': [] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计' });
+      expect(params).toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1' });
+    });
+
+    test('series/[slug] includes only raw Unicode slug in production', async () => {
+      mockedSeries = { '软件构架设计': [] };
+      process.env.NODE_ENV = 'production';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计' });
+      expect(params).not.toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1' });
+    });
+
     test('series/[slug]/page/[page] returns [{ slug: "_", page: "2" }]', async () => {
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_', page: '2' }]);
+    });
+
+    test('series/[slug]/page/[page] includes encoded Unicode slug in non-production', async () => {
+      mockedSeries = { '软件构架设计': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', page: '2' });
+      expect(params).toContainEqual({ slug: '%E8%BD%AF%E4%BB%B6%E6%9E%84%E6%9E%B6%E8%AE%BE%E8%AE%A1', page: '2' });
+    });
+
+    test('series/[slug]/page/[page] includes redirectFrom slug when series is renamed', async () => {
+      mockedSeries = { 'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: 'new-name', page: '2' });
+      expect(params).toContainEqual({ slug: 'old-name', page: '2' });
+    });
+
+    test('series/[slug]/page/[page] redirects old alias slugs to the canonical paginated path', async () => {
+      mockedSeries = { 'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = { 'new-name': { redirectFrom: ['/series/old-name'], title: 'New Series' } };
+      const page = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(page.default({
+        params: Promise.resolve({ slug: 'old-name', page: '2' }),
+      })).resolves.toBeDefined();
+    });
+
+    test('series routes match percent-encoded redirectFrom aliases after normalization', async () => {
+      mockedSeries = { '软件构架设计': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = {
+        '软件构架设计': {
+          redirectFrom: ['/series/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1'],
+          title: '软件构架设计',
+        },
+      };
+
+      const seriesPage = await import('../../src/app/series/[slug]/page');
+      await expect(seriesPage.default({
+        params: Promise.resolve({ slug: '%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1' }),
+      })).resolves.toBeDefined();
+
+      const paginatedPage = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(paginatedPage.default({
+        params: Promise.resolve({ slug: '%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1', page: '2' }),
+      })).resolves.toBeDefined();
+    });
+
+    test('series/[slug]/page/[page] throws when redirectFrom alias conflicts with an existing series slug', async () => {
+      mockedSeries = {
+        'existing-slug': Array.from({ length: 6 }, (_, i) => ({ slug: `a${i + 1}` })),
+        'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `b${i + 1}` })),
+      };
+      mockedSeriesData = {
+        'new-name': { redirectFrom: ['/series/existing-slug'], title: 'New Series' },
+      };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(generateStaticParams()).rejects.toThrow(/conflicts with an existing series slug/i);
+    });
+
+    test('series/[slug]/page/[page] throws when two series claim the same redirectFrom alias', async () => {
+      mockedSeries = {
+        'first-series': Array.from({ length: 6 }, (_, i) => ({ slug: `a${i + 1}` })),
+        'second-series': Array.from({ length: 6 }, (_, i) => ({ slug: `b${i + 1}` })),
+      };
+      mockedSeriesData = {
+        'first-series': { redirectFrom: ['/series/old-name'], title: 'First' },
+        'second-series': { redirectFrom: ['/series/old-name'], title: 'Second' },
+      };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(generateStaticParams()).rejects.toThrow(/claimed by both/i);
     });
   });
 
@@ -504,6 +595,26 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
     });
 
+    test('[slug]/[postSlug] includes encoded Unicode prefix variants in non-production', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: 'architecture-post' }] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: 'architecture-post' });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: 'architecture-post' });
+    });
+
+    test('[slug]/[postSlug] includes encoded Unicode prefix and postSlug variants together in non-production', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: '中文文章' }] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: '中文文章' });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: '中文文章' });
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: encodeURIComponent('中文文章') });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: encodeURIComponent('中文文章') });
+    });
+
     test('[slug]/[postSlug] does not include encoded Unicode postSlug variants in production', async () => {
       mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
       process.env.NODE_ENV = 'production';
@@ -511,6 +622,35 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: '中文文章' });
       expect(params).not.toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
+    });
+
+    test('[slug]/[postSlug] page resolves encoded Unicode series prefix without notFound', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: 'my-post' }] };
+      mockedSeriesData = { '软件构架设计': { title: '软件构架设计' } };
+      mockedPosts = [{
+        slug: 'my-post',
+        title: 'My Post',
+        excerpt: 'Excerpt',
+        date: '2026-01-01',
+        authors: ['Author'],
+        series: '软件构架设计',
+        redirectFrom: ['/软件构架设计/my-post'],
+        layout: 'post',
+        content: 'Body',
+        headings: [],
+        imageBaseSlug: 'posts',
+        category: 'Test',
+        tags: [],
+        readingTime: '1 min read',
+      }];
+
+      const page = await import('../../src/app/[slug]/[postSlug]/page');
+      await expect(page.default({
+        params: Promise.resolve({
+          slug: encodeURIComponent('软件构架设计'),
+          postSlug: 'my-post',
+        }),
+      })).resolves.toBeDefined();
     });
 
     test('[slug]/page/[page]/page returns placeholder when no custom paths', async () => {
