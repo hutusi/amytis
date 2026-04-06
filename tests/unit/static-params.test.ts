@@ -560,6 +560,35 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).not.toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
     });
 
+    test('[slug]/[postSlug] page resolves encoded Unicode series prefix without notFound', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: 'my-post' }] };
+      mockedSeriesData = { '软件构架设计': { title: '软件构架设计' } };
+      mockedPosts = [{
+        slug: 'my-post',
+        title: 'My Post',
+        excerpt: 'Excerpt',
+        date: '2026-01-01',
+        authors: ['Author'],
+        series: '软件构架设计',
+        redirectFrom: ['/软件构架设计/my-post'],
+        layout: 'post',
+        content: 'Body',
+        headings: [],
+        imageBaseSlug: 'posts',
+        category: 'Test',
+        tags: [],
+        readingTime: '1 min read',
+      }];
+
+      const page = await import('../../src/app/[slug]/[postSlug]/page');
+      await expect(page.default({
+        params: Promise.resolve({
+          slug: encodeURIComponent('软件构架设计'),
+          postSlug: 'my-post',
+        }),
+      })).resolves.toBeDefined();
+    });
+
     test('[slug]/page/[page]/page returns placeholder when no custom paths', async () => {
       const { generateStaticParams } = await import('../../src/app/[slug]/page/[page]/page');
       const params = await generateStaticParams();
