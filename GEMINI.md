@@ -40,15 +40,18 @@ bun test
   - `flows/`: Stream-style daily notes or micro-blogging (`[year]/[month]/[day]`).
   - `series/`: Series overview and individual series catalog pages with pagination support.
   - `books/`: Books overview and individual book/chapter pages (`[slug]/[chapter]`).
+  - `notes/`: Evergreen notes index and individual note pages with backlinks.
   - `archive/`: Timeline-based chronological archive grouped by year and month.
   - `tags/`: Popularity-sorted tag cloud and filtered listings.
   - `authors/`: Posts filtered by individual authors.
+  - `graph/`: Interactive knowledge graph visualization of all connected content.
   - `subscribe/`: Subscription options (RSS, Newsletter, Social).
   - `search.json/`: Static search index generator (supplementary).
 - `src/lib/`: Core logic and utilities.
   - `markdown.ts`: Advanced parsing for posts/series/flows, sorting, and metadata.
   - `search-utils.ts`: Content cleaning and search result processing.
   - `shuffle.ts`: Deterministic and random array shuffling.
+  - `urls.ts`: Centralized URL routing and link generation logic.
 - `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, ShareBar, etc.).
 - `content/`: Source Markdown/MDX content.
 - `scripts/`: CLI tools for content management and asset processing.
@@ -57,7 +60,7 @@ bun test
 
 ### Advanced Content Management
 - **Posts**: Supports both flat files (`.mdx`) and nested folders (`/index.mdx`) with co-located assets.
-- **Flows**: Daily notes or micro-posts organized by date (`YYYY/MM/DD`). Designed for quick thoughts and stream-of-consciousness updates.
+- **Flows**: Daily notes or micro-posts organized by date (`YYYY/MM/DD`). Designed for quick thoughts and stream-of-consciousness updates. Supports optional titles via frontmatter or H1 headings.
 - **Series**: 
   - Robust grouping with folder-based or file-based entries.
   - Configurable sorting: `date-asc`, `date-desc`, or `manual` (explicit list of slugs).

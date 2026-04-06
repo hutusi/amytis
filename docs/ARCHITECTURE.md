@@ -57,7 +57,14 @@ src/app/
   authors/[author]/page.tsx
   archive/page.tsx
   graph/page.tsx
-  feed.xml/route.ts
+  feed.xml/route.ts                 # Main curated RSS feed
+  feed.atom/route.ts                # Main curated Atom feed
+  all.xml/route.ts                  # Firehose RSS feed
+  all.atom/route.ts                 # Firehose Atom feed
+  posts/feed.xml/route.ts           # Posts-only RSS feed
+  posts/feed.atom/route.ts          # Posts-only Atom feed
+  flows/feed.xml/route.ts           # Flows-only RSS feed
+  flows/feed.atom/route.ts          # Flows-only Atom feed
   search.json/route.ts
   sitemap.ts
   [slug]/page.tsx                   # Static pages + custom series listing path
