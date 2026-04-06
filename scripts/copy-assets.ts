@@ -105,7 +105,8 @@ function processSeries() {
       items.forEach(item => {
         if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx') || item.name.endsWith('.rst'))) {
           // File-based post or series index
-          const targetSlug = item.name.startsWith('index.') ? seriesEntry.name : getSlugFromFilename(item.name);
+          const isSeriesIndex = item.name.startsWith('index.') || item.name.startsWith('README.');
+          const targetSlug = isSeriesIndex ? seriesEntry.name : getSlugFromFilename(item.name);
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series File: ${item.name} -> ${targetSlug}`);

@@ -14,7 +14,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 ## Content Model
 
 - `content/posts/`: standalone posts (`.md/.mdx`) and folder posts (`index.mdx`)
-- `content/series/<slug>/`: series metadata (`index.mdx` / `index.md` / `index.rst`) + series posts in the same format
+- `content/series/<slug>/`: series metadata (`index.mdx` / `index.md` / `README.mdx` / `README.md` / `index.rst` / `README.rst`) + series posts in the same format
 - `content/books/<slug>/`: book metadata + chapter files
 - `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
 - `content/notes/`: evergreen notes
@@ -77,8 +77,8 @@ src/app/
 
 - `next.config.ts` sets `output: "export"` and `trailingSlash: true`.
 - Series format is inferred from the index file:
-  - Markdown series: `index.md` or `index.mdx`
-  - rST series: `index.rst`
+  - Markdown series: `index.md`, `index.mdx`, `README.md`, or `README.mdx`
+  - rST series: `index.rst` or `README.rst`
 - A series may not mix Markdown and rST content files; ambiguous or mixed layouts are treated as build errors.
 - Post URLs use `getPostUrl()` in `src/lib/urls.ts`:
   - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)

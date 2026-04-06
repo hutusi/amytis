@@ -263,28 +263,40 @@ function isRstFilename(name: string): boolean {
   return name.endsWith('.rst');
 }
 
+function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesFormat): string | null {
+  const seriesPath = path.join(seriesDirectory, seriesSlug);
+  const candidates = format === 'rst'
+    ? ['index.rst', 'README.rst']
+    : ['index.mdx', 'index.md', 'README.mdx', 'README.md'];
+
+  const matches = candidates
+    .map(name => path.join(seriesPath, name))
+    .filter(fullPath => fs.existsSync(fullPath));
+
+  if (matches.length > 1) {
+    throw new Error(
+      `[amytis] Series "${seriesSlug}" has multiple ${format} index files: ${matches.map(match => path.basename(match)).join(', ')}.`
+    );
+  }
+
+  return matches[0] ?? null;
+}
+
 function resolveSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
   if (!fs.existsSync(seriesDirectory)) return null;
   const seriesPath = path.join(seriesDirectory, slug);
   if (!fs.existsSync(seriesPath) || !fs.statSync(seriesPath).isDirectory()) return null;
 
-  const indexPathRst = path.join(seriesPath, 'index.rst');
-  const indexPathMdx = path.join(seriesPath, 'index.mdx');
-  const indexPathMd = path.join(seriesPath, 'index.md');
-  const hasRst = fs.existsSync(indexPathRst);
-  const hasMdx = fs.existsSync(indexPathMdx);
-  const hasMd = fs.existsSync(indexPathMd);
-  const markdownCount = Number(hasMdx) + Number(hasMd);
+  const rstIndex = resolveUniqueSeriesIndex(slug, 'rst');
+  const markdownIndex = resolveUniqueSeriesIndex(slug, 'markdown');
 
-  if (hasRst && markdownCount > 0) {
-    throw new Error(`[amytis] Series "${slug}" cannot contain both index.rst and Markdown index files.`);
+  if (rstIndex && markdownIndex) {
+    throw new Error(
+      `[amytis] Series "${slug}" cannot contain both rST and Markdown index files (${path.basename(rstIndex)} and ${path.basename(markdownIndex)}).`
+    );
   }
-  if (markdownCount > 1) {
-    throw new Error(`[amytis] Series "${slug}" cannot contain both index.md and index.mdx.`);
-  }
-  if (hasRst) return { format: 'rst', fullPath: indexPathRst };
-  if (hasMdx) return { format: 'markdown', fullPath: indexPathMdx };
-  if (hasMd) return { format: 'markdown', fullPath: indexPathMd };
+  if (rstIndex) return { format: 'rst', fullPath: rstIndex };
+  if (markdownIndex) return { format: 'markdown', fullPath: markdownIndex };
   return null;
 }
 
@@ -296,9 +308,10 @@ function getSeriesContentEntries(seriesSlug: string): SeriesContentEntry[] {
   const seriesItems = fs.readdirSync(seriesPath, { withFileTypes: true });
   const entries: SeriesContentEntry[] = [];
   const seenSlugs = new Map<string, string>();
+  const seriesIndexBasenames = new Set(['index.rst', 'README.rst', 'index.md', 'index.mdx', 'README.md', 'README.mdx']);
 
   for (const item of seriesItems) {
-    if (item.name === 'index.rst' || item.name === 'index.md' || item.name === 'index.mdx') continue;
+    if (seriesIndexBasenames.has(item.name)) continue;
 
     if (item.isFile()) {
       const isMarkdown = isMarkdownFilename(item.name);
