@@ -76,22 +76,19 @@ function isAdornmentLine(line: string): boolean {
   return /^([=\-~^"`+#*])\1{2,}$/.test(trimmed);
 }
 
-function extractTitle(lines: string[]): { title: string; nextIndex: number } {
-  let i = 0;
-  while (i < lines.length && !lines[i].trim()) i++;
+function extractTitle(lines: string[]): { title: string; titleIndex: number; nextIndex: number } {
+  for (let i = 0; i + 1 < lines.length; i++) {
+    const titleLine = lines[i].trim();
+    const underline = lines[i + 1].trim();
 
-  if (i + 1 >= lines.length) {
-    throw new RstParseError('Missing top-level rST title.');
+    if (!titleLine) continue;
+    if (/^\s/.test(lines[i])) continue;
+    if (!isAdornmentLine(underline)) continue;
+
+    return { title: titleLine, titleIndex: i, nextIndex: i + 2 };
   }
 
-  const titleLine = lines[i].trim();
-  const underline = lines[i + 1].trim();
-
-  if (!titleLine || !isAdornmentLine(underline)) {
-    throw new RstParseError('Missing top-level rST title.');
-  }
-
-  return { title: titleLine, nextIndex: i + 2 };
+  throw new RstParseError('Missing top-level rST title.');
 }
 
 function parseBoolean(field: string, value: string): boolean {
@@ -222,6 +219,50 @@ function extractMetadata(lines: string[], startIndex: number): { metadata: RstMe
 
   while (i < lines.length && !lines[i].trim()) i++;
   return { metadata, nextIndex: i };
+}
+
+function extractPreambleMetadata(lines: string[]): RstMetadata {
+  const metadata: RstMetadata = {};
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^:([A-Za-z][\w-]*):\s*(.*)$/);
+    if (!match) continue;
+
+    const field = match[1];
+    const continuation: string[] = [match[2]];
+    i++;
+
+    while (i < lines.length) {
+      const next = lines[i];
+      if (!next.trim()) break;
+      if (/^:([A-Za-z][\w-]*):\s*(.*)$/.test(next)) {
+        i--;
+        break;
+      }
+      if (/^\s+/.test(next)) {
+        continuation.push(next.trim());
+        i++;
+        continue;
+      }
+      i--;
+      break;
+    }
+
+    setMetadataField(metadata, field, continuation.join(' ').trim());
+  }
+
+  return metadata;
+}
+
+function mergeMetadata(base: RstMetadata, override: RstMetadata): RstMetadata {
+  return {
+    ...base,
+    ...override,
+    tags: override.tags ?? base.tags,
+    authors: override.authors ?? base.authors,
+    posts: override.posts ?? base.posts,
+    redirectFrom: override.redirectFrom ?? base.redirectFrom,
+  };
 }
 
 function convertInlineRst(text: string): string {
@@ -404,8 +445,10 @@ function getHeadings(content: string): RstHeading[] {
 
 export function parseRstDocument(source: string): ParsedRstDocument {
   const lines = normalizeLines(source);
-  const { title, nextIndex } = extractTitle(lines);
-  const { metadata, nextIndex: contentIndex } = extractMetadata(lines, nextIndex);
+  const { title, titleIndex, nextIndex } = extractTitle(lines);
+  const preTitleMetadata = extractPreambleMetadata(lines.slice(0, titleIndex));
+  const { metadata: postTitleMetadata, nextIndex: contentIndex } = extractMetadata(lines, nextIndex);
+  const metadata = mergeMetadata(preTitleMetadata, postTitleMetadata);
   const body = lines.slice(contentIndex).join('\n').trim();
   const markdownBody = rstToMarkdown(body);
 

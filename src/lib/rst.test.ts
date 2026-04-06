@@ -62,4 +62,22 @@ describe('rst utils', () => {
       'Body',
     ].join('\n'))).toThrow(RstParseError);
   });
+
+  test('accepts leading comments and metadata before the document title', () => {
+    const doc = parseRstDocument([
+      '.. Kenneth Lee 版权所有 2018-2020',
+      '',
+      ':Authors: Kenneth Lee',
+      ':Version: 1.0',
+      '',
+      '从香农熵谈设计文档写作',
+      '************************',
+      '',
+      '正文。',
+    ].join('\n'));
+
+    expect(doc.title).toBe('从香农熵谈设计文档写作');
+    expect(doc.metadata.authors).toEqual(['Kenneth Lee']);
+    expect(doc.body).toBe('正文。');
+  });
 });
