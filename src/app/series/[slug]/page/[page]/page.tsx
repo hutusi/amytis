@@ -10,6 +10,14 @@ import { t, resolveLocale, tWith } from '@/lib/i18n';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
+function safeDecodeParam(param: string): string {
+  try {
+    return decodeURIComponent(param);
+  } catch {
+    return param;
+  }
+}
+
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
   const params: { slug: string; page: string }[] = [];
@@ -25,9 +33,16 @@ export async function generateStaticParams() {
   });
 
   if (process.env.NODE_ENV !== 'production') {
+    const seen = new Set(params.map(param => `${param.slug}:${param.page}`));
     const encodedParams = params
       .filter(param => encodeURIComponent(param.slug) !== param.slug)
-      .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }));
+      .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }))
+      .filter(param => {
+        const key = `${param.slug}:${param.page}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     params.push(...encodedParams);
   }
 
@@ -39,7 +54,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; page: string }> }): Promise<Metadata> {
   const { slug: rawSlug, page } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const seriesData = getSeriesData(slug);
   const title = seriesData?.title || slug;
   const allPosts = seriesData?.type === 'collection' ? getCollectionPosts(slug) : getSeriesPosts(slug);
@@ -51,7 +66,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string; page: string }> }) {
   const { slug: rawSlug, page: pageStr } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const page = parseInt(pageStr);
   const seriesData = getSeriesData(slug);
   const isCollection = seriesData?.type === 'collection';

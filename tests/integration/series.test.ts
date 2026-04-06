@@ -1,7 +1,5 @@
-import fs from "fs";
-import path from "path";
 import { describe, expect, test } from "bun:test";
-import { RstParseError } from "../../src/lib/rst";
+import { parseRstDocument, RstParseError } from "../../src/lib/rst";
 import {
   getAllSeries,
   getSeriesData,
@@ -52,14 +50,8 @@ describe("Integration: Series", () => {
     expect(data!.posts).toEqual(["readme-index-post"]);
   });
 
-  test("getSeriesData rejects rST series indexes with impossible dates", () => {
-    const slug = "__invalid-rst-date-fixture";
-    const seriesDir = path.join(process.cwd(), "content", "series", slug);
-    const indexPath = path.join(seriesDir, "index.rst");
-
-    fs.rmSync(seriesDir, { recursive: true, force: true });
-    fs.mkdirSync(seriesDir, { recursive: true });
-    fs.writeFileSync(indexPath, [
+  test("rST series indexes reject impossible dates", () => {
+    expect(() => parseRstDocument([
       "Broken rST Series",
       "=================",
       "",
@@ -67,13 +59,7 @@ describe("Integration: Series", () => {
       "",
       "Body.",
       "",
-    ].join("\n"));
-
-    try {
-      expect(() => getSeriesData(slug)).toThrow(RstParseError);
-    } finally {
-      fs.rmSync(seriesDir, { recursive: true, force: true });
-    }
+    ].join("\n"))).toThrow(RstParseError);
   });
 
   test("getSeriesPosts returns posts in manual order for manual series", () => {

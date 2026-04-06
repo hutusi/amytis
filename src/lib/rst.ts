@@ -26,6 +26,7 @@ export interface RstMetadata {
   toc?: boolean;
   commentable?: boolean;
   redirectFrom?: string[];
+  type?: 'collection';
 }
 
 export interface ParsedRstDocument {
@@ -65,6 +66,7 @@ const SUPPORTED_FIELDS = new Set([
   'toc',
   'commentable',
   'redirectfrom',
+  'type',
 ]);
 
 function normalizeLines(source: string): string[] {
@@ -123,6 +125,13 @@ function parseSort(value: string): 'date-desc' | 'date-asc' | 'manual' {
     return value;
   }
   throw new RstParseError(`Invalid sort value: ${value}`);
+}
+
+function parseType(value: string): 'collection' {
+  if (value === 'collection') {
+    return value;
+  }
+  throw new RstParseError(`Invalid type value: ${value}`);
 }
 
 function setMetadataField(metadata: RstMetadata, field: string, value: string): void {
@@ -186,6 +195,9 @@ function setMetadataField(metadata: RstMetadata, field: string, value: string): 
       break;
     case 'redirectfrom':
       metadata.redirectFrom = parseCsv(value);
+      break;
+    case 'type':
+      metadata.type = parseType(value);
       break;
   }
 }
@@ -371,7 +383,7 @@ export function rstToMarkdown(body: string): string {
       continue;
     }
 
-    if (trimmed.endsWith('::')) {
+    if (trimmed.endsWith('::') && !trimmed.startsWith('..')) {
       const { content, nextIndex } = readIndentedBlock(lines, i + 1);
       if (content.length > 0) {
         const prefix = trimmed === '::' ? '' : convertInlineRst(trimmed.slice(0, -1));
@@ -423,7 +435,7 @@ function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(/```[\s\S]*?```/g, '');
   plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
+  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
   plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`([^`]+)`/g, '$1');
   plain = plain.replace(/^>\s+/gm, '');

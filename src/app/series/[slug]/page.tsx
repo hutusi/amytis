@@ -12,6 +12,14 @@ import RedirectPage from '@/components/RedirectPage';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
+function safeDecodeParam(param: string): string {
+  try {
+    return decodeURIComponent(param);
+  } catch {
+    return param;
+  }
+}
+
 /** Returns the series whose index.mdx lists `path` in its redirectFrom array, or null. */
 function findSeriesByRedirectFrom(path: string) {
   for (const seriesSlug of Object.keys(getAllSeries())) {
@@ -54,7 +62,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const currentPath = `/series/${slug}`;
 
   const redirect = findSeriesByRedirectFrom(currentPath);
@@ -106,7 +114,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const currentPath = `/series/${slug}`;
 
   const redirect = findSeriesByRedirectFrom(currentPath);

@@ -41,6 +41,17 @@ describe('rst utils', () => {
     expect(markdown).toContain('![Test image](./images/test.svg)');
   });
 
+  test('does not treat generic directives as literal code blocks', () => {
+    const markdown = rstToMarkdown([
+      '.. note::',
+      '',
+      '   Keep this as prose.',
+    ].join('\n'));
+
+    expect(markdown).toContain('.. note::');
+    expect(markdown).not.toContain('```');
+  });
+
   test('ignores unknown metadata fields and rejects malformed supported values', () => {
     const ignored = parseRstDocument([
       'Title',
@@ -88,5 +99,18 @@ describe('rst utils', () => {
     expect(doc.title).toBe('从香农熵谈设计文档写作');
     expect(doc.metadata.authors).toEqual(['Kenneth Lee']);
     expect(doc.body).toBe('正文。');
+  });
+
+  test('strips markdown links when generating excerpts', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      'Paragraph with `Link <https://example.com>`_.',
+    ].join('\n'));
+
+    expect(doc.excerpt).toContain('Link');
+    expect(doc.excerpt).not.toContain('[Link]');
+    expect(doc.excerpt).not.toContain('https://example.com');
   });
 });

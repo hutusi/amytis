@@ -22,6 +22,8 @@ describe('RstRenderer', () => {
     expect(html).toContain('Section');
     expect(html).toContain('https://example.com');
     expect(html).toContain('language-ts');
-    expect(html).toContain('Copy');
+    expect(html).toContain('<code class="language-ts"');
+    expect(html).toContain('token keyword');
+    expect(html).toContain('token number');
   });
 });

@@ -51,11 +51,10 @@ describe("Integration: Reading Time & Headings", () => {
 
   test("short posts have 1 min read", () => {
     const shortPost = getPostBySlug("legacy-markdown");
+    expect(shortPost).toBeDefined();
     if (!shortPost) {
-      console.warn("Skipping: legacy-markdown post not found");
-      return;
+      throw new Error("fixture 'legacy-markdown' not found");
     }
-
     expect(shortPost.readingTime).toBe("1 min read");
   });
 
