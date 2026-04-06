@@ -31,7 +31,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
 
   const renderContent = (content: string) => (
     post.sourceFormat === 'rst'
-      ? <RstRenderer content={content} latex={post.latex} slug={post.imageBaseSlug} />
+      ? <RstRenderer content={content} html={content === post.content ? post.renderedHtml : undefined} latex={post.latex} slug={post.imageBaseSlug} />
       : <MarkdownRenderer content={content} latex={post.latex} slug={post.imageBaseSlug} />
   );
 
