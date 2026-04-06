@@ -7,6 +7,7 @@ import { siteConfig } from '../../../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
+import { getSeriesListUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 
 const PAGE_SIZE = siteConfig.pagination.series;
@@ -31,7 +32,10 @@ function findSeriesByRedirectFrom(path: string) {
 
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
+  const seriesBasePath = getSeriesListUrl();
   const seen = new Set<string>();
+  const reservedSlugs = new Set(Object.keys(allSeries));
+  const claimedAliases = new Map<string, string>();
   const params: { slug: string; page: string }[] = [];
   const pushParam = (slug: string, page: string) => {
     const key = `${slug}:${page}`;
@@ -52,9 +56,23 @@ export async function generateStaticParams() {
     const data = getSeriesData(slug);
     for (const from of data?.redirectFrom ?? []) {
       const segments = from.split('/').filter(Boolean);
-      if (segments.length !== 2 || segments[0] !== 'series') continue;
+      const expectedBase = seriesBasePath.replace(/^\/+|\/+$/g, '');
+      if (segments.length !== 2 || segments[0] !== expectedBase) continue;
       const aliasSlug = segments[1];
       if (aliasSlug === slug || totalPages <= 1) continue;
+      const claimedBy = claimedAliases.get(aliasSlug);
+      if (claimedBy && claimedBy !== slug) {
+        throw new Error(
+          `[amytis] series redirectFrom alias "${from}" is claimed by both "${claimedBy}" and "${slug}".`
+        );
+      }
+      if (!claimedBy && reservedSlugs.has(aliasSlug)) {
+        throw new Error(
+          `[amytis] series redirectFrom alias "${from}" for "${slug}" conflicts with an existing series slug.`
+        );
+      }
+      claimedAliases.set(aliasSlug, slug);
+      reservedSlugs.add(aliasSlug);
       for (let i = 2; i <= totalPages; i++) {
         pushParam(aliasSlug, i.toString());
       }
@@ -83,13 +101,13 @@ export const dynamicParams = false;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; page: string }> }): Promise<Metadata> {
   const { slug: rawSlug, page } = await params;
   const slug = safeDecodeParam(rawSlug);
-  const currentPath = `/series/${slug}`;
+  const currentPath = `${getSeriesListUrl()}/${slug}`;
   const redirect = findSeriesByRedirectFrom(currentPath);
   if (redirect) {
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
       title: redirect.data.title,
-      alternates: { canonical: `${siteUrl}/series/${redirect.slug}/page/${page}` },
+      alternates: { canonical: `${siteUrl}${getSeriesListUrl()}/${redirect.slug}/page/${page}` },
     };
   }
 
@@ -106,10 +124,10 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const { slug: rawSlug, page: pageStr } = await params;
   const slug = safeDecodeParam(rawSlug);
   const page = parseInt(pageStr);
-  const currentPath = `/series/${slug}`;
+  const currentPath = `${getSeriesListUrl()}/${slug}`;
   const redirect = findSeriesByRedirectFrom(currentPath);
   if (redirect) {
-    return <RedirectPage to={`/series/${redirect.slug}/page/${page}`} />;
+    return <RedirectPage to={`${getSeriesListUrl()}/${redirect.slug}/page/${page}`} />;
   }
 
   const seriesData = getSeriesData(slug);

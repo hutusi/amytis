@@ -305,6 +305,31 @@ describe('generateStaticParams — placeholder when content is empty', () => {
         params: Promise.resolve({ slug: 'old-name', page: '2' }),
       })).resolves.toBeDefined();
     });
+
+    test('series/[slug]/page/[page] throws when redirectFrom alias conflicts with an existing series slug', async () => {
+      mockedSeries = {
+        'existing-slug': Array.from({ length: 6 }, (_, i) => ({ slug: `a${i + 1}` })),
+        'new-name': Array.from({ length: 6 }, (_, i) => ({ slug: `b${i + 1}` })),
+      };
+      mockedSeriesData = {
+        'new-name': { redirectFrom: ['/series/existing-slug'], title: 'New Series' },
+      };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(generateStaticParams()).rejects.toThrow(/conflicts with an existing series slug/i);
+    });
+
+    test('series/[slug]/page/[page] throws when two series claim the same redirectFrom alias', async () => {
+      mockedSeries = {
+        'first-series': Array.from({ length: 6 }, (_, i) => ({ slug: `a${i + 1}` })),
+        'second-series': Array.from({ length: 6 }, (_, i) => ({ slug: `b${i + 1}` })),
+      };
+      mockedSeriesData = {
+        'first-series': { redirectFrom: ['/series/old-name'], title: 'First' },
+        'second-series': { redirectFrom: ['/series/old-name'], title: 'Second' },
+      };
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(generateStaticParams()).rejects.toThrow(/claimed by both/i);
+    });
   });
 
   describe('posts routes', () => {
