@@ -61,6 +61,15 @@ describe('rst utils', () => {
       '',
       'Body',
     ].join('\n'))).toThrow(RstParseError);
+
+    expect(() => parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      ':date: 2021-16-15',
+      '',
+      'Body',
+    ].join('\n'))).toThrow(RstParseError);
   });
 
   test('accepts leading comments and metadata before the document title', () => {

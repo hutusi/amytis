@@ -50,16 +50,13 @@ describe("Integration: Reading Time & Headings", () => {
   });
 
   test("short posts have 1 min read", () => {
-    const posts = getAllPosts();
-    // Find a short post (content < 200 words)
-    const shortPost = posts.find((p) => {
-      const wordCount = p.content.split(/\s+/).length;
-      return wordCount < 200;
-    });
-
-    if (shortPost) {
-      expect(shortPost.readingTime).toBe("1 min read");
+    const shortPost = getPostBySlug("legacy-markdown");
+    if (!shortPost) {
+      console.warn("Skipping: legacy-markdown post not found");
+      return;
     }
+
+    expect(shortPost.readingTime).toBe("1 min read");
   });
 
   test("multilingual post has headings with correct IDs", () => {
