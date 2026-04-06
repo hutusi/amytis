@@ -883,19 +883,30 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   const data = getSeriesData(collectionSlug);
   if (data?.type !== 'collection' || !data.items) return [];
 
+  const getCollectionKey = (post: PostData) =>
+    post.series ? `${post.series}/${post.slug}` : `posts/${post.slug}`;
+
+  const allPosts = getAllPosts();
+  const postIndex = new Map(allPosts.map((post) => [getCollectionKey(post), post]));
   const seen = new Set<string>();
+
   return data.items
     .flatMap(item => {
       if ('series' in item) {
         const posts = getSeriesPosts(item.series);
         return item.exclude ? posts.filter(p => !item.exclude!.includes(p.slug)) : posts;
       }
-      const post = getPostBySlug(item.post);
+
+      const post = item.post.includes('/')
+        ? postIndex.get(item.post)
+        : getPostBySlug(item.post);
+
       return post ? [post] : [];
     })
     .filter(post => {
-      if (seen.has(post.slug)) return false;
-      seen.add(post.slug);
+      const key = getCollectionKey(post);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
 }

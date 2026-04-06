@@ -91,7 +91,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   }, [isMenuOpen]);
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 ${
+    <nav className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 select-none ${
       isScrolled
         ? 'border-muted/10 bg-background/90 backdrop-blur-md shadow-sm'
         : 'border-transparent bg-transparent'

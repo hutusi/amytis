@@ -41,4 +41,10 @@ describe("MarkdownRenderer", () => {
     expect(html).toContain("not-prose w-full min-w-0 max-w-full");
     expect(html).toContain("overflow-x-auto");
   });
+
+  test("wraps content in a background container for copy-paste fidelity", () => {
+    const content = "Hello world";
+    const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
+    expect(html).toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
+  });
 });
