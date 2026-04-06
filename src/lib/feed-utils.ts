@@ -161,11 +161,11 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
 
   const selfUrl = `${baseUrl}${selfUrlPath}`;
 
-  const hasAnyAuthor = items.some(item => item.authors && item.authors.length > 0);
+  const hasAllAuthors = items.every(item => item.authors && item.authors.length > 0);
   const siteTitle = resolveLocale(siteConfig.title);
   const defaultAuthor = siteConfig.posts?.authors?.default?.[0];
   const feedAuthorName = defaultAuthor ? defaultAuthor : siteTitle;
-  const feedAuthorXml = hasAnyAuthor ? '' : `\n  <author><name>${escapeXml(feedAuthorName)}</name></author>`;
+  const feedAuthorXml = hasAllAuthors ? '' : `\n  <author><name>${escapeXml(feedAuthorName)}</name></author>`;
 
   const entriesXml = items
     .map((item) => {
