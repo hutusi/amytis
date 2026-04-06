@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-04-05
+
+### Added
+- **Type-Specific Feeds**: Introduced dedicated RSS and Atom feed endpoints for `/posts/feed.xml`, `/flows/feed.xml`, and a global `/all.xml` firehose, allowing readers to subscribe to specific content streams.
+- **Namespaced Collections**: Collection items now support `folder/slug` syntax (e.g., `posts/my-post`, `web-dev/intro`) for explicit resolution, preventing slug collisions across different content directories.
+- **Enhanced Feed Metadata**: Added RFC 4287 compliant author fallbacks for Atom feeds and optimized feed generation with lazy HTML rendering.
+
+### Changed
+- **Copy-Paste UX**: Wrapped article content in background-stable containers to prevent "striping" when pasting into rich-text editors and applied `select-none` to navigation and sidebars for cleaner content selection.
+- **Archive Page Robustness**: Refactored the chronological archive layout to prioritize titles and gracefully truncate long author lists, preventing layout shifts on posts with many contributors.
+- **Test Coverage**: Added comprehensive integration tests for namespaced resolution and E2E tests for the new feed architecture.
+
+### Fixed
+- **XML Template Literals**: Fixed a syntax issue with escaped backticks in the RSS/Atom generator that caused build-time errors.
+- **Archive Mobile Layout**: Improved layout stability on mobile devices for archive timeline entries.
+
 ## [1.13.0] - 2026-03-25
 
 ### Added
