@@ -306,6 +306,26 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       })).resolves.toBeDefined();
     });
 
+    test('series routes match percent-encoded redirectFrom aliases after normalization', async () => {
+      mockedSeries = { '软件构架设计': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
+      mockedSeriesData = {
+        '软件构架设计': {
+          redirectFrom: ['/series/%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1'],
+          title: '软件构架设计',
+        },
+      };
+
+      const seriesPage = await import('../../src/app/series/[slug]/page');
+      await expect(seriesPage.default({
+        params: Promise.resolve({ slug: '%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1' }),
+      })).resolves.toBeDefined();
+
+      const paginatedPage = await import('../../src/app/series/[slug]/page/[page]/page');
+      await expect(paginatedPage.default({
+        params: Promise.resolve({ slug: '%E8%BD%AF%E4%BB%B6%E8%AE%BE%E8%AE%A1', page: '2' }),
+      })).resolves.toBeDefined();
+    });
+
     test('series/[slug]/page/[page] throws when redirectFrom alias conflicts with an existing series slug', async () => {
       mockedSeries = {
         'existing-slug': Array.from({ length: 6 }, (_, i) => ({ slug: `a${i + 1}` })),

@@ -9,27 +9,9 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
+import { findSeriesByRedirectFrom, safeDecodeParam } from '@/lib/series-redirects';
 
 const PAGE_SIZE = siteConfig.pagination.series;
-
-function safeDecodeParam(param: string): string {
-  try {
-    return decodeURIComponent(param);
-  } catch {
-    return param;
-  }
-}
-
-/** Returns the series whose index.mdx lists `path` in its redirectFrom array, or null. */
-function findSeriesByRedirectFrom(path: string) {
-  for (const seriesSlug of Object.keys(getAllSeries())) {
-    const data = getSeriesData(seriesSlug);
-    if (data?.redirectFrom?.includes(path)) {
-      return { slug: seriesSlug, data };
-    }
-  }
-  return null;
-}
 
 export async function generateStaticParams() {
   const allSeries = getAllSeries();

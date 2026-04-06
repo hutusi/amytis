@@ -9,26 +9,9 @@ import Link from 'next/link';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
 import { getSeriesListUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
+import { findSeriesByRedirectFrom, safeDecodeParam } from '@/lib/series-redirects';
 
 const PAGE_SIZE = siteConfig.pagination.series;
-
-function safeDecodeParam(param: string): string {
-  try {
-    return decodeURIComponent(param);
-  } catch {
-    return param;
-  }
-}
-
-function findSeriesByRedirectFrom(path: string) {
-  for (const seriesSlug of Object.keys(getAllSeries())) {
-    const data = getSeriesData(seriesSlug);
-    if (data?.redirectFrom?.includes(path)) {
-      return { slug: seriesSlug, data };
-    }
-  }
-  return null;
-}
 
 export async function generateStaticParams() {
   const allSeries = getAllSeries();
