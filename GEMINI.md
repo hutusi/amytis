@@ -64,6 +64,8 @@ bun test
 - **Series**: 
   - Robust grouping with folder-based or file-based entries.
   - Configurable sorting: `date-asc`, `date-desc`, or `manual` (explicit list of slugs).
+  - **Collections**: Specialized series (`type: collection`) that allow manual curation of posts and other series.
+  - **Namespaced Referencing**: Collection items support `folder/slug` syntax (e.g., `posts/my-post`, `web-dev/intro`) to explicitly resolve posts and prevent collisions across different content directories.
   - Cross-referencing: Series can include posts from the general pool or other folders.
   - Metadata inheritance: Posts can inherit attributes (like authors) from series index files.
 - **Featured Content**: Mark posts or series as `featured` to display them in prominent homepage sections with horizontal scrolling.
@@ -98,3 +100,4 @@ bun test
 - Added pagination to the main posts list and individual series pages.
 - Implemented sophisticated reading time calculation for mixed Latin and CJK text.
 - Enhanced author management with metadata inheritance and slug-based routing.
+- Implemented **Namespaced Collections**: manually curated series now support `folder/slug` references to prevent post collisions and ensure explicit content resolution.

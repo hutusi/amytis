@@ -37,7 +37,27 @@ The `/graph` route visualizes your entire digital garden as an interactive netwo
 - **Edges**: Represent wiki-links connecting them.
 - **Interaction**: Click a node to navigate to that page.
 
-### 5. Flows (`/flows`)
+### 5. Collections (`/series`)
+While a "Series" is typically a linear progression of posts (e.g., Part 1, Part 2), a **Collection** allows you to manually curate an arbitrary list of posts and other series into a single grouped page.
+
+To create a collection, set `type: collection` in a series index file:
+
+- **Location:** `content/series/[collection-slug]/index.mdx`
+- **Frontmatter:**
+  ```yaml
+  ---
+  title: "Modern Web Development"
+  type: collection
+  items:
+    - post: posts/asynchronous-javascript  # Namespaced reference to a standalone post
+    - post: ai-nexus-weekly/week-11        # Namespaced reference to a post inside another series
+    - post: understanding-react-hooks      # Fallback reference (searches all posts by slug)
+    - series: nextjs-deep-dive             # Embeds all posts from another series
+  ---
+  ```
+Using a namespace (`folder/slug`) in the `post` definition prevents slug collisions and explicitly targets the exact file location.
+
+### 6. Flows (`/flows`)
 Flows are a stream-style collection of daily notes, micro-blogging, or imported chat logs. They are ideal for quick thoughts that don't necessarily warrant a full blog post.
 
 - **Location:** `content/flows/YYYY/MM/DD.mdx`
