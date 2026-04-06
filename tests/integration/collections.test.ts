@@ -52,6 +52,11 @@ describe("Integration: Collections", () => {
     expect(foundPost).toBeDefined();
     // Because the namespace was "posts/", its series should be undefined
     expect(foundPost!.series).toBeUndefined();
+
+    // Also verify series-based namespace
+    const seriesPost = posts.find(p => p.slug === "02-architecture");
+    expect(seriesPost).toBeDefined();
+    expect(seriesPost!.series).toBe("digital-garden");
   });
 
   test("getCollectionPosts includes posts from referenced series", () => {

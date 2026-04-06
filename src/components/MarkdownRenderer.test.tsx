@@ -45,6 +45,6 @@ describe("MarkdownRenderer", () => {
   test("wraps content in a background container for copy-paste fidelity", () => {
     const content = "Hello world";
     const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
-    expect(html).toContain('class="bg-background"');
+    expect(html).toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
   });
 });
