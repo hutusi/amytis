@@ -531,6 +531,26 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: encodeURIComponent('中文文章') });
     });
 
+    test('[slug]/[postSlug] includes encoded Unicode prefix variants in non-production', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: 'architecture-post' }] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: 'architecture-post' });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: 'architecture-post' });
+    });
+
+    test('[slug]/[postSlug] includes encoded Unicode prefix and postSlug variants together in non-production', async () => {
+      mockedSeries = { '软件构架设计': [{ slug: '中文文章' }] };
+      process.env.NODE_ENV = 'development';
+      const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
+      const params = await generateStaticParams();
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: '中文文章' });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: '中文文章' });
+      expect(params).toContainEqual({ slug: '软件构架设计', postSlug: encodeURIComponent('中文文章') });
+      expect(params).toContainEqual({ slug: encodeURIComponent('软件构架设计'), postSlug: encodeURIComponent('中文文章') });
+    });
+
     test('[slug]/[postSlug] does not include encoded Unicode postSlug variants in production', async () => {
       mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
       process.env.NODE_ENV = 'production';

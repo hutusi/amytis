@@ -67,17 +67,26 @@ export async function generateStaticParams() {
     }
   }
 
-  // Work around Next dev static-param checks for percent-encoded Unicode postSlugs
-  // under `output: "export"` — dev server may receive percent-encoded forms of Unicode paths.
+  // Work around Next dev static-param checks for percent-encoded Unicode slugs
+  // under `output: "export"` — dev server may receive encoded forms of either segment.
   // Include encoded variants in development only; production export keeps raw segment values.
   if (process.env.NODE_ENV !== 'production') {
     const existing = new Set(params.map(p => `${p.slug}/${p.postSlug}`));
     for (const p of [...params]) {
+      const encodedSlug = encodeURIComponent(p.slug);
       const encodedPostSlug = encodeURIComponent(p.postSlug);
-      const key = `${p.slug}/${encodedPostSlug}`;
-      if (!existing.has(key)) {
-        existing.add(key);
-        params.push({ slug: p.slug, postSlug: encodedPostSlug });
+      const variants = [
+        { slug: p.slug, postSlug: encodedPostSlug },
+        { slug: encodedSlug, postSlug: p.postSlug },
+        { slug: encodedSlug, postSlug: encodedPostSlug },
+      ];
+
+      for (const variant of variants) {
+        const key = `${variant.slug}/${variant.postSlug}`;
+        if (!existing.has(key)) {
+          existing.add(key);
+          params.push(variant);
+        }
       }
     }
   }
