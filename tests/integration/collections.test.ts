@@ -44,6 +44,16 @@ describe("Integration: Collections", () => {
     expect(slugs).toContain("understanding-react-hooks");
   });
 
+  test("getCollectionPosts resolves namespaced post entries properly", () => {
+    // The modern-web-dev collection uses the "posts/asynchronous-javascript" syntax.
+    // This test ensures that the namespaced resolution logic successfully found it.
+    const posts = getCollectionPosts("modern-web-dev");
+    const foundPost = posts.find(p => p.slug === "asynchronous-javascript");
+    expect(foundPost).toBeDefined();
+    // Because the namespace was "posts/", its series should be undefined
+    expect(foundPost!.series).toBeUndefined();
+  });
+
   test("getCollectionPosts includes posts from referenced series", () => {
     const posts = getCollectionPosts("modern-web-dev");
     const slugs = posts.map((p) => p.slug);
@@ -108,8 +118,8 @@ describe("Integration: Collections", () => {
   test("getAllSeries includes collection with correct post count", () => {
     const all = getAllSeries();
     expect(all).toHaveProperty("modern-web-dev");
-    // modern-web-dev has 2 standalone posts + 2 from nextjs-deep-dive
-    expect(all["modern-web-dev"].length).toBe(4);
+    // modern-web-dev has 2 standalone posts + 4 from nextjs-deep-dive
+    expect(all["modern-web-dev"].length).toBe(6);
   });
 
   test("getAllSeries collection posts are sorted by date descending", () => {
