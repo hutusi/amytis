@@ -890,7 +890,20 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
         const posts = getSeriesPosts(item.series);
         return item.exclude ? posts.filter(p => !item.exclude!.includes(p.slug)) : posts;
       }
-      const post = getPostBySlug(item.post);
+
+      let post: PostData | null | undefined;
+      if (item.post.includes('/')) {
+        const [folder, slug] = item.post.split('/');
+        const allPosts = getAllPosts();
+        if (folder === 'posts') {
+          post = allPosts.find(p => p.slug === slug && !p.series);
+        } else {
+          post = allPosts.find(p => p.slug === slug && p.series === folder);
+        }
+      } else {
+        post = getPostBySlug(item.post);
+      }
+
       return post ? [post] : [];
     })
     .filter(post => {
