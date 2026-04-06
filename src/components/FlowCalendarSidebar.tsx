@@ -79,7 +79,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   }, [firstDay, daysInMonth]);
 
   return (
-    <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)]">
+    <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] select-none">
       {breadcrumb && <div className="mb-4">{breadcrumb}</div>}
       <div className="border border-muted/20 rounded-lg p-4">
         {/* Month navigation */}

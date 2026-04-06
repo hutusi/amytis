@@ -11,7 +11,7 @@ export default function Footer() {
   const { t, language } = useLanguage();
   
   return (
-    <footer className="bg-muted/5 border-t border-muted/10 mt-auto">
+    <footer className="bg-muted/5 border-t border-muted/10 mt-auto select-none">
       <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10 lg:mb-12">
           {/* Brand */}
