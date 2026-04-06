@@ -22,6 +22,15 @@
 - [ ] **Link Validator**: Script to check for broken internal wiki-links and external URLs.
 - [ ] **Content Porter**: Tool to import/export notes from Obsidian or Notion.
 - [ ] **Optimization**: Automatically compress and resize co-located images during build.
+- [ ] **Build Performance**: Profile `build:dev`, clean stale export/search outputs before indexing, and consider a lighter local build path that skips expensive full-site indexing when not needed.
+
+## 📚 rST Follow-up
+- [ ] **Fixture Coverage**: Add more compatibility fixtures from legacy rST series, including nested lists, tables, directives, images, and internal links.
+- [ ] **Parser Diagnostics**: Improve rST build errors with clearer file context, line numbers where possible, and actionable unsupported-syntax messages.
+- [ ] **Syntax Contract**: Document the exact supported rST subset and explicitly list unsupported or partial constructs.
+- [ ] **Asset & Link Handling**: Harden relative asset resolution and add validation for broken local rST links and image references.
+- [ ] **Reading Time**: Reuse the shared mixed-CJK reading-time rules for rST content so Chinese, Japanese, and Korean text are counted consistently.
+- [ ] **Advanced Constructs**: Evaluate the highest-value next rST features from real imported content, such as footnotes, simple tables, and selected directives.
 
 ## ✅ Completed Highlights
 - [x] **JSON-LD Structured Data**: `BlogPosting`, `Book`, and `Article` schemas for Google rich results.
@@ -33,3 +42,4 @@
 - [x] **Robust Engineering**: Zero hydration mismatches, Zod validation, and 64+ automated tests.
 - [x] **Refined UI**: High-contrast typography, four color palettes, and horizontal scroll featured sections.
 - [x] **Sub-features**: Newsletter/Subscribe page, Reading Progress, and Author Ecosystem.
+- [x] **Series-scoped rST Support**: Strict rST series detection, README-based indexes, Unicode-safe static params, and legacy redirect handling.
