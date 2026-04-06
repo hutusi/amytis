@@ -58,6 +58,7 @@ Further reading: [How to Get AI to Write Better Code](https://hutusi.com/weeklie
   - Light/Dark mode with automatic system detection.
   - Four color palettes: default (emerald), blue, rose, amber.
   - Responsive layout optimized for reading.
+  - Clean Selection: UI elements are non-selectable to ensure high-fidelity copy-pasting of article content.
   - Horizontal scrolling for featured content on the homepage.
 - **Table of Contents:** Sticky TOC with scroll tracking, reading progress indicator, and active heading highlight.
 - **Flexible Content Structure:**

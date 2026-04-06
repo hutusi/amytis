@@ -101,3 +101,5 @@ bun test
 - Implemented sophisticated reading time calculation for mixed Latin and CJK text.
 - Enhanced author management with metadata inheritance and slug-based routing.
 - Implemented **Namespaced Collections**: manually curated series now support `folder/slug` references to prevent post collisions and ensure explicit content resolution.
+- Added **Type-Specific Feeds**: dedicated RSS/Atom endpoints for `/posts`, `/flows`, and a global `/all` firehose.
+- Improved **Copy-Paste UX**: wrapped article content in background-stable containers and added `select-none` to UI navigation to ensure clean, high-fidelity content selection.
