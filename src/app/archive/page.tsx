@@ -128,12 +128,12 @@ export default function ArchivePage() {
                               <li key={post.slug} className="group">
                                 <Link href={getPostUrl(post)} className="block no-underline">
                                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-6">
-                                    <div className="flex items-baseline gap-6">
+                                    <div className="flex items-baseline gap-6 min-w-0 flex-1">
                                       <span className="font-mono text-base text-muted shrink-0 w-8">
                                         {day}
                                       </span>
-                                      <div className="flex items-baseline gap-2">
-                                        <h4 className="text-xl font-serif font-medium text-heading/80 group-hover:text-accent transition-colors duration-200">
+                                      <div className="flex items-baseline gap-2 min-w-0 flex-1">
+                                        <h4 className="text-xl font-serif font-medium text-heading/80 group-hover:text-accent transition-colors duration-200 truncate">
                                           {post.title}
                                         </h4>
                                         {post.series && (
@@ -147,7 +147,10 @@ export default function ArchivePage() {
                                       </div>
                                     </div>
                                     {showAuthors && post.authors.length > 0 && (
-                                      <span className="text-sm font-sans italic text-muted/60 shrink-0 hidden sm:block">
+                                      <span 
+                                        title={post.authors.join(', ')}
+                                        className="text-sm font-sans italic text-muted/60 hidden sm:block max-w-[12rem] md:max-w-[16rem] lg:max-w-[20rem] truncate text-right shrink-0"
+                                      >
                                         {post.authors.join(', ')}
                                       </span>
                                     )}
