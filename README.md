@@ -213,6 +213,8 @@ Amytis is built around Next.js static export with `output: "export"` and `traili
 - Posts default to `/<posts.basePath>/<slug>` and `posts.basePath` defaults to `/posts`.
 - If `series.autoPaths` is enabled, series posts move to `/<series-slug>/<post-slug>`.
 - If `series.customPaths` is configured, those custom prefixes override `autoPaths`.
+- Frontmatter `redirectFrom` entries are exported as static redirect pages so legacy URLs can keep working.
+- Prefer URL helpers over hardcoded post paths, because a canonical post URL may live under `/posts`, a series slug, or a custom prefix depending on config.
 - Before moving series posts off the default posts path, run `bun run add-series-redirects --dry-run` and then `bun run add-series-redirects` so legacy URLs still resolve.
 
 ## Writing Content

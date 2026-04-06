@@ -4,7 +4,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 
 ## Core Stack
 
-- Framework: Next.js 16.1.6 + React 19
+- Framework: Next.js 16.2.1 + React 19
 - Runtime/tooling: Bun
 - Styling: Tailwind CSS v4 + CSS variables + `next-themes`
 - Content parsing: `gray-matter` + Zod validation in `src/lib/markdown.ts`
@@ -79,6 +79,8 @@ src/app/
   - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)
   - Series auto path: `/<series.slug>/<post.slug>` when `series.autoPaths` is enabled
   - Series override: `/<series.customPaths[seriesSlug]>/<post.slug>`
+- Legacy aliases declared in frontmatter `redirectFrom` are emitted as static redirect pages, so old URLs can continue resolving after a rename or path migration.
+- Dynamic route handlers validate whether a request is canonical or legacy, then either render the content or return `RedirectPage`.
 - Dynamic route params should return raw segment values from `generateStaticParams()` (do not pre-encode values).
 - Links should always target concrete paths, not route placeholders such as `/posts/[slug]`.
 - When moving series posts off the default posts path, `scripts/add-series-redirects.ts` updates frontmatter `redirectFrom` entries so static redirect pages can be generated.
