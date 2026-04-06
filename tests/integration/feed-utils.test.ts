@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { getFeedItems } from "../../src/lib/feed-utils";
 import { getAllPosts, getAllFlows } from "../../src/lib/markdown";
+import { getPostUrl, getFlowUrl } from "../../src/lib/urls";
 import { siteConfig } from "../../site.config";
 
 describe("Integration: Feed Utils", () => {
@@ -149,10 +150,11 @@ describe("Integration: Feed Utils", () => {
       siteConfig.feed.maxItems = 0;
       const items = getFeedItems('posts');
       const allPosts = getAllPosts();
+      const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
       expect(items.length).toBe(allPosts.length);
-      items.forEach(item => {
-        expect(item.url).not.toContain('/flows/');
-      });
+      expect(items.map((item) => item.url).sort()).toEqual(
+        allPosts.map((post) => `${baseUrl}${getPostUrl(post)}`).sort()
+      );
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
     }
@@ -164,10 +166,11 @@ describe("Integration: Feed Utils", () => {
       siteConfig.feed.maxItems = 0;
       const items = getFeedItems('flows');
       const allFlows = getAllFlows();
+      const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
       expect(items.length).toBe(allFlows.length);
-      items.forEach(item => {
-        expect(item.url).toContain('/flows/');
-      });
+      expect(items.map((item) => item.url).sort()).toEqual(
+        allFlows.map((flow) => `${baseUrl}${getFlowUrl(flow.slug)}`).sort()
+      );
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
     }
@@ -180,7 +183,13 @@ describe("Integration: Feed Utils", () => {
       const items = getFeedItems('all');
       const allPosts = getAllPosts();
       const allFlows = getAllFlows();
-      expect(items.length).toBe(allPosts.length + allFlows.length);
+      const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
+      expect(items.map((item) => item.url).sort()).toEqual(
+        [
+          ...allPosts.map((post) => `${baseUrl}${getPostUrl(post)}`),
+          ...allFlows.map((flow) => `${baseUrl}${getFlowUrl(flow.slug)}`),
+        ].sort()
+      );
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
     }

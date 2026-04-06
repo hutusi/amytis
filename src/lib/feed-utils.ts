@@ -46,7 +46,7 @@ export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
 
   let items: FeedItem[] = [];
 
-  const postItems: FeedItem[] = getAllPosts().map((post) => ({
+  const getPostItems = () => getAllPosts().map((post) => ({
     title: post.title,
     url: `${baseUrl}${getPostUrl(post)}`,
     date: new Date(post.date),
@@ -56,7 +56,7 @@ export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
     authors: post.authors,
   }));
 
-  const flowItems: FeedItem[] = getAllFlows().map((flow) => ({
+  const getFlowItems = () => getAllFlows().map((flow) => ({
     title: flow.title,
     url: `${baseUrl}${getFlowUrl(flow.slug)}`,
     date: new Date(flow.date),
@@ -66,14 +66,14 @@ export function getFeedItems(feedType: FeedType = 'main'): FeedItem[] {
   }));
 
   if (feedType === 'posts') {
-    items = postItems;
+    items = getPostItems();
   } else if (feedType === 'flows') {
-    items = flowItems;
+    items = getFlowItems();
   } else if (feedType === 'all') {
-    items = [...postItems, ...flowItems];
+    items = [...getPostItems(), ...getFlowItems()];
   } else {
     // main
-    items = includeFlows ? [...postItems, ...flowItems] : postItems;
+    items = includeFlows ? [...getPostItems(), ...getFlowItems()] : getPostItems();
   }
 
   // Sort descending by date
@@ -161,6 +161,12 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
 
   const selfUrl = `${baseUrl}${selfUrlPath}`;
 
+  const hasAnyAuthor = items.some(item => item.authors && item.authors.length > 0);
+  const siteTitle = resolveLocale(siteConfig.title);
+  const defaultAuthor = siteConfig.posts?.authors?.default?.[0];
+  const feedAuthorName = defaultAuthor ? defaultAuthor : siteTitle;
+  const feedAuthorXml = hasAnyAuthor ? '' : `\n  <author><name>${escapeXml(feedAuthorName)}</name></author>`;
+
   const entriesXml = items
     .map((item) => {
       const contentXml = useFullContent
@@ -189,7 +195,7 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
   <link href="${escapeXml(selfUrl)}" rel="self" type="application/atom+xml" />
   <id>${escapeXml(selfUrl)}</id>
   <updated>${feedUpdated}</updated>
-  <subtitle><![CDATA[${escapeCdata(resolveLocale(siteConfig.description))}]]></subtitle>
+  <subtitle><![CDATA[${escapeCdata(resolveLocale(siteConfig.description))}]]></subtitle>${feedAuthorXml}
 ${entriesXml}
 </feed>`;
 

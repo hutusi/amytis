@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test";
+import { siteConfig } from "../../site.config";
 
 const BASE_URL = "http://localhost:3000";
 
@@ -54,6 +55,7 @@ describe("E2E: Navigation & Assets", () => {
 
   test("feed.atom should be a valid Atom feed", async () => {
     if (!(await isServerRunning())) return;
+    if (siteConfig.feed.format === "rss") return; // skip if Atom is disabled
 
     const response = await fetch(`${BASE_URL}/feed.atom`);
     expect(response.status).toBe(200);
@@ -68,12 +70,17 @@ describe("E2E: Navigation & Assets", () => {
 
     const feedUrls = [
       "/posts/feed.xml",
-      "/posts/feed.atom",
       "/flows/feed.xml",
-      "/flows/feed.atom",
       "/all.xml",
-      "/all.atom",
     ];
+
+    if (siteConfig.feed.format === "atom" || siteConfig.feed.format === "both") {
+      feedUrls.push(
+        "/posts/feed.atom",
+        "/flows/feed.atom",
+        "/all.atom"
+      );
+    }
 
     for (const url of feedUrls) {
       const response = await fetch(`${BASE_URL}${url}`);
