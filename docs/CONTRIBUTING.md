@@ -47,6 +47,13 @@ bun run new-flow
 bun run new-series "My Series Name"
 ```
 
+Series are format-scoped:
+
+- Markdown series use `content/series/<slug>/index.mdx` or `index.md`
+- rST series use `content/series/<slug>/index.rst`
+- Child posts inside the series must use the same format as the index file
+- Mixed Markdown and rST files in one series are treated as build errors
+
 ### Creating Books
 
 Books are manually structured in `content/books/`.

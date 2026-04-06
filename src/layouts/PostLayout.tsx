@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { getAuthorSlug, PostData, BacklinkSource, SlugRegistryEntry, CollectionContext } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import RstRenderer from '@/components/RstRenderer';
 import RelatedPosts from '@/components/RelatedPosts';
 import SeriesList from '@/components/SeriesList';
 import PostSidebar from '@/components/PostSidebar';
@@ -41,6 +42,9 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
     ? `${siteConfig.baseUrl.replace(/\/+$/, '')}${getStaticPageUrl(post.slug)}`
     : `${siteConfig.baseUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
+  const bodyRenderer = post.sourceFormat === 'rst'
+    ? <RstRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
+    : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />;
 
   return (
     <div className="layout-container">
@@ -136,7 +140,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             </div>
           )}
 
-          <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
+          {bodyRenderer}
 
           {siteConfig.posts?.authors?.showAuthorCard !== false && (
             <AuthorCard authors={post.authors} />

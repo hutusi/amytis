@@ -5,6 +5,7 @@ import { siteConfig } from '../../site.config';
 import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
+import { parseRstDocument } from './rst';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -123,6 +124,20 @@ export interface PostData {
   contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
   /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
   imageBaseSlug: string;
+  sourceFormat?: 'markdown' | 'rst';
+}
+
+type SeriesFormat = 'markdown' | 'rst';
+
+interface SeriesIndexInfo {
+  format: SeriesFormat;
+  fullPath: string;
+}
+
+interface SeriesContentEntry {
+  fullPath: string;
+  slug: string;
+  dateFromFileName?: string;
 }
 
 export function calculateReadingTime(content: string): string {
@@ -183,21 +198,26 @@ export function getHeadings(content: string): Heading[] {
  * Returns null if no authors are configured (as opposed to the default fallback).
  */
 export function getSeriesAuthors(seriesSlug: string): string[] | null {
-  if (!fs.existsSync(seriesDirectory)) return null;
-  const indexPathMdx = path.join(seriesDirectory, seriesSlug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, seriesSlug, 'index.md');
+  const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+  if (!indexInfo) return null;
 
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return null;
+  if (indexInfo.format === 'rst') {
+    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    if (parsed.metadata.authors && parsed.metadata.authors.length > 0) {
+      return parsed.metadata.authors;
+    }
+    if (parsed.metadata.author && typeof parsed.metadata.author === 'string') {
+      return [parsed.metadata.author];
+    }
+    return null;
+  }
 
-  const { data } = matter(fs.readFileSync(fullPath, 'utf8'));
+  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.authors && Array.isArray(data.authors) && data.authors.length > 0) {
-    return data.authors;
+    return data.authors as string[];
   }
   if (data.author && typeof data.author === 'string') {
-    return [data.author];
+    return [data.author as string];
   }
   return null;
 }
@@ -221,15 +241,138 @@ export function resolveSeriesAuthors(slug: string, posts: PostData[]): string[] 
     .map(([name]) => name);
 }
 
+function parseSlugAndDate(rawName: string): { slug: string; dateFromFileName?: string } {
+  const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
+  const match = rawName.match(dateRegex);
+
+  if (match) {
+    return {
+      dateFromFileName: match[1],
+      slug: siteConfig.posts?.includeDateInUrl ? rawName : match[2],
+    };
+  }
+
+  return { slug: rawName };
+}
+
+function isMarkdownFilename(name: string): boolean {
+  return name.endsWith('.md') || name.endsWith('.mdx');
+}
+
+function isRstFilename(name: string): boolean {
+  return name.endsWith('.rst');
+}
+
+function resolveSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
+  if (!fs.existsSync(seriesDirectory)) return null;
+  const seriesPath = path.join(seriesDirectory, slug);
+  if (!fs.existsSync(seriesPath) || !fs.statSync(seriesPath).isDirectory()) return null;
+
+  const indexPathRst = path.join(seriesPath, 'index.rst');
+  const indexPathMdx = path.join(seriesPath, 'index.mdx');
+  const indexPathMd = path.join(seriesPath, 'index.md');
+  const hasRst = fs.existsSync(indexPathRst);
+  const hasMdx = fs.existsSync(indexPathMdx);
+  const hasMd = fs.existsSync(indexPathMd);
+  const markdownCount = Number(hasMdx) + Number(hasMd);
+
+  if (hasRst && markdownCount > 0) {
+    throw new Error(`[amytis] Series "${slug}" cannot contain both index.rst and Markdown index files.`);
+  }
+  if (markdownCount > 1) {
+    throw new Error(`[amytis] Series "${slug}" cannot contain both index.md and index.mdx.`);
+  }
+  if (hasRst) return { format: 'rst', fullPath: indexPathRst };
+  if (hasMdx) return { format: 'markdown', fullPath: indexPathMdx };
+  if (hasMd) return { format: 'markdown', fullPath: indexPathMd };
+  return null;
+}
+
+function getSeriesContentEntries(seriesSlug: string): SeriesContentEntry[] {
+  const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+  if (!indexInfo) return [];
+
+  const seriesPath = path.join(seriesDirectory, seriesSlug);
+  const seriesItems = fs.readdirSync(seriesPath, { withFileTypes: true });
+  const entries: SeriesContentEntry[] = [];
+  const seenSlugs = new Map<string, string>();
+
+  for (const item of seriesItems) {
+    if (item.name === 'index.rst' || item.name === 'index.md' || item.name === 'index.mdx') continue;
+
+    if (item.isFile()) {
+      const isMarkdown = isMarkdownFilename(item.name);
+      const isRst = isRstFilename(item.name);
+      if (!isMarkdown && !isRst) continue;
+
+      const itemFormat: SeriesFormat = isRst ? 'rst' : 'markdown';
+      if (itemFormat !== indexInfo.format) {
+        throw new Error(`[amytis] Series "${seriesSlug}" mixes ${indexInfo.format} and ${itemFormat} files. Offending file: ${item.name}`);
+      }
+
+      const rawName = item.name.replace(/\.(mdx?|rst)$/, '');
+      const { slug, dateFromFileName } = parseSlugAndDate(rawName);
+      const prior = seenSlugs.get(slug);
+      if (prior) {
+        throw new Error(`[amytis] Series "${seriesSlug}" contains duplicate post slug "${slug}" from "${prior}" and "${item.name}".`);
+      }
+      seenSlugs.set(slug, item.name);
+      entries.push({ fullPath: path.join(seriesPath, item.name), slug, dateFromFileName });
+      continue;
+    }
+
+    if (item.isDirectory()) {
+      const folderPath = path.join(seriesPath, item.name);
+      const folderIndexRst = path.join(folderPath, 'index.rst');
+      const folderIndexMdx = path.join(folderPath, 'index.mdx');
+      const folderIndexMd = path.join(folderPath, 'index.md');
+      const hasRst = fs.existsSync(folderIndexRst);
+      const hasMdx = fs.existsSync(folderIndexMdx);
+      const hasMd = fs.existsSync(folderIndexMd);
+      const markdownCount = Number(hasMdx) + Number(hasMd);
+      const totalIndexCount = Number(hasRst) + markdownCount;
+
+      if (totalIndexCount === 0) continue;
+      if (hasRst && markdownCount > 0) {
+        throw new Error(`[amytis] Series "${seriesSlug}" post folder "${item.name}" cannot contain both index.rst and Markdown index files.`);
+      }
+      if (markdownCount > 1) {
+        throw new Error(`[amytis] Series "${seriesSlug}" post folder "${item.name}" cannot contain both index.md and index.mdx.`);
+      }
+
+      const itemFormat: SeriesFormat = hasRst ? 'rst' : 'markdown';
+      if (itemFormat !== indexInfo.format) {
+        throw new Error(`[amytis] Series "${seriesSlug}" mixes ${indexInfo.format} and ${itemFormat} files. Offending folder: ${item.name}`);
+      }
+
+      const { slug, dateFromFileName } = parseSlugAndDate(item.name);
+      const prior = seenSlugs.get(slug);
+      if (prior) {
+        throw new Error(`[amytis] Series "${seriesSlug}" contains duplicate post slug "${slug}" from "${prior}" and "${item.name}".`);
+      }
+      seenSlugs.set(slug, item.name);
+      entries.push({
+        fullPath: hasRst ? folderIndexRst : (hasMdx ? folderIndexMdx : folderIndexMd),
+        slug,
+        dateFromFileName,
+      });
+    }
+  }
+
+  return entries;
+}
+
 function getSeriesTitle(slug: string): string | undefined {
-  if (!fs.existsSync(seriesDirectory)) return undefined;
-  const indexPathMdx = path.join(seriesDirectory, slug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, slug, 'index.md');
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return undefined;
-  const { data } = matter(fs.readFileSync(fullPath, 'utf8'));
+  const indexInfo = resolveSeriesIndexInfo(slug);
+  if (!indexInfo) return undefined;
+
+  if (indexInfo.format === 'rst') {
+    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    if (parsed.metadata.draft === true) return undefined;
+    return parsed.title;
+  }
+
+  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.draft === true) return undefined;
   return typeof data.title === 'string' ? data.title : undefined;
 }
@@ -319,6 +462,75 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     content: contentWithoutH1,
     headings,
     imageBaseSlug,
+    sourceFormat: 'markdown',
+  };
+}
+
+function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const parsed = parseRstDocument(fileContents);
+  const data = parsed.metadata;
+
+  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
+    path.dirname(fullPath) === contentDirectory;
+  const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+
+  const effectiveSeriesSlug = data.series || seriesName;
+  let authors: string[] = [];
+  if (data.authors && data.authors.length > 0) {
+    authors = data.authors;
+  } else if (data.author) {
+    authors = [data.author];
+  } else {
+    if (effectiveSeriesSlug) {
+      const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
+      if (seriesAuthors) authors = seriesAuthors;
+    }
+    if (authors.length === 0) {
+      const defaultAuthors = siteConfig.posts?.authors?.default;
+      if (defaultAuthors && defaultAuthors.length > 0) {
+        authors = defaultAuthors;
+      }
+    }
+  }
+
+  let date = data.date;
+  if (!date && dateFromFileName) date = dateFromFileName;
+  if (!date) date = new Date().toISOString().split('T')[0];
+
+  let coverImage = data.coverImage;
+  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
+    const cleanPath = coverImage.replace(/^\.\//, '');
+    coverImage = `/${imageBaseSlug}/${cleanPath}`;
+  }
+
+  return {
+    slug,
+    title: parsed.title,
+    subtitle: data.subtitle,
+    date,
+    excerpt: data.excerpt || parsed.excerpt,
+    category: data.category ?? 'Uncategorized',
+    tags: data.tags ?? [],
+    authors,
+    layout: data.layout ?? 'post',
+    series: effectiveSeriesSlug,
+    seriesTitle: effectiveSeriesSlug ? getSeriesTitle(effectiveSeriesSlug) : undefined,
+    coverImage,
+    sort: data.sort ?? 'date-desc',
+    posts: data.posts,
+    featured: data.featured ?? false,
+    pinned: data.pinned ?? false,
+    draft: data.draft ?? false,
+    latex: data.latex ?? false,
+    toc: data.toc ?? true,
+    commentable: data.commentable,
+    redirectFrom: data.redirectFrom ?? [],
+    readingTime: parsed.readingTime,
+    content: parsed.body,
+    headings: parsed.headings,
+    imageBaseSlug,
+    sourceFormat: 'rst',
   };
 }
 
@@ -336,81 +548,24 @@ export function getAllPosts(): PostData[] {
       let slug = '';
       let dateFromFileName = undefined;
 
-      const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
       const rawName = item.name.replace(/\.mdx?$/, '');
-      const match = rawName.match(dateRegex);
-      
-      if (match) {
-        dateFromFileName = match[1];
-        if (siteConfig.posts?.includeDateInUrl) {
-          slug = rawName;
-        } else {
-          slug = match[2];
-        }
-      } else {
-        slug = rawName;
-      }
+      ({ slug, dateFromFileName } = parseSlugAndDate(rawName));
 
       // Handle Series Directory logic
       if (isSeriesDir) {
         if (item.isDirectory()) {
-           const seriesSlug = item.name; // Folder name is series slug
-           const seriesPath = path.join(dir, item.name);
-           const seriesItems = fs.readdirSync(seriesPath, { withFileTypes: true });
-           
-           seriesItems.forEach(sItem => {
-             // Skip series metadata file itself
-             if (sItem.name === 'index.md' || sItem.name === 'index.mdx') return;
+          const seriesSlug = item.name;
+          const indexInfo = resolveSeriesIndexInfo(seriesSlug);
+          if (!indexInfo) return;
 
-             // 1. File-based posts: series/slug/post.mdx
-             if (sItem.isFile() && (sItem.name.endsWith('.md') || sItem.name.endsWith('.mdx'))) {
-               const sRawName = sItem.name.replace(/\.mdx?$/, '');
-               const sMatch = sRawName.match(dateRegex);
-               let sSlug = sRawName;
-               let sDate = undefined;
-               if (sMatch) {
-                 sDate = sMatch[1];
-                 sSlug = siteConfig.posts?.includeDateInUrl ? sRawName : sMatch[2];
-               }
-               
-               allPostsData.push(parseMarkdownFile(
-                 path.join(seriesPath, sItem.name), 
-                 sSlug, 
-                 sDate, 
-                 seriesSlug 
-               ));
-             } 
-             // 2. Folder-based posts: series/slug/post-folder/index.mdx
-             else if (sItem.isDirectory()) {
-                 const postFolder = path.join(seriesPath, sItem.name);
-                 const postIndexMdx = path.join(postFolder, 'index.mdx');
-                 const postIndexMd = path.join(postFolder, 'index.md');
-                 let postFullPath = '';
-                 
-                 if (fs.existsSync(postIndexMdx)) postFullPath = postIndexMdx;
-                 else if (fs.existsSync(postIndexMd)) postFullPath = postIndexMd;
-                 
-                 if (postFullPath) {
-                     // Handle date prefix in folder name
-                     const sMatch = sItem.name.match(dateRegex);
-                     let sSlug = sItem.name;
-                     let sDate = undefined;
-                     
-                     if (sMatch) {
-                       sDate = sMatch[1];
-                       sSlug = siteConfig.posts?.includeDateInUrl ? sItem.name : sMatch[2];
-                     }
-
-                     allPostsData.push(parseMarkdownFile(
-                       postFullPath, 
-                       sSlug, 
-                       sDate, 
-                       seriesSlug 
-                     ));
-                 }
-             }
-           });
-           return; // Processed this series folder
+          getSeriesContentEntries(seriesSlug).forEach(entry => {
+            allPostsData.push(
+              indexInfo.format === 'rst'
+                ? parseRstFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
+                : parseMarkdownFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
+            );
+          });
+          return;
         }
       }
 
@@ -463,109 +618,8 @@ export function getListingPosts(): PostData[] {
   return getAllPosts().filter(p => !p.series || !excluded.has(p.series));
 }
 
-function findPostFile(name: string, targetSlug: string): PostData | null {
-  // Check standard posts
-  let fullPath = path.join(contentDirectory, `${name}.mdx`);
-  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-  
-  fullPath = path.join(contentDirectory, `${name}.md`);
-  if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-
-  if (fs.existsSync(path.join(contentDirectory, name))) {
-    fullPath = path.join(contentDirectory, name, 'index.mdx');
-    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-    
-    fullPath = path.join(contentDirectory, name, 'index.md');
-    if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug);
-  }
-
-  // Check series posts
-  if (fs.existsSync(seriesDirectory)) {
-    const seriesFolders = fs.readdirSync(seriesDirectory);
-    for (const folder of seriesFolders) {
-      const folderPath = path.join(seriesDirectory, folder);
-      if (!fs.statSync(folderPath).isDirectory()) continue;
-
-      // Check file-based
-      fullPath = path.join(folderPath, `${name}.mdx`);
-      if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-
-      fullPath = path.join(folderPath, `${name}.md`);
-      if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-
-      // Check folder-based
-      const postFolderPath = path.join(folderPath, name);
-      if (fs.existsSync(postFolderPath) && fs.statSync(postFolderPath).isDirectory()) {
-         fullPath = path.join(postFolderPath, 'index.mdx');
-         if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-         
-         fullPath = path.join(postFolderPath, 'index.md');
-         if (fs.existsSync(fullPath)) return parseMarkdownFile(fullPath, targetSlug, undefined, folder);
-      }
-    }
-  }
-
-  return null;
-}
-
 export function getPostBySlug(slug: string): PostData | null {
-  let post: PostData | null = null;
-
-  if (siteConfig.posts?.includeDateInUrl) {
-    post = findPostFile(slug, slug);
-  } else {
-    post = findPostFile(slug, slug);
-    if (!post) {
-        // Search in content/posts
-        const items = fs.existsSync(contentDirectory) ? fs.readdirSync(contentDirectory) : [];
-        for (const item of items) {
-          const rawName = item.replace(/\.mdx?$/, '');
-          const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
-          const match = rawName.match(dateRegex);
-          
-          if (match && match[2] === slug) {
-            post = findPostFile(rawName, slug);
-            break;
-          }
-        }
-
-        // If not found, search in series folders
-        if (!post && fs.existsSync(seriesDirectory)) {
-           const seriesFolders = fs.readdirSync(seriesDirectory);
-           for (const folder of seriesFolders) {
-             const folderPath = path.join(seriesDirectory, folder);
-             if (!fs.statSync(folderPath).isDirectory()) continue;
-             
-             const sItems = fs.readdirSync(folderPath);
-             for (const sItem of sItems) {
-                const sRawName = sItem.replace(/\.mdx?$/, '');
-                // Also check folders
-                const sDateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
-                const sMatch = sRawName.match(sDateRegex);
-                
-                if (sMatch && sMatch[2] === slug) {
-                  post = findPostFile(sRawName, slug);
-                  break;
-                }
-             }
-             if (post) break;
-           }
-        }
-    }
-  }
-
-  if (!post) return null;
-
-  if (process.env.NODE_ENV === 'production' && post.draft) {
-    return null;
-  }
-
-  if (!siteConfig.posts?.showFuturePosts) {
-      const postDate = new Date(post.date);
-      const now = new Date();
-      if (postDate > now) return null;
-  }
-  return post;
+  return getAllPosts().find(post => post.slug === slug) ?? null;
 }
 
 /**
@@ -867,16 +921,12 @@ export function getFeaturedSeries(): Record<string, PostData[]> {
 }
 
 export function getSeriesData(slug: string): PostData | null {
-  if (!fs.existsSync(seriesDirectory)) return null;
-  const indexPathMdx = path.join(seriesDirectory, slug, 'index.mdx');
-  const indexPathMd = path.join(seriesDirectory, slug, 'index.md');
+  const indexInfo = resolveSeriesIndexInfo(slug);
+  if (!indexInfo) return null;
 
-  let fullPath = '';
-  if (fs.existsSync(indexPathMdx)) fullPath = indexPathMdx;
-  else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
-  else return null;
-
-  return parseMarkdownFile(fullPath, slug, undefined, slug);
+  return indexInfo.format === 'rst'
+    ? parseRstFile(indexInfo.fullPath, slug, undefined, slug)
+    : parseMarkdownFile(indexInfo.fullPath, slug, undefined, slug);
 }
 
 export function getCollectionPosts(collectionSlug: string): PostData[] {

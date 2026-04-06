@@ -13,6 +13,7 @@ describe("Integration: Series", () => {
     expect(Object.keys(series).length).toBeGreaterThan(0);
     expect(series).toHaveProperty("nextjs-deep-dive");
     expect(series).toHaveProperty("digital-garden");
+    expect(series).toHaveProperty("rst-legacy");
   });
 
   test("getSeriesData returns metadata with correct fields", () => {
@@ -28,6 +29,15 @@ describe("Integration: Series", () => {
   test("getSeriesData returns null for nonexistent slug", () => {
     const data = getSeriesData("nonexistent-series-slug");
     expect(data).toBeNull();
+  });
+
+  test("getSeriesData loads rST series metadata", () => {
+    const data = getSeriesData("rst-legacy");
+    expect(data).not.toBeNull();
+    expect(data!.title).toBe("Rst Legacy Series");
+    expect(data!.sourceFormat).toBe("rst");
+    expect(data!.sort).toBe("manual");
+    expect(data!.posts).toEqual(["getting-started", "deeper-notes"]);
   });
 
   test("getSeriesPosts returns posts in manual order for manual series", () => {
@@ -60,6 +70,12 @@ describe("Integration: Series", () => {
   test("getSeriesPosts returns empty array for nonexistent series", () => {
     const posts = getSeriesPosts("nonexistent-series-slug");
     expect(posts).toEqual([]);
+  });
+
+  test("getSeriesPosts returns rST posts in manual order", () => {
+    const posts = getSeriesPosts("rst-legacy");
+    expect(posts.map(post => post.slug)).toEqual(["getting-started", "deeper-notes"]);
+    expect(posts.every(post => post.sourceFormat === "rst")).toBe(true);
   });
 
   test("getFeaturedPosts returns only posts with featured: true", () => {

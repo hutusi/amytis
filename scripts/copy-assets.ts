@@ -27,7 +27,7 @@ function copyRecursive(src: string, dest: string) {
       copyRecursive(srcPath, destPath);
     } else {
       // Copy all files except markdown source
-      if (!entry.name.endsWith('.md') && !entry.name.endsWith('.mdx')) {
+      if (!entry.name.endsWith('.md') && !entry.name.endsWith('.mdx') && !entry.name.endsWith('.rst')) {
         let shouldCopy = true;
         if (fs.existsSync(destPath)) {
           const srcStat = fs.statSync(srcPath);
@@ -47,7 +47,7 @@ function copyRecursive(src: string, dest: string) {
 }
 
 function getSlugFromFilename(filename: string): string {
-  const nameWithoutExt = filename.replace(/\.mdx?$/, '');
+  const nameWithoutExt = filename.replace(/\.(mdx?|rst)$/, '');
   const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
   const match = nameWithoutExt.match(dateRegex);
 
@@ -77,7 +77,8 @@ function processPosts() {
 // Check if a directory is a post folder (contains index.md or index.mdx)
 function isPostFolder(dirPath: string): boolean {
   return fs.existsSync(path.join(dirPath, 'index.md')) ||
-         fs.existsSync(path.join(dirPath, 'index.mdx'));
+         fs.existsSync(path.join(dirPath, 'index.mdx')) ||
+         fs.existsSync(path.join(dirPath, 'index.rst'));
 }
 
 // Check if a directory is an asset folder (not a post folder)
@@ -102,7 +103,7 @@ function processSeries() {
 
       // Process items in series folder
       items.forEach(item => {
-        if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx'))) {
+        if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx') || item.name.endsWith('.rst'))) {
           // File-based post or series index
           const targetSlug = item.name.startsWith('index.') ? seriesEntry.name : getSlugFromFilename(item.name);
           const destPostDir = path.join(destDir, targetSlug);
@@ -117,7 +118,7 @@ function processSeries() {
           });
 
           // Copy any non-markdown files at the series root level
-          items.filter(sub => sub.isFile() && !sub.name.endsWith('.md') && !sub.name.endsWith('.mdx'))
+          items.filter(sub => sub.isFile() && !sub.name.endsWith('.md') && !sub.name.endsWith('.mdx') && !sub.name.endsWith('.rst'))
             .forEach(sub => {
               const srcPath = path.join(seriesPath, sub.name);
               const destPath = path.join(destPostDir, sub.name);
@@ -143,7 +144,7 @@ function processSeries() {
 
             if (sub.isDirectory()) {
               copyRecursive(srcPath, destPath);
-            } else if (!sub.name.endsWith('.md') && !sub.name.endsWith('.mdx')) {
+            } else if (!sub.name.endsWith('.md') && !sub.name.endsWith('.mdx') && !sub.name.endsWith('.rst')) {
               if (!fs.existsSync(destPostDir)) {
                 fs.mkdirSync(destPostDir, { recursive: true });
               }

@@ -44,6 +44,7 @@ Further reading: [How to Get AI to Write Better Code](https://hutusi.com/weeklie
 - **Full-text Search:** Fast, static client-side search across all content (Cmd/Ctrl+K) powered by Pagefind.
 - **Structured Content:**
   - **Series:** Multi-part content organization with manual or automatic ordering.
+  - **Legacy rST Series:** A series can opt into reStructuredText by using `index.rst`; mixed Markdown and rST files in the same series fail the build.
   - **Books:** Long-form content with explicit chapters, parts, and a dedicated reading interface.
   - **Notes:** Atomic, evergreen concepts for personal knowledge management.
   - **Flows:** Stream-style daily notes or micro-blogging for quick thoughts.
@@ -238,7 +239,12 @@ Create daily notes in `content/flows/YYYY/MM/DD.md` or `.mdx`.
 
 ### Series
 
-Create a directory in `content/series/<slug>/` with an `index.mdx`, then add posts as sibling files or folders.
+Create a directory in `content/series/<slug>/` with either:
+
+- `index.mdx` or `index.md` for a Markdown series
+- `index.rst` for an rST series
+
+Then add posts as sibling files or folders using the same format as the series index. Mixed Markdown and rST files in one series are rejected at build time.
 
 - CLI: `bun run new-series "Series Name"`
 - You can also create a post directly inside an existing series with `bun run new "Post Title" --series <series-slug>`

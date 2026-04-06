@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX publishing across posts, series, books, flows, and notes.
+Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX publishing across posts, series, books, flows, and notes, with optional series-scoped rST support for legacy content.
 
 ## Core Stack
 
@@ -14,7 +14,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 ## Content Model
 
 - `content/posts/`: standalone posts (`.md/.mdx`) and folder posts (`index.mdx`)
-- `content/series/<slug>/`: series metadata (`index.mdx`) + series posts
+- `content/series/<slug>/`: series metadata (`index.mdx` / `index.md` / `index.rst`) + series posts in the same format
 - `content/books/<slug>/`: book metadata + chapter files
 - `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
 - `content/notes/`: evergreen notes
@@ -27,6 +27,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 3. Draft/future filtering and sorting are applied (based on `site.config.ts`).
 4. Route files consume typed helpers (`getAllPosts`, `getBookData`, `getAllFlows`, `getAllNotes`, etc.).
 5. `generateStaticParams()` precomputes dynamic routes for static export.
+6. Series content format is inferred from the series index file; ambiguous or mixed-format series fail fast during content loading.
 
 ## Route Map (App Router)
 
@@ -75,6 +76,10 @@ src/app/
 ## URL Routing Rules
 
 - `next.config.ts` sets `output: "export"` and `trailingSlash: true`.
+- Series format is inferred from the index file:
+  - Markdown series: `index.md` or `index.mdx`
+  - rST series: `index.rst`
+- A series may not mix Markdown and rST content files; ambiguous or mixed layouts are treated as build errors.
 - Post URLs use `getPostUrl()` in `src/lib/urls.ts`:
   - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)
   - Series auto path: `/<series.slug>/<post.slug>` when `series.autoPaths` is enabled

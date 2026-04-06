@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { PostData } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import RstRenderer from '@/components/RstRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
 import LocaleSwitch from '@/components/LocaleSwitch';
 import PostSidebar from '@/components/PostSidebar';
@@ -28,6 +29,12 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       )
     : undefined;
 
+  const renderContent = (content: string) => (
+    post.sourceFormat === 'rst'
+      ? <RstRenderer content={content} latex={post.latex} slug={post.imageBaseSlug} />
+      : <MarkdownRenderer content={content} latex={post.latex} slug={post.imageBaseSlug} />
+  );
+
   const articleContent = (
     <>
       <SimpleLayoutHeader
@@ -40,16 +47,16 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       {localeEntries.length > 0 ? (
         <LocaleSwitch>
           <div data-locale={defaultLocale}>
-            <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />
+            {renderContent(post.content)}
           </div>
           {localeEntries.map(([locale, data]) => (
             <div key={locale} data-locale={locale} style={{ display: 'none' }}>
-              <MarkdownRenderer content={data.content} latex={post.latex} slug={post.imageBaseSlug} />
+              {renderContent(data.content)}
             </div>
           ))}
         </LocaleSwitch>
       ) : (
-        <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />
+        renderContent(post.content)
       )}
     </>
   );
