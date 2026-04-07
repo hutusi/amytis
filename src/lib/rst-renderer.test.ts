@@ -4,8 +4,13 @@ import { describe, expect, test } from 'bun:test';
 import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
 import { RstParseError } from './rst';
 
-const hasLocalDocutils = existsSync(path.join(process.cwd(), '.venv-rst', 'bin', 'python'));
+const localDocutilsPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
+const hasLocalDocutils = existsSync(localDocutilsPython);
 const fixtureTest = hasLocalDocutils ? test : test.skip;
+
+if (hasLocalDocutils) {
+  process.env.AMYTIS_RST_PYTHON = localDocutilsPython;
+}
 
 describe('rst-renderer bridge', () => {
   test('normalizes python metadata using the existing rst rules', () => {

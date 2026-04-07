@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { RstMetadata, RstParseError } from './rst';
@@ -38,8 +37,7 @@ export interface RenderedRstDocument {
 }
 
 function getPythonExecutableForRstRenderer(): string {
-  const localVenvPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
-  return fs.existsSync(localVenvPython) ? localVenvPython : 'python3';
+  return process.env.AMYTIS_RST_PYTHON || 'python3';
 }
 
 function parseBoolean(field: string, value: unknown): boolean {
