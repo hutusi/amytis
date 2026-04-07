@@ -18,20 +18,25 @@ describe("Integration: Series Draft Support", () => {
 
   test("draft filtering code path runs without error in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
       process.env.NODE_ENV = "production";
+      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
       // This should not throw; draft series are simply excluded
       const series = getAllSeries();
       expect(typeof series).toBe("object");
     } finally {
       process.env.NODE_ENV = originalEnv;
+      process.env.AMYTIS_ENABLE_PYTHON_RST = originalPythonRst;
     }
   });
 
   test("draft series are excluded in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
       process.env.NODE_ENV = "production";
+      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
       const allSeries = getAllSeries();
       
       // Verify that every series returned has draft: false (or undefined which defaults to false)
@@ -41,6 +46,7 @@ describe("Integration: Series Draft Support", () => {
       });
     } finally {
       process.env.NODE_ENV = originalEnv;
+      process.env.AMYTIS_ENABLE_PYTHON_RST = originalPythonRst;
     }
   });
 });

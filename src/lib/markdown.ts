@@ -160,6 +160,8 @@ const allSeriesCache = new Map<string, Record<string, PostData[]>>();
 const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
 const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
 const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
+const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
+const seriesTitleCache = new Map<string, Map<string, string | undefined>>();
 let pythonRstRendererAvailable: boolean | null = null;
 
 function shouldUsePythonRstRenderer(): boolean {
@@ -226,27 +228,47 @@ export function getHeadings(content: string): Heading[] {
  * Returns null if no authors are configured (as opposed to the default fallback).
  */
 export function getSeriesAuthors(seriesSlug: string): string[] | null {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesAuthorsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesAuthorsCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(seriesSlug)) return bySlug.get(seriesSlug) ?? null;
+
   const indexInfo = resolveSeriesIndexInfo(seriesSlug);
-  if (!indexInfo) return null;
+  if (!indexInfo) {
+    bySlug.set(seriesSlug, null);
+    return null;
+  }
 
   if (indexInfo.format === 'rst') {
     const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
     if (parsed.metadata.authors && parsed.metadata.authors.length > 0) {
+      bySlug.set(seriesSlug, parsed.metadata.authors);
       return parsed.metadata.authors;
     }
     if (parsed.metadata.author && typeof parsed.metadata.author === 'string') {
-      return [parsed.metadata.author];
+      const authors = [parsed.metadata.author];
+      bySlug.set(seriesSlug, authors);
+      return authors;
     }
+    bySlug.set(seriesSlug, null);
     return null;
   }
 
   const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.authors && Array.isArray(data.authors) && data.authors.length > 0) {
-    return data.authors as string[];
+    const authors = data.authors as string[];
+    bySlug.set(seriesSlug, authors);
+    return authors;
   }
   if (data.author && typeof data.author === 'string') {
-    return [data.author as string];
+    const authors = [data.author as string];
+    bySlug.set(seriesSlug, authors);
+    return authors;
   }
+  bySlug.set(seriesSlug, null);
   return null;
 }
 
@@ -417,18 +439,38 @@ function getSeriesContentEntries(seriesSlug: string): SeriesContentEntry[] {
 }
 
 function getSeriesTitle(slug: string): string | undefined {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesTitleCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesTitleCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(slug)) return bySlug.get(slug);
+
   const indexInfo = resolveSeriesIndexInfo(slug);
-  if (!indexInfo) return undefined;
+  if (!indexInfo) {
+    bySlug.set(slug, undefined);
+    return undefined;
+  }
 
   if (indexInfo.format === 'rst') {
     const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
-    if (parsed.metadata.draft === true) return undefined;
+    if (parsed.metadata.draft === true) {
+      bySlug.set(slug, undefined);
+      return undefined;
+    }
+    bySlug.set(slug, parsed.title);
     return parsed.title;
   }
 
   const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
-  if (data.draft === true) return undefined;
-  return typeof data.title === 'string' ? data.title : undefined;
+  if (data.draft === true) {
+    bySlug.set(slug, undefined);
+    return undefined;
+  }
+  const title = typeof data.title === 'string' ? data.title : undefined;
+  bySlug.set(slug, title);
+  return title;
 }
 
 function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
