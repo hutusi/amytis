@@ -8,6 +8,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 - Runtime/tooling: Bun
 - Styling: Tailwind CSS v4 + CSS variables + `next-themes`
 - Content parsing: `gray-matter` + Zod validation in `src/lib/markdown.ts`
+- rST rendering: Python `docutils` bridge in `scripts/render-rst.py` plus normalization in `src/lib/rst-renderer.ts`
 - Search: Pagefind (`/pagefind/pagefind.js` loaded at runtime)
 - Tests: Bun test suites in `src/` and `tests/`
 
@@ -28,6 +29,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 4. Route files consume typed helpers (`getAllPosts`, `getBookData`, `getAllFlows`, `getAllNotes`, etc.).
 5. `generateStaticParams()` precomputes dynamic routes for static export.
 6. Series content format is inferred from the series index file; ambiguous or mixed-format series fail fast during content loading.
+7. When `docutils` is available, rST files are rendered to HTML through the Python bridge; if the Python runtime is unavailable, Amytis falls back to the lightweight built-in rST compatibility path.
 
 ## Route Map (App Router)
 
@@ -105,6 +107,16 @@ src/app/
 - Flows: `getAllFlows`, `getFlowBySlug`, `getFlowsByYear`, `getFlowsByMonth`
 - Notes: `getAllNotes`, `getNoteBySlug`, `getNotesByTag`
 - Discovery: `buildSlugRegistry`, `getBacklinks`, `getAllTags`, `getAllAuthors`
+
+## rST Notes
+
+- Full-fidelity rST rendering depends on a Python environment with `docutils` (and ideally `pygments`) available.
+- `src/lib/rst-renderer.ts` uses `AMYTIS_RST_PYTHON` when set; otherwise it falls back to `python3`.
+- Top-of-document docinfo is parsed into Amytis metadata, but it is stripped from rendered article HTML so blog-style posts do not show duplicate author/version blocks above the content.
+- Supported legacy roles are normalized or degraded intentionally:
+  - `:doc:` resolves to local site URLs when the target exists in the imported content tree
+  - `:ref:` / `:numref:` prefer local anchors
+  - unresolved legacy roles degrade to readable inline HTML instead of docutils system-message blocks
 
 ## Build Pipeline
 
