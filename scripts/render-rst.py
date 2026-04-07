@@ -30,6 +30,86 @@ class RstRenderError(Exception):
     pass
 
 
+def detect_series_root(source_file: Path) -> Path | None:
+    parts = source_file.resolve().parts
+    try:
+        series_index = parts.index("series")
+    except ValueError:
+        return None
+
+    if series_index + 1 >= len(parts):
+        return None
+
+    return Path(*parts[: series_index + 2])
+
+
+def slug_from_doc_path(doc_path: Path) -> str:
+    if doc_path.name in {"index.rst", "README.rst"}:
+        return doc_path.parent.name
+    return doc_path.stem
+
+
+def resolve_doc_target_path(source_file: Path, target: str) -> Path | None:
+    candidate_base = (source_file.parent / target).resolve()
+    candidate_paths = [
+        candidate_base.with_suffix(".rst"),
+        candidate_base / "index.rst",
+        candidate_base / "README.rst",
+    ]
+
+    for candidate in candidate_paths:
+        if candidate.exists():
+            return candidate
+
+    return None
+
+
+def resolve_doc_target_uri(source_file: Path, target: str) -> str | None:
+    target_path = resolve_doc_target_path(source_file, target)
+    if target_path is None:
+        return None
+
+    series_root = detect_series_root(target_path)
+    if series_root is None:
+        return None
+
+    series_slug = series_root.name
+    slug = slug_from_doc_path(target_path)
+    return f"/{series_slug}/{slug}"
+
+
+def register_doc_role(source_file: Path, warnings: list[str]) -> None:
+    from docutils import nodes
+    from docutils.parsers.rst import roles
+
+    def doc_role(  # type: ignore[override]
+        _name: str,
+        rawtext: str,
+        text: str,
+        _lineno: int,
+        _inliner: Any,
+        _options: dict[str, Any] | None = None,
+        _content: list[str] | None = None,
+    ) -> tuple[list[Any], list[Any]]:
+        label = None
+        target = text.strip()
+        match = re.match(r"(.+?)\s*<(.+)>$", target)
+        if match:
+            label = match.group(1).strip()
+            target = match.group(2).strip()
+
+        refuri = resolve_doc_target_uri(source_file, target)
+        if refuri is None:
+            warnings.append(f'Unresolved :doc: target "{target}" in {source_file}')
+            display_text = label or target.split("/")[-1]
+            return [nodes.literal(rawtext, display_text)], []
+
+        display_text = label or target.split("/")[-1]
+        return [nodes.reference(rawtext, display_text, refuri=refuri)], []
+
+    roles.register_canonical_role("doc", doc_role)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render a single rST file to JSON via docutils.")
     parser.add_argument("--file", required=True, help="Absolute or relative path to the .rst file")
@@ -203,7 +283,7 @@ def extract_body_text(document: Any) -> str:
 
     body_parts: list[str] = []
     for child in document.children:
-        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment, nodes.title)):
+        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment, nodes.title, nodes.system_message)):
             continue
         text = child.astext().strip()
         if text:
@@ -212,7 +292,16 @@ def extract_body_text(document: Any) -> str:
     return "\n\n".join(body_parts).strip()
 
 
-def build_output(document: Any, source: str, source_file: Path, image_base_slug: str) -> dict[str, Any]:
+def remove_system_messages(document: Any) -> None:
+    from docutils import nodes
+
+    for node in list(document.findall(nodes.system_message)):
+        parent = node.parent
+        if parent is not None:
+            parent.remove(node)
+
+
+def build_output(document: Any, source: str, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
     from docutils import nodes
     from docutils.core import publish_parts
 
@@ -242,7 +331,7 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
         "headings": extract_headings(document),
         "metadata": extract_metadata(document),
         "assets": assets,
-        "warnings": [],
+        "warnings": list(dict.fromkeys(warnings)),
     }
 
 
@@ -266,6 +355,8 @@ def main() -> int:
         return 1
 
     try:
+        warnings: list[str] = []
+        register_doc_role(source_file, warnings)
         source = source_file.read_text(encoding="utf-8")
         document = publish_doctree(
             source=source,
@@ -276,7 +367,8 @@ def main() -> int:
                 "raw_enabled": False,
             },
         )
-        output = build_output(document, source, source_file, args.image_base_slug)
+        remove_system_messages(document)
+        output = build_output(document, source, source_file, args.image_base_slug, warnings)
 
         if args.strict:
             missing = [asset for asset in output["assets"] if not asset["exists"]]

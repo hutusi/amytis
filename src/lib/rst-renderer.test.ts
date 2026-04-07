@@ -88,4 +88,30 @@ describe('rst-renderer bridge', () => {
     expect(doc.text.includes('\n\n0.2\n\n')).toBe(false);
     expect(doc.excerpt.startsWith('关于队列模型')).toBe(true);
   });
+
+  fixtureTest('rewrites same-series :doc: links to site URLs', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/从香农熵谈设计文档写作.rst',
+      'posts/从香农熵谈设计文档写作'
+    );
+
+    expect(doc.html).toContain('href="/软件构架设计/开发视图"');
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.text.includes('No role entry for "doc"')).toBe(false);
+    expect(doc.warnings).toEqual([]);
+  });
+
+  fixtureTest('falls back cleanly for unresolved external-style :doc: targets', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/无名概念的深入探讨.rst',
+      'posts/无名概念的深入探讨'
+    );
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain('<span class="docutils literal">道具体是指什么</span>');
+    expect(doc.html).toContain('href="/软件构架设计/弟子规：美国军方禁止在C语言程序中使用malloc"');
+    expect(doc.warnings.length).toBe(2);
+    expect(doc.warnings[0]).toContain('../道德经直译/道具体是指什么');
+    expect(doc.warnings[1]).toContain('../道德经直译/无名');
+  });
 });
