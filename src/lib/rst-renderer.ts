@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { RstMetadata, RstParseError } from './rst';
 
@@ -35,6 +36,8 @@ export interface RenderedRstDocument {
   assets: PythonRstAsset[];
   warnings: string[];
 }
+
+const rstRenderCache = new Map<string, RenderedRstDocument>();
 
 function getPythonExecutableForRstRenderer(): string {
   return process.env.AMYTIS_RST_PYTHON || 'python3';
@@ -269,11 +272,18 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
 }
 
 export function renderRstFile(filePath: string, imageBaseSlug: string): RenderedRstDocument {
+  const stats = fs.statSync(filePath);
+  const cacheKey = `${getPythonExecutableForRstRenderer()}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
+  const cached = rstRenderCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const result = runPythonRstRenderer(filePath, imageBaseSlug);
   validatePythonRstResult(result, filePath);
   const metadata = normalizePythonRstMetadata(result.metadata);
 
-  return {
+  const rendered = {
     title: result.title,
     html: result.html,
     text: result.text,
@@ -284,4 +294,7 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
     assets: result.assets ?? [],
     warnings: (result.warnings ?? []).map((warning) => String(warning)),
   };
+
+  rstRenderCache.set(cacheKey, rendered);
+  return rendered;
 }

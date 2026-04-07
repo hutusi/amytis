@@ -41,6 +41,7 @@ async function main() {
   const posts = getAllPosts();
   const notes = getAllNotes();
   const flows = getAllFlows();
+  const flowMap = new Map(flows.map(flow => [flow.slug, flow] as const));
 
   // Build id→node map
   const nodeMap = new Map<string, GraphNode>();
@@ -80,7 +81,7 @@ async function main() {
         if (item.type === 'flow') linkedFlowSlugs.add(item.slug);
       }
       // Track referenced flows
-      const targetFlow = flows.find(f => f.slug === target);
+      const targetFlow = flowMap.get(target);
       if (targetFlow) {
         linkedFlowSlugs.add(target);
         if (!nodeMap.has(target)) {
