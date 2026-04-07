@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { getSeriesData, getAllSeries } from "../../src/lib/markdown";
 
+function restoreEnvVar(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
+
 describe("Integration: Series Draft Support", () => {
   test("all series are included when NODE_ENV is not production", () => {
     // In test environment NODE_ENV is typically 'test'
@@ -26,8 +34,8 @@ describe("Integration: Series Draft Support", () => {
       const series = getAllSeries();
       expect(typeof series).toBe("object");
     } finally {
-      process.env.NODE_ENV = originalEnv;
-      process.env.AMYTIS_ENABLE_PYTHON_RST = originalPythonRst;
+      restoreEnvVar("NODE_ENV", originalEnv);
+      restoreEnvVar("AMYTIS_ENABLE_PYTHON_RST", originalPythonRst);
     }
   });
 
@@ -45,8 +53,8 @@ describe("Integration: Series Draft Support", () => {
         expect(seriesData?.draft).not.toBe(true);
       });
     } finally {
-      process.env.NODE_ENV = originalEnv;
-      process.env.AMYTIS_ENABLE_PYTHON_RST = originalPythonRst;
+      restoreEnvVar("NODE_ENV", originalEnv);
+      restoreEnvVar("AMYTIS_ENABLE_PYTHON_RST", originalPythonRst);
     }
   });
 });

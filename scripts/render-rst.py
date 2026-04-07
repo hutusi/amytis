@@ -183,7 +183,7 @@ def register_passthrough_roles(warnings: list[str]) -> None:
         if refid is not None:
             return [nodes.reference(rawtext, display_text, refuri=f"#{refid}", classes=["numref"])], []
 
-        warnings.append(f'Unsupported interpreted text role ":numref:" rendered as plain inline text.')
+        warnings.append('Unsupported interpreted text role ":numref:" rendered as plain inline text.')
         return [nodes.inline(rawtext, display_text, classes=["numref"])], []
 
     for role_name in ("dtag",):
@@ -424,6 +424,8 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
             "initial_header_level": 2,
             "report_level": 2,
             "halt_level": 5,
+            "file_insertion_enabled": False,
+            "raw_enabled": False,
         },
     )
 

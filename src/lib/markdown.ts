@@ -576,13 +576,18 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
   let parsedReadingTime: string;
   let parsedHtml: string | undefined;
   let data: ReturnType<typeof parseRstDocument>['metadata'];
+  const isPythonRuntimeUnavailable = (error: unknown): boolean => {
+    if (!(error instanceof Error)) return false;
+    if (error.message.includes('__RST_FALLBACK__')) return true;
+    return /docutils|No module named|not found|interpreter/i.test(error.message);
+  };
 
   try {
     if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
       const rendered = renderRstFile(fullPath, imageBaseSlug);
       pythonRstRendererAvailable = true;
       parsedTitle = rendered.title;
-      parsedBody = fileContents;
+      parsedBody = rendered.text;
       parsedText = rendered.text;
       parsedHeadings = rendered.headings;
       parsedExcerpt = rendered.excerpt;
@@ -593,7 +598,10 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
       throw new Error('__RST_FALLBACK__');
     }
   } catch (error) {
-    if (pythonRstRendererAvailable !== false && error instanceof Error && /docutils/i.test(error.message)) {
+    if (!isPythonRuntimeUnavailable(error)) {
+      throw error;
+    }
+    if (pythonRstRendererAvailable !== false) {
       pythonRstRendererAvailable = false;
     }
     const parsed = parseRstDocument(fileContents);

@@ -1,16 +1,27 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
 import { RstParseError } from './rst';
 
 const localDocutilsPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
 const hasLocalDocutils = existsSync(localDocutilsPython);
 const fixtureTest = hasLocalDocutils ? test : test.skip;
+const previousPython = process.env.AMYTIS_RST_PYTHON;
 
-if (hasLocalDocutils) {
-  process.env.AMYTIS_RST_PYTHON = localDocutilsPython;
-}
+beforeAll(() => {
+  if (hasLocalDocutils && previousPython === undefined) {
+    process.env.AMYTIS_RST_PYTHON = localDocutilsPython;
+  }
+});
+
+afterAll(() => {
+  if (previousPython === undefined) {
+    delete process.env.AMYTIS_RST_PYTHON;
+  } else {
+    process.env.AMYTIS_RST_PYTHON = previousPython;
+  }
+});
 
 describe('rst-renderer bridge', () => {
   test('normalizes python metadata using the existing rst rules', () => {
