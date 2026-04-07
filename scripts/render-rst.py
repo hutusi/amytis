@@ -7,6 +7,7 @@ import json
 import posixpath
 import re
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,63 @@ SCALAR_FIELDS = {
 
 class RstRenderError(Exception):
     pass
+
+
+class BodyFragmentParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self._target: str | None = None
+        self._depth = 0
+        self._fragments: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._target is None and tag in {"main", "body"}:
+            self._target = tag
+            self._depth = 1
+            return
+
+        if self._target is not None:
+            self._depth += 1
+            self._fragments.append(self.get_starttag_text())
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._target is None:
+            return
+
+        if self._depth == 1 and tag == self._target:
+            self._target = None
+            self._depth = 0
+            return
+
+        self._depth -= 1
+        self._fragments.append(f"</{tag}>")
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._target is not None:
+            self._fragments.append(self.get_starttag_text())
+
+    def handle_data(self, data: str) -> None:
+        if self._target is not None:
+            self._fragments.append(data)
+
+    def handle_comment(self, data: str) -> None:
+        if self._target is not None:
+            self._fragments.append(f"<!--{data}-->")
+
+    def handle_entityref(self, name: str) -> None:
+        if self._target is not None:
+            self._fragments.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        if self._target is not None:
+            self._fragments.append(f"&#{name};")
+
+    def handle_decl(self, decl: str) -> None:
+        if self._target is not None:
+            self._fragments.append(f"<!{decl}>")
+
+    def get_fragment(self) -> str:
+        return "".join(self._fragments).strip()
 
 
 def detect_series_root(source_file: Path) -> Path | None:
@@ -461,14 +519,16 @@ def extract_html_body_from_doctree(document: Any) -> str:
         },
     )
 
-    match = re.search(r"<main(?:\s[^>]*)?>\s*(.*?)\s*</main>", rendered, re.DOTALL)
-    if match is None:
-        raise RstRenderError("Docutils HTML output did not contain a <main> fragment.")
+    parser = BodyFragmentParser()
+    parser.feed(rendered)
+    html_fragment = parser.get_fragment()
+    if not html_fragment:
+        raise RstRenderError("Docutils HTML output did not contain a <main> or <body> fragment.")
 
-    return match.group(1).strip()
+    return html_fragment
 
 
-def build_output(document: Any, source: str, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
+def build_output(document: Any, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
     from docutils import nodes
 
     title_node = next(document.findall(nodes.title), None)
@@ -506,7 +566,7 @@ def render_single_file(source_file: Path, image_base_slug: str, strict: bool) ->
         },
     )
     remove_system_messages(document)
-    output = build_output(document, source, source_file, image_base_slug, warnings)
+    output = build_output(document, source_file, image_base_slug, warnings)
 
     if strict:
         missing = [asset for asset in output["assets"] if not asset["exists"]]
