@@ -45,6 +45,7 @@ Further reading: [How to Get AI to Write Better Code](https://hutusi.com/weeklie
 - **Structured Content:**
   - **Series:** Multi-part content organization with manual or automatic ordering.
   - **Legacy rST Series:** A series can opt into reStructuredText by using `index.rst` or `README.rst`; mixed Markdown and rST files in the same series fail the build.
+  - **Docutils-backed rST Rendering:** When `docutils` is available, rST series render through the Python/docutils path instead of the lightweight fallback parser.
   - **Books:** Long-form content with explicit chapters, parts, and a dedicated reading interface.
   - **Notes:** Atomic, evergreen concepts for personal knowledge management.
   - **Flows:** Stream-style daily notes or micro-blogging for quick thoughts.
@@ -248,6 +249,28 @@ Create a directory in `content/series/<slug>/` with either:
 
 - CLI: `bun run new-series "Series Name"`
 - You can also create a post directly inside an existing series with `bun run new "Post Title" --series <series-slug>`
+
+#### rST / docutils workflow
+
+For full-fidelity rST rendering, install `docutils` in a Python environment that the project can execute:
+
+```bash
+python3 -m pip install docutils pygments
+```
+
+If you want Amytis to use a specific interpreter, point `AMYTIS_RST_PYTHON` at it:
+
+```bash
+export AMYTIS_RST_PYTHON=/absolute/path/to/python
+```
+
+Current behavior:
+
+- `index.rst` or `README.rst` makes the whole series rST-only.
+- rST assets such as `.. image::` and `.. figure::` are resolved relative to the source file and rewritten to the site asset paths.
+- Supported legacy roles such as `:doc:`, `:ref:`, `:numref:`, `:math:`, and `:dtag:` are either rendered directly or degraded into readable inline output instead of docutils error blocks.
+- Top-of-file docinfo metadata is parsed into Amytis metadata, but it is not rendered at the top of blog-style article HTML.
+- If Python/docutils is unavailable, Amytis falls back to the lightweight built-in rST compatibility path. That path keeps series loading working, but it has lower fidelity than the docutils-backed renderer.
 
 ### Books
 

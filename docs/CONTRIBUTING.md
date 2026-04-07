@@ -54,6 +54,9 @@ Series are format-scoped:
 - rST series use `content/series/<slug>/index.rst` or `README.rst`
 - Child posts inside the series must use the same format as the index file
 - Mixed Markdown and rST files in one series are treated as build errors
+- For full-fidelity rST rendering, install `docutils` (and `pygments` for code highlighting) in a Python environment available to the project
+- If needed, set `AMYTIS_RST_PYTHON=/absolute/path/to/python` so Amytis uses a specific interpreter
+- Without Python/docutils, Amytis falls back to a lightweight compatibility parser; that keeps loading/building working, but some legacy rST constructs will render with lower fidelity
 
 ### Creating Books
 

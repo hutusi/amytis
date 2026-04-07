@@ -117,6 +117,18 @@ describe('rst-renderer bridge', () => {
     expect(doc.excerpt.startsWith('关于队列模型')).toBe(true);
   });
 
+  fixtureTest('does not render docinfo or comments at the top of post HTML', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/逻辑闭包.rst',
+      'posts/逻辑闭包'
+    );
+
+    expect(doc.metadata.authors).toEqual(['Kenneth Lee']);
+    expect(doc.html).not.toContain('<dl class="docinfo');
+    expect(doc.html).not.toContain('版权所有');
+    expect(doc.html).toContain('<section id="section-1">');
+  });
+
   fixtureTest('rewrites same-series :doc: links to site URLs', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/从香农熵谈设计文档写作.rst',

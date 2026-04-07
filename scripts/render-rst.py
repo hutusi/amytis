@@ -428,16 +428,26 @@ def remove_system_messages(document: Any) -> None:
             parent.remove(node)
 
 
-def build_output(document: Any, source: str, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
+def strip_preamble_nodes(document: Any) -> Any:
     from docutils import nodes
-    from docutils.core import publish_parts
 
-    title_node = next(document.findall(nodes.title), None)
-    if title_node is None:
-        raise RstRenderError("Missing document title.")
+    stripped = copy.deepcopy(document)
+    for child in list(stripped.children):
+        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment)):
+            stripped.remove(child)
+            continue
+        if isinstance(child, nodes.title):
+            continue
+        break
 
-    parts = publish_parts(
-        source=source,
+    return stripped
+
+
+def extract_html_body_from_doctree(document: Any) -> str:
+    from docutils.core import publish_from_doctree
+
+    rendered = publish_from_doctree(
+        document,
         writer_name="html5",
         settings_overrides={
             "embed_stylesheet": False,
@@ -450,8 +460,23 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
         },
     )
 
+    rendered_html = rendered.decode("utf-8")
+    match = re.search(r"<main(?:\s[^>]*)?>\s*(.*?)\s*</main>", rendered_html, re.DOTALL)
+    if match is None:
+        raise RstRenderError("Docutils HTML output did not contain a <main> fragment.")
+
+    return match.group(1).strip()
+
+
+def build_output(document: Any, source: str, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
+    from docutils import nodes
+
+    title_node = next(document.findall(nodes.title), None)
+    if title_node is None:
+        raise RstRenderError("Missing document title.")
+
     assets = extract_assets(document, source_file, image_base_slug)
-    html_body = parts.get("html_body", "").strip() or parts.get("fragment", "").strip()
+    html_body = extract_html_body_from_doctree(strip_preamble_nodes(document))
 
     return {
         "title": title_node.astext().strip(),
