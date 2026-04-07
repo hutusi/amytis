@@ -492,9 +492,11 @@ def main() -> int:
     except RstRenderError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    except Exception as exc:
+    except (OSError, ValueError, KeyError, AttributeError) as exc:
         print(f"Failed to render {source_file}: {exc}", file=sys.stderr)
         return 1
+    except Exception:
+        raise
 
 
 if __name__ == "__main__":
