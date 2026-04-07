@@ -518,6 +518,11 @@ body {
   color: var(--accent);
 }
 
+.rst-rendered .numref {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .rst-rendered pre.literal-block,
 .rst-rendered pre.code.literal-block {
   overflow-x: auto;

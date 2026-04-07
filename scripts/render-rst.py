@@ -115,6 +115,19 @@ def register_passthrough_roles(warnings: list[str]) -> None:
     from docutils import nodes
     from docutils.parsers.rst import roles
 
+    def parse_role_target(text: str) -> tuple[str | None, str]:
+        target = text.strip()
+        match = re.match(r"(.+?)\s*<(.+)>$", target)
+        if match:
+            return match.group(1).strip(), match.group(2).strip()
+        return None, target
+
+    def normalize_internal_ref(target: str) -> str:
+        cleaned = target.strip().strip("`")
+        cleaned = cleaned.replace("_", "-")
+        cleaned = re.sub(r"\s+", "-", cleaned)
+        return cleaned
+
     def make_passthrough_role(role_name: str):
         def passthrough_role(  # type: ignore[override]
             _name: str,
@@ -130,8 +143,38 @@ def register_passthrough_roles(warnings: list[str]) -> None:
 
         return passthrough_role
 
+    def ref_role(  # type: ignore[override]
+        _name: str,
+        rawtext: str,
+        text: str,
+        _lineno: int,
+        _inliner: Any,
+        _options: dict[str, Any] | None = None,
+        _content: list[str] | None = None,
+    ) -> tuple[list[Any], list[Any]]:
+        label, target = parse_role_target(text)
+        display_text = label or target
+        refid = normalize_internal_ref(target)
+        return [nodes.reference(rawtext, display_text, refuri=f"#{refid}")], []
+
+    def numref_role(  # type: ignore[override]
+        _name: str,
+        rawtext: str,
+        text: str,
+        _lineno: int,
+        _inliner: Any,
+        _options: dict[str, Any] | None = None,
+        _content: list[str] | None = None,
+    ) -> tuple[list[Any], list[Any]]:
+        label, target = parse_role_target(text)
+        display_text = target if label and "%s" in label else (label or target)
+        warnings.append(f'Unsupported interpreted text role ":numref:" rendered as plain inline text.')
+        return [nodes.inline(rawtext, display_text, classes=["numref"])], []
+
     for role_name in ("dtag",):
         roles.register_canonical_role(role_name, make_passthrough_role(role_name))
+    roles.register_canonical_role("ref", ref_role)
+    roles.register_canonical_role("numref", numref_role)
 
 
 def parse_args() -> argparse.Namespace:

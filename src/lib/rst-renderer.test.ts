@@ -150,4 +150,27 @@ describe('rst-renderer bridge', () => {
     expect(doc.text).not.toContain('关于这一点，可以参考这里：计算进化史');
     expect(doc.excerpt).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
   });
+
+  fixtureTest('renders legacy :ref: roles as internal links instead of system-message blocks', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/对一个设计评审意见的深入探讨.rst',
+      'posts/对一个设计评审意见的深入探讨'
+    );
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain('href="#s-extension"');
+    expect(doc.text.includes(':ref:`s_extension`')).toBe(false);
+  });
+
+  fixtureTest('renders legacy :numref: roles as readable inline text instead of system-message blocks', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/逻辑如水.rst',
+      'posts/逻辑如水'
+    );
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain('<span class="numref">图：模拟的特征</span>');
+    expect(doc.html).toContain('<span class="numref">图：模拟特征的数字化过程</span>');
+    expect(doc.warnings).toContain('Unsupported interpreted text role ":numref:" rendered as plain inline text.');
+  });
 });
