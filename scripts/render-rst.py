@@ -243,6 +243,12 @@ def extract_metadata(document: Any) -> dict[str, Any]:
                 if isinstance(entry, nodes.author):
                     metadata["author"] = entry.astext().strip()
                     continue
+                if isinstance(entry, nodes.field) and len(entry.children) >= 2:
+                    name = entry.children[0].astext().strip()
+                    value = entry.children[1].astext().strip()
+                    if name and value:
+                        metadata[name] = normalize_metadata_value(name, value)
+                    continue
 
                 key = entry.tagname.lower()
                 value = entry.astext().strip()

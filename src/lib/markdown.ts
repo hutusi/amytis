@@ -162,6 +162,12 @@ const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
 const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
 let pythonRstRendererAvailable: boolean | null = null;
 
+function shouldUsePythonRstRenderer(): boolean {
+  if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
+  if (process.env.AMYTIS_ENABLE_PYTHON_RST === '0') return false;
+  return process.env.NODE_ENV !== 'test';
+}
+
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
   const hanCharsPerMinute = 300;
@@ -530,7 +536,7 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
   let data: ReturnType<typeof parseRstDocument>['metadata'];
 
   try {
-    if (pythonRstRendererAvailable !== false) {
+    if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
       const rendered = renderRstFile(fullPath, imageBaseSlug);
       pythonRstRendererAvailable = true;
       parsedTitle = rendered.title;

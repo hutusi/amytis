@@ -77,6 +77,18 @@ describe('rst-renderer bridge', () => {
     expect(doc.html).toContain('/posts/关于队列模型/_static/para_queue_model.svg');
   });
 
+  fixtureTest('preserves series index metadata fields from docutils output', () => {
+    const doc = renderRstFile(
+      'content/series/rst-legacy/index.rst',
+      'posts/rst-legacy'
+    );
+
+    expect(doc.metadata.excerpt).toBe('Legacy notes imported from reStructuredText.');
+    expect(doc.metadata.sort).toBe('manual');
+    expect(doc.metadata.posts).toEqual(['getting-started', 'deeper-notes']);
+    expect(doc.metadata.authors).toEqual(['John Hu']);
+  });
+
   fixtureTest('derives excerpt and text from body content instead of docinfo', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/关于队列模型.rst',
