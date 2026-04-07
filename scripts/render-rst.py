@@ -225,8 +225,8 @@ def parse_args() -> argparse.Namespace:
 def resolve_source_file(raw_file: str) -> Path:
     source_file = Path(raw_file).expanduser()
     if not source_file.is_absolute():
-        source_file = (Path.cwd() / source_file).resolve()
-    return source_file
+        source_file = Path.cwd() / source_file
+    return source_file.resolve()
 
 
 def normalize_metadata_value(key: str, value: str) -> Any:
@@ -516,26 +516,14 @@ def render_batch(strict: bool) -> list[dict[str, Any]]:
 
         source_file = resolve_source_file(raw_file)
         if not source_file.exists():
-            results.append({
-                "file": str(source_file),
-                "ok": False,
-                "error": f"rST file not found: {source_file}",
-            })
-            continue
+            raise RstRenderError(f"rST file not found: {source_file}")
 
-        try:
-            output = render_single_file(source_file, image_base_slug, strict)
-            results.append({
-                "file": str(source_file),
-                "ok": True,
-                "result": output,
-            })
-        except (RstRenderError, OSError, ValueError, KeyError, AttributeError) as exc:
-            results.append({
-                "file": str(source_file),
-                "ok": False,
-                "error": str(exc),
-            })
+        output = render_single_file(source_file, image_base_slug, strict)
+        results.append({
+            "file": str(source_file),
+            "ok": True,
+            "result": output,
+        })
 
     return results
 

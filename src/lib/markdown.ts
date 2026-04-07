@@ -171,12 +171,19 @@ const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
 const seriesTitleCache = new Map<string, Map<string, string | undefined>>();
 let pythonRstRendererAvailable: boolean | null = null;
 
-const PYTHON_RUNTIME_UNAVAILABLE_PATTERN = /docutils|No module named|not found|interpreter/i;
+const PYTHON_RUNTIME_UNAVAILABLE_PATTERN = /docutils|No module named|python(?:3)? .*not found|interpreter not found|ENOENT.*python/i;
 
 function isPythonRuntimeUnavailable(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if (error.message.includes('__RST_FALLBACK__')) return true;
+  if (error.message.includes('rST file not found')) return false;
   return PYTHON_RUNTIME_UNAVAILABLE_PATTERN.test(error.message);
+}
+
+function getRstImageBaseSlug(fullPath: string, slug: string): string {
+  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
+    path.dirname(fullPath) === contentDirectory;
+  return isRootFlatPost ? 'posts' : `posts/${slug}`;
 }
 
 function shouldUsePythonRstRenderer(): boolean {
@@ -584,9 +591,7 @@ function parseRstFile(
   seriesName?: string,
   preRendered?: RenderedRstDocument,
 ): PostData {
-  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
-    path.dirname(fullPath) === contentDirectory;
-  const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+  const imageBaseSlug = getRstImageBaseSlug(fullPath, slug);
   const fileContents = fs.readFileSync(fullPath, 'utf8');
 
   let parsedTitle: string;
@@ -773,10 +778,7 @@ export function getAllPosts(): PostData[] {
         batchRenderedByFile = renderRstFilesBatch(
           pendingRstPosts.map(entry => ({
             file: entry.fullPath,
-            imageBaseSlug: path.basename(entry.fullPath) !== 'index.rst' &&
-              path.dirname(entry.fullPath) === contentDirectory
-              ? 'posts'
-              : `posts/${entry.slug}`,
+            imageBaseSlug: getRstImageBaseSlug(entry.fullPath, entry.slug),
           }))
         );
         pythonRstRendererAvailable = true;
