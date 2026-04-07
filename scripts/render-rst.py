@@ -452,6 +452,7 @@ def extract_html_body_from_doctree(document: Any) -> str:
         settings_overrides={
             "embed_stylesheet": False,
             "stylesheet_path": None,
+            "output_encoding": "unicode",
             "initial_header_level": 2,
             "report_level": 2,
             "halt_level": 5,
@@ -460,8 +461,7 @@ def extract_html_body_from_doctree(document: Any) -> str:
         },
     )
 
-    rendered_html = rendered.decode("utf-8")
-    match = re.search(r"<main(?:\s[^>]*)?>\s*(.*?)\s*</main>", rendered_html, re.DOTALL)
+    match = re.search(r"<main(?:\s[^>]*)?>\s*(.*?)\s*</main>", rendered, re.DOTALL)
     if match is None:
         raise RstRenderError("Docutils HTML output did not contain a <main> fragment.")
 
