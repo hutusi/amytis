@@ -127,4 +127,27 @@ describe('rst-renderer bridge', () => {
     expect(doc.html).toContain('<span class="name function">search</span>');
     expect(doc.text).toContain('def search(key, strings):');
   });
+
+  fixtureTest('renders unsupported legacy roles as inline text instead of system-message blocks', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/为什么很多人看书学不会架构设计.rst',
+      'posts/为什么很多人看书学不会架构设计'
+    );
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain('<span class="dtag">架构设计定义</span>');
+    expect(doc.warnings).toContain('Unsupported interpreted text role ":dtag:" rendered as plain inline text.');
+  });
+
+  fixtureTest('does not include footnote bodies in extracted plain text', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/把什么放入架构设计.rst',
+      'posts/把什么放入架构设计'
+    );
+
+    expect(doc.html).toContain('class="footnote-list brackets"');
+    expect(doc.text).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
+    expect(doc.text).not.toContain('关于这一点，可以参考这里：计算进化史');
+    expect(doc.excerpt).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
+  });
 });

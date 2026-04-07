@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import copy
 import html
 import json
 import posixpath
@@ -108,6 +109,29 @@ def register_doc_role(source_file: Path, warnings: list[str]) -> None:
         return [nodes.reference(rawtext, display_text, refuri=refuri)], []
 
     roles.register_canonical_role("doc", doc_role)
+
+
+def register_passthrough_roles(warnings: list[str]) -> None:
+    from docutils import nodes
+    from docutils.parsers.rst import roles
+
+    def make_passthrough_role(role_name: str):
+        def passthrough_role(  # type: ignore[override]
+            _name: str,
+            rawtext: str,
+            text: str,
+            _lineno: int,
+            _inliner: Any,
+            _options: dict[str, Any] | None = None,
+            _content: list[str] | None = None,
+        ) -> tuple[list[Any], list[Any]]:
+            warnings.append(f'Unsupported interpreted text role ":{role_name}:" rendered as plain inline text.')
+            return [nodes.inline(rawtext, text, classes=[role_name])], []
+
+        return passthrough_role
+
+    for role_name in ("dtag",):
+        roles.register_canonical_role(role_name, make_passthrough_role(role_name))
 
 
 def parse_args() -> argparse.Namespace:
@@ -281,9 +305,27 @@ def extract_headings(document: Any) -> list[dict[str, Any]]:
 def extract_body_text(document: Any) -> str:
     from docutils import nodes
 
+    body_tree = copy.deepcopy(document)
+    for node in list(body_tree.findall(nodes.system_message)):
+        parent = node.parent
+        if parent is not None:
+            parent.remove(node)
+
+    for node in list(body_tree.findall(nodes.footnote)):
+        parent = node.parent
+        if parent is not None:
+            parent.remove(node)
+
+    for node in list(body_tree.findall(nodes.footnote_reference)):
+        parent = node.parent
+        if parent is not None:
+            parent.remove(node)
+
     body_parts: list[str] = []
-    for child in document.children:
-        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment, nodes.title, nodes.system_message)):
+    for child in body_tree.children:
+        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment, nodes.title, nodes.system_message, nodes.footnote)):
+            continue
+        if child.tagname == "footnote_list":
             continue
         text = child.astext().strip()
         if text:
@@ -357,6 +399,7 @@ def main() -> int:
     try:
         warnings: list[str] = []
         register_doc_role(source_file, warnings)
+        register_passthrough_roles(warnings)
         source = source_file.read_text(encoding="utf-8")
         document = publish_doctree(
             source=source,

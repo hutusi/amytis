@@ -507,6 +507,17 @@ body {
   color: var(--heading);
 }
 
+.rst-rendered .dtag {
+  display: inline-block;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--background));
+  padding: 0.1rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .rst-rendered pre.literal-block,
 .rst-rendered pre.code.literal-block {
   overflow-x: auto;
@@ -532,4 +543,27 @@ body {
 .rst-rendered pre.code.literal-block .literal.string,
 .rst-rendered pre.code.literal-block .literal.string.double {
   color: color-mix(in srgb, var(--accent) 68%, var(--foreground));
+}
+
+.rst-rendered a[role="doc-noteref"] {
+  font-size: 0.82em;
+  vertical-align: super;
+}
+
+.rst-rendered .footnote-list {
+  margin: 1.5rem 0 2rem;
+  border-top: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
+  padding-top: 1rem;
+}
+
+.rst-rendered .footnote {
+  margin: 0.75rem 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.rst-rendered .footnote .label {
+  margin-right: 0.4rem;
+  font-weight: 600;
+  color: var(--heading);
 }
