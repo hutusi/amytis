@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { getSeriesData, getAllSeries } from "../../src/lib/markdown";
 
+function restoreEnvVar(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
+
 describe("Integration: Series Draft Support", () => {
   test("all series are included when NODE_ENV is not production", () => {
     // In test environment NODE_ENV is typically 'test'
@@ -18,20 +26,25 @@ describe("Integration: Series Draft Support", () => {
 
   test("draft filtering code path runs without error in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
       process.env.NODE_ENV = "production";
+      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
       // This should not throw; draft series are simply excluded
       const series = getAllSeries();
       expect(typeof series).toBe("object");
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      restoreEnvVar("NODE_ENV", originalEnv);
+      restoreEnvVar("AMYTIS_ENABLE_PYTHON_RST", originalPythonRst);
     }
   });
 
   test("draft series are excluded in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
       process.env.NODE_ENV = "production";
+      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
       const allSeries = getAllSeries();
       
       // Verify that every series returned has draft: false (or undefined which defaults to false)
@@ -40,7 +53,8 @@ describe("Integration: Series Draft Support", () => {
         expect(seriesData?.draft).not.toBe(true);
       });
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      restoreEnvVar("NODE_ENV", originalEnv);
+      restoreEnvVar("AMYTIS_ENABLE_PYTHON_RST", originalPythonRst);
     }
   });
 });

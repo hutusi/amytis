@@ -3,6 +3,23 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import RstRenderer from './RstRenderer';
 
 describe('RstRenderer', () => {
+  test('renders pre-rendered html when available', () => {
+    const html = renderToStaticMarkup(
+      <RstRenderer
+        content="Fallback body"
+        html={'<section><h2 id="intro">Intro</h2><p><img src="/posts/demo/test.png" alt="Test" onerror="alert(2)" /></p><a href="/demo" onclick="alert(3)">Link</a><script>alert(1)</script></section>'}
+      />
+    );
+
+    expect(html).toContain('rst-rendered');
+    expect(html).toContain('id="intro"');
+    expect(html).toContain('/posts/demo/test.png');
+    expect(html).not.toContain('alert(1)');
+    expect(html).not.toContain('<script');
+    expect(html).not.toContain('onclick');
+    expect(html).not.toContain('onerror');
+  });
+
   test('renders converted headings, links, and code blocks through the markdown renderer', () => {
     const html = renderToStaticMarkup(
       <RstRenderer

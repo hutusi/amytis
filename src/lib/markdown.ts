@@ -6,6 +6,7 @@ import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
 import { parseRstDocument } from './rst';
+import { renderRstFile } from './rst-renderer';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -120,6 +121,8 @@ export interface PostData {
   redirectFrom?: string[];
   readingTime: string;
   content: string;
+  renderedHtml?: string;
+  plainText?: string;
   headings: Heading[];
   contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
   /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
@@ -157,6 +160,15 @@ const allSeriesCache = new Map<string, Record<string, PostData[]>>();
 const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
 const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
 const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
+const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
+const seriesTitleCache = new Map<string, Map<string, string | undefined>>();
+let pythonRstRendererAvailable: boolean | null = null;
+
+function shouldUsePythonRstRenderer(): boolean {
+  if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
+  if (process.env.AMYTIS_ENABLE_PYTHON_RST === '0') return false;
+  return process.env.NODE_ENV !== 'test';
+}
 
 export function calculateReadingTime(content: string): string {
   const wordsPerMinute = 200;
@@ -216,27 +228,47 @@ export function getHeadings(content: string): Heading[] {
  * Returns null if no authors are configured (as opposed to the default fallback).
  */
 export function getSeriesAuthors(seriesSlug: string): string[] | null {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesAuthorsCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesAuthorsCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(seriesSlug)) return bySlug.get(seriesSlug) ?? null;
+
   const indexInfo = resolveSeriesIndexInfo(seriesSlug);
-  if (!indexInfo) return null;
+  if (!indexInfo) {
+    bySlug.set(seriesSlug, null);
+    return null;
+  }
 
   if (indexInfo.format === 'rst') {
     const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
     if (parsed.metadata.authors && parsed.metadata.authors.length > 0) {
+      bySlug.set(seriesSlug, parsed.metadata.authors);
       return parsed.metadata.authors;
     }
     if (parsed.metadata.author && typeof parsed.metadata.author === 'string') {
-      return [parsed.metadata.author];
+      const authors = [parsed.metadata.author];
+      bySlug.set(seriesSlug, authors);
+      return authors;
     }
+    bySlug.set(seriesSlug, null);
     return null;
   }
 
   const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
   if (data.authors && Array.isArray(data.authors) && data.authors.length > 0) {
-    return data.authors as string[];
+    const authors = data.authors as string[];
+    bySlug.set(seriesSlug, authors);
+    return authors;
   }
   if (data.author && typeof data.author === 'string') {
-    return [data.author as string];
+    const authors = [data.author as string];
+    bySlug.set(seriesSlug, authors);
+    return authors;
   }
+  bySlug.set(seriesSlug, null);
   return null;
 }
 
@@ -407,18 +439,38 @@ function getSeriesContentEntries(seriesSlug: string): SeriesContentEntry[] {
 }
 
 function getSeriesTitle(slug: string): string | undefined {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesTitleCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesTitleCache.set(cacheKey, bySlug);
+  }
+  if (bySlug.has(slug)) return bySlug.get(slug);
+
   const indexInfo = resolveSeriesIndexInfo(slug);
-  if (!indexInfo) return undefined;
+  if (!indexInfo) {
+    bySlug.set(slug, undefined);
+    return undefined;
+  }
 
   if (indexInfo.format === 'rst') {
     const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
-    if (parsed.metadata.draft === true) return undefined;
+    if (parsed.metadata.draft === true) {
+      bySlug.set(slug, undefined);
+      return undefined;
+    }
+    bySlug.set(slug, parsed.title);
     return parsed.title;
   }
 
   const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
-  if (data.draft === true) return undefined;
-  return typeof data.title === 'string' ? data.title : undefined;
+  if (data.draft === true) {
+    bySlug.set(slug, undefined);
+    return undefined;
+  }
+  const title = typeof data.title === 'string' ? data.title : undefined;
+  bySlug.set(slug, title);
+  return title;
 }
 
 function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
@@ -511,13 +563,55 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
 }
 
 function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const parsed = parseRstDocument(fileContents);
-  const data = parsed.metadata;
-
   const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
     path.dirname(fullPath) === contentDirectory;
   const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+
+  let parsedTitle: string;
+  let parsedBody: string;
+  let parsedText: string | undefined;
+  let parsedHeadings: Heading[];
+  let parsedExcerpt: string;
+  let parsedReadingTime: string;
+  let parsedHtml: string | undefined;
+  let data: ReturnType<typeof parseRstDocument>['metadata'];
+  const isPythonRuntimeUnavailable = (error: unknown): boolean => {
+    if (!(error instanceof Error)) return false;
+    if (error.message.includes('__RST_FALLBACK__')) return true;
+    return /docutils|No module named|not found|interpreter/i.test(error.message);
+  };
+
+  try {
+    if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
+      const rendered = renderRstFile(fullPath, imageBaseSlug);
+      pythonRstRendererAvailable = true;
+      parsedTitle = rendered.title;
+      parsedBody = rendered.text;
+      parsedText = rendered.text;
+      parsedHeadings = rendered.headings;
+      parsedExcerpt = rendered.excerpt;
+      parsedReadingTime = rendered.readingTime;
+      parsedHtml = rendered.html;
+      data = rendered.metadata;
+    } else {
+      throw new Error('__RST_FALLBACK__');
+    }
+  } catch (error) {
+    if (!isPythonRuntimeUnavailable(error)) {
+      throw error;
+    }
+    if (pythonRstRendererAvailable !== false) {
+      pythonRstRendererAvailable = false;
+    }
+    const parsed = parseRstDocument(fileContents);
+    parsedTitle = parsed.title;
+    parsedBody = parsed.body;
+    parsedHeadings = parsed.headings;
+    parsedExcerpt = parsed.excerpt;
+    parsedReadingTime = parsed.readingTime;
+    data = parsed.metadata;
+  }
 
   const effectiveSeriesSlug = data.series || seriesName;
   let authors: string[] = [];
@@ -550,10 +644,10 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
 
   return {
     slug,
-    title: parsed.title,
+    title: parsedTitle,
     subtitle: data.subtitle,
     date,
-    excerpt: data.excerpt || parsed.excerpt,
+    excerpt: data.excerpt || parsedExcerpt,
     category: data.category ?? 'Uncategorized',
     tags: data.tags ?? [],
     authors,
@@ -571,9 +665,11 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
     toc: data.toc ?? true,
     commentable: data.commentable,
     redirectFrom: data.redirectFrom ?? [],
-    readingTime: parsed.readingTime,
-    content: parsed.body,
-    headings: parsed.headings,
+    readingTime: parsedReadingTime,
+    content: parsedBody,
+    renderedHtml: parsedHtml,
+    plainText: parsedText,
+    headings: parsedHeadings,
     imageBaseSlug,
     sourceFormat: 'rst',
   };

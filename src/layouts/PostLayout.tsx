@@ -43,7 +43,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
     : `${siteConfig.baseUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
   const bodyRenderer = post.sourceFormat === 'rst'
-    ? <RstRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
+    ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
     : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />;
 
   return (
