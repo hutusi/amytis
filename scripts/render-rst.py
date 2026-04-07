@@ -128,6 +128,17 @@ def register_passthrough_roles(warnings: list[str]) -> None:
         cleaned = re.sub(r"\s+", "-", cleaned)
         return cleaned
 
+    def resolve_named_refid(inliner: Any, target: str) -> str | None:
+        document = getattr(inliner, "document", None)
+        if document is None:
+            return None
+
+        nameids = getattr(document, "nameids", {})
+        refid = nameids.get(target)
+        if isinstance(refid, str) and refid:
+            return refid
+        return None
+
     def make_passthrough_role(role_name: str):
         def passthrough_role(  # type: ignore[override]
             _name: str,
@@ -154,7 +165,7 @@ def register_passthrough_roles(warnings: list[str]) -> None:
     ) -> tuple[list[Any], list[Any]]:
         label, target = parse_role_target(text)
         display_text = label or target
-        refid = normalize_internal_ref(target)
+        refid = resolve_named_refid(_inliner, target) or normalize_internal_ref(target)
         return [nodes.reference(rawtext, display_text, refuri=f"#{refid}")], []
 
     def numref_role(  # type: ignore[override]
@@ -168,6 +179,10 @@ def register_passthrough_roles(warnings: list[str]) -> None:
     ) -> tuple[list[Any], list[Any]]:
         label, target = parse_role_target(text)
         display_text = target if label and "%s" in label else (label or target)
+        refid = resolve_named_refid(_inliner, target)
+        if refid is not None:
+            return [nodes.reference(rawtext, display_text, refuri=f"#{refid}", classes=["numref"])], []
+
         warnings.append(f'Unsupported interpreted text role ":numref:" rendered as plain inline text.')
         return [nodes.inline(rawtext, display_text, classes=["numref"])], []
 

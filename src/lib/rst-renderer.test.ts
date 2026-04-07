@@ -162,16 +162,17 @@ describe('rst-renderer bridge', () => {
     expect(doc.text.includes(':ref:`s_extension`')).toBe(false);
   });
 
-  fixtureTest('renders legacy :numref: roles as readable inline text instead of system-message blocks', () => {
+  fixtureTest('resolves legacy :numref: roles to figure anchors when labels exist', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/逻辑如水.rst',
       'posts/逻辑如水'
     );
 
     expect(doc.html).not.toContain('system-message');
-    expect(doc.html).toContain('<span class="numref">图：模拟的特征</span>');
-    expect(doc.html).toContain('<span class="numref">图：模拟特征的数字化过程</span>');
-    expect(doc.warnings).toContain('Unsupported interpreted text role ":numref:" rendered as plain inline text.');
+    expect(doc.html).toContain('href="#target-1"');
+    expect(doc.html).toContain('href="#target-2"');
+    expect(doc.html).toContain('class="reference external numref"');
+    expect(doc.warnings).not.toContain('Unsupported interpreted text role ":numref:" rendered as plain inline text.');
   });
 
   fixtureTest('renders legacy :math: roles as MathML without leaking raw inline syntax', () => {
