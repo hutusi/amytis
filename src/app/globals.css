@@ -451,3 +451,58 @@ body {
 [id] {
   scroll-margin-top: 5rem;
 }
+
+.rst-rendered figure {
+  margin: 2rem 0;
+}
+
+.rst-rendered figure > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.rst-rendered figcaption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.rst-rendered aside.admonition {
+  margin: 2rem 0;
+  border-left: 4px solid var(--accent);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--accent) 8%, var(--background));
+}
+
+.rst-rendered aside.admonition > :first-child {
+  margin-top: 0;
+}
+
+.rst-rendered aside.admonition > :last-child {
+  margin-bottom: 0;
+}
+
+.rst-rendered .admonition-title {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--heading);
+}
+
+.rst-rendered .docutils.literal {
+  border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--muted) 10%, var(--background));
+  padding: 0.1rem 0.35rem;
+  font-size: 0.9em;
+  color: var(--heading);
+}

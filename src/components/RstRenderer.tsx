@@ -34,7 +34,7 @@ export default function RstRenderer({ content, html, latex = false, slug, slugRe
         {latex && <KatexStyles />}
         <div className="bg-background">
           <div
-            className={proseClasses}
+            className={`${proseClasses} rst-rendered`}
             dangerouslySetInnerHTML={{ __html: sanitizeRenderedHtml(html) }}
           />
         </div>

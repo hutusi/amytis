@@ -11,6 +11,7 @@ describe('RstRenderer', () => {
       />
     );
 
+    expect(html).toContain('rst-rendered');
     expect(html).toContain('id="intro"');
     expect(html).toContain('/posts/demo/test.png');
     expect(html).not.toContain('alert(1)');
