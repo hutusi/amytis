@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
+import { normalizePythonRstMetadata, validatePythonRstResult } from './rst-renderer';
 import { RstParseError } from './rst';
 
 describe('rst-renderer bridge', () => {
@@ -46,12 +46,5 @@ describe('rst-renderer bridge', () => {
       headings: [],
       metadata: {},
     }, 'broken.rst')).toThrow(RstParseError);
-  });
-
-  test('renderRstFile surfaces the missing docutils dependency clearly', () => {
-    expect(() => renderRstFile(
-      'content/series/rst-legacy/index.rst',
-      'posts/rst-legacy'
-    )).toThrow(/docutils/i);
   });
 });

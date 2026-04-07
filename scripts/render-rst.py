@@ -198,6 +198,20 @@ def extract_headings(document: Any) -> list[dict[str, Any]]:
     return headings
 
 
+def extract_body_text(document: Any) -> str:
+    from docutils import nodes
+
+    body_parts: list[str] = []
+    for child in document.children:
+        if isinstance(child, (nodes.docinfo, nodes.field_list, nodes.comment, nodes.title)):
+            continue
+        text = child.astext().strip()
+        if text:
+            body_parts.append(text)
+
+    return "\n\n".join(body_parts).strip()
+
+
 def build_output(document: Any, source: str, source_file: Path, image_base_slug: str) -> dict[str, Any]:
     from docutils import nodes
     from docutils.core import publish_parts
@@ -224,7 +238,7 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
     return {
         "title": title_node.astext().strip(),
         "html": rewrite_html_assets(html_body, assets),
-        "text": document.astext().strip(),
+        "text": extract_body_text(document),
         "headings": extract_headings(document),
         "metadata": extract_metadata(document),
         "assets": assets,
