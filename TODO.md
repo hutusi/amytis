@@ -23,6 +23,10 @@
 - [ ] **Content Porter**: Tool to import/export notes from Obsidian or Notion.
 - [ ] **Optimization**: Automatically compress and resize co-located images during build.
 - [ ] **Build Performance**: Profile `build:dev`, clean stale export/search outputs before indexing, and consider a lighter local build path that skips expensive full-site indexing when not needed.
+- [ ] **Async Content API for rST Worker**: Introduce `getAllPostsAsync()` and migrate the heaviest build routes first so the long-lived Python rST worker can be used without converting the entire content layer to async at once.
+  - [ ] Add async cache-backed content helpers alongside the existing sync APIs.
+  - [ ] Migrate post route static params/pages first, then re-measure `next build`.
+  - [ ] Only broaden the async refactor if the worker path shows a meaningful build-time reduction.
 
 ## 📚 rST Follow-up
 - [ ] **Fixture Coverage**: Add more compatibility fixtures from legacy rST series, including nested lists, tables, directives, images, and internal links.
