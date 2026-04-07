@@ -47,7 +47,9 @@ class BodyFragmentParser(HTMLParser):
 
         if self._target is not None:
             self._depth += 1
-            self._fragments.append(self.get_starttag_text())
+            starttag_text = self.get_starttag_text()
+            if starttag_text is not None:
+                self._fragments.append(starttag_text)
 
     def handle_endtag(self, tag: str) -> None:
         if self._target is None:
@@ -63,7 +65,9 @@ class BodyFragmentParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if self._target is not None:
-            self._fragments.append(self.get_starttag_text())
+            starttag_text = self.get_starttag_text()
+            if starttag_text is not None:
+                self._fragments.append(starttag_text)
 
     def handle_data(self, data: str) -> None:
         if self._target is not None:
