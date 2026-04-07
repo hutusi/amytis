@@ -37,7 +37,24 @@ export interface RenderedRstDocument {
   warnings: string[];
 }
 
+export interface PythonRstBatchEntry {
+  file: string;
+  imageBaseSlug: string;
+}
+
+interface PythonRstBatchResponseItem {
+  file: string;
+  ok: boolean;
+  result?: PythonRstRenderResult;
+  error?: string;
+}
+
 const rstRenderCache = new Map<string, RenderedRstDocument>();
+
+function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
+  const stats = fs.statSync(filePath);
+  return `${getPythonExecutableForRstRenderer()}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
+}
 
 function getPythonExecutableForRstRenderer(): string {
   return process.env.AMYTIS_RST_PYTHON || 'python3';
@@ -271,9 +288,62 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
   }
 }
 
+export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<string, PythonRstRenderResult> {
+  if (entries.length === 0) return new Map();
+
+  const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
+  const pythonExecutable = getPythonExecutableForRstRenderer();
+  const result = spawnSync(pythonExecutable, [
+    scriptPath,
+    '--batch-stdin',
+    '--strict',
+  ], {
+    encoding: 'utf8',
+    input: JSON.stringify(entries),
+  });
+
+  if (result.error) {
+    throw new RstParseError(`Failed to run Python rST renderer batch: ${result.error.message}`);
+  }
+
+  if (result.status !== 0) {
+    throw new RstParseError(
+      result.stderr.trim() || `Python rST renderer batch exited with status ${result.status}.`
+    );
+  }
+
+  let parsed: PythonRstBatchResponseItem[];
+  try {
+    parsed = JSON.parse(result.stdout) as PythonRstBatchResponseItem[];
+  } catch (error) {
+    throw new RstParseError(
+      `Invalid JSON from Python rST renderer batch: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new RstParseError('Invalid batch response from Python rST renderer: expected an array.');
+  }
+
+  const renderedByFile = new Map<string, PythonRstRenderResult>();
+  for (const item of parsed) {
+    if (!item || typeof item.file !== 'string' || typeof item.ok !== 'boolean') {
+      throw new RstParseError('Invalid batch response item from Python rST renderer.');
+    }
+    if (!item.ok) {
+      throw new RstParseError(item.error || `Python rST renderer batch failed for ${item.file}.`);
+    }
+    if (!item.result) {
+      throw new RstParseError(`Python rST renderer batch returned no result for ${item.file}.`);
+    }
+    renderedByFile.set(item.file, item.result);
+  }
+
+  return renderedByFile;
+}
+
 export function renderRstFile(filePath: string, imageBaseSlug: string): RenderedRstDocument {
-  const stats = fs.statSync(filePath);
-  const cacheKey = `${getPythonExecutableForRstRenderer()}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
+  const cacheKey = getRenderCacheKey(filePath, imageBaseSlug);
   const cached = rstRenderCache.get(cacheKey);
   if (cached) {
     return cached;
@@ -297,4 +367,48 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
 
   rstRenderCache.set(cacheKey, rendered);
   return rendered;
+}
+
+export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string, RenderedRstDocument> {
+  const renderedByFile = new Map<string, RenderedRstDocument>();
+  const uncachedEntries: PythonRstBatchEntry[] = [];
+
+  for (const entry of entries) {
+    const cacheKey = getRenderCacheKey(entry.file, entry.imageBaseSlug);
+    const cached = rstRenderCache.get(cacheKey);
+    if (cached) {
+      renderedByFile.set(entry.file, cached);
+      continue;
+    }
+    uncachedEntries.push(entry);
+  }
+
+  if (uncachedEntries.length === 0) {
+    return renderedByFile;
+  }
+
+  const batchResults = runPythonRstRendererBatch(uncachedEntries);
+  for (const entry of uncachedEntries) {
+    const result = batchResults.get(entry.file);
+    if (!result) {
+      throw new RstParseError(`Python rST renderer batch returned no result for ${entry.file}.`);
+    }
+    validatePythonRstResult(result, entry.file);
+    const metadata = normalizePythonRstMetadata(result.metadata);
+    const rendered: RenderedRstDocument = {
+      title: result.title,
+      html: result.html,
+      text: result.text,
+      headings: result.headings,
+      metadata,
+      excerpt: metadata.excerpt || generateExcerptFromText(result.text),
+      readingTime: calculateReadingTimeFromText(result.text),
+      assets: result.assets ?? [],
+      warnings: (result.warnings ?? []).map((warning) => String(warning)),
+    };
+    rstRenderCache.set(getRenderCacheKey(entry.file, entry.imageBaseSlug), rendered);
+    renderedByFile.set(entry.file, rendered);
+  }
+
+  return renderedByFile;
 }

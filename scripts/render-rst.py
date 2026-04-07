@@ -194,18 +194,39 @@ def register_passthrough_roles(warnings: list[str]) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render a single rST file to JSON via docutils.")
-    parser.add_argument("--file", required=True, help="Absolute or relative path to the .rst file")
+    parser.add_argument("--file", help="Absolute or relative path to the .rst file")
     parser.add_argument(
         "--image-base-slug",
-        required=True,
         help="Public-relative base slug for local assets, for example posts/my-post",
+    )
+    parser.add_argument(
+        "--batch-stdin",
+        action="store_true",
+        help="Read a JSON array of batch render entries from stdin",
     )
     parser.add_argument(
         "--strict",
         action="store_true",
         help="Fail on missing local assets instead of reporting them in the output",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.batch_stdin:
+        if args.file or args.image_base_slug:
+            parser.error("--batch-stdin cannot be combined with --file or --image-base-slug")
+        return args
+
+    if not args.file or not args.image_base_slug:
+        parser.error("--file and --image-base-slug are required unless --batch-stdin is used")
+
+    return args
+
+
+def resolve_source_file(raw_file: str) -> Path:
+    source_file = Path(raw_file).expanduser()
+    if not source_file.is_absolute():
+        source_file = (Path.cwd() / source_file).resolve()
+    return source_file
 
 
 def normalize_metadata_value(key: str, value: str) -> Any:
@@ -443,18 +464,87 @@ def build_output(document: Any, source: str, source_file: Path, image_base_slug:
     }
 
 
+def render_single_file(source_file: Path, image_base_slug: str, strict: bool) -> dict[str, Any]:
+    from docutils.core import publish_doctree
+
+    warnings: list[str] = []
+    register_doc_role(source_file, warnings)
+    register_passthrough_roles(warnings)
+    source = source_file.read_text(encoding="utf-8")
+    document = publish_doctree(
+        source=source,
+        settings_overrides={
+            "report_level": 2,
+            "halt_level": 5,
+            "file_insertion_enabled": False,
+            "raw_enabled": False,
+        },
+    )
+    remove_system_messages(document)
+    output = build_output(document, source, source_file, image_base_slug, warnings)
+
+    if strict:
+        missing = [asset for asset in output["assets"] if not asset["exists"]]
+        if missing:
+            first = missing[0]
+            raise RstRenderError(
+                f'Missing local asset "{first["original"]}" in {source_file}'
+            )
+
+    return output
+
+
+def render_batch(strict: bool) -> list[dict[str, Any]]:
+    raw_input = sys.stdin.read()
+    try:
+        entries = json.loads(raw_input)
+    except json.JSONDecodeError as exc:
+        raise RstRenderError(f"Invalid batch JSON: {exc.msg}") from exc
+
+    if not isinstance(entries, list):
+        raise RstRenderError("Invalid batch JSON: expected an array.")
+
+    results: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise RstRenderError("Invalid batch entry: expected an object.")
+
+        raw_file = entry.get("file")
+        image_base_slug = entry.get("imageBaseSlug")
+        if not isinstance(raw_file, str) or not isinstance(image_base_slug, str):
+            raise RstRenderError("Invalid batch entry: missing file or imageBaseSlug.")
+
+        source_file = resolve_source_file(raw_file)
+        if not source_file.exists():
+            results.append({
+                "file": str(source_file),
+                "ok": False,
+                "error": f"rST file not found: {source_file}",
+            })
+            continue
+
+        try:
+            output = render_single_file(source_file, image_base_slug, strict)
+            results.append({
+                "file": str(source_file),
+                "ok": True,
+                "result": output,
+            })
+        except (RstRenderError, OSError, ValueError, KeyError, AttributeError) as exc:
+            results.append({
+                "file": str(source_file),
+                "ok": False,
+                "error": str(exc),
+            })
+
+    return results
+
+
 def main() -> int:
     args = parse_args()
-    source_file = Path(args.file).expanduser()
-    if not source_file.is_absolute():
-        source_file = (Path.cwd() / source_file).resolve()
-
-    if not source_file.exists():
-        print(f"rST file not found: {source_file}", file=sys.stderr)
-        return 1
 
     try:
-        from docutils.core import publish_doctree
+        from docutils.core import publish_doctree  # noqa: F401
     except ImportError:
         print(
             "Missing Python dependency: docutils. Install it with `python3 -m pip install docutils`.",
@@ -463,31 +553,16 @@ def main() -> int:
         return 1
 
     try:
-        warnings: list[str] = []
-        register_doc_role(source_file, warnings)
-        register_passthrough_roles(warnings)
-        source = source_file.read_text(encoding="utf-8")
-        document = publish_doctree(
-            source=source,
-            settings_overrides={
-                "report_level": 2,
-                "halt_level": 5,
-                "file_insertion_enabled": False,
-                "raw_enabled": False,
-            },
-        )
-        remove_system_messages(document)
-        output = build_output(document, source, source_file, args.image_base_slug, warnings)
+        if args.batch_stdin:
+            print(json.dumps(render_batch(args.strict), ensure_ascii=False))
+            return 0
 
-        if args.strict:
-            missing = [asset for asset in output["assets"] if not asset["exists"]]
-            if missing:
-                first = missing[0]
-                raise RstRenderError(
-                    f'Missing local asset "{first["original"]}" in {source_file}'
-                )
+        source_file = resolve_source_file(args.file)
+        if not source_file.exists():
+            print(f"rST file not found: {source_file}", file=sys.stderr)
+            return 1
 
-        print(json.dumps(output, ensure_ascii=False))
+        print(json.dumps(render_single_file(source_file, args.image_base_slug, args.strict), ensure_ascii=False))
         return 0
     except RstRenderError as exc:
         print(str(exc), file=sys.stderr)
