@@ -523,6 +523,13 @@ body {
   font-weight: 600;
 }
 
+.rst-rendered math {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: middle;
+}
+
 .rst-rendered pre.literal-block,
 .rst-rendered pre.code.literal-block {
   overflow-x: auto;

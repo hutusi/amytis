@@ -173,4 +173,16 @@ describe('rst-renderer bridge', () => {
     expect(doc.html).toContain('<span class="numref">图：模拟特征的数字化过程</span>');
     expect(doc.warnings).toContain('Unsupported interpreted text role ":numref:" rendered as plain inline text.');
   });
+
+  fixtureTest('renders legacy :math: roles as MathML without leaking raw inline syntax', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/逻辑闭包.rst',
+      'posts/逻辑闭包'
+    );
+
+    expect(doc.html).toContain('<math xmlns="http://www.w3.org/1998/Math/MathML">');
+    expect(doc.html).toContain('<mi>H</mi>');
+    expect(doc.html).toContain('<msub>');
+    expect(doc.text.includes(':math:`H=-\\sum_{i=0}^n\\ P_ilogP_i`')).toBe(false);
+  });
 });
