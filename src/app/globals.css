@@ -506,3 +506,30 @@ body {
   font-size: 0.9em;
   color: var(--heading);
 }
+
+.rst-rendered pre.literal-block,
+.rst-rendered pre.code.literal-block {
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+  padding: 1rem 1.25rem;
+}
+
+.rst-rendered pre.code.literal-block code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.rst-rendered pre.code.literal-block .keyword,
+.rst-rendered pre.code.literal-block .name.function {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rst-rendered pre.code.literal-block .literal.string,
+.rst-rendered pre.code.literal-block .literal.string.double {
+  color: color-mix(in srgb, var(--accent) 68%, var(--foreground));
+}

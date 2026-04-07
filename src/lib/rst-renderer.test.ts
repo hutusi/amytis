@@ -114,4 +114,17 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings[0]).toContain('../道德经直译/道具体是指什么');
     expect(doc.warnings[1]).toContain('../道德经直译/无名');
   });
+
+  fixtureTest('renders real code blocks through docutils with pygments classes', () => {
+    const doc = renderRstFile(
+      'content/series/软件构架设计/大型软件架构设计.rst',
+      'posts/大型软件架构设计'
+    );
+
+    expect(doc.warnings).toEqual([]);
+    expect(doc.html).toContain('<pre class="code python literal-block">');
+    expect(doc.html).toContain('<span class="keyword">def</span>');
+    expect(doc.html).toContain('<span class="name function">search</span>');
+    expect(doc.text).toContain('def search(key, strings):');
+  });
 });
