@@ -1,6 +1,7 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { RstMetadata, RstParseError } from './rst';
 
 export interface PythonRstHeading {
@@ -49,7 +50,20 @@ interface PythonRstBatchResponseItem {
   error?: string;
 }
 
+interface PythonRstWorkerRequest extends PythonRstBatchEntry {
+  id: string;
+  strict: boolean;
+}
+
+interface PythonRstWorkerResponse {
+  id: string | null;
+  ok: boolean;
+  result?: PythonRstRenderResult;
+  error?: string;
+}
+
 const rstRenderCache = new Map<string, RenderedRstDocument>();
+let rstWorkerClient: RstWorkerClient | null = null;
 
 function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
   const stats = fs.statSync(filePath);
@@ -58,6 +72,97 @@ function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
 
 function getPythonExecutableForRstRenderer(): string {
   return process.env.AMYTIS_RST_PYTHON || 'python3';
+}
+
+class RstWorkerClient {
+  private proc: ChildProcessWithoutNullStreams;
+  private nextId = 0;
+  private pending = new Map<string, { resolve: (value: PythonRstRenderResult) => void; reject: (reason: unknown) => void }>();
+
+  constructor() {
+    const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
+    this.proc = spawn(getPythonExecutableForRstRenderer(), [scriptPath, '--worker'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    const rl = readline.createInterface({ input: this.proc.stdout });
+    rl.on('line', (line) => this.handleLine(line));
+
+    let stderr = '';
+    this.proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    this.proc.on('exit', (code, signal) => {
+      const message = stderr.trim() || `Python rST worker exited with code ${code ?? 'null'} signal ${signal ?? 'null'}.`;
+      for (const pending of this.pending.values()) {
+        pending.reject(new RstParseError(message));
+      }
+      this.pending.clear();
+      rstWorkerClient = null;
+    });
+  }
+
+  render(filePath: string, imageBaseSlug: string): Promise<PythonRstRenderResult> {
+    const id = `rst-${this.nextId++}`;
+    const payload: PythonRstWorkerRequest = {
+      id,
+      file: filePath,
+      imageBaseSlug,
+      strict: true,
+    };
+
+    return new Promise<PythonRstRenderResult>((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.proc.stdin.write(`${JSON.stringify(payload)}\n`, 'utf8');
+    });
+  }
+
+  private handleLine(line: string): void {
+    let response: PythonRstWorkerResponse;
+    try {
+      response = JSON.parse(line) as PythonRstWorkerResponse;
+    } catch (error) {
+      const message = `Invalid JSON from Python rST worker: ${error instanceof Error ? error.message : String(error)}`;
+      for (const pending of this.pending.values()) {
+        pending.reject(new RstParseError(message));
+      }
+      this.pending.clear();
+      return;
+    }
+
+    if (!response.id) {
+      const message = response.error || 'Python rST worker returned an invalid response without an id.';
+      for (const pending of this.pending.values()) {
+        pending.reject(new RstParseError(message));
+      }
+      this.pending.clear();
+      return;
+    }
+
+    const pending = this.pending.get(response.id);
+    if (!pending) {
+      return;
+    }
+
+    this.pending.delete(response.id);
+    if (!response.ok) {
+      pending.reject(new RstParseError(response.error || `Python rST worker failed for request ${response.id}.`));
+      return;
+    }
+    if (!response.result) {
+      pending.reject(new RstParseError(`Python rST worker returned no result for request ${response.id}.`));
+      return;
+    }
+    pending.resolve(response.result);
+  }
+}
+
+function getRstWorkerClient(): RstWorkerClient {
+  if (!rstWorkerClient) {
+    rstWorkerClient = new RstWorkerClient();
+  }
+  return rstWorkerClient;
 }
 
 function parseBoolean(field: string, value: unknown): boolean {
@@ -411,4 +516,30 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
   }
 
   return renderedByFile;
+}
+
+export async function renderRstFileViaWorker(filePath: string, imageBaseSlug: string): Promise<RenderedRstDocument> {
+  const cacheKey = getRenderCacheKey(filePath, imageBaseSlug);
+  const cached = rstRenderCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const result = await getRstWorkerClient().render(filePath, imageBaseSlug);
+  validatePythonRstResult(result, filePath);
+  const metadata = normalizePythonRstMetadata(result.metadata);
+  const rendered: RenderedRstDocument = {
+    title: result.title,
+    html: result.html,
+    text: result.text,
+    headings: result.headings,
+    metadata,
+    excerpt: metadata.excerpt || generateExcerptFromText(result.text),
+    readingTime: calculateReadingTimeFromText(result.text),
+    assets: result.assets ?? [],
+    warnings: (result.warnings ?? []).map((warning) => String(warning)),
+  };
+
+  rstRenderCache.set(cacheKey, rendered);
+  return rendered;
 }

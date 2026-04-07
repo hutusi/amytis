@@ -205,15 +205,20 @@ def parse_args() -> argparse.Namespace:
         help="Read a JSON array of batch render entries from stdin",
     )
     parser.add_argument(
+        "--worker",
+        action="store_true",
+        help="Run a long-lived JSON-lines worker over stdin/stdout",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="Fail on missing local assets instead of reporting them in the output",
     )
     args = parser.parse_args()
 
-    if args.batch_stdin:
+    if args.batch_stdin or args.worker:
         if args.file or args.image_base_slug:
-            parser.error("--batch-stdin cannot be combined with --file or --image-base-slug")
+            parser.error("--batch-stdin/--worker cannot be combined with --file or --image-base-slug")
         return args
 
     if not args.file or not args.image_base_slug:
@@ -528,6 +533,65 @@ def render_batch(strict: bool) -> list[dict[str, Any]]:
     return results
 
 
+def handle_worker_request(request: dict[str, Any]) -> dict[str, Any]:
+    request_id = request.get("id")
+    if not isinstance(request_id, str) or not request_id:
+        raise RstRenderError("Invalid worker request: missing id.")
+
+    raw_file = request.get("file")
+    image_base_slug = request.get("imageBaseSlug")
+    strict = request.get("strict", True)
+
+    if not isinstance(raw_file, str) or not isinstance(image_base_slug, str):
+        raise RstRenderError("Invalid worker request: missing file or imageBaseSlug.")
+    if not isinstance(strict, bool):
+        raise RstRenderError("Invalid worker request: strict must be a boolean.")
+
+    source_file = resolve_source_file(raw_file)
+    if not source_file.exists():
+        return {
+            "id": request_id,
+            "ok": False,
+            "error": f"rST file not found: {source_file}",
+        }
+
+    try:
+        return {
+            "id": request_id,
+            "ok": True,
+            "result": render_single_file(source_file, image_base_slug, strict),
+        }
+    except (RstRenderError, OSError, ValueError, KeyError, AttributeError) as exc:
+        return {
+            "id": request_id,
+            "ok": False,
+            "error": str(exc),
+        }
+
+
+def run_worker() -> int:
+    for raw_line in sys.stdin:
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        try:
+            request = json.loads(line)
+            if not isinstance(request, dict):
+                raise RstRenderError("Invalid worker request: expected an object.")
+            response = handle_worker_request(request)
+        except (json.JSONDecodeError, RstRenderError) as exc:
+            response = {
+                "id": None,
+                "ok": False,
+                "error": str(exc),
+            }
+
+        print(json.dumps(response, ensure_ascii=False), flush=True)
+
+    return 0
+
+
 def main() -> int:
     args = parse_args()
     source_file: Path | None = None
@@ -542,6 +606,8 @@ def main() -> int:
         return 1
 
     try:
+        if args.worker:
+            return run_worker()
         if args.batch_stdin:
             print(json.dumps(render_batch(args.strict), ensure_ascii=False))
             return 0
