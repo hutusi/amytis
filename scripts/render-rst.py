@@ -542,6 +542,7 @@ def render_batch(strict: bool) -> list[dict[str, Any]]:
 
 def main() -> int:
     args = parse_args()
+    source_file: Path | None = None
 
     try:
         from docutils.core import publish_doctree  # noqa: F401
@@ -568,7 +569,10 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
     except (OSError, ValueError, KeyError, AttributeError) as exc:
-        print(f"Failed to render {source_file}: {exc}", file=sys.stderr)
+        if source_file is not None:
+            print(f"Failed to render {source_file}: {exc}", file=sys.stderr)
+        else:
+            print(f"Failed to render: {exc}", file=sys.stderr)
         return 1
     except Exception:
         raise

@@ -171,6 +171,14 @@ const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
 const seriesTitleCache = new Map<string, Map<string, string | undefined>>();
 let pythonRstRendererAvailable: boolean | null = null;
 
+const PYTHON_RUNTIME_UNAVAILABLE_PATTERN = /docutils|No module named|not found|interpreter/i;
+
+function isPythonRuntimeUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.message.includes('__RST_FALLBACK__')) return true;
+  return PYTHON_RUNTIME_UNAVAILABLE_PATTERN.test(error.message);
+}
+
 function shouldUsePythonRstRenderer(): boolean {
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '0') return false;
@@ -589,12 +597,6 @@ function parseRstFile(
   let parsedReadingTime: string;
   let parsedHtml: string | undefined;
   let data: ReturnType<typeof parseRstDocument>['metadata'];
-  const isPythonRuntimeUnavailable = (error: unknown): boolean => {
-    if (!(error instanceof Error)) return false;
-    if (error.message.includes('__RST_FALLBACK__')) return true;
-    return /docutils|No module named|not found|interpreter/i.test(error.message);
-  };
-
   try {
     if (preRendered) {
       const rendered = preRendered;
@@ -779,7 +781,7 @@ export function getAllPosts(): PostData[] {
         );
         pythonRstRendererAvailable = true;
       } catch (error) {
-        if (error instanceof Error && /docutils|No module named|not found|interpreter/i.test(error.message)) {
+        if (isPythonRuntimeUnavailable(error)) {
           pythonRstRendererAvailable = false;
         } else {
           throw error;
