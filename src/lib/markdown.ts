@@ -6,7 +6,7 @@ import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
 import { parseRstDocument } from './rst';
-import { renderRstFile } from './rst-renderer';
+import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from './rst-renderer';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
 const pagesDirectory = path.join(process.cwd(), 'content');
@@ -143,6 +143,13 @@ interface SeriesContentEntry {
   dateFromFileName?: string;
 }
 
+interface PendingRstPostEntry {
+  fullPath: string;
+  slug: string;
+  dateFromFileName?: string;
+  seriesSlug?: string;
+}
+
 function getCacheEnvKey(): string {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
@@ -163,6 +170,21 @@ const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>
 const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
 const seriesTitleCache = new Map<string, Map<string, string | undefined>>();
 let pythonRstRendererAvailable: boolean | null = null;
+
+const PYTHON_RUNTIME_UNAVAILABLE_PATTERN = /docutils|No module named|python(?:3)? .*not found|interpreter not found|ENOENT.*python/i;
+
+function isPythonRuntimeUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.message.includes('__RST_FALLBACK__')) return true;
+  if (error.message.includes('rST file not found')) return false;
+  return PYTHON_RUNTIME_UNAVAILABLE_PATTERN.test(error.message);
+}
+
+function getRstImageBaseSlug(fullPath: string, slug: string): string {
+  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
+    path.dirname(fullPath) === contentDirectory;
+  return isRootFlatPost ? 'posts' : `posts/${slug}`;
+}
 
 function shouldUsePythonRstRenderer(): boolean {
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
@@ -562,10 +584,14 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   };
 }
 
-function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
-  const isRootFlatPost = path.basename(fullPath) !== 'index.rst' &&
-    path.dirname(fullPath) === contentDirectory;
-  const imageBaseSlug = isRootFlatPost ? 'posts' : `posts/${slug}`;
+function parseRstFile(
+  fullPath: string,
+  slug: string,
+  dateFromFileName?: string,
+  seriesName?: string,
+  preRendered?: RenderedRstDocument,
+): PostData {
+  const imageBaseSlug = getRstImageBaseSlug(fullPath, slug);
   const fileContents = fs.readFileSync(fullPath, 'utf8');
 
   let parsedTitle: string;
@@ -576,14 +602,18 @@ function parseRstFile(fullPath: string, slug: string, dateFromFileName?: string,
   let parsedReadingTime: string;
   let parsedHtml: string | undefined;
   let data: ReturnType<typeof parseRstDocument>['metadata'];
-  const isPythonRuntimeUnavailable = (error: unknown): boolean => {
-    if (!(error instanceof Error)) return false;
-    if (error.message.includes('__RST_FALLBACK__')) return true;
-    return /docutils|No module named|not found|interpreter/i.test(error.message);
-  };
-
   try {
-    if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
+    if (preRendered) {
+      const rendered = preRendered;
+      parsedTitle = rendered.title;
+      parsedBody = rendered.text;
+      parsedText = rendered.text;
+      parsedHeadings = rendered.headings;
+      parsedExcerpt = rendered.excerpt;
+      parsedReadingTime = rendered.readingTime;
+      parsedHtml = rendered.html;
+      data = rendered.metadata;
+    } else if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
       const rendered = renderRstFile(fullPath, imageBaseSlug);
       pythonRstRendererAvailable = true;
       parsedTitle = rendered.title;
@@ -681,6 +711,7 @@ export function getAllPosts(): PostData[] {
   if (cached) return cached;
 
   const allPostsData: PostData[] = [];
+  const pendingRstPosts: PendingRstPostEntry[] = [];
 
   // Helper to process a directory
   const processDirectory = (dir: string, isSeriesDir: boolean = false) => {
@@ -704,11 +735,16 @@ export function getAllPosts(): PostData[] {
           if (!indexInfo) return;
 
           getSeriesContentEntries(seriesSlug).forEach(entry => {
-            allPostsData.push(
-              indexInfo.format === 'rst'
-                ? parseRstFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
-                : parseMarkdownFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug)
-            );
+            if (indexInfo.format === 'rst') {
+              pendingRstPosts.push({
+                fullPath: entry.fullPath,
+                slug: entry.slug,
+                dateFromFileName: entry.dateFromFileName,
+                seriesSlug,
+              });
+            } else {
+              allPostsData.push(parseMarkdownFile(entry.fullPath, entry.slug, entry.dateFromFileName, seriesSlug));
+            }
           });
           return;
         }
@@ -733,6 +769,40 @@ export function getAllPosts(): PostData[] {
 
   processDirectory(contentDirectory);
   processDirectory(seriesDirectory, true);
+
+  if (pendingRstPosts.length > 0) {
+    let batchRenderedByFile: Map<string, RenderedRstDocument> | null = null;
+
+    if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
+      try {
+        batchRenderedByFile = renderRstFilesBatch(
+          pendingRstPosts.map(entry => ({
+            file: entry.fullPath,
+            imageBaseSlug: getRstImageBaseSlug(entry.fullPath, entry.slug),
+          }))
+        );
+        pythonRstRendererAvailable = true;
+      } catch (error) {
+        if (isPythonRuntimeUnavailable(error)) {
+          pythonRstRendererAvailable = false;
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    pendingRstPosts.forEach(entry => {
+      allPostsData.push(
+        parseRstFile(
+          entry.fullPath,
+          entry.slug,
+          entry.dateFromFileName,
+          entry.seriesSlug,
+          batchRenderedByFile?.get(entry.fullPath),
+        )
+      );
+    });
+  }
 
   const result = allPostsData
     .filter(post => {
