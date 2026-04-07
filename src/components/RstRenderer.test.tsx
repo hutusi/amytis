@@ -28,6 +28,31 @@ describe('RstRenderer', () => {
     expect(html).not.toContain('javascript:alert(4)');
   });
 
+  test('blocks data urls on images', () => {
+    const html = renderToStaticMarkup(
+      <RstRenderer
+        content="Fallback body"
+        html={'<p><img src="data:image/svg+xml,<svg onload=alert(1)>" alt="Bad" /></p>'}
+      />
+    );
+
+    expect(html).toContain('<img');
+    expect(html).not.toContain('data:image');
+  });
+
+  test('preserves MathML elements', () => {
+    const html = renderToStaticMarkup(
+      <RstRenderer
+        content="Fallback body"
+        html={'<math xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>x</mi><mo>=</mo><mn>2</mn></mrow></math>'}
+      />
+    );
+
+    expect(html).toContain('<math');
+    expect(html).toContain('<mrow');
+    expect(html).toContain('<mi>x</mi>');
+  });
+
   test('renders converted headings, links, and code blocks through the markdown renderer', () => {
     const html = renderToStaticMarkup(
       <RstRenderer
