@@ -533,10 +533,22 @@ body {
 .rst-rendered pre.literal-block,
 .rst-rendered pre.code.literal-block {
   overflow-x: auto;
-  border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 28%, transparent);
   border-radius: 0.875rem;
-  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+  background: color-mix(in srgb, var(--heading) 7%, var(--background));
   padding: 1rem 1.25rem;
+  color: var(--heading);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 60%, transparent);
+}
+
+.dark .rst-rendered pre.literal-block,
+.dark .rst-rendered pre.code.literal-block {
+  border-color: color-mix(in srgb, var(--muted) 22%, transparent);
+  background: color-mix(in srgb, var(--foreground) 9%, var(--background));
+  color: var(--foreground);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
 }
 
 .rst-rendered pre.code.literal-block code {
