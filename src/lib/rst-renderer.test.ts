@@ -141,18 +141,17 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
-  fixtureTest('falls back cleanly for unresolved external-style :doc: targets', () => {
+  fixtureTest('resolves cross-series :doc: targets when the target content exists locally', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/无名概念的深入探讨.rst',
       'posts/无名概念的深入探讨'
     );
 
     expect(doc.html).not.toContain('system-message');
-    expect(doc.html).toContain('<span class="docutils literal">道具体是指什么</span>');
+    expect(doc.html).toContain('href="/道德经直译/道具体是指什么"');
+    expect(doc.html).toContain('href="/道德经直译/无名"');
     expect(doc.html).toContain('href="/软件构架设计/弟子规：美国军方禁止在C语言程序中使用malloc"');
-    expect(doc.warnings.length).toBe(2);
-    expect(doc.warnings[0]).toContain('../道德经直译/道具体是指什么');
-    expect(doc.warnings[1]).toContain('../道德经直译/无名');
+    expect(doc.warnings).toEqual([]);
   });
 
   fixtureTest('renders real code blocks through docutils with pygments classes', () => {

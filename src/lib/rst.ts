@@ -108,16 +108,20 @@ function parseCsv(value: string): string[] {
 }
 
 function parseDate(value: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  const match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!match) {
     throw new RstParseError(`Invalid date: ${value}`);
   }
 
-  const parsed = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+  const [, year, month, day] = match;
+  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+  const parsed = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== normalized) {
     throw new RstParseError(`Invalid date: ${value}`);
   }
 
-  return value;
+  return normalized;
 }
 
 function parseSort(value: string): 'date-desc' | 'date-asc' | 'manual' {

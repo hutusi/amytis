@@ -83,6 +83,19 @@ describe('rst utils', () => {
     ].join('\n'))).toThrow(RstParseError);
   });
 
+  test('accepts legacy non-zero-padded dates and normalizes them', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      ':date: 2022-3-17',
+      '',
+      'Body',
+    ].join('\n'));
+
+    expect(doc.metadata.date).toBe('2022-03-17');
+  });
+
   test('accepts leading comments and metadata before the document title', () => {
     const doc = parseRstDocument([
       '.. Kenneth Lee 版权所有 2018-2020',

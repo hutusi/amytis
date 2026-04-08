@@ -100,16 +100,20 @@ function parseStringArray(field: string, value: unknown): string[] {
 
 function parseDate(value: unknown): string {
   const date = parseString('date', value);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  const match = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!match) {
     throw new RstParseError(`Invalid date: ${date}`);
   }
 
-  const parsed = new Date(`${date}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+  const [, year, month, day] = match;
+  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+  const parsed = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== normalized) {
     throw new RstParseError(`Invalid date: ${date}`);
   }
 
-  return date;
+  return normalized;
 }
 
 function parseSort(value: unknown): 'date-desc' | 'date-asc' | 'manual' {
