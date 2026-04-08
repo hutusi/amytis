@@ -53,6 +53,20 @@ describe('RstRenderer', () => {
     expect(html).toContain('<mi>x</mi>');
   });
 
+  test('wraps rendered rst tables with the same scroll container pattern as markdown', () => {
+    const html = renderToStaticMarkup(
+      <RstRenderer
+        content="Fallback body"
+        html={'<table><thead><tr><th>A</th></tr></thead><tbody><tr><td>B</td></tr></tbody></table>'}
+      />
+    );
+
+    expect(html).toContain('class="rst-table-wrapper"');
+    expect(html).toContain('<table>');
+    expect(html).toContain('<th>A</th>');
+    expect(html).toContain('<td>B</td>');
+  });
+
   test('renders converted headings, links, and code blocks through the markdown renderer', () => {
     const html = renderToStaticMarkup(
       <RstRenderer

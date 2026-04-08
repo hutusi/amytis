@@ -93,13 +93,18 @@ function sanitizeRenderedHtml(html: string): string {
 
 export default function RstRenderer({ content, html, latex = false, slug, slugRegistry }: RstRendererProps) {
   if (html) {
+    const sanitizedHtml = sanitizeRenderedHtml(html).replace(
+      /<table\b([^>]*)>/g,
+      '<div class="rst-table-wrapper"><table$1>'
+    ).replace(/<\/table>/g, '</table></div>');
+
     return (
       <>
         {latex && <KatexStyles />}
         <div className="bg-background">
           <div
             className={`${proseClasses} rst-rendered`}
-            dangerouslySetInnerHTML={{ __html: sanitizeRenderedHtml(html) }}
+            dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
         </div>
       </>
