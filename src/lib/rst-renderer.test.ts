@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
 import { RstParseError } from './rst';
+import { getPostUrl } from './urls';
 
 const localDocutilsPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
 const hasLocalDocutils = existsSync(localDocutilsPython);
@@ -41,6 +42,14 @@ describe('rst-renderer bridge', () => {
       redirectFrom: ['/series/old-slug'],
       coverImage: './images/cover.png',
     });
+  });
+
+  test.each([
+    ['2022-3-17', '2022-03-17'],
+    ['2022-3-7', '2022-03-07'],
+  ])('normalizes legacy non-zero-padded dates from python output (%s)', (input, expected) => {
+    const metadata = normalizePythonRstMetadata({ date: input });
+    expect(metadata.date).toBe(expected);
   });
 
   test('rejects malformed supported metadata from python output', () => {
@@ -105,7 +114,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.metadata.authors).toEqual(['John Hu']);
   });
 
-  fixtureTest('derives excerpt and text from body content instead of docinfo', () => {
+  fixtureTest('derives text from body content without auto-generating an excerpt', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/关于队列模型.rst',
       'posts/关于队列模型'
@@ -114,7 +123,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.text.startsWith('关于队列模型')).toBe(true);
     expect(doc.text.includes('Kenneth Lee 版权所有 2024')).toBe(false);
     expect(doc.text.includes('\n\n0.2\n\n')).toBe(false);
-    expect(doc.excerpt.startsWith('关于队列模型')).toBe(true);
+    expect(doc.excerpt).toBe('');
   });
 
   fixtureTest('does not render docinfo or comments at the top of post HTML', () => {
@@ -141,18 +150,21 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
-  fixtureTest('falls back cleanly for unresolved external-style :doc: targets', () => {
+  fixtureTest('resolves cross-series :doc: targets when the target content exists locally', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/无名概念的深入探讨.rst',
       'posts/无名概念的深入探讨'
     );
 
+    const daoConcreteUrl = getPostUrl({ series: '道德经直译', slug: '道具体是指什么' });
+    const daoNamelessUrl = getPostUrl({ series: '道德经直译', slug: '无名' });
+    const discipleRulesUrl = getPostUrl({ series: '软件构架设计', slug: '弟子规：美国军方禁止在C语言程序中使用malloc' });
+
     expect(doc.html).not.toContain('system-message');
-    expect(doc.html).toContain('<span class="docutils literal">道具体是指什么</span>');
-    expect(doc.html).toContain('href="/软件构架设计/弟子规：美国军方禁止在C语言程序中使用malloc"');
-    expect(doc.warnings.length).toBe(2);
-    expect(doc.warnings[0]).toContain('../道德经直译/道具体是指什么');
-    expect(doc.warnings[1]).toContain('../道德经直译/无名');
+    expect(doc.html).toContain(`href="${daoConcreteUrl}"`);
+    expect(doc.html).toContain(`href="${daoNamelessUrl}"`);
+    expect(doc.html).toContain(`href="${discipleRulesUrl}"`);
+    expect(doc.warnings).toEqual([]);
   });
 
   fixtureTest('renders real code blocks through docutils with pygments classes', () => {
@@ -188,7 +200,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.html).toContain('class="footnote-list brackets"');
     expect(doc.text).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
     expect(doc.text).not.toContain('关于这一点，可以参考这里：计算进化史');
-    expect(doc.excerpt).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
+    expect(doc.excerpt).toBe('');
   });
 
   fixtureTest('renders legacy :ref: roles as internal links instead of system-message blocks', () => {

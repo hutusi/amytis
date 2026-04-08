@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { parseRstDocument, RstParseError } from "../../src/lib/rst";
 import {
   getAllSeries,
+  getAdjacentPosts,
   getSeriesData,
   getSeriesPosts,
   getFeaturedPosts,
@@ -126,6 +127,16 @@ describe("Integration: Series", () => {
     const posts = getSeriesPosts("rst-toctree");
     expect(posts.map(post => post.slug)).toEqual(["second-post", "first-post"]);
     expect(posts.every(post => post.sourceFormat === "rst")).toBe(true);
+  });
+
+  test("getAdjacentPosts follows rST series order instead of global post date order", () => {
+    const first = getAdjacentPosts("getting-started");
+    expect(first.prev?.slug ?? null).toBeNull();
+    expect(first.next?.slug).toBe("deeper-notes");
+
+    const second = getAdjacentPosts("deeper-notes");
+    expect(second.prev?.slug).toBe("getting-started");
+    expect(second.next?.slug ?? null).toBeNull();
   });
 
   test("explicit rST posts metadata takes precedence over toctree order", () => {

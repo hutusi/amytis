@@ -1239,6 +1239,27 @@ export function getAdjacentPosts(slug: string): { prev: PostData | null; next: P
     bySlug = new Map();
     adjacentPostsCache.set(cacheKey, bySlug);
   }
+  const currentPost = getPostBySlug(slug);
+  if (currentPost?.series) {
+    const seriesCacheKey = `${currentPost.series}/${slug}`;
+    const cachedSeries = bySlug.get(seriesCacheKey);
+    if (cachedSeries) return cachedSeries;
+
+    const seriesData = getSeriesData(currentPost.series);
+    if (seriesData?.type !== 'collection') {
+      const seriesPosts = getSeriesPosts(currentPost.series);
+      const seriesIndex = seriesPosts.findIndex(post => post.slug === slug);
+      if (seriesIndex !== -1) {
+        const seriesResult = {
+          prev: seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : null,
+          next: seriesIndex < seriesPosts.length - 1 ? seriesPosts[seriesIndex + 1] : null,
+        };
+        bySlug.set(seriesCacheKey, seriesResult);
+        return seriesResult;
+      }
+    }
+  }
+
   const cached = bySlug.get(slug);
   if (cached) return cached;
 

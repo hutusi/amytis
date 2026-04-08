@@ -83,6 +83,19 @@ describe('rst utils', () => {
     ].join('\n'))).toThrow(RstParseError);
   });
 
+  test('accepts legacy non-zero-padded dates and normalizes them', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      ':date: 2022-3-17',
+      '',
+      'Body',
+    ].join('\n'));
+
+    expect(doc.metadata.date).toBe('2022-03-17');
+  });
+
   test('accepts leading comments and metadata before the document title', () => {
     const doc = parseRstDocument([
       '.. Kenneth Lee 版权所有 2018-2020',
@@ -101,7 +114,7 @@ describe('rst utils', () => {
     expect(doc.body).toBe('正文。');
   });
 
-  test('strips markdown links when generating excerpts', () => {
+  test('does not auto-generate excerpts when rST metadata omits them', () => {
     const doc = parseRstDocument([
       'Title',
       '=====',
@@ -109,8 +122,19 @@ describe('rst utils', () => {
       'Paragraph with `Link <https://example.com>`_.',
     ].join('\n'));
 
-    expect(doc.excerpt).toContain('Link');
-    expect(doc.excerpt).not.toContain('[Link]');
-    expect(doc.excerpt).not.toContain('https://example.com');
+    expect(doc.excerpt).toBe('');
+  });
+
+  test('preserves explicit excerpts from rST metadata', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      ':excerpt: Paragraph with `Link <https://example.com>`_.',
+      '',
+      'Body.',
+    ].join('\n'));
+
+    expect(doc.excerpt).toBe('Paragraph with `Link <https://example.com>`_.');
   });
 });

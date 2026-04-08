@@ -108,16 +108,20 @@ function parseCsv(value: string): string[] {
 }
 
 function parseDate(value: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  const match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!match) {
     throw new RstParseError(`Invalid date: ${value}`);
   }
 
-  const parsed = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+  const [, year, month, day] = match;
+  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+  const parsed = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== normalized) {
     throw new RstParseError(`Invalid date: ${value}`);
   }
 
-  return value;
+  return normalized;
 }
 
 function parseSort(value: string): 'date-desc' | 'date-asc' | 'manual' {
@@ -431,22 +435,6 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`;
 }
 
-function generateExcerpt(content: string): string {
-  let plain = content.replace(/^#+\s+/gm, '');
-  plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
-  plain = plain.replace(/`([^`]+)`/g, '$1');
-  plain = plain.replace(/^>\s+/gm, '');
-  plain = plain.replace(/\s+/g, ' ').trim();
-
-  if (plain.length <= 160) {
-    return plain;
-  }
-  return plain.slice(0, 160).trim() + '...';
-}
-
 function getHeadings(content: string): RstHeading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
   const headings: RstHeading[] = [];
@@ -476,7 +464,7 @@ export function parseRstDocument(source: string): ParsedRstDocument {
     markdownBody,
     metadata,
     headings: getHeadings(markdownBody),
-    excerpt: metadata.excerpt || generateExcerpt(markdownBody),
+    excerpt: metadata.excerpt ?? '',
     readingTime: calculateReadingTime(markdownBody),
   };
 }
