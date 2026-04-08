@@ -9,6 +9,14 @@ const flowsSrcDir = path.join(process.cwd(), 'content', 'flows');
 const destDir = path.join(process.cwd(), 'public', 'posts');
 const booksDestDir = path.join(process.cwd(), 'public', 'books');
 const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
+const publicDir = path.join(process.cwd(), 'public');
+
+function resetGeneratedAssetDirs() {
+  fs.rmSync(destDir, { recursive: true, force: true });
+  fs.rmSync(booksDestDir, { recursive: true, force: true });
+  fs.rmSync(flowsDestDir, { recursive: true, force: true });
+  fs.rmSync(path.join(publicDir, 'nextImageExportOptimizer'), { recursive: true, force: true });
+}
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
@@ -57,6 +65,79 @@ function getSlugFromFilename(filename: string): string {
   return nameWithoutExt;
 }
 
+function isLocalAssetReference(rawPath: string): boolean {
+  const trimmed = rawPath.trim();
+  return Boolean(trimmed) &&
+    !trimmed.startsWith('#') &&
+    !trimmed.startsWith('/') &&
+    !trimmed.startsWith('http://') &&
+    !trimmed.startsWith('https://') &&
+    !trimmed.startsWith('data:') &&
+    !trimmed.startsWith('mailto:') &&
+    !trimmed.startsWith('javascript:');
+}
+
+function normalizeReferencedAssetPath(rawPath: string): string | null {
+  const trimmed = rawPath.trim().replace(/^['"]|['"]$/g, '');
+  const withoutFragment = trimmed.split('#')[0]?.split('?')[0]?.trim();
+  if (!withoutFragment || !isLocalAssetReference(withoutFragment)) {
+    return null;
+  }
+
+  return withoutFragment;
+}
+
+function extractReferencedAssetPaths(filePath: string): string[] {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const references = new Set<string>();
+  const patterns = [
+    /\!\[[^\]]*\]\(([^)]+)\)/g,
+    /\[[^\]]*\]\(([^)]+)\)/g,
+    /\b(?:src|href|poster)=["']([^"']+)["']/g,
+    /^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm,
+    /^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of content.matchAll(pattern)) {
+      const candidate = normalizeReferencedAssetPath(match[1] ?? '');
+      if (candidate) {
+        references.add(candidate);
+      }
+    }
+  }
+
+  return [...references];
+}
+
+function copyReferencedAssets(sourceFile: string, rootDir: string, destPostDir: string) {
+  const references = extractReferencedAssetPaths(sourceFile);
+
+  references.forEach((reference) => {
+    const absolutePath = path.resolve(path.dirname(sourceFile), reference);
+    const relativeToRoot = path.relative(rootDir, absolutePath);
+
+    if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot) || !fs.existsSync(absolutePath)) {
+      return;
+    }
+
+    const sourceStat = fs.statSync(absolutePath);
+    if (sourceStat.isDirectory()) {
+      return;
+    }
+
+    if (absolutePath.endsWith('.md') || absolutePath.endsWith('.mdx') || absolutePath.endsWith('.rst')) {
+      return;
+    }
+
+    const destPath = path.join(destPostDir, relativeToRoot);
+    if (!fs.existsSync(path.dirname(destPath))) {
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    }
+    fs.copyFileSync(absolutePath, destPath);
+  });
+}
+
 function processPosts() {
   if (fs.existsSync(srcDir)) {
     const entries = fs.readdirSync(srcDir, { withFileTypes: true });
@@ -69,6 +150,16 @@ function processPosts() {
 
         console.log(`Processing Post: ${entry.name} -> ${targetName}`);
         copyRecursive(srcPostDir, destPostDir);
+      } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx') || entry.name.endsWith('.rst'))) {
+        const targetName = getSlugFromFilename(entry.name);
+        const sourceFile = path.join(srcDir, entry.name);
+        const destPostDir = path.join(destDir, targetName);
+
+        console.log(`Processing Flat Post: ${entry.name} -> ${targetName}`);
+        if (!fs.existsSync(destPostDir)) {
+          fs.mkdirSync(destPostDir, { recursive: true });
+        }
+        copyReferencedAssets(sourceFile, srcDir, destPostDir);
       }
     });
   }
@@ -81,11 +172,6 @@ function isPostFolder(dirPath: string): boolean {
          fs.existsSync(path.join(dirPath, 'index.rst'));
 }
 
-// Check if a directory is an asset folder (not a post folder)
-function isAssetFolder(dirPath: string): boolean {
-  return !isPostFolder(dirPath);
-}
-
 function processSeries() {
   if (!fs.existsSync(seriesSrcDir)) return;
 
@@ -96,38 +182,22 @@ function processSeries() {
       const seriesPath = path.join(seriesSrcDir, seriesEntry.name);
       const items = fs.readdirSync(seriesPath, { withFileTypes: true });
 
-      // First pass: identify shared asset folders at series level (folders that are NOT posts)
-      const sharedAssetFolders = items
-        .filter(item => item.isDirectory() && isAssetFolder(path.join(seriesPath, item.name)))
-        .map(item => item.name);
-
       // Process items in series folder
       items.forEach(item => {
         if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.mdx') || item.name.endsWith('.rst'))) {
           // File-based post or series index
           const isSeriesIndex = item.name.startsWith('index.') || item.name.startsWith('README.');
           const targetSlug = isSeriesIndex ? seriesEntry.name : getSlugFromFilename(item.name);
+          const sourceFile = path.join(seriesPath, item.name);
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series File: ${item.name} -> ${targetSlug}`);
 
-          // Only copy shared asset folders (like images/, assets/), not sibling post folders
-          sharedAssetFolders.forEach(folderName => {
-            const srcPath = path.join(seriesPath, folderName);
-            const destPath = path.join(destPostDir, folderName);
-            copyRecursive(srcPath, destPath);
-          });
+          if (!fs.existsSync(destPostDir)) {
+            fs.mkdirSync(destPostDir, { recursive: true });
+          }
 
-          // Copy any non-markdown files at the series root level
-          items.filter(sub => sub.isFile() && !sub.name.endsWith('.md') && !sub.name.endsWith('.mdx') && !sub.name.endsWith('.rst'))
-            .forEach(sub => {
-              const srcPath = path.join(seriesPath, sub.name);
-              const destPath = path.join(destPostDir, sub.name);
-              if (!fs.existsSync(destPostDir)) {
-                fs.mkdirSync(destPostDir, { recursive: true });
-              }
-              fs.copyFileSync(srcPath, destPath);
-            });
+          copyReferencedAssets(sourceFile, seriesPath, destPostDir);
 
         } else if (item.isDirectory() && isPostFolder(path.join(seriesPath, item.name))) {
           // Folder-based post: copy only its own assets
@@ -206,6 +276,7 @@ function processFlows() {
 }
 
 console.log('Copying assets...');
+resetGeneratedAssetDirs();
 processPosts();
 processSeries();
 processBooks();
