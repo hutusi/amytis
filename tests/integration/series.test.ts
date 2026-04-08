@@ -130,12 +130,12 @@ describe("Integration: Series", () => {
   });
 
   test("getAdjacentPosts follows rST series order instead of global post date order", () => {
-    const first = getAdjacentPosts("second-post");
+    const first = getAdjacentPosts("getting-started");
     expect(first.prev?.slug ?? null).toBeNull();
-    expect(first.next?.slug).toBe("first-post");
+    expect(first.next?.slug).toBe("deeper-notes");
 
-    const second = getAdjacentPosts("first-post");
-    expect(second.prev?.slug).toBe("second-post");
+    const second = getAdjacentPosts("deeper-notes");
+    expect(second.prev?.slug).toBe("getting-started");
     expect(second.next?.slug ?? null).toBeNull();
   });
 
