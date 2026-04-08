@@ -11,7 +11,12 @@ if (!command) {
 
 const env = { ...process.env };
 if (!env.AMYTIS_RST_PYTHON) {
-  const localPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
+  const localPython = path.join(
+    process.cwd(),
+    '.venv-rst',
+    process.platform === 'win32' ? 'Scripts' : 'bin',
+    process.platform === 'win32' ? 'python.exe' : 'python',
+  );
   if (fs.existsSync(localPython)) {
     env.AMYTIS_RST_PYTHON = localPython;
   }
@@ -20,6 +25,7 @@ if (!env.AMYTIS_RST_PYTHON) {
 const child = spawn(command, args, {
   stdio: 'inherit',
   env,
+  shell: process.platform === 'win32',
 });
 
 child.on('exit', (code, signal) => {

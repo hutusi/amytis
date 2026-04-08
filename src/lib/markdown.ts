@@ -741,7 +741,9 @@ function parseRstFile(
   const toctreePosts = isSeriesIndexRst(fullPath, slug, seriesName)
     ? extractRstToctreePosts(fileContents)
     : [];
-  const seriesPosts = data.posts && data.posts.length > 0 ? data.posts : (toctreePosts.length > 0 ? toctreePosts : undefined);
+  const seriesPosts = data.posts && data.posts.length > 0
+    ? data.posts
+    : ((data.sort === undefined || data.sort === 'manual') && toctreePosts.length > 0 ? toctreePosts : undefined);
   const sort = data.sort ?? (seriesPosts ? 'manual' : 'date-desc');
 
   return {
