@@ -121,12 +121,16 @@ function copyReferencedAssets(sourceFile: string, rootDir: string, destPostDir: 
       return;
     }
 
-    const destPath = path.join(destPostDir, relativeToRoot);
-    if (fs.statSync(absolutePath).isDirectory()) {
-      copyRecursive(absolutePath, destPath);
+    const sourceStat = fs.statSync(absolutePath);
+    if (sourceStat.isDirectory()) {
       return;
     }
 
+    if (absolutePath.endsWith('.md') || absolutePath.endsWith('.mdx') || absolutePath.endsWith('.rst')) {
+      return;
+    }
+
+    const destPath = path.join(destPostDir, relativeToRoot);
     if (!fs.existsSync(path.dirname(destPath))) {
       fs.mkdirSync(path.dirname(destPath), { recursive: true });
     }
@@ -146,6 +150,16 @@ function processPosts() {
 
         console.log(`Processing Post: ${entry.name} -> ${targetName}`);
         copyRecursive(srcPostDir, destPostDir);
+      } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx') || entry.name.endsWith('.rst'))) {
+        const targetName = getSlugFromFilename(entry.name);
+        const sourceFile = path.join(srcDir, entry.name);
+        const destPostDir = path.join(destDir, targetName);
+
+        console.log(`Processing Flat Post: ${entry.name} -> ${targetName}`);
+        if (!fs.existsSync(destPostDir)) {
+          fs.mkdirSync(destPostDir, { recursive: true });
+        }
+        copyReferencedAssets(sourceFile, srcDir, destPostDir);
       }
     });
   }
