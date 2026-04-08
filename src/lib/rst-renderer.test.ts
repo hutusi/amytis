@@ -105,7 +105,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.metadata.authors).toEqual(['John Hu']);
   });
 
-  fixtureTest('derives excerpt and text from body content instead of docinfo', () => {
+  fixtureTest('derives text from body content without auto-generating an excerpt', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/关于队列模型.rst',
       'posts/关于队列模型'
@@ -114,7 +114,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.text.startsWith('关于队列模型')).toBe(true);
     expect(doc.text.includes('Kenneth Lee 版权所有 2024')).toBe(false);
     expect(doc.text.includes('\n\n0.2\n\n')).toBe(false);
-    expect(doc.excerpt.startsWith('关于队列模型')).toBe(true);
+    expect(doc.excerpt).toBe('');
   });
 
   fixtureTest('does not render docinfo or comments at the top of post HTML', () => {
@@ -187,7 +187,7 @@ describe('rst-renderer bridge', () => {
     expect(doc.html).toContain('class="footnote-list brackets"');
     expect(doc.text).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
     expect(doc.text).not.toContain('关于这一点，可以参考这里：计算进化史');
-    expect(doc.excerpt).not.toContain('我这里说争论纯粹是指技术上的真理探讨');
+    expect(doc.excerpt).toBe('');
   });
 
   fixtureTest('renders legacy :ref: roles as internal links instead of system-message blocks', () => {

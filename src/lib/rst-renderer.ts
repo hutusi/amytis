@@ -218,12 +218,6 @@ function calculateReadingTimeFromText(text: string): string {
   return `${Math.max(1, Math.ceil(estimatedMinutes))} min read`;
 }
 
-function generateExcerptFromText(text: string): string {
-  const plain = text.replace(/\s+/g, ' ').trim();
-  if (plain.length <= 160) return plain;
-  return `${plain.slice(0, 160).trim()}...`;
-}
-
 export function validatePythonRstResult(result: PythonRstRenderResult, filePath: string): void {
   if (!result || typeof result !== 'object') {
     throw new RstParseError(`Invalid renderer output for ${filePath}: expected object.`);
@@ -374,7 +368,7 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
     text: result.text,
     headings: result.headings,
     metadata,
-    excerpt: metadata.excerpt || generateExcerptFromText(result.text),
+    excerpt: metadata.excerpt ?? '',
     readingTime: calculateReadingTimeFromText(result.text),
     assets: result.assets ?? [],
     warnings: (result.warnings ?? []).map((warning) => String(warning)),
@@ -416,7 +410,7 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
       text: result.text,
       headings: result.headings,
       metadata,
-      excerpt: metadata.excerpt || generateExcerptFromText(result.text),
+      excerpt: metadata.excerpt ?? '',
       readingTime: calculateReadingTimeFromText(result.text),
       assets: result.assets ?? [],
       warnings: (result.warnings ?? []).map((warning) => String(warning)),

@@ -114,7 +114,7 @@ describe('rst utils', () => {
     expect(doc.body).toBe('正文。');
   });
 
-  test('strips markdown links when generating excerpts', () => {
+  test('does not auto-generate excerpts when rST metadata omits them', () => {
     const doc = parseRstDocument([
       'Title',
       '=====',
@@ -122,8 +122,19 @@ describe('rst utils', () => {
       'Paragraph with `Link <https://example.com>`_.',
     ].join('\n'));
 
-    expect(doc.excerpt).toContain('Link');
-    expect(doc.excerpt).not.toContain('[Link]');
-    expect(doc.excerpt).not.toContain('https://example.com');
+    expect(doc.excerpt).toBe('');
+  });
+
+  test('preserves explicit excerpts from rST metadata', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      ':excerpt: Paragraph with `Link <https://example.com>`_.',
+      '',
+      'Body.',
+    ].join('\n'));
+
+    expect(doc.excerpt).toBe('Paragraph with `Link <https://example.com>`_.');
   });
 });

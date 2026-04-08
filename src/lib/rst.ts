@@ -435,22 +435,6 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`;
 }
 
-function generateExcerpt(content: string): string {
-  let plain = content.replace(/^#+\s+/gm, '');
-  plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
-  plain = plain.replace(/`([^`]+)`/g, '$1');
-  plain = plain.replace(/^>\s+/gm, '');
-  plain = plain.replace(/\s+/g, ' ').trim();
-
-  if (plain.length <= 160) {
-    return plain;
-  }
-  return plain.slice(0, 160).trim() + '...';
-}
-
 function getHeadings(content: string): RstHeading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
   const headings: RstHeading[] = [];
@@ -480,7 +464,7 @@ export function parseRstDocument(source: string): ParsedRstDocument {
     markdownBody,
     metadata,
     headings: getHeadings(markdownBody),
-    excerpt: metadata.excerpt || generateExcerpt(markdownBody),
+    excerpt: metadata.excerpt ?? '',
     readingTime: calculateReadingTime(markdownBody),
   };
 }
