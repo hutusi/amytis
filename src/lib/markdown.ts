@@ -1242,6 +1242,23 @@ export function getAdjacentPosts(slug: string): { prev: PostData | null; next: P
   const cached = bySlug.get(slug);
   if (cached) return cached;
 
+  const currentPost = getPostBySlug(slug);
+  if (currentPost?.series) {
+    const seriesData = getSeriesData(currentPost.series);
+    if (seriesData?.type !== 'collection') {
+      const seriesPosts = getSeriesPosts(currentPost.series);
+      const seriesIndex = seriesPosts.findIndex(post => post.slug === slug);
+      if (seriesIndex !== -1) {
+        const seriesResult = {
+          prev: seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : null,
+          next: seriesIndex < seriesPosts.length - 1 ? seriesPosts[seriesIndex + 1] : null,
+        };
+        bySlug.set(slug, seriesResult);
+        return seriesResult;
+      }
+    }
+  }
+
   const allPosts = getAllPosts(); // sorted desc by date (newest first)
   const index = allPosts.findIndex(p => p.slug === slug);
   if (index === -1) {
