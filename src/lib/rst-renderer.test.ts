@@ -44,9 +44,12 @@ describe('rst-renderer bridge', () => {
     });
   });
 
-  test('normalizes legacy non-zero-padded dates from python output', () => {
-    const metadata = normalizePythonRstMetadata({ date: '2022-3-17' });
-    expect(metadata.date).toBe('2022-03-17');
+  test.each([
+    ['2022-3-17', '2022-03-17'],
+    ['2022-3-7', '2022-03-07'],
+  ])('normalizes legacy non-zero-padded dates from python output (%s)', (input, expected) => {
+    const metadata = normalizePythonRstMetadata({ date: input });
+    expect(metadata.date).toBe(expected);
   });
 
   test('rejects malformed supported metadata from python output', () => {
