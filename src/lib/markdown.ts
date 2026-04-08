@@ -186,6 +186,72 @@ function getRstImageBaseSlug(fullPath: string, slug: string): string {
   return isRootFlatPost ? 'posts' : `posts/${slug}`;
 }
 
+function isSeriesIndexRst(fullPath: string, slug: string, seriesName?: string): boolean {
+  return Boolean(
+    seriesName &&
+    slug === seriesName &&
+    (path.basename(fullPath) === 'index.rst' || path.basename(fullPath) === 'README.rst')
+  );
+}
+
+function slugFromRstToctreeTarget(target: string): string | null {
+  const trimmed = target.trim();
+  if (!trimmed || trimmed.startsWith(':')) return null;
+  if (/^[a-z]+:\/\//i.test(trimmed) || trimmed.startsWith('/')) return null;
+
+  const withoutAnchor = trimmed.split('#')[0]?.split('?')[0]?.trim();
+  if (!withoutAnchor) return null;
+
+  const normalized = withoutAnchor.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
+  if (!normalized || normalized.startsWith('../')) return null;
+
+  const withoutExt = normalized.replace(/\.rst$/i, '');
+  const parts = withoutExt.split('/').filter(Boolean);
+  if (parts.length === 0) return null;
+
+  const last = parts[parts.length - 1];
+  if (last === 'index' || last === 'README') {
+    return parts.length > 1 ? parts[parts.length - 2] : null;
+  }
+
+  return last;
+}
+
+function extractRstToctreePosts(source: string): string[] {
+  const lines = source.replace(/\r\n?/g, '\n').split('\n');
+  const posts: string[] = [];
+  const seen = new Set<string>();
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*\.\.\s+toctree::\s*$/.test(lines[i])) continue;
+
+    i++;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (!line.trim()) {
+        i++;
+        continue;
+      }
+      if (!/^\s+/.test(line)) {
+        i--;
+        break;
+      }
+
+      const trimmed = line.trim();
+      if (!trimmed.startsWith(':')) {
+        const slug = slugFromRstToctreeTarget(trimmed);
+        if (slug && !seen.has(slug)) {
+          seen.add(slug);
+          posts.push(slug);
+        }
+      }
+      i++;
+    }
+  }
+
+  return posts;
+}
+
 function shouldUsePythonRstRenderer(): boolean {
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '0') return false;
@@ -672,6 +738,14 @@ function parseRstFile(
     coverImage = `/${imageBaseSlug}/${cleanPath}`;
   }
 
+  const toctreePosts = isSeriesIndexRst(fullPath, slug, seriesName)
+    ? extractRstToctreePosts(fileContents)
+    : [];
+  const seriesPosts = data.posts && data.posts.length > 0
+    ? data.posts
+    : ((data.sort === undefined || data.sort === 'manual') && toctreePosts.length > 0 ? toctreePosts : undefined);
+  const sort = data.sort ?? (seriesPosts ? 'manual' : 'date-desc');
+
   return {
     slug,
     title: parsedTitle,
@@ -685,8 +759,8 @@ function parseRstFile(
     series: effectiveSeriesSlug,
     seriesTitle: effectiveSeriesSlug ? getSeriesTitle(effectiveSeriesSlug) : undefined,
     coverImage,
-    sort: data.sort ?? 'date-desc',
-    posts: data.posts,
+    sort,
+    posts: seriesPosts,
     type: data.type,
     featured: data.featured ?? false,
     pinned: data.pinned ?? false,

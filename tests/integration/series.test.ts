@@ -16,6 +16,8 @@ describe("Integration: Series", () => {
     expect(series).toHaveProperty("digital-garden");
     expect(series).toHaveProperty("rst-legacy");
     expect(series).toHaveProperty("rst-readme");
+    expect(series).toHaveProperty("rst-toctree");
+    expect(series).toHaveProperty("rst-toctree-precedence");
   });
 
   test("getSeriesData returns metadata with correct fields", () => {
@@ -48,6 +50,15 @@ describe("Integration: Series", () => {
     expect(data!.title).toBe("Rst README Series");
     expect(data!.sourceFormat).toBe("rst");
     expect(data!.posts).toEqual(["readme-index-post"]);
+  });
+
+  test("getSeriesData derives manual order from rST toctree when posts metadata is absent", () => {
+    const data = getSeriesData("rst-toctree");
+    expect(data).not.toBeNull();
+    expect(data!.title).toBe("Rst Toctree Series");
+    expect(data!.sourceFormat).toBe("rst");
+    expect(data!.sort).toBe("manual");
+    expect(data!.posts).toEqual(["second-post", "first-post"]);
   });
 
   test("getSeriesData rejects unsafe series slugs", () => {
@@ -109,6 +120,21 @@ describe("Integration: Series", () => {
     const posts = getSeriesPosts("rst-readme");
     expect(posts.map(post => post.slug)).toEqual(["readme-index-post"]);
     expect(posts[0]?.sourceFormat).toBe("rst");
+  });
+
+  test("getSeriesPosts follows rST toctree order when posts metadata is absent", () => {
+    const posts = getSeriesPosts("rst-toctree");
+    expect(posts.map(post => post.slug)).toEqual(["second-post", "first-post"]);
+    expect(posts.every(post => post.sourceFormat === "rst")).toBe(true);
+  });
+
+  test("explicit rST posts metadata takes precedence over toctree order", () => {
+    const data = getSeriesData("rst-toctree-precedence");
+    expect(data).not.toBeNull();
+    expect(data!.posts).toEqual(["first-post", "second-post"]);
+
+    const posts = getSeriesPosts("rst-toctree-precedence");
+    expect(posts.map(post => post.slug)).toEqual(["first-post", "second-post"]);
   });
 
   test("getFeaturedPosts returns only posts with featured: true", () => {

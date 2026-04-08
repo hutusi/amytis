@@ -13,9 +13,9 @@
   "private": false,
   "packageManager": "bun@1.3.4",
   "scripts": {
-    "dev": "next dev",
-    "build": "bun scripts/copy-assets.ts && bun run build:graph && next build && next-image-export-optimizer && pagefind --site out",
-    "build:dev": "bun scripts/copy-assets.ts && bun run build:graph && next build && pagefind --site out --output-path public/pagefind",
+    "dev": "bun scripts/run-with-rst-python.ts next dev",
+    "build": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && next-image-export-optimizer && pagefind --site out",
+    "build:dev": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && pagefind --site out --output-path public/pagefind",
     "build:graph": "NODE_ENV=production bun scripts/generate-knowledge-graph.ts",
     "validate": "bun run lint && bun run test && bun run build:dev",
     "clean": "rm -rf .next out public/posts public/books public/flows",

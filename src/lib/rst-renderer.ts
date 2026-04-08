@@ -50,6 +50,15 @@ interface PythonRstBatchResponseItem {
 }
 
 const rstRenderCache = new Map<string, RenderedRstDocument>();
+const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
+
+function canonicalizeSourcePath(filePath: string): string {
+  try {
+    return fs.realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
+}
 
 function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
   const stats = fs.statSync(filePath);
@@ -267,6 +276,7 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
     '--strict',
   ], {
     encoding: 'utf8',
+    maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
   });
 
   if (result.error) {
@@ -300,6 +310,7 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
   ], {
     encoding: 'utf8',
     input: JSON.stringify(entries),
+    maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
   });
 
   if (result.error) {
@@ -336,7 +347,7 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
     if (!item.result) {
       throw new RstParseError(`Python rST renderer batch returned no result for ${item.file}.`);
     }
-    renderedByFile.set(item.file, item.result);
+    renderedByFile.set(canonicalizeSourcePath(item.file), item.result);
   }
 
   return renderedByFile;
@@ -389,7 +400,7 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
 
   const batchResults = runPythonRstRendererBatch(uncachedEntries);
   for (const entry of uncachedEntries) {
-    const result = batchResults.get(entry.file);
+    const result = batchResults.get(canonicalizeSourcePath(entry.file));
     if (!result) {
       throw new RstParseError(`Python rST renderer batch returned no result for ${entry.file}.`);
     }
