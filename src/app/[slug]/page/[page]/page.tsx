@@ -57,6 +57,21 @@ export async function generateStaticParams() {
     }
   }
 
+  // Work around Next dev static-param checks for percent-encoded Unicode slugs
+  // under `output: "export"` — dev server may receive encoded forms of the
+  // prefix segment for paginated listings.
+  if (process.env.NODE_ENV !== 'production') {
+    const existing = new Set(params.map(p => `${p.slug}/${p.page}`));
+    for (const p of [...params]) {
+      const encodedSlug = encodeURIComponent(p.slug);
+      const key = `${encodedSlug}/${p.page}`;
+      if (!existing.has(key)) {
+        existing.add(key);
+        params.push({ slug: encodedSlug, page: p.page });
+      }
+    }
+  }
+
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
   // dynamicParams = false ensures any unrecognised slug/page combo returns 404.
   return params.length > 0 ? params : [{ slug: '_', page: '2' }];

@@ -167,6 +167,24 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
+  fixtureTest('does not leak :doc: role resolution across sequential renders in one process', () => {
+    renderRstFile(
+      'content/series/花朵的温室/读史的方法.rst',
+      'posts/读史的方法'
+    );
+
+    const doc = renderRstFile(
+      'content/series/软件构架设计/什么是架构设计2023.rst',
+      'posts/什么是架构设计2023'
+    );
+
+    expect(doc.html).toContain('href="/软件构架设计/什么是软件架构"');
+    expect(doc.html).not.toContain('<span class="docutils literal">什么是软件架构</span>');
+    expect(doc.warnings).toEqual([
+      'Unsupported interpreted text role ":dtag:" rendered as plain inline text.',
+    ]);
+  });
+
   fixtureTest('resolves same-series :doc: targets whose rst filenames contain dots', () => {
     const doc = renderRstFile(
       'content/series/道德经直译/德信.rst',
