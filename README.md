@@ -267,6 +267,7 @@ export AMYTIS_RST_PYTHON=/absolute/path/to/python
 Current behavior:
 
 - `index.rst` or `README.rst` makes the whole series rST-only.
+- For rST series ordering, explicit `:posts:` metadata takes precedence. If `:posts:` is absent, Amytis uses simple local `.. toctree::` entry order from the series index. If neither exists, the series falls back to the existing date-based sort.
 - rST assets such as `.. image::` and `.. figure::` are resolved relative to the source file and rewritten to the site asset paths.
 - Supported legacy roles such as `:doc:`, `:ref:`, `:numref:`, `:math:`, and `:dtag:` are either rendered directly or degraded into readable inline output instead of docutils error blocks.
 - Top-of-file docinfo metadata is parsed into Amytis metadata, but it is not rendered at the top of blog-style article HTML.

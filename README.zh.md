@@ -273,6 +273,7 @@ export AMYTIS_RST_PYTHON=/absolute/path/to/python
 当前行为：
 
 - `index.rst` 或 `README.rst` 会让整个系列进入 rST 模式。
+- 对于 rST 系列文章顺序，显式的 `:posts:` 元数据优先级最高；如果没有 `:posts:`，Amytis 会使用系列入口文件中简单本地 `.. toctree::` 条目的顺序；如果两者都没有，则回退到现有的基于日期排序。
 - `.. image::`、`.. figure::` 等资源路径会相对源文件解析，并重写为站点可用的静态资源路径。
 - `:doc:`、`:ref:`、`:numref:`、`:math:`、`:dtag:` 等常见 legacy role 会尽量直接渲染；无法完整支持时也会降级为可读的内联输出，而不是 docutils 报错块。
 - 文件顶部的 docinfo 元数据会被解析为 Amytis 元数据，但不会再渲染为文章顶部的作者/版本信息块。
