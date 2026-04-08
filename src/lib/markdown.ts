@@ -1239,11 +1239,12 @@ export function getAdjacentPosts(slug: string): { prev: PostData | null; next: P
     bySlug = new Map();
     adjacentPostsCache.set(cacheKey, bySlug);
   }
-  const cached = bySlug.get(slug);
-  if (cached) return cached;
-
   const currentPost = getPostBySlug(slug);
   if (currentPost?.series) {
+    const seriesCacheKey = `${currentPost.series}/${slug}`;
+    const cachedSeries = bySlug.get(seriesCacheKey);
+    if (cachedSeries) return cachedSeries;
+
     const seriesData = getSeriesData(currentPost.series);
     if (seriesData?.type !== 'collection') {
       const seriesPosts = getSeriesPosts(currentPost.series);
@@ -1253,11 +1254,14 @@ export function getAdjacentPosts(slug: string): { prev: PostData | null; next: P
           prev: seriesIndex > 0 ? seriesPosts[seriesIndex - 1] : null,
           next: seriesIndex < seriesPosts.length - 1 ? seriesPosts[seriesIndex + 1] : null,
         };
-        bySlug.set(slug, seriesResult);
+        bySlug.set(seriesCacheKey, seriesResult);
         return seriesResult;
       }
     }
   }
+
+  const cached = bySlug.get(slug);
+  if (cached) return cached;
 
   const allPosts = getAllPosts(); // sorted desc by date (newest first)
   const index = allPosts.findIndex(p => p.slug === slug);

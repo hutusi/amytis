@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
 import { RstParseError } from './rst';
+import { getPostUrl } from './urls';
 
 const localDocutilsPython = path.join(process.cwd(), '.venv-rst', 'bin', 'python');
 const hasLocalDocutils = existsSync(localDocutilsPython);
@@ -41,6 +42,11 @@ describe('rst-renderer bridge', () => {
       redirectFrom: ['/series/old-slug'],
       coverImage: './images/cover.png',
     });
+  });
+
+  test('normalizes legacy non-zero-padded dates from python output', () => {
+    const metadata = normalizePythonRstMetadata({ date: '2022-3-17' });
+    expect(metadata.date).toBe('2022-03-17');
   });
 
   test('rejects malformed supported metadata from python output', () => {
@@ -147,10 +153,14 @@ describe('rst-renderer bridge', () => {
       'posts/无名概念的深入探讨'
     );
 
+    const daoConcreteUrl = getPostUrl({ series: '道德经直译', slug: '道具体是指什么' });
+    const daoNamelessUrl = getPostUrl({ series: '道德经直译', slug: '无名' });
+    const discipleRulesUrl = getPostUrl({ series: '软件构架设计', slug: '弟子规：美国军方禁止在C语言程序中使用malloc' });
+
     expect(doc.html).not.toContain('system-message');
-    expect(doc.html).toContain('href="/道德经直译/道具体是指什么"');
-    expect(doc.html).toContain('href="/道德经直译/无名"');
-    expect(doc.html).toContain('href="/软件构架设计/弟子规：美国军方禁止在C语言程序中使用malloc"');
+    expect(doc.html).toContain(`href="${daoConcreteUrl}"`);
+    expect(doc.html).toContain(`href="${daoNamelessUrl}"`);
+    expect(doc.html).toContain(`href="${discipleRulesUrl}"`);
     expect(doc.warnings).toEqual([]);
   });
 
