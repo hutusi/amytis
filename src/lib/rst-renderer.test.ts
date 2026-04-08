@@ -167,6 +167,20 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
+  fixtureTest('resolves cross-series :doc: links when legacy content omits a boundary before the role', () => {
+    const doc = renderRstFile(
+      'content/series/花朵的温室/读史的方法.rst',
+      'posts/读史的方法'
+    );
+
+    const targetUrl = getPostUrl({ series: '道德经直译', slug: '温故而知新' });
+
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.html).not.toContain(':doc:<cite>');
+    expect(doc.html).not.toContain('<span class="docutils literal">温故而知新</span>');
+    expect(doc.warnings).toEqual([]);
+  });
+
   fixtureTest('does not leak :doc: role resolution across sequential renders in one process', () => {
     renderRstFile(
       'content/series/花朵的温室/读史的方法.rst',

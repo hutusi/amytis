@@ -27,6 +27,7 @@ SCALAR_FIELDS = {
     "sort",
     "type",
 }
+LEGACY_DOC_ROLE_BOUNDARY = "\u00a0"
 
 
 class RstRenderError(Exception):
@@ -341,6 +342,14 @@ def normalize_metadata_value(key: str, value: str) -> Any:
     return stripped
 
 
+def normalize_legacy_doc_role_syntax(source: str) -> str:
+    return re.sub(
+        r"(?<![\s(\[{<])(:doc:`[^`\n]+`)",
+        LEGACY_DOC_ROLE_BOUNDARY + r"\1",
+        source,
+    )
+
+
 def extract_metadata(document: Any) -> dict[str, Any]:
     from docutils import nodes
 
@@ -507,7 +516,7 @@ def extract_body_text(document: Any) -> str:
         if text:
             body_parts.append(text)
 
-    return "\n\n".join(body_parts).strip()
+    return "\n\n".join(body_parts).replace(LEGACY_DOC_ROLE_BOUNDARY, "").strip()
 
 
 def remove_system_messages(document: Any) -> None:
@@ -558,7 +567,7 @@ def extract_html_body_from_doctree(document: Any) -> str:
     if not html_fragment:
         raise RstRenderError("Docutils HTML output did not contain a <main> or <body> fragment.")
 
-    return html_fragment
+    return html_fragment.replace(LEGACY_DOC_ROLE_BOUNDARY, "")
 
 
 def build_output(document: Any, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
@@ -586,7 +595,7 @@ def render_single_file(source_file: Path, image_base_slug: str, strict: bool) ->
     from docutils.core import publish_doctree
 
     warnings: list[str] = []
-    source = source_file.read_text(encoding="utf-8")
+    source = normalize_legacy_doc_role_syntax(source_file.read_text(encoding="utf-8"))
     with temporary_role_overrides(source_file, warnings):
         document = publish_doctree(
             source=source,
