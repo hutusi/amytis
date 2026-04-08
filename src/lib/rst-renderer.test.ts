@@ -167,6 +167,31 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
+  fixtureTest('resolves same-series :doc: targets whose rst filenames contain dots', () => {
+    const doc = renderRstFile(
+      'content/series/道德经直译/德信.rst',
+      'posts/德信'
+    );
+
+    const targetUrl = getPostUrl({ series: '道德经直译', slug: '02.不尚贤' });
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.warnings).toEqual([]);
+  });
+
+  fixtureTest('resolves version-like :doc: targets whose rst filenames contain dots', () => {
+    const doc = renderRstFile(
+      'content/series/Linux主线内核跟踪/6.5.rst',
+      'posts/6.5'
+    );
+
+    const targetUrl = getPostUrl({ series: 'Linux主线内核跟踪', slug: '6.2' });
+
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.warnings).toEqual([]);
+  });
+
   fixtureTest('renders real code blocks through docutils with pygments classes', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/大型软件架构设计.rst',

@@ -114,8 +114,9 @@ def slug_from_doc_path(doc_path: Path) -> str:
 
 def resolve_doc_target_path(source_file: Path, target: str) -> Path | None:
     candidate_base = (source_file.parent / target).resolve()
+    candidate_rst = candidate_base if candidate_base.suffix == ".rst" else candidate_base.parent / f"{candidate_base.name}.rst"
     candidate_paths = [
-        candidate_base.with_suffix(".rst"),
+        candidate_rst,
         candidate_base / "index.rst",
         candidate_base / "README.rst",
     ]
