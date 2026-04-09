@@ -64,6 +64,12 @@ export function resetPythonCommandSpecForTests(): void {
   resolvedPythonCommandSpec = null;
 }
 
+function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null | undefined): string {
+  if (typeof output === 'string') return output;
+  if (!output) return '';
+  return Buffer.from(output.buffer, output.byteOffset, output.byteLength).toString('utf8');
+}
+
 function canonicalizeSourcePath(filePath: string): string {
   try {
     return fs.realpathSync(filePath);
@@ -110,6 +116,12 @@ export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
       return resolvedPythonCommandSpec;
     }
   }
+
+  console.warn(
+    `[rst-renderer] No Python candidate responded to --version; using fallback ${candidates.map((candidate) =>
+      [candidate.executable, ...candidate.args].join(' ')
+    ).join(', ')}`
+  );
 
   resolvedPythonCommandSpec = process.platform === 'win32'
     ? { executable: 'py', args: ['-3'], cacheKey: 'py::-3' }
@@ -330,14 +342,17 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
     throw new RstParseError(`Failed to run Python rST renderer for ${filePath}: ${result.error.message}`);
   }
 
+  const stderr = ensureSpawnOutputString(result.stderr);
+  const stdout = ensureSpawnOutputString(result.stdout);
+
   if (result.status !== 0) {
     throw new RstParseError(
-      result.stderr.trim() || `Python rST renderer exited with status ${result.status} for ${filePath}.`
+      stderr.trim() || `Python rST renderer exited with status ${result.status} for ${filePath}.`
     );
   }
 
   try {
-    return JSON.parse(result.stdout) as PythonRstRenderResult;
+    return JSON.parse(stdout) as PythonRstRenderResult;
   } catch (error) {
     throw new RstParseError(
       `Invalid JSON from Python rST renderer for ${filePath}: ${error instanceof Error ? error.message : String(error)}`
@@ -353,13 +368,14 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
   const shouldUseBatchFile = process.platform === 'win32' && pythonCommand.executable === 'py';
   let batchFilePath: string | null = null;
 
-  const result = (() => {
+  let result: ReturnType<typeof spawnSync>;
+  try {
     if (shouldUseBatchFile) {
       const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-rst-batch-'));
       batchFilePath = path.join(tempDir, 'batch.json');
       fs.writeFileSync(batchFilePath, JSON.stringify(entries), 'utf8');
 
-      return spawnSync(pythonCommand.executable, [
+      result = spawnSync(pythonCommand.executable, [
         ...pythonCommand.args,
         scriptPath,
         '--batch-file',
@@ -369,25 +385,25 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
         encoding: 'utf8',
         maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
       });
+    } else {
+      result = spawnSync(pythonCommand.executable, [
+        ...pythonCommand.args,
+        scriptPath,
+        '--batch-stdin',
+        '--strict',
+      ], {
+        encoding: 'utf8',
+        input: JSON.stringify(entries),
+        maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
+      });
     }
-
-    return spawnSync(pythonCommand.executable, [
-      ...pythonCommand.args,
-      scriptPath,
-      '--batch-stdin',
-      '--strict',
-    ], {
-      encoding: 'utf8',
-      input: JSON.stringify(entries),
-      maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
-    });
-  })();
-
-  if (batchFilePath) {
-    try {
-      fs.rmSync(path.dirname(batchFilePath), { recursive: true, force: true });
-    } catch {
-      // Best-effort cleanup for Windows batch temp files.
+  } finally {
+    if (batchFilePath) {
+      try {
+        fs.rmSync(path.dirname(batchFilePath), { recursive: true, force: true });
+      } catch {
+        // Best-effort cleanup for Windows batch temp files.
+      }
     }
   }
 
@@ -395,15 +411,18 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
     throw new RstParseError(`Failed to run Python rST renderer batch: ${result.error.message}`);
   }
 
+  const stderr = ensureSpawnOutputString(result.stderr);
+  const stdout = ensureSpawnOutputString(result.stdout);
+
   if (result.status !== 0) {
     throw new RstParseError(
-      result.stderr.trim() || `Python rST renderer batch exited with status ${result.status}.`
+      stderr.trim() || `Python rST renderer batch exited with status ${result.status}.`
     );
   }
 
   let parsed: PythonRstBatchResponseItem[];
   try {
-    parsed = JSON.parse(result.stdout) as PythonRstBatchResponseItem[];
+    parsed = JSON.parse(stdout) as PythonRstBatchResponseItem[];
   } catch (error) {
     throw new RstParseError(
       `Invalid JSON from Python rST renderer batch: ${error instanceof Error ? error.message : String(error)}`
