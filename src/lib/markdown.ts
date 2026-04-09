@@ -785,6 +785,24 @@ function parseRstFile(
   }
 }
 
+export function parseRstFileForTests(
+  fullPath: string,
+  slug: string,
+  dateFromFileName?: string,
+  seriesName?: string,
+  preRendered?: RenderedRstDocument,
+): PostData {
+  return parseRstFile(fullPath, slug, dateFromFileName, seriesName, preRendered);
+}
+
+export function resetPythonRstRendererAvailabilityForTests(value: boolean | null = null): void {
+  pythonRstRendererAvailable = value;
+}
+
+export function getPythonRstRendererAvailabilityForTests(): boolean | null {
+  return pythonRstRendererAvailable;
+}
+
 export function getAllPosts(): PostData[] {
   const cacheKey = getCacheEnvKey();
   const cached = postsCache.get(cacheKey);
