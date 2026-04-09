@@ -76,17 +76,6 @@ function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
   return `${getPythonCommandSpecForRstRenderer().cacheKey}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
 }
 
-function getBundledPythonPath(): string | null {
-  const bundledPython = path.join(
-    process.cwd(),
-    '.venv-rst',
-    process.platform === 'win32' ? 'Scripts' : 'bin',
-    process.platform === 'win32' ? 'python.exe' : 'python',
-  );
-
-  return fs.existsSync(bundledPython) ? bundledPython : null;
-}
-
 export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
   if (resolvedPythonCommandSpec) {
     return resolvedPythonCommandSpec;
@@ -97,16 +86,6 @@ export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
       executable: process.env.AMYTIS_RST_PYTHON,
       args: [],
       cacheKey: process.env.AMYTIS_RST_PYTHON,
-    };
-    return resolvedPythonCommandSpec;
-  }
-
-  const bundledPython = getBundledPythonPath();
-  if (bundledPython) {
-    resolvedPythonCommandSpec = {
-      executable: bundledPython,
-      args: [],
-      cacheKey: bundledPython,
     };
     return resolvedPythonCommandSpec;
   }
