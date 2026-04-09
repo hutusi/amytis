@@ -167,6 +167,64 @@ describe('rst-renderer bridge', () => {
     expect(doc.warnings).toEqual([]);
   });
 
+  fixtureTest('resolves cross-series :doc: links when legacy content omits a boundary before the role', () => {
+    const doc = renderRstFile(
+      'content/series/花朵的温室/读史的方法.rst',
+      'posts/读史的方法'
+    );
+
+    const targetUrl = getPostUrl({ series: '道德经直译', slug: '温故而知新' });
+
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.html).not.toContain(':doc:<cite>');
+    expect(doc.html).not.toContain('<span class="docutils literal">温故而知新</span>');
+    expect(doc.warnings).toEqual([]);
+  });
+
+  fixtureTest('does not leak :doc: role resolution across sequential renders in one process', () => {
+    renderRstFile(
+      'content/series/花朵的温室/读史的方法.rst',
+      'posts/读史的方法'
+    );
+
+    const doc = renderRstFile(
+      'content/series/软件构架设计/什么是架构设计2023.rst',
+      'posts/什么是架构设计2023'
+    );
+    const targetUrl = getPostUrl({ series: '软件构架设计', slug: '什么是软件架构' });
+
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.html).not.toContain('<span class="docutils literal">什么是软件架构</span>');
+    expect(doc.warnings).toEqual([
+      'Unsupported interpreted text role ":dtag:" rendered as plain inline text.',
+    ]);
+  });
+
+  fixtureTest('resolves same-series :doc: targets whose rst filenames contain dots', () => {
+    const doc = renderRstFile(
+      'content/series/道德经直译/德信.rst',
+      'posts/德信'
+    );
+
+    const targetUrl = getPostUrl({ series: '道德经直译', slug: '02.不尚贤' });
+
+    expect(doc.html).not.toContain('system-message');
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.warnings).toEqual([]);
+  });
+
+  fixtureTest('resolves version-like :doc: targets whose rst filenames contain dots', () => {
+    const doc = renderRstFile(
+      'content/series/Linux主线内核跟踪/6.5.rst',
+      'posts/6.5'
+    );
+
+    const targetUrl = getPostUrl({ series: 'Linux主线内核跟踪', slug: '6.2' });
+
+    expect(doc.html).toContain(`href="${targetUrl}"`);
+    expect(doc.warnings).toEqual([]);
+  });
+
   fixtureTest('renders real code blocks through docutils with pygments classes', () => {
     const doc = renderRstFile(
       'content/series/软件构架设计/大型软件架构设计.rst',

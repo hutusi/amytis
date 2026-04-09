@@ -518,9 +518,34 @@ body {
   color: var(--accent);
 }
 
-.rst-rendered .numref {
+.rst-rendered a[href]:not([role="doc-noteref"]) {
   color: var(--accent);
-  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.rst-rendered a[href]:not([role="doc-noteref"]):hover,
+.rst-rendered a[href]:not([role="doc-noteref"]):focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.rst-rendered .numref {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.rst-rendered .rst-table-wrapper {
+  overflow-x: auto;
+  margin: 2rem 0;
+  border: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+  border-radius: 0.5rem;
+}
+
+.rst-rendered .rst-table-wrapper > table {
+  min-width: 100%;
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .rst-rendered math {

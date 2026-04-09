@@ -7,6 +7,7 @@ import json
 import posixpath
 import re
 import sys
+from contextlib import contextmanager
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,8 @@ SCALAR_FIELDS = {
     "sort",
     "type",
 }
+LEGACY_DOC_ROLE_BOUNDARY = "__AMYTIS_RST_DOC_ROLE_BOUNDARY__"
+LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE = f"{LEGACY_DOC_ROLE_BOUNDARY} "
 
 
 class RstRenderError(Exception):
@@ -114,8 +117,9 @@ def slug_from_doc_path(doc_path: Path) -> str:
 
 def resolve_doc_target_path(source_file: Path, target: str) -> Path | None:
     candidate_base = (source_file.parent / target).resolve()
+    candidate_rst = candidate_base if candidate_base.suffix == ".rst" else candidate_base.parent / f"{candidate_base.name}.rst"
     candidate_paths = [
-        candidate_base.with_suffix(".rst"),
+        candidate_rst,
         candidate_base / "index.rst",
         candidate_base / "README.rst",
     ]
@@ -254,6 +258,39 @@ def register_passthrough_roles(warnings: list[str]) -> None:
     roles.register_canonical_role("numref", numref_role)
 
 
+@contextmanager
+def temporary_role_overrides(source_file: Path, warnings: list[str]):
+    from docutils.parsers.rst import roles
+
+    if not hasattr(roles, "_role_registry") or not hasattr(roles, "_roles"):
+        raise RstRenderError(
+            "Incompatible docutils roles registry layout. Expected _role_registry and _roles "
+            "attributes for temporary role overrides."
+        )
+
+    tracked_names = ("doc", "dtag", "ref", "numref")
+    previous_registry = {name: roles._role_registry.get(name) for name in tracked_names}
+    previous_local = {name: roles._roles.get(name) for name in tracked_names}
+
+    register_doc_role(source_file, warnings)
+    register_passthrough_roles(warnings)
+
+    try:
+        yield
+    finally:
+        for name, role_fn in previous_registry.items():
+            if role_fn is None:
+                roles._role_registry.pop(name, None)
+            else:
+                roles._role_registry[name] = role_fn
+
+        for name, role_fn in previous_local.items():
+            if role_fn is None:
+                roles._roles.pop(name, None)
+            else:
+                roles._roles[name] = role_fn
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render a single rST file to JSON via docutils.")
     parser.add_argument("--file", help="Absolute or relative path to the .rst file")
@@ -310,6 +347,19 @@ def normalize_metadata_value(key: str, value: str) -> Any:
         return stripped
 
     return stripped
+
+
+def normalize_legacy_doc_role_syntax(source: str) -> str:
+    if LEGACY_DOC_ROLE_BOUNDARY in source or LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE in source:
+        raise RstRenderError(
+            f'Source already contains reserved legacy :doc: boundary marker "{LEGACY_DOC_ROLE_BOUNDARY}".'
+        )
+
+    return re.sub(
+        r"(?<![\s\\(\[{<])(:doc:`[^`\n]+`)",
+        LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE + r"\1",
+        source,
+    )
 
 
 def extract_metadata(document: Any) -> dict[str, Any]:
@@ -478,7 +528,7 @@ def extract_body_text(document: Any) -> str:
         if text:
             body_parts.append(text)
 
-    return "\n\n".join(body_parts).strip()
+    return "\n\n".join(body_parts).replace(LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE, "").replace(LEGACY_DOC_ROLE_BOUNDARY, "").strip()
 
 
 def remove_system_messages(document: Any) -> None:
@@ -529,7 +579,7 @@ def extract_html_body_from_doctree(document: Any) -> str:
     if not html_fragment:
         raise RstRenderError("Docutils HTML output did not contain a <main> or <body> fragment.")
 
-    return html_fragment
+    return html_fragment.replace(LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE, "").replace(LEGACY_DOC_ROLE_BOUNDARY, "")
 
 
 def build_output(document: Any, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
@@ -557,18 +607,17 @@ def render_single_file(source_file: Path, image_base_slug: str, strict: bool) ->
     from docutils.core import publish_doctree
 
     warnings: list[str] = []
-    register_doc_role(source_file, warnings)
-    register_passthrough_roles(warnings)
-    source = source_file.read_text(encoding="utf-8")
-    document = publish_doctree(
-        source=source,
-        settings_overrides={
-            "report_level": 2,
-            "halt_level": 5,
-            "file_insertion_enabled": False,
-            "raw_enabled": False,
-        },
-    )
+    source = normalize_legacy_doc_role_syntax(source_file.read_text(encoding="utf-8"))
+    with temporary_role_overrides(source_file, warnings):
+        document = publish_doctree(
+            source=source,
+            settings_overrides={
+                "report_level": 2,
+                "halt_level": 5,
+                "file_insertion_enabled": False,
+                "raw_enabled": False,
+            },
+        )
     remove_system_messages(document)
     output = build_output(document, source_file, image_base_slug, warnings)
 
