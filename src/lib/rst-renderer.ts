@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { RstMetadata, RstParseError } from './rst';
 
 export interface PythonRstHeading {
@@ -349,16 +350,46 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
   const pythonCommand = getPythonCommandSpecForRstRenderer();
-  const result = spawnSync(pythonCommand.executable, [
-    ...pythonCommand.args,
-    scriptPath,
-    '--batch-stdin',
-    '--strict',
-  ], {
-    encoding: 'utf8',
-    input: JSON.stringify(entries),
-    maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
-  });
+  const shouldUseBatchFile = process.platform === 'win32' && pythonCommand.executable === 'py';
+  let batchFilePath: string | null = null;
+
+  const result = (() => {
+    if (shouldUseBatchFile) {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-rst-batch-'));
+      batchFilePath = path.join(tempDir, 'batch.json');
+      fs.writeFileSync(batchFilePath, JSON.stringify(entries), 'utf8');
+
+      return spawnSync(pythonCommand.executable, [
+        ...pythonCommand.args,
+        scriptPath,
+        '--batch-file',
+        batchFilePath,
+        '--strict',
+      ], {
+        encoding: 'utf8',
+        maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
+      });
+    }
+
+    return spawnSync(pythonCommand.executable, [
+      ...pythonCommand.args,
+      scriptPath,
+      '--batch-stdin',
+      '--strict',
+    ], {
+      encoding: 'utf8',
+      input: JSON.stringify(entries),
+      maxBuffer: PYTHON_RENDERER_MAX_BUFFER,
+    });
+  })();
+
+  if (batchFilePath) {
+    try {
+      fs.rmSync(path.dirname(batchFilePath), { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup for Windows batch temp files.
+    }
+  }
 
   if (result.error) {
     throw new RstParseError(`Failed to run Python rST renderer batch: ${result.error.message}`);
