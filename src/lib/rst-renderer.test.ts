@@ -191,8 +191,9 @@ describe('rst-renderer bridge', () => {
       'content/series/软件构架设计/什么是架构设计2023.rst',
       'posts/什么是架构设计2023'
     );
+    const targetUrl = getPostUrl({ series: '软件构架设计', slug: '什么是软件架构' });
 
-    expect(doc.html).toContain('href="/软件构架设计/什么是软件架构"');
+    expect(doc.html).toContain(`href="${targetUrl}"`);
     expect(doc.html).not.toContain('<span class="docutils literal">什么是软件架构</span>');
     expect(doc.warnings).toEqual([
       'Unsupported interpreted text role ":dtag:" rendered as plain inline text.',

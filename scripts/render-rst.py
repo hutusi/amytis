@@ -27,7 +27,8 @@ SCALAR_FIELDS = {
     "sort",
     "type",
 }
-LEGACY_DOC_ROLE_BOUNDARY = "\u00a0"
+LEGACY_DOC_ROLE_BOUNDARY = "__AMYTIS_RST_DOC_ROLE_BOUNDARY__"
+LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE = f"{LEGACY_DOC_ROLE_BOUNDARY} "
 
 
 class RstRenderError(Exception):
@@ -261,6 +262,12 @@ def register_passthrough_roles(warnings: list[str]) -> None:
 def temporary_role_overrides(source_file: Path, warnings: list[str]):
     from docutils.parsers.rst import roles
 
+    if not hasattr(roles, "_role_registry") or not hasattr(roles, "_roles"):
+        raise RuntimeError(
+            "Incompatible docutils roles registry layout. Expected _role_registry and _roles "
+            "attributes for temporary role overrides."
+        )
+
     tracked_names = ("doc", "dtag", "ref", "numref")
     previous_registry = {name: roles._role_registry.get(name) for name in tracked_names}
     previous_local = {name: roles._roles.get(name) for name in tracked_names}
@@ -345,7 +352,7 @@ def normalize_metadata_value(key: str, value: str) -> Any:
 def normalize_legacy_doc_role_syntax(source: str) -> str:
     return re.sub(
         r"(?<![\s(\[{<])(:doc:`[^`\n]+`)",
-        LEGACY_DOC_ROLE_BOUNDARY + r"\1",
+        LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE + r"\1",
         source,
     )
 
@@ -516,7 +523,7 @@ def extract_body_text(document: Any) -> str:
         if text:
             body_parts.append(text)
 
-    return "\n\n".join(body_parts).replace(LEGACY_DOC_ROLE_BOUNDARY, "").strip()
+    return "\n\n".join(body_parts).replace(LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE, "").replace(LEGACY_DOC_ROLE_BOUNDARY, "").strip()
 
 
 def remove_system_messages(document: Any) -> None:
@@ -567,7 +574,7 @@ def extract_html_body_from_doctree(document: Any) -> str:
     if not html_fragment:
         raise RstRenderError("Docutils HTML output did not contain a <main> or <body> fragment.")
 
-    return html_fragment.replace(LEGACY_DOC_ROLE_BOUNDARY, "")
+    return html_fragment.replace(LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE, "").replace(LEGACY_DOC_ROLE_BOUNDARY, "")
 
 
 def build_output(document: Any, source_file: Path, image_base_slug: str, warnings: list[str]) -> dict[str, Any]:
