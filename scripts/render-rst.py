@@ -263,7 +263,7 @@ def temporary_role_overrides(source_file: Path, warnings: list[str]):
     from docutils.parsers.rst import roles
 
     if not hasattr(roles, "_role_registry") or not hasattr(roles, "_roles"):
-        raise RuntimeError(
+        raise RstRenderError(
             "Incompatible docutils roles registry layout. Expected _role_registry and _roles "
             "attributes for temporary role overrides."
         )
@@ -350,8 +350,13 @@ def normalize_metadata_value(key: str, value: str) -> Any:
 
 
 def normalize_legacy_doc_role_syntax(source: str) -> str:
+    if LEGACY_DOC_ROLE_BOUNDARY in source or LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE in source:
+        raise RstRenderError(
+            f'Source already contains reserved legacy :doc: boundary marker "{LEGACY_DOC_ROLE_BOUNDARY}".'
+        )
+
     return re.sub(
-        r"(?<![\s(\[{<])(:doc:`[^`\n]+`)",
+        r"(?<![\s\\(\[{<])(:doc:`[^`\n]+`)",
         LEGACY_DOC_ROLE_BOUNDARY_WITH_SPACE + r"\1",
         source,
     )
