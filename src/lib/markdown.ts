@@ -5,7 +5,7 @@ import { siteConfig } from '../../site.config';
 import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
-import { parseRstDocument } from './rst';
+import { parseRstDocument, RstParseError } from './rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from './rst-renderer';
 
 const contentDirectory = path.join(process.cwd(), 'content', 'posts');
@@ -657,126 +657,150 @@ function parseRstFile(
   seriesName?: string,
   preRendered?: RenderedRstDocument,
 ): PostData {
-  const imageBaseSlug = getRstImageBaseSlug(fullPath, slug);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-  let parsedTitle: string;
-  let parsedBody: string;
-  let parsedText: string | undefined;
-  let parsedHeadings: Heading[];
-  let parsedExcerpt: string;
-  let parsedReadingTime: string;
-  let parsedHtml: string | undefined;
-  let data: ReturnType<typeof parseRstDocument>['metadata'];
   try {
-    if (preRendered) {
-      const rendered = preRendered;
-      parsedTitle = rendered.title;
-      parsedBody = rendered.text;
-      parsedText = rendered.text;
-      parsedHeadings = rendered.headings;
-      parsedExcerpt = rendered.excerpt;
-      parsedReadingTime = rendered.readingTime;
-      parsedHtml = rendered.html;
-      data = rendered.metadata;
-    } else if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
-      const rendered = renderRstFile(fullPath, imageBaseSlug);
-      pythonRstRendererAvailable = true;
-      parsedTitle = rendered.title;
-      parsedBody = rendered.text;
-      parsedText = rendered.text;
-      parsedHeadings = rendered.headings;
-      parsedExcerpt = rendered.excerpt;
-      parsedReadingTime = rendered.readingTime;
-      parsedHtml = rendered.html;
-      data = rendered.metadata;
-    } else {
-      throw new Error('__RST_FALLBACK__');
-    }
-  } catch (error) {
-    if (!isPythonRuntimeUnavailable(error)) {
-      throw error;
-    }
-    if (pythonRstRendererAvailable !== false) {
-      pythonRstRendererAvailable = false;
-    }
-    const parsed = parseRstDocument(fileContents);
-    parsedTitle = parsed.title;
-    parsedBody = parsed.body;
-    parsedHeadings = parsed.headings;
-    parsedExcerpt = parsed.excerpt;
-    parsedReadingTime = parsed.readingTime;
-    data = parsed.metadata;
-  }
+    const imageBaseSlug = getRstImageBaseSlug(fullPath, slug);
+    const fileContents = fs.readFileSync(fullPath, 'utf8');
 
-  const effectiveSeriesSlug = data.series || seriesName;
-  let authors: string[] = [];
-  if (data.authors && data.authors.length > 0) {
-    authors = data.authors;
-  } else if (data.author) {
-    authors = [data.author];
-  } else {
-    if (effectiveSeriesSlug) {
-      const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
-      if (seriesAuthors) authors = seriesAuthors;
+    let parsedTitle: string;
+    let parsedBody: string;
+    let parsedText: string | undefined;
+    let parsedHeadings: Heading[];
+    let parsedExcerpt: string;
+    let parsedReadingTime: string;
+    let parsedHtml: string | undefined;
+    let data: ReturnType<typeof parseRstDocument>['metadata'];
+    try {
+      if (preRendered) {
+        const rendered = preRendered;
+        parsedTitle = rendered.title;
+        parsedBody = rendered.text;
+        parsedText = rendered.text;
+        parsedHeadings = rendered.headings;
+        parsedExcerpt = rendered.excerpt;
+        parsedReadingTime = rendered.readingTime;
+        parsedHtml = rendered.html;
+        data = rendered.metadata;
+      } else if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
+        const rendered = renderRstFile(fullPath, imageBaseSlug);
+        pythonRstRendererAvailable = true;
+        parsedTitle = rendered.title;
+        parsedBody = rendered.text;
+        parsedText = rendered.text;
+        parsedHeadings = rendered.headings;
+        parsedExcerpt = rendered.excerpt;
+        parsedReadingTime = rendered.readingTime;
+        parsedHtml = rendered.html;
+        data = rendered.metadata;
+      } else {
+        throw new Error('__RST_FALLBACK__');
+      }
+    } catch (error) {
+      if (!isPythonRuntimeUnavailable(error)) {
+        throw error;
+      }
+      if (pythonRstRendererAvailable !== false) {
+        pythonRstRendererAvailable = false;
+      }
+      const parsed = parseRstDocument(fileContents);
+      parsedTitle = parsed.title;
+      parsedBody = parsed.body;
+      parsedHeadings = parsed.headings;
+      parsedExcerpt = parsed.excerpt;
+      parsedReadingTime = parsed.readingTime;
+      data = parsed.metadata;
     }
-    if (authors.length === 0) {
-      const defaultAuthors = siteConfig.posts?.authors?.default;
-      if (defaultAuthors && defaultAuthors.length > 0) {
-        authors = defaultAuthors;
+
+    const effectiveSeriesSlug = data.series || seriesName;
+    let authors: string[] = [];
+    if (data.authors && data.authors.length > 0) {
+      authors = data.authors;
+    } else if (data.author) {
+      authors = [data.author];
+    } else {
+      if (effectiveSeriesSlug) {
+        const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
+        if (seriesAuthors) authors = seriesAuthors;
+      }
+      if (authors.length === 0) {
+        const defaultAuthors = siteConfig.posts?.authors?.default;
+        if (defaultAuthors && defaultAuthors.length > 0) {
+          authors = defaultAuthors;
+        }
       }
     }
+
+    let date = data.date;
+    if (!date && dateFromFileName) date = dateFromFileName;
+    if (!date) date = new Date().toISOString().split('T')[0];
+
+    let coverImage = data.coverImage;
+    if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
+      const cleanPath = coverImage.replace(/^\.\//, '');
+      coverImage = `/${imageBaseSlug}/${cleanPath}`;
+    }
+    const toctreePosts = isSeriesIndexRst(fullPath, slug, seriesName)
+      ? extractRstToctreePosts(fileContents)
+      : [];
+    const seriesPosts = data.posts && data.posts.length > 0
+      ? data.posts
+      : ((data.sort === undefined || data.sort === 'manual') && toctreePosts.length > 0 ? toctreePosts : undefined);
+    const sort = data.sort ?? (seriesPosts ? 'manual' : 'date-desc');
+
+    return {
+      slug,
+      title: parsedTitle,
+      subtitle: data.subtitle,
+      date,
+      excerpt: data.excerpt || parsedExcerpt,
+      category: data.category ?? 'Uncategorized',
+      tags: data.tags ?? [],
+      authors,
+      layout: data.layout ?? 'post',
+      series: effectiveSeriesSlug,
+      seriesTitle: effectiveSeriesSlug ? getSeriesTitle(effectiveSeriesSlug) : undefined,
+      coverImage,
+      sort,
+      posts: seriesPosts,
+      type: data.type,
+      featured: data.featured ?? false,
+      pinned: data.pinned ?? false,
+      draft: data.draft ?? false,
+      latex: data.latex ?? false,
+      toc: data.toc ?? true,
+      commentable: data.commentable,
+      redirectFrom: data.redirectFrom ?? [],
+      readingTime: parsedReadingTime,
+      content: parsedBody,
+      renderedHtml: parsedHtml,
+      plainText: parsedText,
+      headings: parsedHeadings,
+      imageBaseSlug,
+      sourceFormat: 'rst',
+    };
+  } catch (error) {
+    if (error instanceof RstParseError) {
+      throw new RstParseError(`${error.message} (${fullPath})`);
+    }
+    throw error;
   }
+}
 
-  let date = data.date;
-  if (!date && dateFromFileName) date = dateFromFileName;
-  if (!date) date = new Date().toISOString().split('T')[0];
+export function parseRstFileForTests(
+  fullPath: string,
+  slug: string,
+  dateFromFileName?: string,
+  seriesName?: string,
+  preRendered?: RenderedRstDocument,
+): PostData {
+  return parseRstFile(fullPath, slug, dateFromFileName, seriesName, preRendered);
+}
 
-  let coverImage = data.coverImage;
-  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
-    const cleanPath = coverImage.replace(/^\.\//, '');
-    coverImage = `/${imageBaseSlug}/${cleanPath}`;
-  }
+export function resetPythonRstRendererAvailabilityForTests(value: boolean | null = null): void {
+  pythonRstRendererAvailable = value;
+}
 
-  const toctreePosts = isSeriesIndexRst(fullPath, slug, seriesName)
-    ? extractRstToctreePosts(fileContents)
-    : [];
-  const seriesPosts = data.posts && data.posts.length > 0
-    ? data.posts
-    : ((data.sort === undefined || data.sort === 'manual') && toctreePosts.length > 0 ? toctreePosts : undefined);
-  const sort = data.sort ?? (seriesPosts ? 'manual' : 'date-desc');
-
-  return {
-    slug,
-    title: parsedTitle,
-    subtitle: data.subtitle,
-    date,
-    excerpt: data.excerpt || parsedExcerpt,
-    category: data.category ?? 'Uncategorized',
-    tags: data.tags ?? [],
-    authors,
-    layout: data.layout ?? 'post',
-    series: effectiveSeriesSlug,
-    seriesTitle: effectiveSeriesSlug ? getSeriesTitle(effectiveSeriesSlug) : undefined,
-    coverImage,
-    sort,
-    posts: seriesPosts,
-    type: data.type,
-    featured: data.featured ?? false,
-    pinned: data.pinned ?? false,
-    draft: data.draft ?? false,
-    latex: data.latex ?? false,
-    toc: data.toc ?? true,
-    commentable: data.commentable,
-    redirectFrom: data.redirectFrom ?? [],
-    readingTime: parsedReadingTime,
-    content: parsedBody,
-    renderedHtml: parsedHtml,
-    plainText: parsedText,
-    headings: parsedHeadings,
-    imageBaseSlug,
-    sourceFormat: 'rst',
-  };
+export function getPythonRstRendererAvailabilityForTests(): boolean | null {
+  return pythonRstRendererAvailable;
 }
 
 export function getAllPosts(): PostData[] {

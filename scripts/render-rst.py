@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 import copy
 import html
@@ -304,15 +306,21 @@ def parse_args() -> argparse.Namespace:
         help="Read a JSON array of batch render entries from stdin",
     )
     parser.add_argument(
+        "--batch-file",
+        help="Read a JSON array of batch render entries from a file",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="Fail on missing local assets instead of reporting them in the output",
     )
     args = parser.parse_args()
 
-    if args.batch_stdin:
+    if args.batch_stdin or args.batch_file:
+        if args.batch_stdin and args.batch_file:
+            parser.error("--batch-stdin and --batch-file cannot be combined")
         if args.file or args.image_base_slug:
-            parser.error("--batch-stdin cannot be combined with --file or --image-base-slug")
+            parser.error("--batch-stdin/--batch-file cannot be combined with --file or --image-base-slug")
         return args
 
     if not args.file or not args.image_base_slug:
@@ -632,8 +640,7 @@ def render_single_file(source_file: Path, image_base_slug: str, strict: bool) ->
     return output
 
 
-def render_batch(strict: bool) -> list[dict[str, Any]]:
-    raw_input = sys.stdin.read()
+def render_batch(raw_input: str, strict: bool) -> list[dict[str, Any]]:
     try:
         entries = json.loads(raw_input)
     except json.JSONDecodeError as exc:
@@ -680,8 +687,12 @@ def main() -> int:
         return 1
 
     try:
-        if args.batch_stdin:
-            print(json.dumps(render_batch(args.strict), ensure_ascii=False))
+        if args.batch_stdin or args.batch_file:
+            if args.batch_file:
+                raw_batch_input = Path(args.batch_file).read_text(encoding="utf-8")
+            else:
+                raw_batch_input = sys.stdin.read()
+            print(json.dumps(render_batch(raw_batch_input, args.strict), ensure_ascii=False))
             return 0
 
         source_file = resolve_source_file(args.file)

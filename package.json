@@ -11,7 +11,7 @@
   },
   "homepage": "https://github.com/hutusi/amytis#readme",
   "private": false,
-  "packageManager": "bun@1.3.4",
+  "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "bun scripts/run-with-rst-python.ts next dev",
     "build": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && next-image-export-optimizer && pagefind --site out",
