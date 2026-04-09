@@ -1,7 +1,13 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { normalizePythonRstMetadata, renderRstFile, validatePythonRstResult } from './rst-renderer';
+import {
+  getPythonCommandSpecForRstRenderer,
+  normalizePythonRstMetadata,
+  resetPythonCommandSpecForTests,
+  renderRstFile,
+  validatePythonRstResult,
+} from './rst-renderer';
 import { RstParseError } from './rst';
 import { getPostUrl } from './urls';
 
@@ -11,6 +17,7 @@ const fixtureTest = hasLocalDocutils ? test : test.skip;
 const previousPython = process.env.AMYTIS_RST_PYTHON;
 
 beforeAll(() => {
+  resetPythonCommandSpecForTests();
   if (hasLocalDocutils && previousPython === undefined) {
     process.env.AMYTIS_RST_PYTHON = localDocutilsPython;
   }
@@ -22,6 +29,7 @@ afterAll(() => {
   } else {
     process.env.AMYTIS_RST_PYTHON = previousPython;
   }
+  resetPythonCommandSpecForTests();
 });
 
 describe('rst-renderer bridge', () => {
@@ -76,6 +84,27 @@ describe('rst-renderer bridge', () => {
       headings: [],
       metadata: {},
     }, 'broken.rst')).toThrow(RstParseError);
+  });
+
+  test('prefers the configured python runtime when provided', () => {
+    const previousPython = process.env.AMYTIS_RST_PYTHON;
+    process.env.AMYTIS_RST_PYTHON = '/tmp/custom-python';
+    resetPythonCommandSpecForTests();
+
+    try {
+      expect(getPythonCommandSpecForRstRenderer()).toEqual({
+        executable: '/tmp/custom-python',
+        args: [],
+        cacheKey: '/tmp/custom-python',
+      });
+    } finally {
+      if (previousPython === undefined) {
+        delete process.env.AMYTIS_RST_PYTHON;
+      } else {
+        process.env.AMYTIS_RST_PYTHON = previousPython;
+      }
+      resetPythonCommandSpecForTests();
+    }
   });
 
   fixtureTest('renders a real legacy rST page with rewritten figure asset URLs', () => {

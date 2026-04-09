@@ -49,8 +49,19 @@ interface PythonRstBatchResponseItem {
   error?: string;
 }
 
+interface PythonCommandSpec {
+  executable: string;
+  args: string[];
+  cacheKey: string;
+}
+
 const rstRenderCache = new Map<string, RenderedRstDocument>();
 const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
+let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
+
+export function resetPythonCommandSpecForTests(): void {
+  resolvedPythonCommandSpec = null;
+}
 
 function canonicalizeSourcePath(filePath: string): string {
   try {
@@ -62,11 +73,68 @@ function canonicalizeSourcePath(filePath: string): string {
 
 function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
   const stats = fs.statSync(filePath);
-  return `${getPythonExecutableForRstRenderer()}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
+  return `${getPythonCommandSpecForRstRenderer().cacheKey}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
 }
 
-function getPythonExecutableForRstRenderer(): string {
-  return process.env.AMYTIS_RST_PYTHON || 'python3';
+function getBundledPythonPath(): string | null {
+  const bundledPython = path.join(
+    process.cwd(),
+    '.venv-rst',
+    process.platform === 'win32' ? 'Scripts' : 'bin',
+    process.platform === 'win32' ? 'python.exe' : 'python',
+  );
+
+  return fs.existsSync(bundledPython) ? bundledPython : null;
+}
+
+export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
+  if (resolvedPythonCommandSpec) {
+    return resolvedPythonCommandSpec;
+  }
+
+  if (process.env.AMYTIS_RST_PYTHON) {
+    resolvedPythonCommandSpec = {
+      executable: process.env.AMYTIS_RST_PYTHON,
+      args: [],
+      cacheKey: process.env.AMYTIS_RST_PYTHON,
+    };
+    return resolvedPythonCommandSpec;
+  }
+
+  const bundledPython = getBundledPythonPath();
+  if (bundledPython) {
+    resolvedPythonCommandSpec = {
+      executable: bundledPython,
+      args: [],
+      cacheKey: bundledPython,
+    };
+    return resolvedPythonCommandSpec;
+  }
+
+  const candidates: PythonCommandSpec[] = process.platform === 'win32'
+    ? [
+      { executable: 'py', args: ['-3'], cacheKey: 'py::-3' },
+      { executable: 'python', args: [], cacheKey: 'python' },
+    ]
+    : [
+      { executable: 'python3', args: [], cacheKey: 'python3' },
+      { executable: 'python', args: [], cacheKey: 'python' },
+    ];
+
+  for (const candidate of candidates) {
+    const probe = spawnSync(candidate.executable, [...candidate.args, '--version'], {
+      encoding: 'utf8',
+    });
+    if (!probe.error && probe.status === 0) {
+      resolvedPythonCommandSpec = candidate;
+      return resolvedPythonCommandSpec;
+    }
+  }
+
+  resolvedPythonCommandSpec = process.platform === 'win32'
+    ? { executable: 'py', args: ['-3'], cacheKey: 'py::-3' }
+    : { executable: 'python3', args: [], cacheKey: 'python3' };
+  return resolvedPythonCommandSpec;
 }
 
 function parseBoolean(field: string, value: unknown): boolean {
@@ -264,8 +332,9 @@ export function validatePythonRstResult(result: PythonRstRenderResult, filePath:
 
 export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): PythonRstRenderResult {
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
-  const pythonExecutable = getPythonExecutableForRstRenderer();
-  const result = spawnSync(pythonExecutable, [
+  const pythonCommand = getPythonCommandSpecForRstRenderer();
+  const result = spawnSync(pythonCommand.executable, [
+    ...pythonCommand.args,
     scriptPath,
     '--file',
     filePath,
@@ -300,8 +369,9 @@ export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<s
   if (entries.length === 0) return new Map();
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
-  const pythonExecutable = getPythonExecutableForRstRenderer();
-  const result = spawnSync(pythonExecutable, [
+  const pythonCommand = getPythonCommandSpecForRstRenderer();
+  const result = spawnSync(pythonCommand.executable, [
+    ...pythonCommand.args,
     scriptPath,
     '--batch-stdin',
     '--strict',
