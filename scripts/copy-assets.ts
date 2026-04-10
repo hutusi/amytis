@@ -9,13 +9,49 @@ const flowsSrcDir = path.join(process.cwd(), 'content', 'flows');
 const destDir = path.join(process.cwd(), 'public', 'posts');
 const booksDestDir = path.join(process.cwd(), 'public', 'books');
 const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
-const publicDir = path.join(process.cwd(), 'public');
+const optimizerDirName = 'nextImageExportOptimizer';
+const generatedAssetDestinations = new Set<string>();
+
+function markGeneratedDestination(destPath: string) {
+  generatedAssetDestinations.add(path.resolve(destPath));
+}
+
+function shouldPreserveOptimizerDir(optimizerPath: string): boolean {
+  return generatedAssetDestinations.has(path.resolve(path.dirname(optimizerPath)));
+}
+
+function resetGeneratedTreePreservingOptimizerCache(rootDir: string) {
+  if (!fs.existsSync(rootDir)) return;
+
+  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const entryPath = path.join(rootDir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name === optimizerDirName) {
+        if (!shouldPreserveOptimizerDir(entryPath)) {
+          fs.rmSync(entryPath, { recursive: true, force: true });
+        }
+        continue;
+      }
+
+      resetGeneratedTreePreservingOptimizerCache(entryPath);
+
+      if (fs.existsSync(entryPath) && fs.readdirSync(entryPath).length === 0) {
+        fs.rmdirSync(entryPath);
+      }
+      continue;
+    }
+
+    fs.rmSync(entryPath, { force: true });
+  }
+}
 
 function resetGeneratedAssetDirs() {
-  fs.rmSync(destDir, { recursive: true, force: true });
-  fs.rmSync(booksDestDir, { recursive: true, force: true });
-  fs.rmSync(flowsDestDir, { recursive: true, force: true });
-  fs.rmSync(path.join(publicDir, 'nextImageExportOptimizer'), { recursive: true, force: true });
+  generatedAssetDestinations.clear();
+  fs.mkdirSync(destDir, { recursive: true });
+  fs.mkdirSync(booksDestDir, { recursive: true });
+  fs.mkdirSync(flowsDestDir, { recursive: true });
 }
 
 function copyRecursive(src: string, dest: string) {
@@ -149,6 +185,7 @@ function processPosts() {
         const destPostDir = path.join(destDir, targetName);
 
         console.log(`Processing Post: ${entry.name} -> ${targetName}`);
+        markGeneratedDestination(destPostDir);
         copyRecursive(srcPostDir, destPostDir);
       } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx') || entry.name.endsWith('.rst'))) {
         const targetName = getSlugFromFilename(entry.name);
@@ -156,6 +193,7 @@ function processPosts() {
         const destPostDir = path.join(destDir, targetName);
 
         console.log(`Processing Flat Post: ${entry.name} -> ${targetName}`);
+        markGeneratedDestination(destPostDir);
         if (!fs.existsSync(destPostDir)) {
           fs.mkdirSync(destPostDir, { recursive: true });
         }
@@ -192,6 +230,7 @@ function processSeries() {
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series File: ${item.name} -> ${targetSlug}`);
+          markGeneratedDestination(destPostDir);
 
           if (!fs.existsSync(destPostDir)) {
             fs.mkdirSync(destPostDir, { recursive: true });
@@ -206,6 +245,7 @@ function processSeries() {
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series Post Folder: ${item.name} -> ${targetSlug}`);
+          markGeneratedDestination(destPostDir);
 
           // Copy everything from the post folder EXCEPT markdown files
           const subItems = fs.readdirSync(itemSrcPath, { withFileTypes: true });
@@ -239,6 +279,7 @@ function processBooks() {
       const destBookDir = path.join(booksDestDir, entry.name);
 
       console.log(`Processing Book: ${entry.name}`);
+      markGeneratedDestination(destBookDir);
       copyRecursive(srcBookDir, destBookDir);
     }
   });
@@ -269,6 +310,7 @@ function processFlows() {
         const destFlowDir = path.join(flowsDestDir, yearEntry.name, monthEntry.name, rawName);
 
         console.log(`Processing Flow: ${yearEntry.name}/${monthEntry.name}/${rawName}`);
+        markGeneratedDestination(destFlowDir);
         copyRecursive(srcFlowDir, destFlowDir);
       }
     }
@@ -281,4 +323,7 @@ processPosts();
 processSeries();
 processBooks();
 processFlows();
+resetGeneratedTreePreservingOptimizerCache(destDir);
+resetGeneratedTreePreservingOptimizerCache(booksDestDir);
+resetGeneratedTreePreservingOptimizerCache(flowsDestDir);
 console.log('Assets copied successfully.');

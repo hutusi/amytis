@@ -28,6 +28,7 @@
 __pycache__/
 *.py[cod]
 .venv-rst/
+.cache/
 
 # debug
 npm-debug.log*

@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -56,18 +57,43 @@ interface PythonCommandSpec {
   cacheKey: string;
 }
 
+interface RstRendererDiskCacheEntry {
+  version: string;
+  sourceHash: string;
+  imageBaseSlug: string;
+  pythonCacheKey: string;
+  rendered: RenderedRstDocument;
+}
+
 const rstRenderCache = new Map<string, RenderedRstDocument>();
 const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
+const RST_RENDERER_DISK_CACHE_VERSION = '1';
+const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
+let pythonRendererInvocationCount = 0;
 
 export function resetPythonCommandSpecForTests(): void {
   resolvedPythonCommandSpec = null;
+}
+
+export function getPythonRendererInvocationCountForTests(): number {
+  return pythonRendererInvocationCount;
+}
+
+export function resetRstRendererCachesForTests(): void {
+  rstRenderCache.clear();
+  resolvedPythonCommandSpec = null;
+  pythonRendererInvocationCount = 0;
 }
 
 function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null | undefined): string {
   if (typeof output === 'string') return output;
   if (!output) return '';
   return Buffer.from(output.buffer, output.byteOffset, output.byteLength).toString('utf8');
+}
+
+function getRstRendererSourceHash(filePath: string): string {
+  return createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
 }
 
 function canonicalizeSourcePath(filePath: string): string {
@@ -81,6 +107,58 @@ function canonicalizeSourcePath(filePath: string): string {
 function getRenderCacheKey(filePath: string, imageBaseSlug: string): string {
   const stats = fs.statSync(filePath);
   return `${getPythonCommandSpecForRstRenderer().cacheKey}::${filePath}::${imageBaseSlug}::${stats.mtimeMs}::${stats.size}`;
+}
+
+function getRstRendererDiskCachePath(filePath: string): string {
+  const cacheKey = createHash('sha1')
+    .update(canonicalizeSourcePath(filePath))
+    .digest('hex');
+  return path.join(rstRendererCacheDir, `${cacheKey}.json`);
+}
+
+export function getRstRendererDiskCachePathForTests(filePath: string): string {
+  return getRstRendererDiskCachePath(filePath);
+}
+
+function loadRenderedRstDocumentFromDiskCache(filePath: string, imageBaseSlug: string): RenderedRstDocument | null {
+  const cachePath = getRstRendererDiskCachePath(filePath);
+  if (!fs.existsSync(cachePath)) return null;
+
+  try {
+    const raw = fs.readFileSync(cachePath, 'utf8');
+    const parsed = JSON.parse(raw) as Partial<RstRendererDiskCacheEntry>;
+    if (
+      parsed.version !== RST_RENDERER_DISK_CACHE_VERSION ||
+      parsed.imageBaseSlug !== imageBaseSlug ||
+      parsed.pythonCacheKey !== getPythonCommandSpecForRstRenderer().cacheKey ||
+      parsed.sourceHash !== getRstRendererSourceHash(filePath) ||
+      !parsed.rendered
+    ) {
+      return null;
+    }
+
+    return parsed.rendered as RenderedRstDocument;
+  } catch {
+    return null;
+  }
+}
+
+function writeRenderedRstDocumentToDiskCache(filePath: string, imageBaseSlug: string, rendered: RenderedRstDocument): void {
+  const cachePath = getRstRendererDiskCachePath(filePath);
+  const entry: RstRendererDiskCacheEntry = {
+    version: RST_RENDERER_DISK_CACHE_VERSION,
+    sourceHash: getRstRendererSourceHash(filePath),
+    imageBaseSlug,
+    pythonCacheKey: getPythonCommandSpecForRstRenderer().cacheKey,
+    rendered,
+  };
+
+  try {
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+    fs.writeFileSync(cachePath, JSON.stringify(entry), 'utf8');
+  } catch {
+    // Best-effort cache persistence; rendering should still succeed.
+  }
 }
 
 export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
@@ -323,6 +401,7 @@ export function validatePythonRstResult(result: PythonRstRenderResult, filePath:
 }
 
 export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): PythonRstRenderResult {
+  pythonRendererInvocationCount += 1;
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
   const pythonCommand = getPythonCommandSpecForRstRenderer();
   const result = spawnSync(pythonCommand.executable, [
@@ -362,6 +441,7 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
 
 export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<string, PythonRstRenderResult> {
   if (entries.length === 0) return new Map();
+  pythonRendererInvocationCount += 1;
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
   const pythonCommand = getPythonCommandSpecForRstRenderer();
@@ -457,6 +537,12 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
     return cached;
   }
 
+  const diskCached = loadRenderedRstDocumentFromDiskCache(filePath, imageBaseSlug);
+  if (diskCached) {
+    rstRenderCache.set(cacheKey, diskCached);
+    return diskCached;
+  }
+
   const result = runPythonRstRenderer(filePath, imageBaseSlug);
   validatePythonRstResult(result, filePath);
   const metadata = normalizePythonRstMetadata(result.metadata);
@@ -474,6 +560,7 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
   };
 
   rstRenderCache.set(cacheKey, rendered);
+  writeRenderedRstDocumentToDiskCache(filePath, imageBaseSlug, rendered);
   return rendered;
 }
 
@@ -486,6 +573,13 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
     const cached = rstRenderCache.get(cacheKey);
     if (cached) {
       renderedByFile.set(entry.file, cached);
+      continue;
+    }
+
+    const diskCached = loadRenderedRstDocumentFromDiskCache(entry.file, entry.imageBaseSlug);
+    if (diskCached) {
+      rstRenderCache.set(cacheKey, diskCached);
+      renderedByFile.set(entry.file, diskCached);
       continue;
     }
     uncachedEntries.push(entry);
@@ -515,6 +609,7 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
       warnings: (result.warnings ?? []).map((warning) => String(warning)),
     };
     rstRenderCache.set(getRenderCacheKey(entry.file, entry.imageBaseSlug), rendered);
+    writeRenderedRstDocumentToDiskCache(entry.file, entry.imageBaseSlug, rendered);
     renderedByFile.set(entry.file, rendered);
   }
 
