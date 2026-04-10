@@ -53,8 +53,8 @@ export default function rehypeImageMetadata(options: Options) {
 
         // Enrich with dimensions only when the file is available locally
         try {
-          if (imagePath && fs.existsSync(imagePath)) {
-            const buffer = fs.readFileSync(imagePath);
+          if (imagePath && fs.existsSync(/* turbopackIgnore: true */ imagePath)) {
+            const buffer = fs.readFileSync(/* turbopackIgnore: true */ imagePath);
             const dimensions = sizeOf(buffer);
             if (dimensions) {
               node.properties.width = dimensions.width;

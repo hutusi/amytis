@@ -15,6 +15,10 @@ const booksDirectory = path.join(process.cwd(), 'content', 'books');
 const flowsDirectory = path.join(process.cwd(), 'content', 'flows');
 const notesDirectory = path.join(process.cwd(), 'content', 'notes');
 
+function readUtf8File(filePath: string): string {
+  return fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf8');
+}
+
 const ExternalLinkSchema = z.object({
   name: z.string(),
   url: z.string().url(),
@@ -331,7 +335,7 @@ export function getSeriesAuthors(seriesSlug: string): string[] | null {
   }
 
   if (indexInfo.format === 'rst') {
-    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    const parsed = parseRstDocument(readUtf8File(indexInfo.fullPath));
     if (parsed.metadata.authors && parsed.metadata.authors.length > 0) {
       bySlug.set(seriesSlug, parsed.metadata.authors);
       return parsed.metadata.authors;
@@ -345,7 +349,7 @@ export function getSeriesAuthors(seriesSlug: string): string[] | null {
     return null;
   }
 
-  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+  const { data } = matter(readUtf8File(indexInfo.fullPath));
   if (data.authors && Array.isArray(data.authors) && data.authors.length > 0) {
     const authors = data.authors as string[];
     bySlug.set(seriesSlug, authors);
@@ -542,7 +546,7 @@ function getSeriesTitle(slug: string): string | undefined {
   }
 
   if (indexInfo.format === 'rst') {
-    const parsed = parseRstDocument(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+    const parsed = parseRstDocument(readUtf8File(indexInfo.fullPath));
     if (parsed.metadata.draft === true) {
       bySlug.set(slug, undefined);
       return undefined;
@@ -551,7 +555,7 @@ function getSeriesTitle(slug: string): string | undefined {
     return parsed.title;
   }
 
-  const { data } = matter(fs.readFileSync(indexInfo.fullPath, 'utf8'));
+  const { data } = matter(readUtf8File(indexInfo.fullPath));
   if (data.draft === true) {
     bySlug.set(slug, undefined);
     return undefined;
