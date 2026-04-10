@@ -56,11 +56,36 @@ function resetGeneratedTreePreservingOptimizerCache(rootDir: string) {
   }
 }
 
+function pruneOrphanedOptimizerDirs(rootDir: string) {
+  if (!fs.existsSync(rootDir)) return;
+
+  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const entryPath = path.join(rootDir, entry.name);
+
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    if (entry.name === optimizerDirName) {
+      if (!shouldPreserveOptimizerDir(entryPath)) {
+        fs.rmSync(entryPath, { recursive: true, force: true });
+      }
+      continue;
+    }
+
+    pruneOrphanedOptimizerDirs(entryPath);
+  }
+}
+
 function resetGeneratedAssetDirs() {
   generatedAssetDestinations.clear();
   fs.mkdirSync(destDir, { recursive: true });
   fs.mkdirSync(booksDestDir, { recursive: true });
   fs.mkdirSync(flowsDestDir, { recursive: true });
+  resetGeneratedTreePreservingOptimizerCache(destDir);
+  resetGeneratedTreePreservingOptimizerCache(booksDestDir);
+  resetGeneratedTreePreservingOptimizerCache(flowsDestDir);
 }
 
 function copyRecursive(src: string, dest: string) {
@@ -332,7 +357,7 @@ processPosts();
 processSeries();
 processBooks();
 processFlows();
-resetGeneratedTreePreservingOptimizerCache(destDir);
-resetGeneratedTreePreservingOptimizerCache(booksDestDir);
-resetGeneratedTreePreservingOptimizerCache(flowsDestDir);
+pruneOrphanedOptimizerDirs(destDir);
+pruneOrphanedOptimizerDirs(booksDestDir);
+pruneOrphanedOptimizerDirs(flowsDestDir);
 console.log('Assets copied successfully.');
