@@ -12,6 +12,15 @@ const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
 const optimizerDirName = 'nextImageExportOptimizer';
 const generatedAssetDestinations = new Set<string>();
 
+function copyFileOrThrow(srcPath: string, destPath: string, context: string) {
+  try {
+    fs.copyFileSync(srcPath, destPath);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`[copy-assets] Failed to copy ${context}: ${srcPath} -> ${destPath}: ${message}`);
+  }
+}
+
 function markGeneratedDestination(destPath: string) {
   generatedAssetDestinations.add(path.resolve(destPath));
 }
@@ -82,7 +91,7 @@ function copyRecursive(src: string, dest: string) {
         }
 
         if (shouldCopy) {
-          fs.copyFileSync(srcPath, destPath);
+          copyFileOrThrow(srcPath, destPath, 'recursive asset');
           // console.log(`Copied: ${entry.name} -> ${destPath}`);
         }
       }
@@ -170,7 +179,7 @@ function copyReferencedAssets(sourceFile: string, rootDir: string, destPostDir: 
     if (!fs.existsSync(path.dirname(destPath))) {
       fs.mkdirSync(path.dirname(destPath), { recursive: true });
     }
-    fs.copyFileSync(absolutePath, destPath);
+    copyFileOrThrow(absolutePath, destPath, `referenced asset from ${sourceFile}`);
   });
 }
 
@@ -259,7 +268,7 @@ function processSeries() {
               if (!fs.existsSync(destPostDir)) {
                 fs.mkdirSync(destPostDir, { recursive: true });
               }
-              fs.copyFileSync(srcPath, destPath);
+              copyFileOrThrow(srcPath, destPath, `series post asset from ${itemSrcPath}`);
             }
           });
         }
