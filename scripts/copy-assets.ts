@@ -9,13 +9,40 @@ const flowsSrcDir = path.join(process.cwd(), 'content', 'flows');
 const destDir = path.join(process.cwd(), 'public', 'posts');
 const booksDestDir = path.join(process.cwd(), 'public', 'books');
 const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
-const publicDir = path.join(process.cwd(), 'public');
+const optimizerDirName = 'nextImageExportOptimizer';
+
+function resetGeneratedTreePreservingOptimizerCache(rootDir: string) {
+  if (!fs.existsSync(rootDir)) return;
+
+  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const entryPath = path.join(rootDir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name === optimizerDirName) {
+        continue;
+      }
+
+      resetGeneratedTreePreservingOptimizerCache(entryPath);
+
+      if (fs.existsSync(entryPath) && fs.readdirSync(entryPath).length === 0) {
+        fs.rmdirSync(entryPath);
+      }
+      continue;
+    }
+
+    fs.rmSync(entryPath, { force: true });
+  }
+}
 
 function resetGeneratedAssetDirs() {
-  fs.rmSync(destDir, { recursive: true, force: true });
-  fs.rmSync(booksDestDir, { recursive: true, force: true });
-  fs.rmSync(flowsDestDir, { recursive: true, force: true });
-  fs.rmSync(path.join(publicDir, 'nextImageExportOptimizer'), { recursive: true, force: true });
+  fs.mkdirSync(destDir, { recursive: true });
+  fs.mkdirSync(booksDestDir, { recursive: true });
+  fs.mkdirSync(flowsDestDir, { recursive: true });
+
+  resetGeneratedTreePreservingOptimizerCache(destDir);
+  resetGeneratedTreePreservingOptimizerCache(booksDestDir);
+  resetGeneratedTreePreservingOptimizerCache(flowsDestDir);
 }
 
 function copyRecursive(src: string, dest: string) {
