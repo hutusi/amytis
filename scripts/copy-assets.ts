@@ -66,6 +66,16 @@ function shouldSkipSourceFile(name: string): boolean {
   return name.endsWith('.md') || name.endsWith('.mdx') || name.endsWith('.rst');
 }
 
+function shouldCopyBasedOnMtimeAndSize(srcPath: string, destPath: string): boolean {
+  if (!fs.existsSync(destPath)) {
+    return true;
+  }
+
+  const srcStat = fs.statSync(srcPath);
+  const destStat = fs.statSync(destPath);
+  return srcStat.mtimeMs > destStat.mtimeMs || srcStat.size !== destStat.size;
+}
+
 function syncRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
 
@@ -87,16 +97,7 @@ function syncRecursive(src: string, dest: string) {
         continue;
       }
 
-      let shouldCopy = true;
-      if (fs.existsSync(destPath)) {
-        const srcStat = fs.statSync(srcPath);
-        const destStat = fs.statSync(destPath);
-        if (srcStat.mtimeMs <= destStat.mtimeMs && srcStat.size === destStat.size) {
-          shouldCopy = false;
-        }
-      }
-
-      if (shouldCopy) {
+      if (shouldCopyBasedOnMtimeAndSize(srcPath, destPath)) {
         copyFileOrThrow(srcPath, destPath, 'recursive asset');
       }
     }
@@ -107,14 +108,8 @@ function syncRecursive(src: string, dest: string) {
     if (entry.name === optimizerDirName) continue;
 
     const destPath = path.join(dest, entry.name);
-    const srcPath = path.join(src, entry.name);
 
     if (!srcNames.has(entry.name)) {
-      fs.rmSync(destPath, { recursive: true, force: true });
-      continue;
-    }
-
-    if (entry.isDirectory() && !fs.existsSync(srcPath)) {
       fs.rmSync(destPath, { recursive: true, force: true });
     }
   }
@@ -207,16 +202,7 @@ function syncReferencedAssets(sourceFile: string, rootDir: string, destPostDir: 
       fs.mkdirSync(path.dirname(destPath), { recursive: true });
     }
 
-    let shouldCopy = true;
-    if (fs.existsSync(destPath)) {
-      const srcStat = fs.statSync(absolutePath);
-      const destStat = fs.statSync(destPath);
-      if (srcStat.mtimeMs <= destStat.mtimeMs && srcStat.size === destStat.size) {
-        shouldCopy = false;
-      }
-    }
-
-    if (shouldCopy) {
+    if (shouldCopyBasedOnMtimeAndSize(absolutePath, destPath)) {
       copyFileOrThrow(absolutePath, destPath, `referenced asset from ${sourceFile}`);
     }
   });
@@ -343,7 +329,9 @@ function processSeries() {
               if (!fs.existsSync(destPostDir)) {
                 fs.mkdirSync(destPostDir, { recursive: true });
               }
-              copyFileOrThrow(srcPath, destPath, `series post asset from ${itemSrcPath}`);
+              if (shouldCopyBasedOnMtimeAndSize(srcPath, destPath)) {
+                copyFileOrThrow(srcPath, destPath, `series post asset from ${itemSrcPath}`);
+              }
             }
           });
         }
