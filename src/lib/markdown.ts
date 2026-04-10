@@ -611,7 +611,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
-  if (!date) date = new Date().toISOString().split('T')[0]; // Fallback
+  if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
   const headings = getHeadings(content);
 
@@ -652,6 +652,15 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     imageBaseSlug,
     sourceFormat: 'markdown',
   };
+}
+
+export function parseMarkdownFileForTests(
+  fullPath: string,
+  slug: string,
+  dateFromFileName?: string,
+  seriesName?: string,
+): PostData {
+  return parseMarkdownFile(fullPath, slug, dateFromFileName, seriesName);
 }
 
 function parseRstFile(
@@ -735,7 +744,7 @@ function parseRstFile(
 
     let date = data.date;
     if (!date && dateFromFileName) date = dateFromFileName;
-    if (!date) date = new Date().toISOString().split('T')[0];
+    if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
     let coverImage = data.coverImage;
     if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
