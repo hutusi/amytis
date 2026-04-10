@@ -1,7 +1,8 @@
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
+  getPythonRendererInvocationCountForTests,
   getRstRendererDiskCachePathForTests,
   getPythonCommandSpecForRstRenderer,
   normalizePythonRstMetadata,
@@ -145,11 +146,16 @@ describe('rst-renderer bridge', () => {
 
     const first = renderRstFile(filePath, 'posts/关于队列模型');
     expect(existsSync(cachePath)).toBe(true);
+    const cacheMtime = statSync(cachePath).mtimeMs;
+    const invocationCount = getPythonRendererInvocationCountForTests();
 
     resetRstRendererCachesForTests();
     const second = renderRstFile(filePath, 'posts/关于队列模型');
 
     expect(second).toEqual(first);
+    expect(getPythonRendererInvocationCountForTests()).toBe(0);
+    expect(statSync(cachePath).mtimeMs).toBe(cacheMtime);
+    expect(invocationCount).toBeGreaterThan(0);
   });
 
   fixtureTest('preserves series index metadata fields from docutils output', () => {

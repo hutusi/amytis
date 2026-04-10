@@ -70,14 +70,20 @@ const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
 const RST_RENDERER_DISK_CACHE_VERSION = '1';
 const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
+let pythonRendererInvocationCount = 0;
 
 export function resetPythonCommandSpecForTests(): void {
   resolvedPythonCommandSpec = null;
 }
 
+export function getPythonRendererInvocationCountForTests(): number {
+  return pythonRendererInvocationCount;
+}
+
 export function resetRstRendererCachesForTests(): void {
   rstRenderCache.clear();
   resolvedPythonCommandSpec = null;
+  pythonRendererInvocationCount = 0;
 }
 
 function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null | undefined): string {
@@ -147,8 +153,12 @@ function writeRenderedRstDocumentToDiskCache(filePath: string, imageBaseSlug: st
     rendered,
   };
 
-  fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-  fs.writeFileSync(cachePath, JSON.stringify(entry), 'utf8');
+  try {
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+    fs.writeFileSync(cachePath, JSON.stringify(entry), 'utf8');
+  } catch {
+    // Best-effort cache persistence; rendering should still succeed.
+  }
 }
 
 export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
@@ -391,6 +401,7 @@ export function validatePythonRstResult(result: PythonRstRenderResult, filePath:
 }
 
 export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): PythonRstRenderResult {
+  pythonRendererInvocationCount += 1;
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
   const pythonCommand = getPythonCommandSpecForRstRenderer();
   const result = spawnSync(pythonCommand.executable, [
@@ -430,6 +441,7 @@ export function runPythonRstRenderer(filePath: string, imageBaseSlug: string): P
 
 export function runPythonRstRendererBatch(entries: PythonRstBatchEntry[]): Map<string, PythonRstRenderResult> {
   if (entries.length === 0) return new Map();
+  pythonRendererInvocationCount += 1;
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
   const pythonCommand = getPythonCommandSpecForRstRenderer();

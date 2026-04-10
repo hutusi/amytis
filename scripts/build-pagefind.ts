@@ -101,8 +101,12 @@ function writeManifest(sitePath: string, outputPath: string, files: Record<strin
     files,
   };
 
-  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+  try {
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+  } catch (error) {
+    console.warn(`[pagefind] Failed to persist manifest at ${manifestPath}:`, error);
+  }
 }
 
 export function shouldSkipPagefindBuild(sitePath: string, outputPath: string, currentFiles: Record<string, string>): boolean {
