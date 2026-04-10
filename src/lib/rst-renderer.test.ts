@@ -1,9 +1,11 @@
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
+  getRstRendererDiskCachePathForTests,
   getPythonCommandSpecForRstRenderer,
   normalizePythonRstMetadata,
+  resetRstRendererCachesForTests,
   resetPythonCommandSpecForTests,
   renderRstFile,
   validatePythonRstResult,
@@ -18,6 +20,7 @@ const previousPython = process.env.AMYTIS_RST_PYTHON;
 
 beforeAll(() => {
   resetPythonCommandSpecForTests();
+  resetRstRendererCachesForTests();
   if (hasLocalDocutils && previousPython === undefined) {
     process.env.AMYTIS_RST_PYTHON = localDocutilsPython;
   }
@@ -29,6 +32,8 @@ afterAll(() => {
   } else {
     process.env.AMYTIS_RST_PYTHON = previousPython;
   }
+  rmSync(path.join(process.cwd(), '.cache', 'rst-renderer'), { recursive: true, force: true });
+  resetRstRendererCachesForTests();
   resetPythonCommandSpecForTests();
 });
 
@@ -129,6 +134,22 @@ describe('rst-renderer bridge', () => {
     ]);
     expect(doc.html).toContain('/posts/关于队列模型/_static/fsm_vs_queue.svg');
     expect(doc.html).toContain('/posts/关于队列模型/_static/para_queue_model.svg');
+  });
+
+  fixtureTest('persists rendered rst output to disk cache and reloads it without rerendering', () => {
+    const filePath = 'content/series/软件构架设计/关于队列模型.rst';
+    const cachePath = getRstRendererDiskCachePathForTests(filePath);
+
+    rmSync(cachePath, { force: true });
+    resetRstRendererCachesForTests();
+
+    const first = renderRstFile(filePath, 'posts/关于队列模型');
+    expect(existsSync(cachePath)).toBe(true);
+
+    resetRstRendererCachesForTests();
+    const second = renderRstFile(filePath, 'posts/关于队列模型');
+
+    expect(second).toEqual(first);
   });
 
   fixtureTest('preserves series index metadata fields from docutils output', () => {
