@@ -4,6 +4,7 @@ import {
   getAllSeries,
   getAdjacentPosts,
   getSeriesData,
+  getSeriesLatestPostDate,
   getSeriesPosts,
   getFeaturedPosts,
   getFeaturedSeries,
@@ -127,6 +128,12 @@ describe("Integration: Series", () => {
     const posts = getSeriesPosts("rst-toctree");
     expect(posts.map(post => post.slug)).toEqual(["second-post", "first-post"]);
     expect(posts.every(post => post.sourceFormat === "rst")).toBe(true);
+  });
+
+  test("getSeriesLatestPostDate uses the newest post date instead of manual series order", () => {
+    expect(getSeriesData("nextjs-deep-dive")?.sort).toBe("manual");
+    expect(getSeriesPosts("nextjs-deep-dive").map(post => post.date)).toEqual(["2026-01-30", "2026-01-31"]);
+    expect(getSeriesLatestPostDate("nextjs-deep-dive")).toBe("2026-01-31");
   });
 
   test("getAdjacentPosts follows rST series order instead of global post date order", () => {
