@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as https from "https";
 import * as readline from "readline";
-import { execSync } from "child_process";
+import { execFileSync, execSync } from "child_process";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -77,11 +77,54 @@ function downloadFile(url: string, dest: string): Promise<void> {
   });
 }
 
-function extractTarball(tarPath: string, outDir: string): void {
+export function getArchiveMetadata(tag: string, platform: NodeJS.Platform = process.platform): {
+  url: string;
+  filename: string;
+  kind: "zip" | "tar.gz";
+} {
+  if (platform === "win32") {
+    return {
+      url: `https://github.com/hutusi/amytis/archive/refs/tags/${tag}.zip`,
+      filename: `amytis-${tag}.zip`,
+      kind: "zip",
+    };
+  }
+
+  return {
+    url: `https://github.com/hutusi/amytis/archive/refs/tags/${tag}.tar.gz`,
+    filename: `amytis-${tag}.tar.gz`,
+    kind: "tar.gz",
+  };
+}
+
+function extractArchive(archivePath: string, outDir: string, kind: "zip" | "tar.gz", platform: NodeJS.Platform = process.platform): void {
   // Extract into a temp dir, then move the inner folder out
   const tmpDir = `${outDir}.__tmp__`;
   fs.mkdirSync(tmpDir, { recursive: true });
-  execSync(`tar xzf "${tarPath}" -C "${tmpDir}"`);
+  if (kind === "zip") {
+    if (platform !== "win32") {
+      throw new Error("ZIP extraction is only supported on Windows in create-amytis");
+    }
+    execFileSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "Expand-Archive",
+        "-LiteralPath",
+        archivePath,
+        "-DestinationPath",
+        tmpDir,
+        "-Force",
+      ],
+      { stdio: "inherit" }
+    );
+  } else {
+    execSync(`tar xzf "${archivePath}" -C "${tmpDir}"`);
+  }
 
   // The tarball unpacks to a single top-level dir like "amytis-1.2.0/"
   const entries = fs.readdirSync(tmpDir);
@@ -91,7 +134,7 @@ function extractTarball(tarPath: string, outDir: string): void {
   const innerDir = path.join(tmpDir, entries[0]);
   fs.renameSync(innerDir, outDir);
   fs.rmdirSync(tmpDir);
-  fs.unlinkSync(tarPath);
+  fs.unlinkSync(archivePath);
 }
 
 // ---------------------------------------------------------------------------
@@ -180,14 +223,14 @@ async function main(): Promise<void> {
   console.log(`  Found: ${tag}`);
 
   // 3. Download tarball
-  const tarUrl = `https://github.com/hutusi/amytis/archive/refs/tags/${tag}.tar.gz`;
-  const tarDest = path.join(process.cwd(), `amytis-${tag}.tar.gz`);
+  const archive = getArchiveMetadata(tag);
+  const archiveDest = path.join(process.cwd(), archive.filename);
   console.log("Downloading tarball...");
-  await downloadFile(tarUrl, tarDest);
+  await downloadFile(archive.url, archiveDest);
 
   // 4. Extract
   console.log("Extracting...");
-  extractTarball(tarDest, targetDir);
+  extractArchive(archiveDest, targetDir, archive.kind);
   console.log(`  Scaffolded: ${targetDir}`);
 
   // 5-6. Prompt for site metadata

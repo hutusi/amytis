@@ -2,7 +2,7 @@ import { describe, test, expect, afterAll } from "bun:test";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { patchSiteConfig, patchPackageJson } from "./index";
+import { getArchiveMetadata, patchSiteConfig, patchPackageJson } from "./index";
 
 // Minimal site.config.ts that mirrors the real file's patchable fields.
 // Inner backticks and `${` are escaped so they appear literally in the string.
@@ -183,5 +183,21 @@ describe("patchPackageJson", () => {
     tmpDirs.push(dir);
     // file intentionally absent
     expect(() => patchPackageJson(dir, "my-garden")).not.toThrow();
+  });
+});
+
+describe("getArchiveMetadata", () => {
+  test("uses zip archives on Windows", () => {
+    const archive = getArchiveMetadata("v1.13.0", "win32");
+    expect(archive.kind).toBe("zip");
+    expect(archive.filename).toBe("amytis-v1.13.0.zip");
+    expect(archive.url).toBe("https://github.com/hutusi/amytis/archive/refs/tags/v1.13.0.zip");
+  });
+
+  test("uses tar.gz archives on non-Windows platforms", () => {
+    const archive = getArchiveMetadata("v1.13.0", "darwin");
+    expect(archive.kind).toBe("tar.gz");
+    expect(archive.filename).toBe("amytis-v1.13.0.tar.gz");
+    expect(archive.url).toBe("https://github.com/hutusi/amytis/archive/refs/tags/v1.13.0.tar.gz");
   });
 });
