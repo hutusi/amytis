@@ -3,6 +3,7 @@ import ExportedImage from 'next-image-export-optimizer';
 import { getAuthorSlug } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
+import { shouldBypassImageOptimization } from '@/lib/image-utils';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isExternal = (src: string) => src.startsWith('http') || src.startsWith('//');
@@ -31,7 +32,8 @@ export default function AuthorCard({ authors }: { authors: string[] }) {
                   width={56}
                   height={56}
                   className="w-14 h-14 rounded-full object-cover flex-shrink-0 ring-2 ring-muted/20"
-                  unoptimized={isDev || isExternal(profile.avatar)}
+                  unoptimized={isDev || isExternal(profile.avatar) || shouldBypassImageOptimization(profile.avatar)}
+                  placeholder={shouldBypassImageOptimization(profile.avatar) ? 'empty' : 'blur'}
                 />
               ) : (
                 <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 text-accent font-serif font-bold text-2xl select-none">
@@ -68,7 +70,8 @@ export default function AuthorCard({ authors }: { authors: string[] }) {
                       width={72}
                       height={72}
                       className="w-[72px] h-[72px] object-contain rounded-lg bg-white p-0.5"
-                      unoptimized={isDev || isExternal(item.image)}
+                      unoptimized={isDev || isExternal(item.image) || shouldBypassImageOptimization(item.image)}
+                      placeholder={shouldBypassImageOptimization(item.image) ? 'empty' : 'blur'}
                     />
                     <figcaption className="text-[10px] font-sans text-muted text-center leading-tight max-w-[72px]">
                       {item.description}
