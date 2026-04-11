@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as https from "https";
 import * as readline from "readline";
-import { execFileSync, execSync } from "child_process";
+import { execFileSync } from "child_process";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,17 +97,20 @@ export function getArchiveMetadata(tag: string, platform: NodeJS.Platform = proc
   };
 }
 
-function extractArchive(archivePath: string, outDir: string, kind: "zip" | "tar.gz", platform: NodeJS.Platform = process.platform): void {
-  // Extract into a temp dir, then move the inner folder out
-  const tmpDir = `${outDir}.__tmp__`;
-  fs.mkdirSync(tmpDir, { recursive: true });
+export function buildExtractCommand(
+  archivePath: string,
+  tmpDir: string,
+  kind: "zip" | "tar.gz",
+  platform: NodeJS.Platform = process.platform,
+): { command: string; args: string[] } {
   if (kind === "zip") {
     if (platform !== "win32") {
       throw new Error("ZIP extraction is only supported on Windows in create-amytis");
     }
-    execFileSync(
-      "powershell.exe",
-      [
+
+    return {
+      command: "powershell.exe",
+      args: [
         "-NoProfile",
         "-NonInteractive",
         "-ExecutionPolicy",
@@ -120,11 +123,21 @@ function extractArchive(archivePath: string, outDir: string, kind: "zip" | "tar.
         tmpDir,
         "-Force",
       ],
-      { stdio: "inherit" }
-    );
-  } else {
-    execSync(`tar xzf "${archivePath}" -C "${tmpDir}"`);
+    };
   }
+
+  return {
+    command: "tar",
+    args: ["xzf", archivePath, "-C", tmpDir],
+  };
+}
+
+function extractArchive(archivePath: string, outDir: string, kind: "zip" | "tar.gz", platform: NodeJS.Platform = process.platform): void {
+  // Extract into a temp dir, then move the inner folder out
+  const tmpDir = `${outDir}.__tmp__`;
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const { command, args } = buildExtractCommand(archivePath, tmpDir, kind, platform);
+  execFileSync(command, args, { stdio: "inherit" });
 
   // The tarball unpacks to a single top-level dir like "amytis-1.2.0/"
   const entries = fs.readdirSync(tmpDir);
