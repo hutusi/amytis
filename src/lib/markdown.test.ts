@@ -9,6 +9,7 @@ import {
   getHeadings,
   getAuthorSlug,
   getPythonRstRendererAvailabilityForTests,
+  parseMarkdownFileForTests,
   parseRstFileForTests,
   resetPythonRstRendererAvailabilityForTests,
 } from "./markdown";
@@ -157,6 +158,34 @@ describe("markdown utils", () => {
   });
 
   describe("rST parsing fallbacks", () => {
+    test("uses markdown file mtime when frontmatter date and slug date are missing", () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-md-"));
+      const filePath = path.join(tempDir, "legacy.mdx");
+      fs.writeFileSync(
+        filePath,
+        [
+          "---",
+          'title: "Legacy Markdown"',
+          "---",
+          "",
+          "Body",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const expectedDate = "2021-03-17";
+      const expectedTime = new Date(`${expectedDate}T12:00:00Z`);
+      fs.utimesSync(filePath, expectedTime, expectedTime);
+
+      try {
+        const post = parseMarkdownFileForTests(filePath, "legacy");
+        expect(post.date).toBe(expectedDate);
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
     test("includes the source file path in rst parse errors", () => {
       process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
 
@@ -202,6 +231,35 @@ describe("markdown utils", () => {
       expect(post.content).toContain("Overview\n--------");
       expect(post.content).toContain(".. code-block:: ts");
       expect(getPythonRstRendererAvailabilityForTests()).toBe(false);
+    });
+
+    test("uses rst file mtime when metadata date and slug date are missing", () => {
+      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
+
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-rst-"));
+      const filePath = path.join(tempDir, "legacy.rst");
+      fs.writeFileSync(
+        filePath,
+        [
+          "Legacy rST",
+          "**********",
+          "",
+          "Body",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const expectedDate = "2020-04-09";
+      const expectedTime = new Date(`${expectedDate}T12:00:00Z`);
+      fs.utimesSync(filePath, expectedTime, expectedTime);
+
+      try {
+        const post = parseRstFileForTests(filePath, "legacy");
+        expect(post.date).toBe(expectedDate);
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
     });
   });
 });

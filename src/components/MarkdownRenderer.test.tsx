@@ -24,6 +24,22 @@ describe("MarkdownRenderer", () => {
       // images as LCP candidates, avoiding "preloaded but not used" warnings
       expect(html).toContain('fetchPriority="low"');
     });
+
+    test("bypasses optimization for local avif images", () => {
+      const content = "![alt text](/images/background-new-wave.avif)";
+      const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
+      expect(html).toContain('src="/images/background-new-wave.avif"');
+      expect(html).not.toContain('nextImageExportOptimizer');
+      expect(html).not.toContain('background-image:url');
+    });
+
+    test("bypasses optimization for local webp images", () => {
+      const content = "![alt text](/images/already-optimized.webp)";
+      const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
+      expect(html).toContain('src="/images/already-optimized.webp"');
+      expect(html).not.toContain('nextImageExportOptimizer');
+      expect(html).not.toContain('background-image:url');
+    });
   });
 
   test("adds horizontal overflow containment while preserving code scrolling", () => {

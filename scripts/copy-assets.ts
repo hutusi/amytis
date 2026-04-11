@@ -12,38 +12,46 @@ const flowsDestDir = path.join(process.cwd(), 'public', 'flows');
 const optimizerDirName = 'nextImageExportOptimizer';
 const generatedAssetDestinations = new Set<string>();
 
+function copyFileOrThrow(srcPath: string, destPath: string, context: string) {
+  try {
+    fs.copyFileSync(srcPath, destPath);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`[copy-assets] Failed to copy ${context}: ${srcPath} -> ${destPath}: ${message}`);
+  }
+}
+
 function markGeneratedDestination(destPath: string) {
   generatedAssetDestinations.add(path.resolve(destPath));
 }
 
 function shouldPreserveOptimizerDir(optimizerPath: string): boolean {
-  return generatedAssetDestinations.has(path.resolve(path.dirname(optimizerPath)));
+  const optimizerParentPath = path.resolve(path.dirname(optimizerPath));
+  return [...generatedAssetDestinations].some((generatedDestination) =>
+    optimizerParentPath === generatedDestination ||
+    optimizerParentPath.startsWith(`${generatedDestination}${path.sep}`)
+  );
 }
 
-function resetGeneratedTreePreservingOptimizerCache(rootDir: string) {
+function pruneOrphanedOptimizerDirs(rootDir: string) {
   if (!fs.existsSync(rootDir)) return;
 
   const entries = fs.readdirSync(rootDir, { withFileTypes: true });
   for (const entry of entries) {
     const entryPath = path.join(rootDir, entry.name);
 
-    if (entry.isDirectory()) {
-      if (entry.name === optimizerDirName) {
-        if (!shouldPreserveOptimizerDir(entryPath)) {
-          fs.rmSync(entryPath, { recursive: true, force: true });
-        }
-        continue;
-      }
+    if (!entry.isDirectory()) {
+      continue;
+    }
 
-      resetGeneratedTreePreservingOptimizerCache(entryPath);
-
-      if (fs.existsSync(entryPath) && fs.readdirSync(entryPath).length === 0) {
-        fs.rmdirSync(entryPath);
+    if (entry.name === optimizerDirName) {
+      if (!shouldPreserveOptimizerDir(entryPath)) {
+        fs.rmSync(entryPath, { recursive: true, force: true });
       }
       continue;
     }
 
-    fs.rmSync(entryPath, { force: true });
+    pruneOrphanedOptimizerDirs(entryPath);
   }
 }
 
@@ -54,38 +62,55 @@ function resetGeneratedAssetDirs() {
   fs.mkdirSync(flowsDestDir, { recursive: true });
 }
 
-function copyRecursive(src: string, dest: string) {
+function shouldSkipSourceFile(name: string): boolean {
+  return name.endsWith('.md') || name.endsWith('.mdx') || name.endsWith('.rst');
+}
+
+function shouldCopyBasedOnMtimeAndSize(srcPath: string, destPath: string): boolean {
+  if (!fs.existsSync(destPath)) {
+    return true;
+  }
+
+  const srcStat = fs.statSync(srcPath);
+  const destStat = fs.statSync(destPath);
+  return srcStat.mtimeMs > destStat.mtimeMs || srcStat.size !== destStat.size;
+}
+
+function syncRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) return;
-  
+
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
 
-  const entries = fs.readdirSync(src, { withFileTypes: true });
+  const srcEntries = fs.readdirSync(src, { withFileTypes: true });
+  const srcNames = new Set(srcEntries.map((entry) => entry.name));
 
-  for (const entry of entries) {
+  for (const entry of srcEntries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
-      copyRecursive(srcPath, destPath);
+      syncRecursive(srcPath, destPath);
     } else {
-      // Copy all files except markdown source
-      if (!entry.name.endsWith('.md') && !entry.name.endsWith('.mdx') && !entry.name.endsWith('.rst')) {
-        let shouldCopy = true;
-        if (fs.existsSync(destPath)) {
-          const srcStat = fs.statSync(srcPath);
-          const destStat = fs.statSync(destPath);
-          if (srcStat.mtimeMs <= destStat.mtimeMs) {
-            shouldCopy = false;
-          }
-        }
-
-        if (shouldCopy) {
-          fs.copyFileSync(srcPath, destPath);
-          // console.log(`Copied: ${entry.name} -> ${destPath}`);
-        }
+      if (shouldSkipSourceFile(entry.name)) {
+        continue;
       }
+
+      if (shouldCopyBasedOnMtimeAndSize(srcPath, destPath)) {
+        copyFileOrThrow(srcPath, destPath, 'recursive asset');
+      }
+    }
+  }
+
+  const destEntries = fs.readdirSync(dest, { withFileTypes: true });
+  for (const entry of destEntries) {
+    if (entry.name === optimizerDirName) continue;
+
+    const destPath = path.join(dest, entry.name);
+
+    if (!srcNames.has(entry.name)) {
+      fs.rmSync(destPath, { recursive: true, force: true });
     }
   }
 }
@@ -146,8 +171,13 @@ function extractReferencedAssetPaths(filePath: string): string[] {
   return [...references];
 }
 
-function copyReferencedAssets(sourceFile: string, rootDir: string, destPostDir: string) {
+function syncReferencedAssets(sourceFile: string, rootDir: string, destPostDir: string) {
   const references = extractReferencedAssetPaths(sourceFile);
+  const desiredRelativePaths = new Set<string>();
+
+  if (!fs.existsSync(destPostDir)) {
+    fs.mkdirSync(destPostDir, { recursive: true });
+  }
 
   references.forEach((reference) => {
     const absolutePath = path.resolve(path.dirname(sourceFile), reference);
@@ -167,11 +197,51 @@ function copyReferencedAssets(sourceFile: string, rootDir: string, destPostDir: 
     }
 
     const destPath = path.join(destPostDir, relativeToRoot);
+    desiredRelativePaths.add(relativeToRoot.replaceAll(path.sep, '/'));
     if (!fs.existsSync(path.dirname(destPath))) {
       fs.mkdirSync(path.dirname(destPath), { recursive: true });
     }
-    fs.copyFileSync(absolutePath, destPath);
+
+    if (shouldCopyBasedOnMtimeAndSize(absolutePath, destPath)) {
+      copyFileOrThrow(absolutePath, destPath, `referenced asset from ${sourceFile}`);
+    }
   });
+
+  function pruneDestDir(currentDir: string, relativeDir = '') {
+    if (!fs.existsSync(currentDir)) return;
+
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === optimizerDirName) continue;
+
+      const relativePath = relativeDir ? path.join(relativeDir, entry.name) : entry.name;
+      const normalizedRelativePath = relativePath.replaceAll(path.sep, '/');
+      const fullPath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        const hasDesiredDescendant = [...desiredRelativePaths].some((desiredPath) =>
+          desiredPath === normalizedRelativePath || desiredPath.startsWith(`${normalizedRelativePath}/`)
+        );
+
+        if (!hasDesiredDescendant) {
+          fs.rmSync(fullPath, { recursive: true, force: true });
+          continue;
+        }
+
+        pruneDestDir(fullPath, relativePath);
+        if (fs.existsSync(fullPath) && fs.readdirSync(fullPath).length === 0) {
+          fs.rmdirSync(fullPath);
+        }
+        continue;
+      }
+
+      if (!desiredRelativePaths.has(normalizedRelativePath)) {
+        fs.rmSync(fullPath, { force: true });
+      }
+    }
+  }
+
+  pruneDestDir(destPostDir);
 }
 
 function processPosts() {
@@ -186,7 +256,7 @@ function processPosts() {
 
         console.log(`Processing Post: ${entry.name} -> ${targetName}`);
         markGeneratedDestination(destPostDir);
-        copyRecursive(srcPostDir, destPostDir);
+        syncRecursive(srcPostDir, destPostDir);
       } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx') || entry.name.endsWith('.rst'))) {
         const targetName = getSlugFromFilename(entry.name);
         const sourceFile = path.join(srcDir, entry.name);
@@ -197,7 +267,7 @@ function processPosts() {
         if (!fs.existsSync(destPostDir)) {
           fs.mkdirSync(destPostDir, { recursive: true });
         }
-        copyReferencedAssets(sourceFile, srcDir, destPostDir);
+        syncReferencedAssets(sourceFile, srcDir, destPostDir);
       }
     });
   }
@@ -236,7 +306,7 @@ function processSeries() {
             fs.mkdirSync(destPostDir, { recursive: true });
           }
 
-          copyReferencedAssets(sourceFile, seriesPath, destPostDir);
+          syncReferencedAssets(sourceFile, seriesPath, destPostDir);
 
         } else if (item.isDirectory() && isPostFolder(path.join(seriesPath, item.name))) {
           // Folder-based post: copy only its own assets
@@ -254,12 +324,14 @@ function processSeries() {
             const destPath = path.join(destPostDir, sub.name);
 
             if (sub.isDirectory()) {
-              copyRecursive(srcPath, destPath);
-            } else if (!sub.name.endsWith('.md') && !sub.name.endsWith('.mdx') && !sub.name.endsWith('.rst')) {
+              syncRecursive(srcPath, destPath);
+            } else if (!shouldSkipSourceFile(sub.name)) {
               if (!fs.existsSync(destPostDir)) {
                 fs.mkdirSync(destPostDir, { recursive: true });
               }
-              fs.copyFileSync(srcPath, destPath);
+              if (shouldCopyBasedOnMtimeAndSize(srcPath, destPath)) {
+                copyFileOrThrow(srcPath, destPath, `series post asset from ${itemSrcPath}`);
+              }
             }
           });
         }
@@ -280,7 +352,7 @@ function processBooks() {
 
       console.log(`Processing Book: ${entry.name}`);
       markGeneratedDestination(destBookDir);
-      copyRecursive(srcBookDir, destBookDir);
+      syncRecursive(srcBookDir, destBookDir);
     }
   });
 }
@@ -311,7 +383,7 @@ function processFlows() {
 
         console.log(`Processing Flow: ${yearEntry.name}/${monthEntry.name}/${rawName}`);
         markGeneratedDestination(destFlowDir);
-        copyRecursive(srcFlowDir, destFlowDir);
+        syncRecursive(srcFlowDir, destFlowDir);
       }
     }
   }
@@ -323,7 +395,7 @@ processPosts();
 processSeries();
 processBooks();
 processFlows();
-resetGeneratedTreePreservingOptimizerCache(destDir);
-resetGeneratedTreePreservingOptimizerCache(booksDestDir);
-resetGeneratedTreePreservingOptimizerCache(flowsDestDir);
+pruneOrphanedOptimizerDirs(destDir);
+pruneOrphanedOptimizerDirs(booksDestDir);
+pruneOrphanedOptimizerDirs(flowsDestDir);
 console.log('Assets copied successfully.');

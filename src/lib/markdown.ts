@@ -169,6 +169,7 @@ const seriesDataCache = new Map<string, Map<string, PostData | null>>();
 const seriesPostsCache = new Map<string, Map<string, PostData[]>>();
 const allSeriesCache = new Map<string, Record<string, PostData[]>>();
 const featuredSeriesCache = new Map<string, Record<string, PostData[]>>();
+const seriesLatestDateCache = new Map<string, Map<string, string>>();
 const collectionPostsCache = new Map<string, Map<string, PostData[]>>();
 const collectionsForPostCache = new Map<string, Map<string, CollectionContext[]>>();
 const seriesAuthorsCache = new Map<string, Map<string, string[] | null>>();
@@ -611,7 +612,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
   
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
-  if (!date) date = new Date().toISOString().split('T')[0]; // Fallback
+  if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
   const headings = getHeadings(content);
 
@@ -652,6 +653,15 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     imageBaseSlug,
     sourceFormat: 'markdown',
   };
+}
+
+export function parseMarkdownFileForTests(
+  fullPath: string,
+  slug: string,
+  dateFromFileName?: string,
+  seriesName?: string,
+): PostData {
+  return parseMarkdownFile(fullPath, slug, dateFromFileName, seriesName);
 }
 
 function parseRstFile(
@@ -735,7 +745,7 @@ function parseRstFile(
 
     let date = data.date;
     if (!date && dateFromFileName) date = dateFromFileName;
-    if (!date) date = new Date().toISOString().split('T')[0];
+    if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
     let coverImage = data.coverImage;
     if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
@@ -1249,6 +1259,25 @@ export function getAllSeries(): Record<string, PostData[]> {
 
   allSeriesCache.set(cacheKey, series);
   return series;
+}
+
+export function getSeriesLatestPostDate(slug: string): string {
+  const cacheKey = getCacheEnvKey();
+  let bySlug = seriesLatestDateCache.get(cacheKey);
+  if (!bySlug) {
+    bySlug = new Map();
+    seriesLatestDateCache.set(cacheKey, bySlug);
+  }
+  const cached = bySlug.get(slug);
+  if (cached !== undefined) return cached;
+
+  const seriesData = getSeriesData(slug);
+  const posts = seriesData?.type === 'collection' ? getCollectionPosts(slug) : getSeriesPosts(slug);
+  const latestPostDate = posts.reduce((latest, post) => (post.date > latest ? post.date : latest), '');
+  const resolved = latestPostDate || seriesData?.date || '';
+
+  bySlug.set(slug, resolved);
+  return resolved;
 }
 
 export function getFeaturedPosts(): PostData[] {

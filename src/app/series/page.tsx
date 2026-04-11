@@ -1,4 +1,4 @@
-import { getAllSeries, getSeriesData, resolveSeriesAuthors } from '@/lib/markdown';
+import { getAllSeries, getSeriesData, getSeriesLatestPostDate, resolveSeriesAuthors } from '@/lib/markdown';
 import Link from 'next/link';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
@@ -20,8 +20,8 @@ export default function SeriesIndexPage() {
 
   // Sort by most recent post date (active series first)
   const seriesSlugs = Object.keys(allSeries).sort((a, b) => {
-    const latestA = allSeries[a][0]?.date || '';
-    const latestB = allSeries[b][0]?.date || '';
+    const latestA = getSeriesLatestPostDate(a);
+    const latestB = getSeriesLatestPostDate(b);
     return latestB.localeCompare(latestA);
   });
 

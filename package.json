@@ -22,7 +22,7 @@
     "build:search:cli": "pagefind --site out",
     "build:search:cli:dev": "pagefind --site out --output-path public/pagefind",
     "validate": "bun run lint && bun run test && bun run build:dev",
-    "clean": "rm -rf .next out public/posts public/books public/flows",
+    "clean": "rm -rf .next out public/posts public/books public/flows public/images/nextImageExportOptimizer",
     "new": "bun scripts/new-post.ts",
     "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
     "new-series": "bun scripts/new-series.ts",

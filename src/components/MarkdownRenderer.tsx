@@ -14,6 +14,7 @@ import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/markdown';
+import { shouldBypassImageOptimization } from '@/lib/image-utils';
 
 
 interface MarkdownRendererProps {
@@ -139,6 +140,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       const isExternal = imageSrc?.startsWith('http') || imageSrc?.startsWith('//');
 
       if (!isExternal) {
+        const shouldBypassOptimization = shouldBypassImageOptimization(imageSrc);
         return (
           <ExportedImage
             src={imageSrc || ''}
@@ -147,7 +149,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
             height={height ? Number(height) : 900}
             className="max-w-full h-auto rounded-lg my-4"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-            unoptimized={isDev}
+            unoptimized={isDev || shouldBypassOptimization}
+            placeholder={shouldBypassOptimization ? 'empty' : 'blur'}
             style={(!width || !height) ? { width: '100%', height: 'auto' } : undefined}
           />
         );
