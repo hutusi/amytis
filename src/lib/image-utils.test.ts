@@ -12,6 +12,7 @@ describe("image-utils", () => {
     expect(shouldBypassImageOptimization("/images/background-new-wave.avif")).toBe(true);
     expect(shouldBypassImageOptimization("/images/already-optimized.webp")).toBe(true);
     expect(shouldBypassImageOptimization("/images/already-optimized.WEBP?version=1")).toBe(true);
+    expect(shouldBypassImageOptimization("/images/already-optimized.webp?version=1#hero")).toBe(true);
     expect(shouldBypassImageOptimization("/images/photo.jpg")).toBe(false);
     expect(shouldBypassImageOptimization("/images/photo.png#fragment")).toBe(false);
   });
