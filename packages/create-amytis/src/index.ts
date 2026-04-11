@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as https from "https";
 import * as readline from "readline";
-import { execFileSync } from "child_process";
+import { execFileSync, execSync } from "child_process";
 
 // ---------------------------------------------------------------------------
 // Helpers
