@@ -2,7 +2,7 @@ import { describe, test, expect, afterAll } from "bun:test";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { patchSiteConfig, patchPackageJson } from "./index";
+import { buildExtractCommand, getArchiveMetadata, patchSiteConfig, patchPackageJson } from "./index";
 
 // Minimal site.config.ts that mirrors the real file's patchable fields.
 // Inner backticks and `${` are escaped so they appear literally in the string.
@@ -183,5 +183,47 @@ describe("patchPackageJson", () => {
     tmpDirs.push(dir);
     // file intentionally absent
     expect(() => patchPackageJson(dir, "my-garden")).not.toThrow();
+  });
+});
+
+describe("getArchiveMetadata", () => {
+  test("uses zip archives on Windows", () => {
+    const archive = getArchiveMetadata("v1.13.0", "win32");
+    expect(archive.kind).toBe("zip");
+    expect(archive.filename).toBe("amytis-v1.13.0.zip");
+    expect(archive.url).toBe("https://github.com/hutusi/amytis/archive/refs/tags/v1.13.0.zip");
+  });
+
+  test("uses tar.gz archives on non-Windows platforms", () => {
+    const archive = getArchiveMetadata("v1.13.0", "darwin");
+    expect(archive.kind).toBe("tar.gz");
+    expect(archive.filename).toBe("amytis-v1.13.0.tar.gz");
+    expect(archive.url).toBe("https://github.com/hutusi/amytis/archive/refs/tags/v1.13.0.tar.gz");
+  });
+});
+
+describe("buildExtractCommand", () => {
+  test("builds the PowerShell Expand-Archive command on Windows", () => {
+    const command = buildExtractCommand("C:\\tmp\\amytis-v1.13.0.zip", "C:\\tmp\\my-garden.__tmp__", "zip", "win32");
+    expect(command.command).toBe("powershell.exe");
+    expect(command.args).toEqual([
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      "Expand-Archive",
+      "-LiteralPath",
+      "C:\\tmp\\amytis-v1.13.0.zip",
+      "-DestinationPath",
+      "C:\\tmp\\my-garden.__tmp__",
+      "-Force",
+    ]);
+  });
+
+  test("builds the tar extraction command on non-Windows platforms", () => {
+    const command = buildExtractCommand("/tmp/amytis-v1.13.0.tar.gz", "/tmp/my-garden.__tmp__", "tar.gz", "darwin");
+    expect(command.command).toBe("tar");
+    expect(command.args).toEqual(["xzf", "/tmp/amytis-v1.13.0.tar.gz", "-C", "/tmp/my-garden.__tmp__"]);
   });
 });
