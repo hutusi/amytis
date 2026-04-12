@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-04-12
+
+### Added
+- **First-Class rST Support**: Added robust reStructuredText post and series support through the Python/docutils pipeline, including README-based series indexes and better handling of legacy rST metadata and content structure.
+- **Legacy rST Link Resolution**: Added support for legacy `:doc:` references, including same-series and cross-series links, so migrated rST content can keep its internal navigation intact.
+
+### Changed
+- **rST Rendering Fidelity**: Improved rST rendering parity with Markdown for links, tables, code blocks, images, and general article presentation, making legacy content feel native inside Amytis.
+- **Series Ordering Accuracy**: Series listing pages now sort by the real newest post date in each series instead of assuming the first rendered post is the latest one.
+- **Build Performance**: Significantly reduced rebuild cost by caching rendered rST output, preserving nested image optimizer caches, tightening asset sync behavior, reducing generated image width buckets, and skipping Pagefind work when exported HTML is unchanged.
+
+### Fixed
+- **Legacy rST Edge Cases**: Fixed broken rST image rendering, restored docutils-based runtime rendering, accepted legacy single-digit date formats, improved adjacency/order handling for manually ordered rST series, and kept rST excerpts explicit when metadata omits them.
+- **Image Optimizer Compatibility**: Prevented broken optimized URLs for local `.avif` and `.webp` sources by bypassing `next-image-export-optimizer` for those files in shared image renderers.
+- **Create Amytis on Windows**: Fixed `create-amytis` scaffolding on Windows for releases containing Unicode paths by switching the Windows extraction path to ZIP + PowerShell. The scaffold package was also released separately as `create-amytis@0.1.2`.
+
 ## [1.14.0] - 2026-04-05
 
 ### Added
