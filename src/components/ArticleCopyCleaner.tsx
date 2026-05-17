@@ -45,10 +45,11 @@ export default function ArticleCopyCleaner({ children }: { children: ReactNode }
           el.style.removeProperty('background');
         });
 
-        const html = sandbox.innerHTML;
-        const text = selection.toString();
-        event.clipboardData?.setData('text/html', html);
-        event.clipboardData?.setData('text/plain', text);
+        const clipboard = event.clipboardData;
+        if (!clipboard) return;
+
+        clipboard.setData('text/html', sandbox.innerHTML);
+        clipboard.setData('text/plain', selection.toString());
         event.preventDefault();
       } finally {
         sandbox.remove();
