@@ -1,231 +1,67 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code in this repo. Rules, gotchas, and pointers — not reference material.
 
-## Project Overview
+## Project
 
-Amytis is a static "digital garden" blog built with Next.js 15+ (App Router), React 19, and Tailwind CSS v4. Content is authored in MDX/Markdown files and statically generated at build time. Features include series support, multi-language (i18n), configurable themes, and comments integration.
+Amytis: static digital-garden blog (Next.js 16 App Router, React 19, Tailwind v4, static export). Content in MDX / Markdown / rST; everything resolves at build time. Package manager: bun.
 
-## Commands
+## Essential commands
 
 ```bash
-# Development
-bun dev                    # Start dev server at localhost:3000
-bun run lint               # Run ESLint
-
-# Testing
-bun test                   # Run all tests
-bun run test:unit          # Run unit tests (src/)
-bun run test:int           # Run integration tests
-bun run test:e2e           # Run end-to-end tests
-bun run test:mobile        # Run Playwright mobile compatibility tests (requires dev server)
-bun test path/to/file.test.ts  # Run a single test file
-
-# Build
-bun run build              # Full production build (copies assets, builds Next.js, optimizes images)
-bun run build:dev          # Development build (no image optimization, faster) — also regenerates Pagefind search index in public/pagefind/
-bun run clean              # Remove .next, out, public/posts directories
-
-# Deploy
-bun run deploy             # Deploy out/ to Linux/nginx server via rsync+sshpass (reads .env.local)
-
-# Content creation
-bun run new "Post Title"              # Create new post
-bun run new-series "Series Name"      # Create new series
-bun run new-from-pdf doc.pdf          # Create post from PDF
-bun run new-from-images ./photos      # Create post from image folder
-bun run new-flow                      # Create today's flow note
-bun run add-series-redirects                    # Add redirectFrom to all series posts (for autoPaths migration)
-bun run add-series-redirects <series-slug>      # Add redirectFrom to one series only
-bun run add-series-redirects --dry-run          # Preview without writing
-bun run new-flow-from-chat            # Import all new files from imports/chats/
-bun run sync-book                     # Sync chapters list for all books from disk
-bun run sync-book <slug>              # Sync chapters list for one book
+bun dev                 # dev server (Turbopack, http://localhost:3000)
+bun run lint            # ESLint
+bun test                # all tests
+bun run build           # production build (image optimization + Pagefind)
+bun run build:dev       # faster build; regenerates public/pagefind/ for search-in-dev
+bun run clean           # nuke .next, out, public/posts when caches misbehave
 ```
 
-## Design Principles
+Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.md`.
 
-- **Strict build over silent runtime failure.** This is a statically exported site — all misconfiguration must be caught at build time. Prefer `throw` in `generateStaticParams` and similar build-time functions over silent skips or `console.warn`. Examples: `validateSeriesAutoPaths` throws on slug collisions; `redirectFrom` alias conflicts should throw rather than silently producing broken redirects.
+## Design principles
 
-## Architecture
+- **Strict build over silent runtime failure.** Static export means misconfiguration must fail at build time. Use `throw` in `generateStaticParams` and similar — never silent skips or `console.warn`. Precedent: `validateSeriesAutoPaths` throws on slug collisions; `redirectFrom` alias conflicts (reserved slug or duplicate) should also throw, not produce broken redirects.
 
-### Data Flow
+## Integration-point rules (always go through X)
 
-1. **Content source**: MDX/Markdown files in `content/posts/` and `content/series/`
-2. **Data layer**: `src/lib/markdown.ts` - reads files with Node `fs`, parses frontmatter with `gray-matter`, validates with Zod
-3. **Static generation**: Routes use `generateStaticParams` to pre-render at build time
-4. **Rendering**: `react-markdown` with remark/rehype plugins for GFM, math (KaTeX), syntax highlighting, and Mermaid diagrams
+- **URLs:** always `getPostUrl()` / `getPostsBasePath()` / `getSeriesCustomPaths()` from `src/lib/urls.ts`. Never hardcode `/posts/[slug]` — posts may live at `/articles/[slug]`, custom prefixes (`series.customPaths`), or under `posts.basePath`.
+- **Content reads:** always via `src/lib/markdown.ts` (`getAllPosts`, `getPostBySlug`, `getSeriesData`, etc.). Frontmatter validation belongs in its Zod schemas, not in route files.
+- **Search utilities:** pure helpers (URL type detection, date extraction, title cleaning, markdown stripping) live in `src/lib/search-utils.ts` and are shared by the `Search` component and the search-index route. Don't duplicate them.
+- **i18n strings:** add to `src/i18n/translations.ts`. Locale-aware config fields are `string | Record<string, string>`; resolve via `resolveLocale()` / `resolveLocaleValue()` from `src/lib/i18n.ts`.
 
-### Key Files
+## Config sync
 
-- `site.config.ts` - Site configuration (nav, social, pagination, themes, i18n, analytics, comments)
-- `src/lib/markdown.ts` - Data access layer with all content query functions
-- `src/lib/urls.ts` - Central URL helpers (`getPostUrl`, `getPostsBasePath`, `getSeriesCustomPaths`, etc.) — always use these instead of hardcoding `/posts/[slug]`
-- `src/lib/search-utils.ts` - Pure search utilities (URL type detection, date extraction, title cleaning, markdown stripping) shared by `Search` and the search index route
-- `src/app/globals.css` - Theme CSS variables and color palettes
-- `src/components/MarkdownRenderer.tsx` - MDX rendering with all plugins
-- `src/i18n/translations.ts` - Language strings for i18n
+`site.config.ts` (this repo — i18n object form, `{ en, zh }`) and `site.config.example.ts` (shipped via `create-amytis` — plain strings, single-locale, optional features default disabled) must stay in sync. Any schema change to one must be mirrored in the other.
 
-### Route Structure
+## Gotchas (things Claude will get wrong on first try)
 
-- `/` - Homepage with hero, featured series, featured posts, latest writing
-- `/posts/[slug]` - Individual post pages
-- `/posts/page/[page]` - Paginated post listing
-- `/series` - All series overview
-- `/series/[slug]` - Single series with its posts
-- `/series/[slug]/page/[page]` - Series pagination
-- `/tags` - Tag cloud with post counts
-- `/tags/[tag]` - Posts filtered by tag
-- `/authors/[author]` - Posts filtered by author
-- `/archive` - Chronological listing grouped by year/month
-- `/books` - All books overview
-- `/books/[slug]` - Single book with chapter listing
-- `/books/[slug]/[chapter]` - Individual chapter page
-- `/flows` - Flow notes listing (paginated)
-- `/flows/page/[page]` - Paginated flow listing
-- `/flows/[year]` - Flows filtered by year
-- `/flows/[year]/[month]` - Flows filtered by month
-- `/flows/[year]/[month]/[day]` - Single flow detail page
-- `/[slug]` - Static pages (about, subscribe, etc.) and custom posts/series listing pages
-- `/[prefix]/[slug]` - Posts at custom URL prefixes (e.g. `/articles/my-post`, `/weeklies/my-post`)
-- `/[prefix]/page/[page]` - Paginated listing at custom URL prefixes
+- **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/markdown.ts`, `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling.
+- **No AVIF for `coverImage`.** Upstream bug in `next-image-export-optimizer` emits `.webp` files but a `srcset` pointing at `.avif` → 404 in prod. Use `.jpg` / `.png` / `.webp`. See `docs/TROUBLESHOOTING.md`.
+- **Unicode slugs.** Dynamic route pages call `safeDecodeParam()` and try decoded / raw / NFC / NFD variants — don't shortcut with bare `decodeURIComponent()` (it throws on malformed input). When touching dynamic routes, verify both ASCII and Unicode slugs.
+- **`generateStaticParams` returns raw values.** Don't `encodeURIComponent` route params; Next.js handles encoding. Don't link to placeholder routes like `/posts/[slug]` — always link to concrete URLs.
+- **Series format is locked.** A series index can be `index.md` / `.mdx` / `README.md` / `README.mdx` / `index.rst` / `README.rst` (first match wins). All child posts must match. Mixing formats is a build error.
+- **rST needs Python `docutils`.** Set `AMYTIS_RST_PYTHON=/path/to/python` if not on `$PATH`. Without it, falls back to a lower-fidelity built-in parser.
+- **Pagefind index.** `bun run build:dev` regenerates `public/pagefind/`; search returns stale results until you rerun it after content changes.
+- **`trailingSlash: true` is load-bearing.** Lets co-located post assets (`posts/slug/images/`) coexist with `posts/slug/index.html`. Don't flip it in `next.config.ts`.
 
-### Content Structure
+## Git conventions
 
-**Posts** support two formats:
-- **Flat file**: `content/posts/my-post.mdx`
-- **Nested folder**: `content/posts/my-post/index.mdx` (allows co-located images in `./images/`)
+- **Commits** follow Conventional Commits (already consistent in `git log`): `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
+- **Branches:** `<type>/<kebab-slug>` matching the commit prefixes (e.g. `fix/create-amytis-windows-extract`, `perf/build-time`, `docs/claude-md-trim`).
+- Not enforced by hooks — convention only. CI (`.github/workflows/ci.yml`) runs lint → test → build:dev; all three must pass.
 
-**Series** live in `content/series/[slug]/index.mdx` with optional `images/` folder for cover images.
+## Verifying a change
 
-**Books** live in `content/books/[slug]/` with `index.mdx` for metadata and separate `.mdx` files per chapter. The `index.mdx` frontmatter defines chapter ordering with an optional parts structure.
+- Minimum: `bun run lint && bun test` (or `bun run validate` to chain lint + test + build:dev).
+- Touched routes or content? `bun run build:dev` and spot-check the affected page — also re-runs Pagefind so search reflects your change.
+- Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
+- Touched any dynamic route? Verify both ASCII and Unicode slugs render.
 
-**Flows** (daily notes) live in `content/flows/YYYY/MM/DD.md` (or `.mdx`). Each flow has a date, title, excerpt, tags, and markdown content.
+## Where to find more
 
-Date-prefixed filenames (`2026-01-01-my-post.mdx`) extract dates automatically.
-
-## Config Files
-
-There are two config files that must be kept in sync:
-
-- **`site.config.ts`** — the live config for this repo (i18n enabled; locale-aware fields use `{ en: '...', zh: '...' }` objects)
-- **`site.config.example.ts`** — single-language starter template shipped via `create-amytis`; locale-aware fields use plain strings; optional features (books, flow) default to disabled
-
-**Rule:** Any schema change to `site.config.ts` (new field, renamed field, type change) must be mirrored in `site.config.example.ts`. Locale-aware values (`string | Record<string, string>`) should use plain strings in the example.
-
-## Configuration (`site.config.ts`)
-
-Key configuration options:
-- `nav` - Navigation links with weights
-- `social` - GitHub, Twitter, email links for footer
-- `series.navbar` - Series slugs to show in navbar dropdown
-- `series.customPaths` - Per-series custom URL prefix e.g. `{ 'weeklies': 'weeklies' }` → posts at `/weeklies/[slug]`
-- `pagination.posts`, `pagination.series` - Items per page
-- `themeColor` - 'default' | 'blue' | 'rose' | 'amber'
-- `hero` - Homepage hero title and subtitle
-- `i18n` - Default locale and supported locales
-- `featured.series` - Scrollable series: `scrollThreshold` (default: 2), `maxItems` (default: 6)
-- `featured.stories` - Scrollable stories: `scrollThreshold` (default: 1), `maxItems` (default: 5)
-- `analytics.providers` - array of enabled providers: `['umami', 'google']`; `[]` disables analytics
-- `comments.provider` - 'giscus' | 'disqus' | null
-- `feed.format` - 'rss' | 'atom' | 'both'
-- `feed.content` - 'full' | 'excerpt'
-- `feed.maxItems` - max feed items (0 = unlimited)
-- `footer.bottomLinks` - custom links in the footer bottom bar (ICP, cookie policy, etc.); `text` accepts plain string or `{ en, zh }` locale map
-- `posts.basePath` - Custom URL prefix for all posts (default: `'posts'`); e.g. `'articles'` → posts at `/articles/[slug]`
-- `posts.authors.default` - Fallback authors when a post has none set in frontmatter
-- `posts.authors.showInHeader` - Show author byline below post title (default: true)
-- `posts.authors.showAuthorCard` - Show author card at end of post (default: true)
-- `posts.excludeFromListing` - Series slugs whose posts are hidden from `/posts` listing pages
-- `authors` - Per-author profiles: `bio`, `avatar` (image path), `social` (array of `{ image, description }`)
-
-## Content Frontmatter
-
-### Posts
-
-```yaml
----
-title: "Post Title"
-subtitle: "Optional subtitle line"  # Rendered below the title in italic
-date: "2026-01-01"
-excerpt: "Optional summary (auto-generated if omitted)"
-category: "Category Name"
-tags: ["tag1", "tag2"]
-authors: ["Author Name"]
-series: "series-slug"      # Link to a series
-draft: true                # Hidden in production
-featured: true             # Show in featured section
-pinned: true               # Always shown in featured section; never shuffled away (hero = most recent pinned)
-coverImage: "./images/cover.jpg"  # Local or external URL
-latex: true                # Enable KaTeX math
-toc: false                 # Hide table of contents
-layout: "simple"           # Use simple layout (default: "post")
-externalLinks:             # Links to external discussions
-  - name: "Hacker News"
-    url: "https://news.ycombinator.com/item?id=12345"
-  - name: "V2EX"
-    url: "https://v2ex.com/t/123456"
-redirectFrom:              # Old URLs that should redirect to this post (prefix changes only)
-  - /posts/my-old-slug
-  - /old-series/my-old-slug
----
-```
-
-### Series (`content/series/[slug]/index.mdx`)
-
-```yaml
----
-title: "Series Title"
-excerpt: "Series description"
-date: "2026-01-01"
-coverImage: "./images/cover.jpg"
-featured: true             # Show in featured series
-draft: true                # Hidden in production (default: false)
-sort: "date-asc"           # 'date-asc' | 'date-desc' | 'manual'
-posts: ["post-1", "post-2"] # Manual post ordering (optional)
----
-```
-
-### Books (`content/books/[slug]/index.mdx`)
-
-```yaml
----
-title: "Book Title"
-excerpt: "Book description"
-date: "2026-01-01"
-coverImage: "text:DG"           # Cover image or text placeholder
-featured: true                  # Show in featured books
-draft: false
-authors: ["Author Name"]
-chapters:
-  - part: "Part I: Getting Started"    # Optional part grouping
-    chapters:
-      - title: "Chapter Title"
-        id: "chapter-file"             # Maps to chapter-file.mdx or chapter-file/index.mdx
-  - part: "Part II: Advanced"
-    chapters:
-      - title: "Another Chapter"
-        id: "another-chapter"
----
-```
-
-## Key Components
-
-- `PostLayout` / `SimpleLayout` - Post page layouts with TOC, series sidebar, external links, comments
-- `Hero` - Configurable homepage hero section with collapsible intro
-- `HorizontalScroll` - Scrollable container with navigation arrows for featured content
-- `PostList` - Card-based post listing with thumbnails, metadata, excerpts, and tags
-- `SeriesCatalog` - Timeline-style series post listing with numbered entries and progress indicator
-- `SeriesSidebar` - Series navigation sidebar with progress bar and color-coded states
-- `SeriesList` - Mobile-optimized series navigation matching sidebar design
-- `Search` - Full-text search (Cmd/Ctrl+K) powered by Pagefind (build-time index); features type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation (arrows + number keys), debounced input, body scroll lock, focus trap, ARIA accessibility, and search syntax tips (`"phrase"`, `-exclude`)
-- `TableOfContents` - Sticky TOC with scroll tracking, reading progress, and back-to-top
-- `MarkdownRenderer` - MDX rendering with GFM, math, syntax highlighting, diagrams
-- `CoverImage` - Optimized image component with WebP support
-- `Comments` - Giscus or Disqus integration (theme-aware)
-- `Analytics` - Umami, Plausible, or Google Analytics integration
-- `FlowContent` - Client wrapper for flow pages with tag filtering state management
-- `FlowCalendarSidebar` - Calendar sidebar with date navigation, browse panel, and clickable tag filters
-- `FlowTimelineEntry` - Individual flow entry in timeline list
-- `LanguageSwitch` - i18n language selector
-- `ThemeToggle` - Light/dark mode toggle
+- `docs/ARCHITECTURE.md` — route map, content model, components, data layer, frontmatter schemas, full configuration reference
+- `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
+- `docs/TROUBLESHOOTING.md` — known issues (AVIF, dev-mode browser-extension CSP/SharedStorage noise)
+- `docs/deployment.md` — production deploy steps
+- `site.config.ts` — live config (read it directly; don't infer from this file)

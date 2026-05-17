@@ -94,11 +94,45 @@ src/app/
 
 ## Key Components
 
-- Layout/navigation: `Navbar`, `Footer`, `Hero`, `FlowHubTabs`
-- Content renderers: `MarkdownRenderer`, `CodeBlock`, `Mermaid`
-- Post surfaces: `PostLayout`, `PostSidebar`, `PostCard`, `RelatedPosts`, `ShareBar`
-- Notes/flows discovery: `NoteSidebar`, `FlowContent`, `FlowCalendarSidebar`, `TagContentTabs`
-- Search/discovery: `Search`, `Pagination`, `KnowledgeGraph`
+Layout & navigation:
+
+- `Navbar`, `Footer`, `Hero` (configurable homepage hero with collapsible intro)
+- `LanguageSwitch` (i18n language selector), `ThemeToggle` (light/dark mode)
+- `FlowHubTabs`
+
+Content renderers:
+
+- `MarkdownRenderer` — MDX with GFM, KaTeX math, syntax highlighting, Mermaid
+- `CodeBlock`, `Mermaid`
+- `CoverImage` — optimized image component with WebP support
+
+Post & series surfaces:
+
+- `PostLayout` / `SimpleLayout` — post page layouts with TOC, series sidebar, external links, comments
+- `PostList` — card-based post listing with thumbnails, metadata, excerpts, tags
+- `PostCard`, `PostSidebar`, `RelatedPosts`, `ShareBar`
+- `SeriesCatalog` — timeline-style listing with numbered entries and progress indicator
+- `SeriesSidebar` — series navigation sidebar with progress bar and color-coded states
+- `SeriesList` — mobile-optimized series navigation matching sidebar design
+- `TableOfContents` — sticky TOC with scroll tracking, reading progress, back-to-top
+- `HorizontalScroll` — scrollable container with navigation arrows for featured content
+
+Notes & flows:
+
+- `NoteSidebar`, `TagContentTabs`
+- `FlowContent` — client wrapper for flow pages with tag filtering state
+- `FlowCalendarSidebar` — calendar sidebar with date navigation, browse panel, clickable tag filters
+- `FlowTimelineEntry` — individual flow entry in timeline list
+
+Search & discovery:
+
+- `Search` — full-text search (Cmd/Ctrl+K) powered by Pagefind; type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation, debounced input, focus trap, ARIA, search syntax (`"phrase"`, `-exclude`)
+- `Pagination`, `KnowledgeGraph`
+
+Integrations:
+
+- `Comments` — Giscus or Disqus (theme-aware)
+- `Analytics` — Umami, Plausible, or Google Analytics
 
 ## Data Layer Highlights (`src/lib/markdown.ts`)
 
@@ -127,3 +161,110 @@ src/app/
 5. Pagefind indexing:
    - Production: `pagefind --site out` (writes to `out/pagefind`)
    - Dev build: `pagefind --site out --output-path public/pagefind`
+
+## Content Frontmatter
+
+Validated by Zod in `src/lib/markdown.ts` — invalid frontmatter throws at build time.
+
+### Posts
+
+```yaml
+---
+title: "Post Title"
+subtitle: "Optional subtitle line"  # Rendered below the title in italic
+date: "2026-01-01"
+excerpt: "Optional summary (auto-generated if omitted)"
+category: "Category Name"
+tags: ["tag1", "tag2"]
+authors: ["Author Name"]
+series: "series-slug"             # Link to a series
+draft: true                       # Hidden in production
+featured: true                    # Show in featured section
+pinned: true                      # Always shown in featured section; hero = most recent pinned
+coverImage: "./images/cover.jpg"  # Local path, external URL, or text placeholder
+latex: true                       # Enable KaTeX math
+toc: false                        # Hide table of contents
+layout: "simple"                  # Use simple layout (default: "post")
+externalLinks:                    # Links to external discussions
+  - name: "Hacker News"
+    url: "https://news.ycombinator.com/item?id=12345"
+  - name: "V2EX"
+    url: "https://v2ex.com/t/123456"
+redirectFrom:                     # Old URLs to redirect to this post (prefix changes only)
+  - /posts/my-old-slug
+  - /old-series/my-old-slug
+---
+```
+
+### Series (`content/series/[slug]/index.mdx`)
+
+```yaml
+---
+title: "Series Title"
+excerpt: "Series description"
+date: "2026-01-01"
+coverImage: "./images/cover.jpg"
+featured: true               # Show in featured series
+draft: true                  # Hidden in production (default: false)
+sort: "date-asc"             # 'date-asc' | 'date-desc' | 'manual'
+posts: ["post-1", "post-2"]  # Manual post ordering (optional)
+---
+```
+
+### Books (`content/books/[slug]/index.mdx`)
+
+```yaml
+---
+title: "Book Title"
+excerpt: "Book description"
+date: "2026-01-01"
+coverImage: "text:DG"           # Image path or text placeholder
+featured: true
+draft: false
+authors: ["Author Name"]
+chapters:
+  - part: "Part I: Getting Started"    # Optional part grouping
+    chapters:
+      - title: "Chapter Title"
+        id: "chapter-file"             # Maps to chapter-file.mdx or chapter-file/index.mdx
+  - part: "Part II: Advanced"
+    chapters:
+      - title: "Another Chapter"
+        id: "another-chapter"
+---
+```
+
+## Configuration Reference (`site.config.ts`)
+
+| Field | Notes |
+| --- | --- |
+| `nav` | Navigation links with weights |
+| `social` | GitHub, Twitter, email links for the footer |
+| `series.navbar` | Series slugs to show in the navbar dropdown |
+| `series.customPaths` | Per-series URL prefix, e.g. `{ 'weeklies': 'weeklies' }` → `/weeklies/[slug]` |
+| `pagination.posts`, `pagination.series` | Items per page |
+| `themeColor` | `'default' \| 'blue' \| 'rose' \| 'amber'` |
+| `hero` | Homepage hero title and subtitle |
+| `i18n` | Default locale and supported locales |
+| `featured.series` | Scrollable series: `scrollThreshold` (default 2), `maxItems` (default 6) |
+| `featured.stories` | Scrollable stories: `scrollThreshold` (default 1), `maxItems` (default 5) |
+| `analytics.providers` | Enabled providers, e.g. `['umami', 'google']`; `[]` disables |
+| `comments.provider` | `'giscus' \| 'disqus' \| null` |
+| `feed.format` | `'rss' \| 'atom' \| 'both'` |
+| `feed.content` | `'full' \| 'excerpt'` |
+| `feed.maxItems` | Max feed items (`0` = unlimited) |
+| `footer.bottomLinks` | Custom footer links (ICP, cookie policy); `text` accepts plain string or `{ en, zh }` |
+| `posts.basePath` | URL prefix for all posts (default `'posts'`) |
+| `posts.authors.default` | Fallback authors when a post has none in frontmatter |
+| `posts.authors.showInHeader` | Show author byline below post title (default `true`) |
+| `posts.authors.showAuthorCard` | Show author card at end of post (default `true`) |
+| `posts.excludeFromListing` | Series slugs whose posts are hidden from `/posts` listings |
+| `authors` | Per-author profiles: `bio`, `avatar`, `social[]` |
+
+### Config sync
+
+`site.config.ts` (this repo, i18n object form) and `site.config.example.ts`
+(shipped via `create-amytis`, plain strings, single-locale, optional features
+default disabled) must stay in sync. Any schema change to one must be mirrored
+in the other. Locale-aware fields use `{ en, zh }` in `site.config.ts` and
+plain strings in the example.

@@ -93,10 +93,19 @@ bun run new-flow-from-chat
 ```bash
 # Sync book chapters with files in the folder
 bun run sync-book
+bun run sync-book <slug>            # one book only
 
 # Bulk draft/publish a series
 bun run series-draft "my-series"
 bun run series-draft "my-series" --undraft
+
+# Add redirectFrom to series posts (for autoPaths / path migrations)
+bun run add-series-redirects                    # all series
+bun run add-series-redirects <series-slug>      # one series only
+bun run add-series-redirects --dry-run          # preview without writing
+
+# Reset build caches (when copy-assets or the image optimizer misbehave)
+bun run clean                       # removes .next, out, public/posts
 ```
 
 ## Running Tests
