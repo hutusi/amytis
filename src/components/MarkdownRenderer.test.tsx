@@ -12,6 +12,9 @@ describe("MarkdownRenderer", () => {
       expect(html).toContain('height="900"');
       // style override ensures the image renders at its natural size
       expect(html).toContain('width:100%');
+      // fetchpriority="low" prevents React 19 from auto-preloading local
+      // markdown images as LCP candidates (matches the external-image fix)
+      expect(html).toContain('fetchPriority="low"');
     });
 
     test("uses plain img for external images", () => {

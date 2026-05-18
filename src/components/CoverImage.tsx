@@ -101,6 +101,7 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
       unoptimized={!useBlurPlaceholder}
       placeholder={useBlurPlaceholder ? 'blur' : 'empty'}
       loading={loading}
+      fetchPriority={loading === 'eager' ? 'high' : 'low'}
     />
   );
 }

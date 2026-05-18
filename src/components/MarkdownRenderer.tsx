@@ -153,6 +153,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
             unoptimized={isDev || shouldBypassOptimization}
             placeholder={shouldBypassOptimization ? 'empty' : 'blur'}
             style={(!width || !height) ? { width: '100%', height: 'auto' } : undefined}
+            fetchPriority="low"
           />
         );
       }
