@@ -1,13 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { getSeriesData, getAllSeries } from "../../src/lib/markdown";
-
-function restoreEnvVar(key: string, value: string | undefined): void {
-  if (value === undefined) {
-    delete process.env[key];
-  } else {
-    process.env[key] = value;
-  }
-}
+import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Series Draft Support", () => {
   test("all series are included when NODE_ENV is not production", () => {
@@ -28,8 +21,8 @@ describe("Integration: Series Draft Support", () => {
     const originalEnv = process.env.NODE_ENV;
     const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
-      process.env.NODE_ENV = "production";
-      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
+      setEnvVar("NODE_ENV", "production");
+      setEnvVar("AMYTIS_ENABLE_PYTHON_RST", "0");
       // This should not throw; draft series are simply excluded
       const series = getAllSeries();
       expect(typeof series).toBe("object");
@@ -43,10 +36,10 @@ describe("Integration: Series Draft Support", () => {
     const originalEnv = process.env.NODE_ENV;
     const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
     try {
-      process.env.NODE_ENV = "production";
-      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
+      setEnvVar("NODE_ENV", "production");
+      setEnvVar("AMYTIS_ENABLE_PYTHON_RST", "0");
       const allSeries = getAllSeries();
-      
+
       // Verify that every series returned has draft: false (or undefined which defaults to false)
       Object.keys(allSeries).forEach(slug => {
         const seriesData = getSeriesData(slug);

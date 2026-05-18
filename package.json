@@ -88,13 +88,28 @@
     "@types/react-dom": "^19.2.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/sanitize-html": "^2.16.1",
+    "@next/eslint-plugin-next": "^16.2.6",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint": "^10.4.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "pagefind": "^1.5.2",
     "pdf-to-img": "^6.1.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.3"
+  },
+  "overrides": {
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "@typescript-eslint/project-service": "^8.59.3",
+    "@typescript-eslint/scope-manager": "^8.59.3",
+    "@typescript-eslint/tsconfig-utils": "^8.59.3",
+    "@typescript-eslint/type-utils": "^8.59.3",
+    "@typescript-eslint/types": "^8.59.3",
+    "@typescript-eslint/typescript-estree": "^8.59.3",
+    "@typescript-eslint/utils": "^8.59.3",
+    "@typescript-eslint/visitor-keys": "^8.59.3",
+    "typescript-eslint": "^8.59.3"
   },
   "ignoreScripts": [
     "sharp",

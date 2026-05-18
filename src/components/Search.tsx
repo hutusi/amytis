@@ -130,8 +130,11 @@ export default function Search() {
   // True while debounce is pending — suppress "no results" flash
   const isTyping = query.length > 0 && query !== debouncedQuery;
 
-  // Load recent searches on mount
+  // Load recent searches on mount. localStorage is unavailable during SSR,
+  // so this can't be hoisted into useState's initializer without breaking
+  // hydration — the mount-only effect is the documented React pattern.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecentSearches(loadRecentSearches());
   }, []);
 
@@ -142,16 +145,22 @@ export default function Search() {
     }
   }, [isOpen]);
 
-  // Debounce query
+  // Debounce query. The sync reset when `query` is empty is intentional:
+  // skipping it would leave stale results visible for DEBOUNCE_MS after the
+  // user clears the input.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!query) { setDebouncedQuery(''); return; }
     const timer = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Run Pagefind search on debounced query
+  // Run Pagefind search on debounced query. Synchronous resets when the
+  // query becomes empty are the simplest way to clear results state without
+  // threading conditional renders through every consumer of allResults.
   useEffect(() => {
     if (!debouncedQuery) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAllResults([]);
       setActiveIndex(-1);
       setActiveType('All');
@@ -214,17 +223,22 @@ export default function Search() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Focus on open; full reset on close
+  // Focus on open; full reset on close. The 6 resets are batched into a
+  // single React render — the rule's "cascading renders" warning doesn't
+  // apply when state changes are batched as siblings, only when one update
+  // triggers the next.
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setQuery('');
       setDebouncedQuery('');
       setAllResults([]);
       setActiveIndex(-1);
       setActiveType('All');
       setIsFetching(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isOpen]);
 

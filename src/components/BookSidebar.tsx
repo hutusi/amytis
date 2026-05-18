@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
@@ -50,14 +50,18 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
   );
   useSidebarAutoScroll(sidebarRef, currentItemRef, `${currentChapter}:${isCurrentChapterVisible}`);
 
-  // Expand part containing current chapter when it changes
-  useEffect(() => {
+  // Expand part containing current chapter when it changes.
+  // Uses the "store info from previous renders" pattern instead of useEffect
+  // so the state update happens during render and React doesn't cascade.
+  const [trackedChapter, setTrackedChapter] = useState(currentChapter);
+  if (trackedChapter !== currentChapter) {
+    setTrackedChapter(currentChapter);
     for (const item of toc) {
       if ('part' in item && item.chapters.some(ch => ch.id === currentChapter)) {
         setCollapsedParts(prev => ({ ...prev, [item.part]: false }));
       }
     }
-  }, [currentChapter, toc]);
+  }
 
 
   // Pre-calculate chapter global indices to avoid reassignment during render

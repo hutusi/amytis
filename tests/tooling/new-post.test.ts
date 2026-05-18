@@ -16,7 +16,7 @@ describe("Tooling: New Post Script", () => {
       if (fs.existsSync(file)) fs.unlinkSync(file);
     });
     createdDirs.forEach(dir => {
-      if (fs.existsSync(dir)) fs.rmdirSync(dir, { recursive: true });
+      if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
     });
   });
 
