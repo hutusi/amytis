@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { getAllBooks, getFeaturedBooks } from "../../src/lib/markdown";
+import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Books", () => {
   test("getAllBooks returns an array", () => {
@@ -48,14 +49,14 @@ describe("Integration: Books", () => {
 
   test("getAllBooks excludes drafts in production", () => {
     const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    setEnvVar("NODE_ENV", "production");
     try {
       const books = getAllBooks();
       books.forEach((book) => {
         expect(book.draft).toBe(false);
       });
     } finally {
-      process.env.NODE_ENV = prev;
+      restoreEnvVar("NODE_ENV", prev);
     }
   });
 });

@@ -21,6 +21,7 @@
  *   • afterAll restores the real module so any subsequent tests see real data.
  */
 import { describe, test, expect, mock, beforeAll, beforeEach, afterAll, afterEach } from 'bun:test';
+import { setEnvVar, restoreEnvVar } from '../helpers/env';
 
 // ─── Capture real modules ─────────────────────────────────────────────────────
 // Static imports are hoisted and resolved before any executable code (including
@@ -36,7 +37,18 @@ import * as realUrls from '../../src/lib/urls';
 // reference, but they are never mutated during tests so this is safe.
 const snapshotUrls = { ...realUrls };
 
-let mockedPosts: Array<{ slug: string; series?: string; redirectFrom?: string[] }> = [];
+// Mock-post shape: only `slug` is required; the named fields are the ones
+// production code paths read. Extra fields (full Post shape) are allowed via
+// the index signature so individual tests can pass realistic fixtures without
+// every property having to be enumerated here.
+let mockedPosts: Array<{
+  slug: string;
+  series?: string;
+  redirectFrom?: string[];
+  draft?: boolean;
+  title?: string;
+  [key: string]: unknown;
+}> = [];
 let mockedNotes: Array<{ slug: string }> = [];
 let mockedSeries: Record<string, Array<{ slug: string }>> = {};
 let mockedSeriesData: Record<string, { redirectFrom?: string[]; title?: string }> = {};
@@ -148,7 +160,7 @@ beforeEach(() => {
   mockedNotes = [];
   mockedSeries = {};
   mockedSeriesData = {};
-  process.env.NODE_ENV = originalNodeEnv;
+  restoreEnvVar('NODE_ENV', originalNodeEnv);
 });
 
 afterEach(() => {
@@ -156,7 +168,7 @@ afterEach(() => {
   mockedNotes = [];
   mockedSeries = {};
   mockedSeriesData = {};
-  process.env.NODE_ENV = originalNodeEnv;
+  restoreEnvVar('NODE_ENV', originalNodeEnv);
 });
 
 // ─── Restore real modules ─────────────────────────────────────────────────────
@@ -201,7 +213,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('notes/[slug] includes raw and encoded Unicode slug in non-production', async () => {
       mockedNotes = [{ slug: '推理模型' }];
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/notes/[slug]/page');
       const params = generateStaticParams();
       expect(params).toContainEqual({ slug: '推理模型' });
@@ -210,7 +222,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('notes/[slug] includes only raw Unicode slug in production', async () => {
       mockedNotes = [{ slug: '推理模型' }];
-      process.env.NODE_ENV = 'production';
+      setEnvVar('NODE_ENV', 'production');
       const { generateStaticParams } = await import('../../src/app/notes/[slug]/page');
       const params = generateStaticParams();
       expect(params).toContainEqual({ slug: '推理模型' });
@@ -257,7 +269,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('series/[slug] includes raw and encoded Unicode slug in non-production', async () => {
       mockedSeries = { '软件构架设计': [] };
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: '软件构架设计' });
@@ -266,7 +278,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('series/[slug] includes only raw Unicode slug in production', async () => {
       mockedSeries = { '软件构架设计': [] };
-      process.env.NODE_ENV = 'production';
+      setEnvVar('NODE_ENV', 'production');
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: '软件构架设计' });
@@ -281,7 +293,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('series/[slug]/page/[page] includes encoded Unicode slug in non-production', async () => {
       mockedSeries = { '软件构架设计': Array.from({ length: 6 }, (_, i) => ({ slug: `p${i + 1}` })) };
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page/[page]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: '软件构架设计', page: '2' });
@@ -361,7 +373,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('posts/[slug] includes raw and encoded Unicode slug in non-production', async () => {
       mockedPosts = [{ slug: '中文测试文章' }];
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
       const params = await generateStaticParams();
 
@@ -371,7 +383,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('posts/[slug] includes only raw Unicode slug in production', async () => {
       mockedPosts = [{ slug: '中文测试文章' }];
-      process.env.NODE_ENV = 'production';
+      setEnvVar('NODE_ENV', 'production');
       const { generateStaticParams } = await import('../../src/app/posts/[slug]/page');
       const params = await generateStaticParams();
 
@@ -485,7 +497,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('[slug]/page does not include single-segment redirectFrom for draft posts in production', async () => {
       mockedPosts = [{ slug: 'my-post', draft: true, redirectFrom: ['/old-slug'] }];
-      process.env.NODE_ENV = 'production';
+      setEnvVar('NODE_ENV', 'production');
       const { generateStaticParams } = await import('../../src/app/[slug]/page');
       const params = await generateStaticParams();
       expect(params).not.toContainEqual({ slug: 'old-slug' });
@@ -588,7 +600,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
     test('[slug]/[postSlug] includes encoded Unicode postSlug variants in non-production', async () => {
       // Use redirectFrom to place a Unicode postSlug at a 2-segment path — no url mock needed.
       mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: '中文文章' });
@@ -597,7 +609,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('[slug]/[postSlug] includes encoded Unicode prefix variants in non-production', async () => {
       mockedSeries = { '软件构架设计': [{ slug: 'architecture-post' }] };
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: '软件构架设计', postSlug: 'architecture-post' });
@@ -606,7 +618,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('[slug]/[postSlug] includes encoded Unicode prefix and postSlug variants together in non-production', async () => {
       mockedSeries = { '软件构架设计': [{ slug: '中文文章' }] };
-      process.env.NODE_ENV = 'development';
+      setEnvVar('NODE_ENV', 'development');
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: '软件构架设计', postSlug: '中文文章' });
@@ -617,7 +629,7 @@ describe('generateStaticParams — placeholder when content is empty', () => {
 
     test('[slug]/[postSlug] does not include encoded Unicode postSlug variants in production', async () => {
       mockedPosts = [{ slug: 'my-post', redirectFrom: ['/old-prefix/中文文章'] }];
-      process.env.NODE_ENV = 'production';
+      setEnvVar('NODE_ENV', 'production');
       const { generateStaticParams } = await import('../../src/app/[slug]/[postSlug]/page');
       const params = await generateStaticParams();
       expect(params).toContainEqual({ slug: 'old-prefix', postSlug: '中文文章' });
