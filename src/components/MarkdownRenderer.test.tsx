@@ -58,9 +58,13 @@ describe("MarkdownRenderer", () => {
     expect(html).toContain("overflow-x-auto");
   });
 
-  test("wraps content in a background container for copy-paste fidelity", () => {
+  test("wraps content in ArticleCopyCleaner so paste output is stripped of per-paragraph backgrounds", () => {
     const content = "Hello world";
     const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
-    expect(html).toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
+    // The cleaner renders a bare wrapper div; the page background lives on body now,
+    // so the article HTML must not paint its own background (which is what caused
+    // Chromium's clipboard serializer to inline `background-color` on every <p>).
+    expect(html).not.toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
+    expect(html).toContain('<p class="mb-4 leading-relaxed text-foreground">Hello world</p>');
   });
 });

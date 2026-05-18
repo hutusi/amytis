@@ -3,6 +3,7 @@ import RssFeedWidget from '@/components/RssFeedWidget';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
 import KatexStyles from '@/components/KatexStyles';
+import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
@@ -167,9 +168,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   return (
     <>
     {latex && <KatexStyles />}
-    <div className="bg-background"> {/* Explicit background for better copy-paste fidelity */}
+    <ArticleCopyCleaner>
       <div className="prose prose-lg max-w-none min-w-0 overflow-x-hidden text-foreground
-            prose-headings:font-serif prose-headings:text-heading 
+            prose-headings:font-serif prose-headings:text-heading
             prose-p:text-foreground prose-p:leading-loose
             prose-strong:text-heading prose-strong:font-semibold
             prose-code:bg-muted/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:border prose-code:border-muted/20 prose-code:text-[0.9em] prose-code:font-medium
@@ -185,7 +186,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
           {content}
         </ReactMarkdown>
       </div>
-    </div>
+    </ArticleCopyCleaner>
     </>
   );
 }
