@@ -314,6 +314,17 @@ function convertInlineRst(text: string): string {
       /:numref:`([^`]+)`/g,
       (_, target: string) => `[${target.trim()}](#${slugifyAnchor(target)})`,
     )
+    .replace(
+      /:doc:`([^<`]+?)\s*<([^>`]+)>`/g,
+      (_, title: string, target: string) => `[${title.trim()}](${target.trim()})`,
+    )
+    .replace(
+      /:doc:`([^`]+)`/g,
+      (_, target: string) => {
+        const trimmed = target.trim();
+        return `[${trimmed}](${trimmed})`;
+      },
+    )
     .replace(/`([^`]+?)\s*<([^>]+)>`__/g, '[$1]($2)')
     .replace(/`([^`]+?)\s*<([^>]+)>`_/g, '[$1]($2)');
 }

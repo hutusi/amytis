@@ -98,6 +98,19 @@ describe('rst utils', () => {
     expect(markdown).not.toContain('> **Unknownthing**');
   });
 
+  test('renders :doc: cross-references and works alongside escaped whitespace', () => {
+    const md = rstToMarkdown([
+      '前面提到的\\ :doc:`AI编程中人的作用`\\ 这件事。',
+      '',
+      'See :doc:`Label <some/path>` for details.',
+    ].join('\n'));
+
+    expect(md).toContain('前面提到的[AI编程中人的作用](AI编程中人的作用)这件事。');
+    expect(md).toContain('[Label](some/path)');
+    expect(md).not.toContain(':doc:');
+    expect(md).not.toContain('\\ ');
+  });
+
   test('renders :ref: and :numref: roles as anchor links', () => {
     const md = rstToMarkdown([
       'See :ref:`s_extension` for details.',
