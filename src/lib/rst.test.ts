@@ -41,6 +41,17 @@ describe('rst utils', () => {
     expect(markdown).toContain('![Test image](./images/test.svg)');
   });
 
+  test('converts figure directives the same way as image directives', () => {
+    const bare = rstToMarkdown('.. figure:: _static/redis.svg');
+    expect(bare).toContain('![](_static/redis.svg)');
+
+    const withAlt = rstToMarkdown([
+      '.. figure:: ./images/diagram.svg',
+      '   :alt: A diagram',
+    ].join('\n'));
+    expect(withAlt).toContain('![A diagram](./images/diagram.svg)');
+  });
+
   test('does not treat generic directives as literal code blocks', () => {
     const markdown = rstToMarkdown([
       '.. note::',

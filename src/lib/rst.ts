@@ -358,7 +358,7 @@ export function rstToMarkdown(body: string): string {
       }
     }
 
-    const imageMatch = line.match(/^\.\.\s+image::\s+(.+?)\s*$/);
+    const imageMatch = line.match(/^\.\.\s+(?:image|figure)::\s+(.+?)\s*$/);
     if (imageMatch) {
       let alt = '';
       let j = i + 1;
