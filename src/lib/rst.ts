@@ -287,9 +287,44 @@ function mergeMetadata(base: RstMetadata, override: RstMetadata): RstMetadata {
   };
 }
 
+function slugifyAnchor(target: string): string {
+  return new GithubSlugger().slug(target.trim());
+}
+
 function convertInlineRst(text: string): string {
   return text
+    .replace(/\\([ \t])/g, '')
     .replace(/``([^`]+)``/g, '`$1`')
+    .replace(
+      /:ref:`([^<`]+?)\s*<([^>`]+)>`/g,
+      (_, title: string, target: string) => `[${title.trim()}](#${slugifyAnchor(target)})`,
+    )
+    .replace(
+      /:ref:`([^`]+)`/g,
+      (_, target: string) => `[${target.trim()}](#${slugifyAnchor(target)})`,
+    )
+    .replace(
+      /:numref:`([^<`]+?)\s*<([^>`]+)>`/g,
+      (_, title: string, target: string) => {
+        const label = title.replace(/%s/g, '').trim() || target.trim();
+        return `[${label}](#${slugifyAnchor(target)})`;
+      },
+    )
+    .replace(
+      /:numref:`([^`]+)`/g,
+      (_, target: string) => `[${target.trim()}](#${slugifyAnchor(target)})`,
+    )
+    .replace(
+      /:doc:`([^<`]+?)\s*<([^>`]+)>`/g,
+      (_, title: string, target: string) => `[${title.trim()}](${target.trim()})`,
+    )
+    .replace(
+      /:doc:`([^`]+)`/g,
+      (_, target: string) => {
+        const trimmed = target.trim();
+        return `[${trimmed}](${trimmed})`;
+      },
+    )
     .replace(/`([^`]+?)\s*<([^>]+)>`__/g, '[$1]($2)')
     .replace(/`([^`]+?)\s*<([^>]+)>`_/g, '[$1]($2)');
 }
@@ -358,7 +393,79 @@ export function rstToMarkdown(body: string): string {
       }
     }
 
-    const imageMatch = line.match(/^\.\.\s+image::\s+(.+?)\s*$/);
+    if (/^\.\.\s+toctree::\s*$/.test(line)) {
+      const { nextIndex } = readIndentedBlock(lines, i + 1);
+      i = nextIndex - 1;
+      continue;
+    }
+
+    const lineBlockRegex = /^\s*\|(?:\s(.*))?$/;
+    if (lineBlockRegex.test(line)) {
+      const blockLines: string[] = [];
+      let j = i;
+      while (j < lines.length) {
+        const lineMatch = lines[j].match(lineBlockRegex);
+        if (!lineMatch) break;
+        blockLines.push((lineMatch[1] ?? '').trim());
+        j++;
+      }
+      out.push('');
+      blockLines.forEach((bl, idx) => {
+        const content = convertInlineRst(bl);
+        const isLast = idx === blockLines.length - 1;
+        out.push(isLast ? `> ${content}` : `> ${content}  `);
+      });
+      out.push('');
+      i = j - 1;
+      continue;
+    }
+
+    const admonitionMatch = line.match(
+      /^\.\.\s+(note|warning|tip|caution|attention|important|hint|danger|error|cnote)::(?:\s+(.*\S))?\s*$/i,
+    );
+    if (admonitionMatch) {
+      const kind = admonitionMatch[1].toLowerCase();
+      const inlineBody = admonitionMatch[2]?.trim() ?? '';
+      const { content, nextIndex } = readIndentedBlock(lines, i + 1);
+
+      let captionLabel: string | null = null;
+      let bodyStart = 0;
+      if (!inlineBody) {
+        while (bodyStart < content.length && content[bodyStart].trim() === '') bodyStart++;
+        while (bodyStart < content.length) {
+          const ln = content[bodyStart];
+          if (ln.trim() === '') {
+            bodyStart++;
+            break;
+          }
+          const optionMatch = ln.match(/^\s*:([A-Za-z-]+):\s*(.*)$/);
+          if (!optionMatch) break;
+          if (optionMatch[1].toLowerCase() === 'caption') {
+            captionLabel = optionMatch[2].trim();
+          }
+          bodyStart++;
+        }
+      }
+      const inlineHasParagraphBreak =
+        inlineBody && i + 1 < lines.length && lines[i + 1].trim() === '';
+      const bodyContent = inlineBody
+        ? inlineHasParagraphBreak
+          ? [inlineBody, '', ...content.slice(bodyStart)]
+          : [inlineBody, ...content.slice(bodyStart)]
+        : content.slice(bodyStart);
+
+      const label = captionLabel || (kind.charAt(0).toUpperCase() + kind.slice(1));
+      out.push(`> **${label}**`);
+      out.push('>');
+      for (const ln of bodyContent) {
+        out.push(ln.trim() === '' ? '>' : `> ${convertInlineRst(ln)}`);
+      }
+      out.push('');
+      i = nextIndex - 1;
+      continue;
+    }
+
+    const imageMatch = line.match(/^\.\.\s+(?:image|figure)::\s+(.+?)\s*$/);
     if (imageMatch) {
       let alt = '';
       let j = i + 1;

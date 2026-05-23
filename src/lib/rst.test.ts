@@ -41,15 +41,196 @@ describe('rst utils', () => {
     expect(markdown).toContain('![Test image](./images/test.svg)');
   });
 
-  test('does not treat generic directives as literal code blocks', () => {
+  test('converts figure directives the same way as image directives', () => {
+    const bare = rstToMarkdown('.. figure:: _static/redis.svg');
+    expect(bare).toContain('![](_static/redis.svg)');
+
+    const withAlt = rstToMarkdown([
+      '.. figure:: ./images/diagram.svg',
+      '   :alt: A diagram',
+    ].join('\n'));
+    expect(withAlt).toContain('![A diagram](./images/diagram.svg)');
+  });
+
+  test('renders .. note:: as a markdown blockquote with a bold label', () => {
     const markdown = rstToMarkdown([
       '.. note::',
       '',
       '   Keep this as prose.',
     ].join('\n'));
 
-    expect(markdown).toContain('.. note::');
+    expect(markdown).toContain('> **Note**');
+    expect(markdown).toContain('> Keep this as prose.');
+    expect(markdown).not.toContain('.. note::');
     expect(markdown).not.toContain('```');
+  });
+
+  test('renders all admonition kinds and preserves inline rST + blank lines', () => {
+    const warning = rstToMarkdown([
+      '.. WARNING::',
+      '',
+      '   First line with ``code``.',
+      '',
+      '   Second paragraph.',
+    ].join('\n'));
+
+    expect(warning).toContain('> **Warning**');
+    expect(warning).toContain('> First line with `code`.');
+    expect(warning).toContain('> Second paragraph.');
+    expect(warning.split('\n').filter((line) => line === '>').length).toBeGreaterThanOrEqual(2);
+
+    for (const kind of ['tip', 'caution', 'attention', 'important', 'hint', 'danger', 'error']) {
+      const md = rstToMarkdown(`.. ${kind}::\n\n   body`);
+      const label = kind.charAt(0).toUpperCase() + kind.slice(1);
+      expect(md).toContain(`> **${label}**`);
+      expect(md).toContain('> body');
+    }
+  });
+
+  test('passes unknown directives through as plain text', () => {
+    const markdown = rstToMarkdown([
+      '.. unknownthing::',
+      '',
+      '   should not be swallowed',
+    ].join('\n'));
+
+    expect(markdown).toContain('.. unknownthing::');
+    expect(markdown).not.toContain('> **Unknownthing**');
+  });
+
+  test('handles single-line admonitions and inline body with indented continuation', () => {
+    const singleLine = rstToMarkdown('.. note:: Quick reminder.');
+    expect(singleLine).toContain('> **Note**');
+    expect(singleLine).toContain('> Quick reminder.');
+    expect(singleLine).not.toContain('.. note::');
+
+    const withContinuation = rstToMarkdown([
+      '.. note:: 特别要说明的是，本文的内容不涉及任何真实的设计',
+      '   示例，和任何真正的商用秘密无关。',
+    ].join('\n'));
+    expect(withContinuation).toContain('> **Note**');
+    expect(withContinuation).toContain('> 特别要说明的是，本文的内容不涉及任何真实的设计');
+    expect(withContinuation).toContain('> 示例，和任何真正的商用秘密无关。');
+    expect(withContinuation).not.toContain('.. note::');
+
+    const withParagraphBreak = rstToMarkdown([
+      '.. note:: First paragraph.',
+      '',
+      '   Second paragraph.',
+    ].join('\n'));
+    const lines = withParagraphBreak.split('\n');
+    const firstIdx = lines.findIndex((l) => l === '> First paragraph.');
+    const secondIdx = lines.findIndex((l) => l === '> Second paragraph.');
+    expect(firstIdx).toBeGreaterThan(-1);
+    expect(secondIdx).toBeGreaterThan(firstIdx);
+    expect(lines.slice(firstIdx + 1, secondIdx)).toContain('>');
+  });
+
+  test('treats .. cnote:: as a custom admonition with :caption: support', () => {
+    const withCaption = rstToMarkdown([
+      '.. cnote::',
+      '   :caption: 说明',
+      '',
+      '   Body content here.',
+    ].join('\n'));
+
+    expect(withCaption).toContain('> **说明**');
+    expect(withCaption).toContain('> Body content here.');
+    expect(withCaption).not.toContain(':caption:');
+    expect(withCaption).not.toContain('> **Cnote**');
+
+    const withoutCaption = rstToMarkdown([
+      '.. cnote::',
+      '',
+      '   Default label fallback.',
+    ].join('\n'));
+
+    expect(withoutCaption).toContain('> **Cnote**');
+    expect(withoutCaption).toContain('> Default label fallback.');
+  });
+
+  test('renders line blocks (| prefixed lines) as a blockquote with hard breaks', () => {
+    const md = rstToMarkdown([
+      'Intro paragraph.',
+      '',
+      '  | First poetic line.',
+      '  | Second poetic line.',
+      '  | Third with ``code``.',
+      '',
+      'Trailing paragraph.',
+    ].join('\n'));
+
+    expect(md).toContain('> First poetic line.  ');
+    expect(md).toContain('> Second poetic line.  ');
+    expect(md).toContain('> Third with `code`.');
+    expect(md).not.toContain('| First');
+    const lines = md.split('\n');
+    const last = lines.findIndex((l) => l.startsWith('> Third'));
+    expect(last).toBeGreaterThan(-1);
+    expect(lines[last].endsWith('  ')).toBe(false);
+  });
+
+  test('renders :doc: cross-references and works alongside escaped whitespace', () => {
+    const md = rstToMarkdown([
+      '前面提到的\\ :doc:`AI编程中人的作用`\\ 这件事。',
+      '',
+      'See :doc:`Label <some/path>` for details.',
+    ].join('\n'));
+
+    expect(md).toContain('前面提到的[AI编程中人的作用](AI编程中人的作用)这件事。');
+    expect(md).toContain('[Label](some/path)');
+    expect(md).not.toContain(':doc:');
+    expect(md).not.toContain('\\ ');
+  });
+
+  test('renders :ref: and :numref: roles as anchor links', () => {
+    const md = rstToMarkdown([
+      'See :ref:`s_extension` for details.',
+      '',
+      'Look at :ref:`扩展机制 <s_extension>`.',
+      '',
+      'Per :numref:`图%s <图：架构图>` above.',
+      '',
+      'Bare :numref:`图：架构图` works too.',
+    ].join('\n'));
+
+    expect(md).toContain('[s_extension](#s_extension)');
+    expect(md).toContain('[扩展机制](#s_extension)');
+    expect(md).toContain('[图](#图架构图)');
+    expect(md).toContain('[图：架构图](#图架构图)');
+  });
+
+  test('suppresses .. toctree:: directive and its child list from rendered body', () => {
+    const markdown = rstToMarkdown([
+      'Intro paragraph.',
+      '',
+      '.. toctree::',
+      '   :maxdepth: 2',
+      '',
+      '   first-child',
+      '   second-child',
+      '',
+      'Trailing paragraph.',
+    ].join('\n'));
+
+    expect(markdown).toContain('Intro paragraph.');
+    expect(markdown).toContain('Trailing paragraph.');
+    expect(markdown).not.toContain('toctree');
+    expect(markdown).not.toContain('first-child');
+    expect(markdown).not.toContain('second-child');
+    expect(markdown).not.toContain(':maxdepth:');
+  });
+
+  test('normalizes rST escaped whitespace inline', () => {
+    const doc = parseRstDocument([
+      'Title',
+      '=====',
+      '',
+      '前面提到的\\ ``code``\\ 这件事。',
+    ].join('\n'));
+
+    expect(doc.markdownBody).toContain('前面提到的`code`这件事。');
+    expect(doc.markdownBody).not.toContain('\\ ');
   });
 
   test('ignores unknown metadata fields and rejects malformed supported values', () => {
