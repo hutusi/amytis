@@ -112,6 +112,18 @@ describe('rst utils', () => {
     expect(withContinuation).toContain('> 特别要说明的是，本文的内容不涉及任何真实的设计');
     expect(withContinuation).toContain('> 示例，和任何真正的商用秘密无关。');
     expect(withContinuation).not.toContain('.. note::');
+
+    const withParagraphBreak = rstToMarkdown([
+      '.. note:: First paragraph.',
+      '',
+      '   Second paragraph.',
+    ].join('\n'));
+    const lines = withParagraphBreak.split('\n');
+    const firstIdx = lines.findIndex((l) => l === '> First paragraph.');
+    const secondIdx = lines.findIndex((l) => l === '> Second paragraph.');
+    expect(firstIdx).toBeGreaterThan(-1);
+    expect(secondIdx).toBeGreaterThan(firstIdx);
+    expect(lines.slice(firstIdx + 1, secondIdx)).toContain('>');
   });
 
   test('treats .. cnote:: as a custom admonition with :caption: support', () => {

@@ -446,8 +446,12 @@ export function rstToMarkdown(body: string): string {
           bodyStart++;
         }
       }
+      const inlineHasParagraphBreak =
+        inlineBody && i + 1 < lines.length && lines[i + 1].trim() === '';
       const bodyContent = inlineBody
-        ? [inlineBody, ...content.slice(bodyStart)]
+        ? inlineHasParagraphBreak
+          ? [inlineBody, '', ...content.slice(bodyStart)]
+          : [inlineBody, ...content.slice(bodyStart)]
         : content.slice(bodyStart);
 
       const label = captionLabel || (kind.charAt(0).toUpperCase() + kind.slice(1));
