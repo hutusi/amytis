@@ -98,6 +98,27 @@ describe('rst utils', () => {
     expect(markdown).not.toContain('> **Unknownthing**');
   });
 
+  test('suppresses .. toctree:: directive and its child list from rendered body', () => {
+    const markdown = rstToMarkdown([
+      'Intro paragraph.',
+      '',
+      '.. toctree::',
+      '   :maxdepth: 2',
+      '',
+      '   first-child',
+      '   second-child',
+      '',
+      'Trailing paragraph.',
+    ].join('\n'));
+
+    expect(markdown).toContain('Intro paragraph.');
+    expect(markdown).toContain('Trailing paragraph.');
+    expect(markdown).not.toContain('toctree');
+    expect(markdown).not.toContain('first-child');
+    expect(markdown).not.toContain('second-child');
+    expect(markdown).not.toContain(':maxdepth:');
+  });
+
   test('normalizes rST escaped whitespace inline', () => {
     const doc = parseRstDocument([
       'Title',

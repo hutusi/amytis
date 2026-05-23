@@ -359,6 +359,12 @@ export function rstToMarkdown(body: string): string {
       }
     }
 
+    if (/^\.\.\s+toctree::\s*$/.test(line)) {
+      const { nextIndex } = readIndentedBlock(lines, i + 1);
+      i = nextIndex - 1;
+      continue;
+    }
+
     const admonitionMatch = line.match(
       /^\.\.\s+(note|warning|tip|caution|attention|important|hint|danger|error)::\s*$/i,
     );
