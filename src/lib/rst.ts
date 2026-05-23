@@ -358,6 +358,23 @@ export function rstToMarkdown(body: string): string {
       }
     }
 
+    const admonitionMatch = line.match(
+      /^\.\.\s+(note|warning|tip|caution|attention|important|hint|danger|error)::\s*$/i,
+    );
+    if (admonitionMatch) {
+      const kind = admonitionMatch[1].toLowerCase();
+      const { content, nextIndex } = readIndentedBlock(lines, i + 1);
+      const label = kind.charAt(0).toUpperCase() + kind.slice(1);
+      out.push(`> **${label}**`);
+      out.push('>');
+      for (const ln of content) {
+        out.push(ln.trim() === '' ? '>' : `> ${convertInlineRst(ln)}`);
+      }
+      out.push('');
+      i = nextIndex - 1;
+      continue;
+    }
+
     const imageMatch = line.match(/^\.\.\s+(?:image|figure)::\s+(.+?)\s*$/);
     if (imageMatch) {
       let alt = '';

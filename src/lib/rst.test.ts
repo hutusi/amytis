@@ -52,15 +52,50 @@ describe('rst utils', () => {
     expect(withAlt).toContain('![A diagram](./images/diagram.svg)');
   });
 
-  test('does not treat generic directives as literal code blocks', () => {
+  test('renders .. note:: as a markdown blockquote with a bold label', () => {
     const markdown = rstToMarkdown([
       '.. note::',
       '',
       '   Keep this as prose.',
     ].join('\n'));
 
-    expect(markdown).toContain('.. note::');
+    expect(markdown).toContain('> **Note**');
+    expect(markdown).toContain('> Keep this as prose.');
+    expect(markdown).not.toContain('.. note::');
     expect(markdown).not.toContain('```');
+  });
+
+  test('renders all admonition kinds and preserves inline rST + blank lines', () => {
+    const warning = rstToMarkdown([
+      '.. WARNING::',
+      '',
+      '   First line with ``code``.',
+      '',
+      '   Second paragraph.',
+    ].join('\n'));
+
+    expect(warning).toContain('> **Warning**');
+    expect(warning).toContain('> First line with `code`.');
+    expect(warning).toContain('> Second paragraph.');
+    expect(warning.split('\n').filter((line) => line === '>').length).toBeGreaterThanOrEqual(2);
+
+    for (const kind of ['tip', 'caution', 'attention', 'important', 'hint', 'danger', 'error']) {
+      const md = rstToMarkdown(`.. ${kind}::\n\n   body`);
+      const label = kind.charAt(0).toUpperCase() + kind.slice(1);
+      expect(md).toContain(`> **${label}**`);
+      expect(md).toContain('> body');
+    }
+  });
+
+  test('passes unknown directives through as plain text', () => {
+    const markdown = rstToMarkdown([
+      '.. unknownthing::',
+      '',
+      '   should not be swallowed',
+    ].join('\n'));
+
+    expect(markdown).toContain('.. unknownthing::');
+    expect(markdown).not.toContain('> **Unknownthing**');
   });
 
   test('ignores unknown metadata fields and rejects malformed supported values', () => {
