@@ -98,6 +98,22 @@ describe('rst utils', () => {
     expect(markdown).not.toContain('> **Unknownthing**');
   });
 
+  test('handles single-line admonitions and inline body with indented continuation', () => {
+    const singleLine = rstToMarkdown('.. note:: Quick reminder.');
+    expect(singleLine).toContain('> **Note**');
+    expect(singleLine).toContain('> Quick reminder.');
+    expect(singleLine).not.toContain('.. note::');
+
+    const withContinuation = rstToMarkdown([
+      '.. note:: 特别要说明的是，本文的内容不涉及任何真实的设计',
+      '   示例，和任何真正的商用秘密无关。',
+    ].join('\n'));
+    expect(withContinuation).toContain('> **Note**');
+    expect(withContinuation).toContain('> 特别要说明的是，本文的内容不涉及任何真实的设计');
+    expect(withContinuation).toContain('> 示例，和任何真正的商用秘密无关。');
+    expect(withContinuation).not.toContain('.. note::');
+  });
+
   test('treats .. cnote:: as a custom admonition with :caption: support', () => {
     const withCaption = rstToMarkdown([
       '.. cnote::',
