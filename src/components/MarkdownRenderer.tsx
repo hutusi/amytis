@@ -10,6 +10,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
@@ -29,7 +30,10 @@ interface MarkdownRendererProps {
 export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
   const remarkPlugins: PluggableList = [remarkGfm];
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
-  const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
+  // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
+  // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
+  // real data-meta attribute first lets it survive the round trip.
+  const rehypePlugins: PluggableList = [rehypeFenceMeta, rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
 
   if (slugRegistry && slugRegistry.size > 0) {
     remarkPlugins.push([remarkWikilinks, { slugRegistry }]);
@@ -82,7 +86,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
     code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
-      const { className, children, node } = props;
+      const { className, children } = props;
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
@@ -93,9 +97,10 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
         if (language === 'mermaid') {
           return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
-        // mdast-util-to-hast preserves the fence meta string under node.data.meta.
-        const meta = (node?.data as { meta?: string } | undefined)?.meta;
-        const parsedMeta = parseFenceMeta(meta);
+        // react-markdown v10 strips node.data before invoking overrides, so the
+        // fence meta is surfaced as a real `data-meta` attribute by rehypeFenceMeta.
+        const meta = (props as unknown as Record<string, unknown>)['data-meta'];
+        const parsedMeta = parseFenceMeta(typeof meta === 'string' ? meta : undefined);
         return (
           <CodeBlock
             language={language}
