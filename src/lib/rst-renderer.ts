@@ -67,7 +67,10 @@ interface RstRendererDiskCacheEntry {
 
 const rstRenderCache = new Map<string, RenderedRstDocument>();
 const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
-const RST_RENDERER_DISK_CACHE_VERSION = '1';
+// Bumped when the docutils renderer's HTML output shape changes; v2 emits
+// opaque <pre data-amytis-code> markers around literal blocks (consumed by
+// applyShikiToRstHtml at render time) instead of docutils' default <pre class="literal-block">.
+const RST_RENDERER_DISK_CACHE_VERSION = '2';
 const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
 let pythonRendererInvocationCount = 0;

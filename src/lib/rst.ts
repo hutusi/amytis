@@ -336,6 +336,35 @@ function detectHeadingLevel(adornment: string): number | null {
   return null;
 }
 
+interface DirectiveCodeOptions {
+  language?: string;
+  caption?: string;
+  linenos?: boolean;
+  emphasizeLines?: string;
+}
+
+function readDirectiveOptions(
+  lines: string[],
+  startIndex: number,
+): { options: DirectiveCodeOptions; nextLine: number } {
+  const options: DirectiveCodeOptions = {};
+  let i = startIndex;
+  while (i < lines.length) {
+    const match = lines[i].match(/^\s+:([A-Za-z-]+):\s*(.*)$/);
+    if (!match) break;
+    const key = match[1].toLowerCase();
+    const value = match[2].trim();
+    if (key === 'language') options.language = value;
+    else if (key === 'caption') options.caption = value;
+    else if (key === 'linenos') options.linenos = true;
+    else if (key === 'emphasize-lines') options.emphasizeLines = value;
+    i++;
+  }
+  // Skip the blank line separator that always follows the option block.
+  while (i < lines.length && !lines[i].trim()) i++;
+  return { options, nextLine: i };
+}
+
 function readIndentedBlock(lines: string[], startIndex: number): { content: string[]; nextIndex: number } {
   let i = startIndex;
   while (i < lines.length && !lines[i].trim()) i++;
@@ -483,10 +512,20 @@ export function rstToMarkdown(body: string): string {
       continue;
     }
 
-    const codeMatch = line.match(/^\.\.\s+(?:code-block|code)::\s*([A-Za-z0-9_-]+)?\s*$/);
+    const codeMatch = line.match(/^\.\.\s+(?:code-block|code)::\s*([A-Za-z0-9_+-]+)?\s*$/);
     if (codeMatch) {
-      const { content, nextIndex } = readIndentedBlock(lines, i + 1);
-      out.push(`\`\`\`${codeMatch[1] ?? ''}`.trimEnd());
+      const directiveLanguage = codeMatch[1] ?? '';
+      const { options, nextLine } = readDirectiveOptions(lines, i + 1);
+      const { content, nextIndex } = readIndentedBlock(lines, nextLine);
+
+      const language = options.language || directiveLanguage;
+      const fenceMeta: string[] = [];
+      if (options.caption) fenceMeta.push(`title="${options.caption.replace(/"/g, '\\"')}"`);
+      if (options.linenos) fenceMeta.push('linenos');
+      if (options.emphasizeLines) fenceMeta.push(`{${options.emphasizeLines}}`);
+
+      const infoString = [language, ...fenceMeta].filter(Boolean).join(' ');
+      out.push(`\`\`\`${infoString}`.trimEnd());
       out.push(...content);
       out.push('```');
       out.push('');

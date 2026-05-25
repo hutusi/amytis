@@ -563,6 +563,86 @@ def strip_preamble_nodes(document: Any) -> Any:
     return stripped
 
 
+def _language_from_classes(classes: list[str] | None) -> str:
+    """Recover the source language from a literal_block's class list when the
+    explicit `language` attribute is absent. Docutils stores ``.. code-block:: foo``
+    as classes=['code', 'foo']; the first class that isn't a docutils-internal
+    marker is the language name.
+    """
+    if not classes:
+        return ""
+    for cls in classes:
+        if cls not in ("code", "literal-block", "linenos"):
+            return cls
+    return ""
+
+
+def _build_amytis_code_marker(
+    text: str,
+    language: str,
+    highlight_lines: list[int] | None,
+    linenos: bool,
+    title: str | None,
+) -> str:
+    """Build the opaque <pre data-amytis-code> marker that the JS-side
+    Shiki post-processor in src/lib/shiki-rst.ts replaces with highlighted HTML.
+    """
+    attrs = ['data-amytis-code=""']
+    if language:
+        attrs.append(f'data-language="{html.escape(language, quote=True)}"')
+    if highlight_lines:
+        attrs.append(
+            f'data-highlight-lines="{",".join(str(n) for n in highlight_lines)}"'
+        )
+    if linenos:
+        attrs.append('data-line-numbers="true"')
+    if title:
+        attrs.append(f'data-title="{html.escape(title, quote=True)}"')
+
+    escaped = html.escape(text, quote=False)
+    return f'<pre {" ".join(attrs)}><code>{escaped}</code></pre>'
+
+
+def transform_literal_blocks_to_markers(document: Any) -> None:
+    """Replace every literal_block with an opaque <pre data-amytis-code> marker
+    so the JS-side post-processor can run Shiki uniformly. Caption-bearing
+    literal-block-wrapper containers are flattened into the marker's data-title.
+    """
+    from docutils import nodes
+
+    for block in list(document.findall(nodes.literal_block)):
+        classes = list(block.get("classes") or [])
+        language = block.get("language") or _language_from_classes(classes)
+        highlight_args = block.get("highlight_args") or {}
+        hl_lines = list(highlight_args.get("hl_lines") or [])
+        linenos = "linenos" in classes
+
+        replace_target = block
+        caption_text: str | None = None
+        parent = block.parent
+        if (
+            isinstance(parent, nodes.container)
+            and "literal-block-wrapper" in (parent.get("classes") or [])
+        ):
+            caption_node = next(
+                (c for c in parent.children if isinstance(c, nodes.caption)),
+                None,
+            )
+            if caption_node is not None:
+                caption_text = caption_node.astext().strip() or None
+            replace_target = parent
+
+        marker_html = _build_amytis_code_marker(
+            text=block.astext(),
+            language=language,
+            highlight_lines=hl_lines,
+            linenos=linenos,
+            title=caption_text,
+        )
+        raw_node = nodes.raw("", marker_html, format="html")
+        replace_target.parent.replace(replace_target, raw_node)
+
+
 def extract_html_body_from_doctree(document: Any) -> str:
     from docutils.core import publish_from_doctree
 
@@ -598,14 +678,20 @@ def build_output(document: Any, source_file: Path, image_base_slug: str, warning
         raise RstRenderError("Missing document title.")
 
     assets = extract_assets(document, source_file, image_base_slug)
+    # Read-only extractions first; the literal-block transformation mutates the tree.
+    text = extract_body_text(document)
+    headings = extract_headings(document)
+    metadata = extract_metadata(document)
+
+    transform_literal_blocks_to_markers(document)
     html_body = extract_html_body_from_doctree(strip_preamble_nodes(document))
 
     return {
         "title": title_node.astext().strip(),
         "html": rewrite_html_assets(html_body, assets),
-        "text": extract_body_text(document),
-        "headings": extract_headings(document),
-        "metadata": extract_metadata(document),
+        "text": text,
+        "headings": headings,
+        "metadata": metadata,
         "assets": assets,
         "warnings": list(dict.fromkeys(warnings)),
     }
