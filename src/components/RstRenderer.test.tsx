@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import RstRenderer from './RstRenderer';
+import { renderAsync } from '@/test-utils/render';
 
 describe('RstRenderer', () => {
   test('renders pre-rendered html when available', () => {
@@ -67,8 +68,8 @@ describe('RstRenderer', () => {
     expect(html).toContain('<td>B</td>');
   });
 
-  test('renders converted headings, links, and code blocks through the markdown renderer', () => {
-    const html = renderToStaticMarkup(
+  test('renders converted headings, links, and code blocks through the markdown renderer', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content={[
           'Section',
@@ -85,9 +86,9 @@ describe('RstRenderer', () => {
 
     expect(html).toContain('Section');
     expect(html).toContain('https://example.com');
-    expect(html).toContain('language-ts');
-    expect(html).toContain('<code class="language-ts"');
-    expect(html).toContain('token keyword');
-    expect(html).toContain('token number');
+    // Shiki produces a .shiki container with language-aware token spans, not Prism's
+    // legacy class="language-ts" + token markup. Assert the new highlighter ran.
+    expect(html).toContain('class="shiki');
+    expect(html).toContain('export');
   });
 });

@@ -216,6 +216,102 @@ pre[class*="language-"] {
   cursor: help;
 }
 
+/* Shiki dual-theme code blocks (build-time highlighter) */
+.cb-root .shiki,
+.cb-root .shiki span {
+  background-color: transparent !important;
+}
+
+html:not(.dark) .cb-root .shiki,
+html:not(.dark) .cb-root .shiki span {
+  color: var(--shiki-light, var(--foreground));
+}
+
+html.dark .cb-root .shiki,
+html.dark .cb-root .shiki span {
+  color: var(--shiki-dark, var(--foreground));
+}
+
+.cb-root .shiki {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+.cb-root .shiki code {
+  display: grid;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+.cb-root .shiki .line {
+  display: block;
+  min-height: 1.6em;
+  padding-inline: 1.5rem;
+  margin-inline: -1.5rem;
+}
+
+/* Line numbers (opt-in via data-line-numbers on <pre>) */
+.cb-root .shiki[data-line-numbers="true"] code {
+  counter-reset: shiki-line;
+}
+
+.cb-root .shiki[data-line-numbers="true"] .line::before {
+  counter-increment: shiki-line;
+  content: counter(shiki-line);
+  display: inline-block;
+  width: 2.25rem;
+  margin-right: 1rem;
+  text-align: right;
+  color: var(--muted);
+  opacity: 0.55;
+  user-select: none;
+}
+
+/* Highlighted lines (via {1,3-5} fence meta or :emphasize-lines:) */
+.cb-root .shiki .line.highlighted,
+.cb-root .shiki .line[data-highlighted-line] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-left: 3px solid var(--accent);
+  padding-inline-start: calc(1.5rem - 3px);
+}
+
+/* Diff fence backgrounds (raw + / - lines) */
+.cb-root .shiki .line.diff.add {
+  background: color-mix(in srgb, #16a34a 14%, transparent);
+}
+
+.cb-root .shiki .line.diff.remove {
+  background: color-mix(in srgb, #dc2626 14%, transparent);
+}
+
+html.dark .cb-root .shiki .line.diff.add {
+  background: color-mix(in srgb, #16a34a 22%, transparent);
+}
+
+html.dark .cb-root .shiki .line.diff.remove {
+  background: color-mix(in srgb, #dc2626 22%, transparent);
+}
+
+/* Word-wrap toggle */
+.cb-root[data-wrap="true"] .cb-scroll {
+  overflow-x: hidden;
+}
+
+.cb-root[data-wrap="true"] .shiki code,
+.cb-root[data-wrap="true"] .shiki .line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 @layer components {
   .layout-container {
     @apply max-w-6xl mx-auto px-6 py-12 md:py-20;

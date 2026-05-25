@@ -16,6 +16,7 @@ import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/markdown';
 import { shouldBypassImageOptimization } from '@/lib/image-utils';
+import { parseFenceMeta } from '@/lib/shiki';
 
 
 interface MarkdownRendererProps {
@@ -81,27 +82,34 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
     code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { className, children, node: _node, ...rest } = props;
+      const { className, children, node } = props;
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
-      
-      // In react-markdown v10, 'inline' prop is removed. 
+
+      // In react-markdown v10, 'inline' prop is removed.
       // We use className presence (e.g. language-js) or newline presence to detect code blocks.
       if (match || isMultiLine) {
         if (language === 'mermaid') {
           return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
+        // mdast-util-to-hast preserves the fence meta string under node.data.meta.
+        const meta = (node?.data as { meta?: string } | undefined)?.meta;
+        const parsedMeta = parseFenceMeta(meta);
         return (
-          <CodeBlock language={language} {...rest}>
+          <CodeBlock
+            language={language}
+            title={parsedMeta.title}
+            showLineNumbers={parsedMeta.showLineNumbers}
+            highlightLines={parsedMeta.highlightLines}
+          >
             {String(children).replace(/\n$/, '')}
           </CodeBlock>
         );
       }
 
       return (
-        <code className={className} {...rest}>
+        <code className={className}>
           {children}
         </code>
       );

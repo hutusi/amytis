@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { renderAsync } from "@/test-utils/render";
 
 describe("MarkdownRenderer", () => {
   describe("image rendering", () => {
@@ -45,7 +46,7 @@ describe("MarkdownRenderer", () => {
     });
   });
 
-  test("adds horizontal overflow containment while preserving code scrolling", () => {
+  test("adds horizontal overflow containment while preserving code scrolling", async () => {
     const content = [
       "## Example",
       "",
@@ -54,11 +55,13 @@ describe("MarkdownRenderer", () => {
       "```",
     ].join("\n");
 
-    const html = renderToStaticMarkup(<MarkdownRenderer content={content} />);
+    const html = await renderAsync(<MarkdownRenderer content={content} />);
 
     expect(html).toContain("overflow-x-hidden");
     expect(html).toContain("not-prose w-full min-w-0 max-w-full");
     expect(html).toContain("overflow-x-auto");
+    // Shiki rendered the block — ensure the highlighted shell pass produced output.
+    expect(html).toContain('class="shiki');
   });
 
   test("wraps content in ArticleCopyCleaner so paste output is stripped of per-paragraph backgrounds", () => {
