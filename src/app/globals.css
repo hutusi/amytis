@@ -626,6 +626,7 @@ body {
  * Colors track GitHub Primer's alert palette adapted to amytis CSS variables. */
 .alert {
   --alert-accent: var(--accent);
+
   margin: 2rem 0;
   border-left: 4px solid var(--alert-accent);
   border-radius: 0.75rem;
@@ -722,6 +723,7 @@ html.dark .rst-rendered aside.admonition-danger {
  * alerts use, so the existing rule (border-left, background) recolors itself. */
 .rst-rendered aside.admonition {
   --alert-accent: var(--accent);
+
   border-left-color: var(--alert-accent);
   background: color-mix(in srgb, var(--alert-accent) 8%, var(--background));
 }
