@@ -189,6 +189,44 @@ html.dark .shiki .line.diff.remove {
   background: color-mix(in srgb, #dc2626 22%, transparent);
 }
 
+/* Notation: error / warning lines (// [!code error] / [!code warning]).
+ * Shared with the existing diff colors but with a left border accent so they
+ * read as line-level annotations rather than block-wide states. */
+.shiki .line.error {
+  background: color-mix(in srgb, #dc2626 12%, transparent);
+  border-left: 3px solid #dc2626;
+  padding-inline-start: calc(1.5rem - 3px);
+}
+
+.shiki .line.warning {
+  background: color-mix(in srgb, #eab308 14%, transparent);
+  border-left: 3px solid #eab308;
+  padding-inline-start: calc(1.5rem - 3px);
+}
+
+html.dark .shiki .line.error {
+  background: color-mix(in srgb, #dc2626 20%, transparent);
+}
+
+html.dark .shiki .line.warning {
+  background: color-mix(in srgb, #eab308 20%, transparent);
+}
+
+/* Notation: focus (// [!code focus]).
+ * Non-focused lines fade to make the focused subset stand out; hovering the
+ * <pre> reverts the dim so readers can scan the full block on demand. */
+.shiki.has-focused .line:not(.focused) {
+  opacity: 0.5;
+  filter: blur(1px);
+  transition: opacity 180ms ease, filter 180ms ease;
+}
+
+.shiki.has-focused:hover .line:not(.focused),
+.shiki.has-focused:focus-within .line:not(.focused) {
+  opacity: 1;
+  filter: none;
+}
+
 /* Tabbed code groups (CSS-only — radio + label sibling trick).
  * Same markup is produced by CodeGroup.tsx (MDX path) and shiki-rst.ts (rST
  * path), so this single block styles both. Hardcodes selectors for up to 10

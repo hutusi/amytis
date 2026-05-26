@@ -1,4 +1,10 @@
 import { createHighlighter, type Highlighter, type ShikiTransformer } from 'shiki';
+import {
+  transformerNotationDiff,
+  transformerNotationErrorLevel,
+  transformerNotationFocus,
+  transformerNotationHighlight,
+} from '@shikijs/transformers';
 import type { Root } from 'hast';
 
 export const SHIKI_LANGS = [
@@ -235,6 +241,19 @@ export async function highlightToHast(
       transformerTitle(opts.title),
       transformerHighlightLines(opts.highlightLines),
       transformerDiffBg(lang, code),
+      // VitePress-style notation comments inside the source:
+      //   // [!code focus]         dim/blur non-focused lines (hover to reveal)
+      //   // [!code error]         red line tinting
+      //   // [!code warning]       amber line tinting
+      //   // [!code highlight]     same .highlighted class as the meta {1,3-5} syntax
+      //   // [!code ++] / [!code --] same .diff.add / .diff.remove classes as the
+      //                            raw +/- transformer in diff fences; they coexist.
+      // The class names emitted (.focused/.error/.warning/.highlighted/.diff.add/.diff.remove)
+      // are styled by globals.css alongside our existing rules.
+      transformerNotationFocus({ classActivePre: 'has-focused' }),
+      transformerNotationErrorLevel(),
+      transformerNotationHighlight(),
+      transformerNotationDiff(),
     ],
   });
 }
