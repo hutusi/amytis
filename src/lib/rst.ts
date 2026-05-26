@@ -341,6 +341,7 @@ interface DirectiveCodeOptions {
   caption?: string;
   linenos?: boolean;
   emphasizeLines?: string;
+  label?: string;
 }
 
 function readDirectiveOptions(
@@ -358,11 +359,48 @@ function readDirectiveOptions(
     else if (key === 'caption') options.caption = value;
     else if (key === 'linenos') options.linenos = true;
     else if (key === 'emphasize-lines') options.emphasizeLines = value;
+    else if (key === 'label') options.label = value;
     i++;
   }
   // Skip the blank line separator that always follows the option block.
   while (i < lines.length && !lines[i].trim()) i++;
   return { options, nextLine: i };
+}
+
+function buildFenceMetaFromOptions(options: DirectiveCodeOptions): string[] {
+  const meta: string[] = [];
+  // [label] must be the FIRST token after the language for the MDX-side
+  // parseFenceMeta + remark-code-group plugin to pick it up.
+  if (options.label) meta.push(`[${options.label}]`);
+  if (options.caption) meta.push(`title="${options.caption.replace(/"/g, '\\"')}"`);
+  if (options.linenos) meta.push('linenos');
+  if (options.emphasizeLines) meta.push(`{${options.emphasizeLines}}`);
+  return meta;
+}
+
+function convertNestedCodeBlocksToFences(body: string[]): string[] {
+  // Used by the .. code-group:: fallback path. Walks the indented body lines
+  // (already dedented to the directive's body indent) and emits Markdown
+  // fences for each nested .. code-block:: child. Anything else is dropped
+  // since :::code-group expects only code fences as children.
+  const out: string[] = [];
+  for (let i = 0; i < body.length; i++) {
+    const line = body[i];
+    const match = line.match(/^\.\.\s+(?:code-block|code|sourcecode)::\s*([A-Za-z0-9_+-]+)?\s*$/);
+    if (!match) continue;
+    const directiveLanguage = match[1] ?? '';
+    const { options, nextLine } = readDirectiveOptions(body, i + 1);
+    const { content, nextIndex } = readIndentedBlock(body, nextLine);
+    const language = options.language || directiveLanguage;
+    const fenceMeta = buildFenceMetaFromOptions(options);
+    const infoString = [language, ...fenceMeta].filter(Boolean).join(' ');
+    out.push(`\`\`\`${infoString}`.trimEnd());
+    out.push(...content);
+    out.push('```');
+    out.push('');
+    i = nextIndex - 1;
+  }
+  return out;
 }
 
 function readIndentedBlock(lines: string[], startIndex: number): { content: string[]; nextIndex: number } {
@@ -512,17 +550,27 @@ export function rstToMarkdown(body: string): string {
       continue;
     }
 
-    const codeMatch = line.match(/^\.\.\s+(?:code-block|code)::\s*([A-Za-z0-9_+-]+)?\s*$/);
+    const codeGroupMatch = line.match(/^\.\.\s+code-group::\s*$/);
+    if (codeGroupMatch) {
+      // Collect the indented body — nested .. code-block:: blocks — and emit a
+      // :::code-group MDX directive so the result lands in the same MDX pipeline.
+      const { content: groupBody, nextIndex } = readIndentedBlock(lines, i + 1);
+      out.push(':::code-group');
+      out.push(...convertNestedCodeBlocksToFences(groupBody));
+      out.push(':::');
+      out.push('');
+      i = nextIndex - 1;
+      continue;
+    }
+
+    const codeMatch = line.match(/^\.\.\s+(?:code-block|code|sourcecode)::\s*([A-Za-z0-9_+-]+)?\s*$/);
     if (codeMatch) {
       const directiveLanguage = codeMatch[1] ?? '';
       const { options, nextLine } = readDirectiveOptions(lines, i + 1);
       const { content, nextIndex } = readIndentedBlock(lines, nextLine);
 
       const language = options.language || directiveLanguage;
-      const fenceMeta: string[] = [];
-      if (options.caption) fenceMeta.push(`title="${options.caption.replace(/"/g, '\\"')}"`);
-      if (options.linenos) fenceMeta.push('linenos');
-      if (options.emphasizeLines) fenceMeta.push(`{${options.emphasizeLines}}`);
+      const fenceMeta = buildFenceMetaFromOptions(options);
 
       const infoString = [language, ...fenceMeta].filter(Boolean).join(' ');
       out.push(`\`\`\`${infoString}`.trimEnd());

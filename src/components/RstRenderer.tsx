@@ -31,6 +31,11 @@ const allowedTags = [
   'figure',
   'figcaption',
   'aside',
+  // Tabbed code groups (CSS-only via radio + label). Without these on the
+  // allowlist, the rST path drops to stacked code blocks with no tabs.
+  // transformTags below restricts `input` to type="radio" only.
+  'input',
+  'label',
   'math',
   'annotation',
   'annotation-xml',
@@ -88,7 +93,12 @@ const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   pre: ['class', 'style', ...codeBlockAttrs],
   code: ['class', 'style', ...codeBlockAttrs],
   span: ['class', 'style', ...codeBlockAttrs],
-  div: ['class', 'style', ...codeBlockAttrs],
+  div: ['class', 'style', 'data-group-id', 'data-panel', ...codeBlockAttrs],
+  // Tabbed code groups: input is restricted to type=radio via transformTags.
+  // Defense-in-depth: even if an unexpected attr slips in, the CSS-only tab
+  // mechanism can't do anything dangerous with a stray radio button.
+  input: ['type', 'name', 'id', 'checked', 'data-idx', 'aria-controls', 'tabindex', 'class'],
+  label: ['for', 'class', 'role', 'aria-controls', 'tabindex'],
 };
 
 function sanitizeRenderedHtml(html: string): string {
@@ -100,6 +110,16 @@ function sanitizeRenderedHtml(html: string): string {
       img: ['http', 'https'],
     },
     allowProtocolRelative: false,
+    transformTags: {
+      // Restrict <input> to type="radio" only. Anything else gets stripped.
+      // Prevents an rST author from injecting password/file/etc. inputs.
+      input: (tagName, attribs) => {
+        if (attribs.type !== 'radio') {
+          return { tagName: 'span', attribs: {} };
+        }
+        return { tagName, attribs };
+      },
+    },
   });
 }
 
