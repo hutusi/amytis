@@ -70,6 +70,20 @@ export default async function CodeBlock({ language, children, title }) {
 +export const STAGE = "beta";
 ```
 
+## Word-wrap toggle
+
+Long lines in code blocks overflow horizontally by default — the block grows
+a scrollbar at the bottom. Click the **Wrap** button in any block's header
+to soft-wrap long lines onto multiple visual lines instead; click again to
+restore horizontal scrolling.
+
+```bash
+curl -X POST "https://api.example.com/v1/items?fields=id,name,description,createdAt,updatedAt&sort=createdAt:desc&limit=100&offset=0&filter[status]=active&filter[category]=blog&include=author,tags" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature" -H "Content-Type: application/json" -d '{"name":"example","description":"a sufficiently long single line to demonstrate the wrap toggle"}'
+```
+
+Try the **Wrap** button in the header above ↑ to see the long line collapse
+into multiple soft-wrapped lines.
+
 ## Mermaid still works (regression check)
 
 ```mermaid
