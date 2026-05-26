@@ -21,6 +21,9 @@ export const SHIKI_LANGS = [
   'diff',
   'html',
   'xml',
+  'nginx',
+  'haskell',
+  'ocaml',
   'plaintext',
 ] as const;
 export type ShikiLang = (typeof SHIKI_LANGS)[number];
@@ -48,7 +51,6 @@ const LANG_ALIASES: Record<string, ShikiLang> = {
 };
 
 const SHIKI_LANG_SET = new Set<string>(SHIKI_LANGS);
-const warnedLangs = new Set<string>();
 
 export function normalizeLang(language: string): { lang: ShikiLang; recognized: boolean } {
   const lower = (language || '').toLowerCase();
@@ -73,7 +75,6 @@ export function getHighlighter(): Promise<Highlighter> {
 
 export function resetHighlighterForTests(): void {
   globalThis.__amytisShikiHighlighter = undefined;
-  warnedLangs.clear();
 }
 
 export interface ParsedFenceMeta {
@@ -201,9 +202,15 @@ export async function highlightToHast(
   opts: HighlightOpts = {},
 ): Promise<Root> {
   const { lang, recognized } = normalizeLang(language);
-  if (!recognized && language && !warnedLangs.has(language)) {
-    warnedLangs.add(language);
-    console.warn(`[shiki] Unknown code-block language "${language}" — rendering as plaintext.`);
+  // Strict build per CLAUDE.md "strict build over silent runtime failure": a typo'd
+  // or unsupported fence language is misconfiguration. Throwing here surfaces it at
+  // build time with a clear error rather than silently shipping degraded plaintext
+  // output. To genuinely render as plaintext, write the fence as `plaintext` (or
+  // `text`/`txt`/`plain`, which alias to it).
+  if (!recognized && language) {
+    throw new Error(
+      `[shiki] Unknown code-block language "${language}". Add it to SHIKI_LANGS or LANG_ALIASES in src/lib/shiki.ts, or use a recognized language. Use \`plaintext\` for unhighlighted content.`,
+    );
   }
 
   const highlighter = await getHighlighter();

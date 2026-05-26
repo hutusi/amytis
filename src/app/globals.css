@@ -192,7 +192,6 @@ html.dark .cb-root .shiki .line.diff.remove {
 .cb-root[data-wrap="true"] .shiki code,
 .cb-root[data-wrap="true"] .shiki .line {
   white-space: pre-wrap;
-  word-break: break-word;
   overflow-wrap: anywhere;
 }
 

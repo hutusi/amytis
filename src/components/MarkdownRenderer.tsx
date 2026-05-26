@@ -87,7 +87,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
     code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
       const { className, children } = props;
-      const match = /language-(\w+)/.exec(className || '');
+      // [^\s]+ rather than \w+ so fences like ```c++ or ```objective-c++ are detected
+      // as `c++` / `objective-c++` and not truncated to `c` at the punctuation boundary.
+      const match = /language-([^\s]+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
 

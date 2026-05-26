@@ -58,13 +58,25 @@ describe('Integration: Code Block Features', () => {
       expect(html.toLowerCase()).toContain('mermaid');
     });
 
-    test('unknown language degrades to plaintext without throwing', async () => {
-      const content = ['```fakelang', 'should not crash', '```'].join('\n');
+    test('unknown language throws at build time (strict build)', async () => {
+      const content = ['```fakelang', 'should fail loudly', '```'].join('\n');
+
+      let thrown: unknown = null;
+      try {
+        await renderAsync(MarkdownRenderer({ content }));
+      } catch (error) {
+        thrown = error;
+      }
+      expect(thrown).toBeInstanceOf(Error);
+      expect(String(thrown)).toMatch(/fakelang/);
+    });
+
+    test('explicit `plaintext` fences render unhighlighted without erroring', async () => {
+      const content = ['```plaintext', 'just prose', '```'].join('\n');
       const html = await renderAsync(MarkdownRenderer({ content }));
 
-      // The block still renders, just without language-specific tokenization.
       expect(html).toContain('class="shiki');
-      expect(html).toContain('should not crash');
+      expect(html).toContain('just prose');
     });
   });
 

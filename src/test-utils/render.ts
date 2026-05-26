@@ -15,7 +15,9 @@ export async function renderAsync(element: ReactElement): Promise<string> {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    if (value) html += decoder.decode(value);
+    if (value) html += decoder.decode(value, { stream: !done });
   }
+  // Flush any trailing buffered bytes from incomplete sequences (no-op for well-formed UTF-8).
+  html += decoder.decode();
   return html;
 }

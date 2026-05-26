@@ -79,8 +79,10 @@ graph LR
   C --> D[Static HTML]
 ```
 
-## Unknown language falls back to plaintext
+## Explicit plaintext
 
-```fakelang
-This should render as plaintext rather than crashing the build.
+```plaintext
+This block opts out of syntax highlighting entirely. Use `plaintext` (or its
+aliases `text`, `txt`, `plain`) for prose-like blocks where token coloring
+would be noisy or misleading. Unknown language names will fail the build.
 ```

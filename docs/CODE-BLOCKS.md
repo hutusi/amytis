@@ -6,18 +6,18 @@ authoring syntax is symmetric across formats: write a fence with metadata in
 Markdown/MDX, write directive options in rST, and the same features come out
 the other side.
 
-The features below are all opt-in — a plain ` ```ts ` fence still renders as a
+The features below are all opt-in — a plain `` ```ts `` fence still renders as a
 normal highlighted block.
 
 ## Feature matrix
 
 | Feature | Markdown / MDX | rST |
 |---|---|---|
-| Line numbers | ` ```ts linenos ` | `:linenos:` |
-| Highlighted lines | ` ```ts {1,3-5} ` | `:emphasize-lines: 1,3-5` |
-| Title / filename bar | ` ```ts title="app.ts" ` | `:caption: app.ts` |
+| Line numbers | `` ```ts linenos `` | `:linenos:` |
+| Highlighted lines | `` ```ts {1,3-5} `` | `:emphasize-lines: 1,3-5` |
+| Title / filename bar | `` ```ts title="app.ts" `` | `:caption: app.ts` |
 | Override language | (set on the fence) | `:language: rust` |
-| Diff `+`/`-` backgrounds | ` ```diff ` | `.. code-block:: diff` |
+| Diff `+`/`-` backgrounds | `` ```diff `` | `.. code-block:: diff` |
 | Word-wrap toggle | header button (client) | header button (client) |
 
 All four metadata fields can be combined freely:
@@ -49,12 +49,15 @@ The Shiki bundle is loaded with this curated list (see `src/lib/shiki.ts`):
 `tsx`, `typescript` (`ts`), `javascript` (`js`), `bash` (`sh`, `shell`,
 `zsh`), `markdown` (`md`), `json`, `css`, `python` (`py`), `rust`, `go`
 (`golang`), `c`, `cpp` (`c++`), `java`, `ruby` (`rb`), `sql`, `yaml`
-(`yml`), `diff`, `html`, `xml`, `svg` (aliased to `xml`), `plaintext`
-(`text`, `txt`, `plain`).
+(`yml`), `diff`, `html`, `xml`, `svg` (aliased to `xml`), `nginx`,
+`haskell`, `ocaml`, `plaintext` (`text`, `txt`, `plain`).
 
-Unknown languages don't fail the build — they degrade to `plaintext` and
-emit a one-line `[shiki] Unknown code-block language "…"` warning. Add the
-language to `SHIKI_LANGS` in `src/lib/shiki.ts` to enable it properly.
+Unknown languages **fail the build** with an explicit error — per the
+"strict build over silent runtime failure" principle in `CLAUDE.md`, a
+typo'd fence language is treated as misconfiguration. To add a language,
+extend `SHIKI_LANGS` or `LANG_ALIASES` in `src/lib/shiki.ts`. To render
+unhighlighted code on purpose, use `plaintext` (or its aliases `text` /
+`txt` / `plain`).
 
 ## Diff fences
 
