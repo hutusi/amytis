@@ -91,6 +91,44 @@ tabs per group are supported out of the box (CSS rules hardcoded for
 `data-idx="0"` through `data-idx="9"`); extend the rules in
 `src/app/globals.css` if you need more.
 
+## Notation comments
+
+Six VitePress-style `[!code …]` markers can be embedded inline in any code
+block. They're written using the language's native comment syntax (the
+Shiki transformers detect `//`, `#`, `--`, `<!-- -->`, etc.):
+
+| Marker | Effect |
+|---|---|
+| `[!code focus]` | Dim every other line in the block; revert on `:hover` of the `<pre>` |
+| `[!code highlight]` | Same `.line.highlighted` style as the `{1,3-5}` fence-meta range syntax |
+| `[!code ++]` | Green-tinted line (same `.line.diff.add` as raw `+` in `diff` fences) |
+| `[!code --]` | Red-tinted line (same `.line.diff.remove` as raw `-` in `diff` fences) |
+| `[!code error]` | Red border + tint for error annotations |
+| `[!code warning]` | Amber border + tint for warning annotations |
+
+Example:
+
+````markdown
+```ts
+function login(user: string) {           // [!code focus]
+  const token = oldApi.auth(user)        // [!code --]
+  const token = newApi.auth({ user })    // [!code ++]
+  validate(token)                        // [!code highlight]
+  throwIfExpired(token)                  // [!code error]
+  if (!token.refreshable) warn()         // [!code warning]
+  return token
+}
+```
+````
+
+Notation comments and the meta-based features (`title="…"`, `linenos`,
+`{1,3-5}`) compose freely on the same fence.
+
+The four transformers (`transformerNotationFocus`, `transformerNotationErrorLevel`,
+`transformerNotationHighlight`, `transformerNotationDiff`) ship with the
+`@shikijs/transformers` package; see [`src/lib/shiki.ts`](../src/lib/shiki.ts)
+for where they're registered.
+
 ## Supported languages
 
 The Shiki bundle is loaded with this curated list (see `src/lib/shiki.ts`):

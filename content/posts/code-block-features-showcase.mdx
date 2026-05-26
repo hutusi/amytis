@@ -121,6 +121,62 @@ fn greet(name: &str) -> String {
 ```
 :::
 
+## Notation comments
+
+Annotate individual lines with `// [!code …]` comments. Six markers are
+supported — focus, diff, highlight, error, warning — using the language's
+native comment style (`//` in C-family, `#` in Python, `--` in SQL, etc.):
+
+```ts
+function login(user: string) {            // [!code focus]
+  const token = oldApi.auth(user)         // [!code --]
+  const token = newApi.auth({ user })     // [!code ++]
+  validate(token)                         // [!code highlight]
+  throwIfExpired(token)                   // [!code error]
+  if (!token.refreshable) warn()          // [!code warning]
+  return token
+}
+```
+
+`// [!code focus]` dims the rest of the block so the focused subset stands
+out; hover the block to reveal the dimmed lines. `// [!code error]` /
+`[!code warning]` tint the line with a colored left-border (red / amber).
+`[!code ++]` / `[!code --]` color individual lines without needing a
+`diff`-language fence.
+
+Notation comments work in **any** language — Python:
+
+```python
+def fib(n):
+    if n < 2: return n          # [!code focus]
+    return fib(n-1) + fib(n-2)
+```
+
+## GitHub-flavored alerts
+
+Add a `[!TYPE]` marker on the first line of a blockquote to render it as a
+GitHub-style callout. Five types are supported, each with its own color,
+icon, and label:
+
+> [!NOTE]
+> Highlights information that users should take into account, even when skimming.
+
+> [!TIP]
+> Optional information to help a user be more successful.
+
+> [!IMPORTANT]
+> Crucial information necessary for users to succeed.
+
+> [!WARNING]
+> Critical content demanding immediate user attention due to potential risks.
+
+> [!CAUTION]
+> Negative potential consequences of an action.
+
+rST equivalents (`.. note::` / `.. tip::` / `.. important::` / `.. warning::`
+/ `.. caution::`) render with matching colors via docutils' admonition
+directives — same visual treatment across both pipelines.
+
 ## Explicit plaintext
 
 ```plaintext
