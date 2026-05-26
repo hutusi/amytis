@@ -79,6 +79,48 @@ graph LR
   C --> D[Static HTML]
 ```
 
+## Tabbed code groups
+
+Group adjacent fences into a single tabbed widget by wrapping them in a
+`:::code-group` container directive. Tab names come from the `[label]`
+token after the language. The mechanism is pure CSS (radio inputs + sibling
+selectors) — zero JavaScript, zero hydration cost.
+
+:::code-group
+```bash [npm]
+npm install amytis
+```
+```bash [yarn]
+yarn add amytis
+```
+```bash [pnpm]
+pnpm add amytis
+```
+```bash [bun]
+bun add amytis
+```
+:::
+
+Tabs work across languages too — handy for showing the same algorithm in
+multiple implementations:
+
+:::code-group
+```ts [TypeScript]
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+```python [Python]
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+```
+```rust [Rust]
+fn greet(name: &str) -> String {
+    format!("Hello, {name}!")
+}
+```
+:::
+
 ## Explicit plaintext
 
 ```plaintext

@@ -42,6 +42,55 @@ import { highlightToHast } from '@/lib/shiki';
 Both produce identical output: header bar with the filename + language label,
 a line-number gutter, and lines 3 and 7–9 highlighted.
 
+## Tabbed code groups
+
+Group adjacent fences into a tabbed widget. The mechanism is **CSS-only**
+(hidden `<input type="radio">` + `<label>` siblings + attribute selectors)
+— no JavaScript, no hydration cost. Keyboard navigation works for free via
+the browser's native arrow-key cycling between radios in the same group.
+
+**Markdown / MDX** — wrap fences in a `:::code-group` container directive
+from [`remark-directive`](https://github.com/remarkjs/remark-directive).
+Tab names come from a `[label]` token at the start of each fence's info
+string (Docusaurus convention). When `[label]` is absent, the language
+name is used as the tab name.
+
+````markdown
+:::code-group
+```bash [npm]
+npm install foo
+```
+```bash [yarn]
+yarn add foo
+```
+```bash [bun]
+bun add foo
+```
+:::
+````
+
+**rST** — use the custom `.. code-group::` directive wrapping nested
+`.. code-block::` blocks, each with a `:label:` option for the tab name:
+
+```rst
+.. code-group::
+
+   .. code-block:: bash
+      :label: npm
+
+      npm install foo
+
+   .. code-block:: bash
+      :label: yarn
+
+      yarn add foo
+```
+
+Both pipelines produce identical HTML and share the same CSS. Up to 10
+tabs per group are supported out of the box (CSS rules hardcoded for
+`data-idx="0"` through `data-idx="9"`); extend the rules in
+`src/app/globals.css` if you need more.
+
 ## Supported languages
 
 The Shiki bundle is loaded with this curated list (see `src/lib/shiki.ts`):
