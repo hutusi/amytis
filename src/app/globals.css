@@ -100,23 +100,28 @@ html {
   cursor: default;
 }
 
-/* Shiki dual-theme code blocks (build-time highlighter) */
-.cb-root .shiki,
-.cb-root .shiki span {
+/* Shiki dual-theme code blocks (build-time highlighter).
+ * Selectors are scoped to .shiki (added by Shiki itself on every <pre>) rather
+ * than .cb-root .shiki, so highlighting applies in both the MDX path (wrapped
+ * in <div class="cb-root">) and the rST html-path (bare <pre class="shiki">
+ * inserted via dangerouslySetInnerHTML). Only the wrap-toggle rules keep the
+ * .cb-root scope because that state lives on the toolbar button, MDX-only. */
+.shiki,
+.shiki span {
   background-color: transparent !important;
 }
 
-html:not(.dark) .cb-root .shiki,
-html:not(.dark) .cb-root .shiki span {
+html:not(.dark) .shiki,
+html:not(.dark) .shiki span {
   color: var(--shiki-light, var(--foreground));
 }
 
-html.dark .cb-root .shiki,
-html.dark .cb-root .shiki span {
+html.dark .shiki,
+html.dark .shiki span {
   color: var(--shiki-dark, var(--foreground));
 }
 
-.cb-root .shiki {
+.shiki {
   margin: 0;
   padding: 1.25rem 1.5rem;
   font-family: var(--font-mono);
@@ -125,7 +130,7 @@ html.dark .cb-root .shiki span {
   tab-size: 4;
 }
 
-.cb-root .shiki code {
+.shiki code {
   display: grid;
   background: transparent;
   border: 0;
@@ -135,7 +140,7 @@ html.dark .cb-root .shiki span {
   white-space: pre;
 }
 
-.cb-root .shiki .line {
+.shiki .line {
   display: block;
   min-height: 1.6em;
   padding-inline: 1.5rem;
@@ -143,11 +148,11 @@ html.dark .cb-root .shiki span {
 }
 
 /* Line numbers (opt-in via data-line-numbers on <pre>) */
-.cb-root .shiki[data-line-numbers="true"] code {
+.shiki[data-line-numbers="true"] code {
   counter-reset: shiki-line;
 }
 
-.cb-root .shiki[data-line-numbers="true"] .line::before {
+.shiki[data-line-numbers="true"] .line::before {
   counter-increment: shiki-line;
   content: counter(shiki-line);
   display: inline-block;
@@ -160,31 +165,31 @@ html.dark .cb-root .shiki span {
 }
 
 /* Highlighted lines (via {1,3-5} fence meta or :emphasize-lines:) */
-.cb-root .shiki .line.highlighted,
-.cb-root .shiki .line[data-highlighted-line] {
+.shiki .line.highlighted,
+.shiki .line[data-highlighted-line] {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-left: 3px solid var(--accent);
   padding-inline-start: calc(1.5rem - 3px);
 }
 
 /* Diff fence backgrounds (raw + / - lines) */
-.cb-root .shiki .line.diff.add {
+.shiki .line.diff.add {
   background: color-mix(in srgb, #16a34a 14%, transparent);
 }
 
-.cb-root .shiki .line.diff.remove {
+.shiki .line.diff.remove {
   background: color-mix(in srgb, #dc2626 14%, transparent);
 }
 
-html.dark .cb-root .shiki .line.diff.add {
+html.dark .shiki .line.diff.add {
   background: color-mix(in srgb, #16a34a 22%, transparent);
 }
 
-html.dark .cb-root .shiki .line.diff.remove {
+html.dark .shiki .line.diff.remove {
   background: color-mix(in srgb, #dc2626 22%, transparent);
 }
 
-/* Word-wrap toggle */
+/* Word-wrap toggle (MDX-only — the toolbar button flips data-wrap on cb-root) */
 .cb-root[data-wrap="true"] .cb-scroll {
   overflow-x: hidden;
 }
