@@ -189,6 +189,106 @@ html.dark .shiki .line.diff.remove {
   background: color-mix(in srgb, #dc2626 22%, transparent);
 }
 
+/* Tabbed code groups (CSS-only — radio + label sibling trick).
+ * Same markup is produced by CodeGroup.tsx (MDX path) and shiki-rst.ts (rST
+ * path), so this single block styles both. Hardcodes selectors for up to 10
+ * tabs — more than enough for code-group use cases. */
+.code-group {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--background) 90%, transparent);
+  overflow: hidden;
+}
+
+.code-group > input[type="radio"] {
+  /* Visually hide but keep keyboard-accessible via arrow keys. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+}
+
+.code-group .cg-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 15%, transparent);
+  background: color-mix(in srgb, var(--muted) 5%, transparent);
+}
+
+.code-group .cg-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+  user-select: none;
+}
+
+.code-group .cg-tab:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--muted) 8%, transparent);
+}
+
+.code-group > input[type="radio"]:focus-visible + .cg-tablist .cg-tab,
+.code-group .cg-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.code-group .cg-panel {
+  display: none;
+}
+
+/* Inside a panel, drop the cb-root's own outer my-6 margin — the code-group
+ * already provides framing. */
+.code-group .cg-panel .cb-root {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Show only the panel whose matching radio is checked. Hardcoded up to 10
+ * tabs; if a code-group ever needs more, extend this list. */
+.code-group > input[data-idx="0"]:checked ~ .cg-panel[data-panel="0"],
+.code-group > input[data-idx="1"]:checked ~ .cg-panel[data-panel="1"],
+.code-group > input[data-idx="2"]:checked ~ .cg-panel[data-panel="2"],
+.code-group > input[data-idx="3"]:checked ~ .cg-panel[data-panel="3"],
+.code-group > input[data-idx="4"]:checked ~ .cg-panel[data-panel="4"],
+.code-group > input[data-idx="5"]:checked ~ .cg-panel[data-panel="5"],
+.code-group > input[data-idx="6"]:checked ~ .cg-panel[data-panel="6"],
+.code-group > input[data-idx="7"]:checked ~ .cg-panel[data-panel="7"],
+.code-group > input[data-idx="8"]:checked ~ .cg-panel[data-panel="8"],
+.code-group > input[data-idx="9"]:checked ~ .cg-panel[data-panel="9"] {
+  display: block;
+}
+
+/* Highlight the active tab's label. The general sibling combinator (~) works
+ * because every input precedes the .cg-tablist in document order. */
+.code-group > input[data-idx="0"]:checked ~ .cg-tablist .cg-tab[for$="-0"],
+.code-group > input[data-idx="1"]:checked ~ .cg-tablist .cg-tab[for$="-1"],
+.code-group > input[data-idx="2"]:checked ~ .cg-tablist .cg-tab[for$="-2"],
+.code-group > input[data-idx="3"]:checked ~ .cg-tablist .cg-tab[for$="-3"],
+.code-group > input[data-idx="4"]:checked ~ .cg-tablist .cg-tab[for$="-4"],
+.code-group > input[data-idx="5"]:checked ~ .cg-tablist .cg-tab[for$="-5"],
+.code-group > input[data-idx="6"]:checked ~ .cg-tablist .cg-tab[for$="-6"],
+.code-group > input[data-idx="7"]:checked ~ .cg-tablist .cg-tab[for$="-7"],
+.code-group > input[data-idx="8"]:checked ~ .cg-tablist .cg-tab[for$="-8"],
+.code-group > input[data-idx="9"]:checked ~ .cg-tablist .cg-tab[for$="-9"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--background) 100%, transparent);
+}
+
 /* Word-wrap toggle (MDX-only — the toolbar button flips data-wrap on cb-root) */
 .cb-root[data-wrap="true"] .cb-scroll {
   overflow-x: hidden;
