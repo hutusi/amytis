@@ -45,4 +45,11 @@ describe('parseFenceMeta', () => {
     // not interpreted as a label — keeps the grammar unambiguous.
     expect(parseFenceMeta('linenos [late]').tabLabel).toBeUndefined();
   });
+
+  test('whitespace-only [   ] does not leak an empty-string label', () => {
+    // `[   ]` would otherwise produce an empty string, which bypasses downstream
+    // `?? language` fallbacks (empty string isn't nullish). Result: blank tabs.
+    expect(parseFenceMeta('[   ]').tabLabel).toBeUndefined();
+    expect(parseFenceMeta('[]').tabLabel).toBeUndefined();
+  });
 });

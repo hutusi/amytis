@@ -658,16 +658,20 @@ def transform_literal_blocks_to_markers(document: Any) -> None:
             container.parent.replace(container, inner_block)
 
     # Pass 2: handle code-group containers. The directive marks them with the
-    # 'amytis-code-group-source' class.
+    # 'amytis-code-group-source' class. Per CLAUDE.md "strict build over silent
+    # runtime failure", malformed groups raise rather than getting dropped, and
+    # group ids are issued from a monotonic counter so two groups with identical
+    # label sets never share an id (which would couple their tab radios).
+    group_counter = 0
     for container in list(document.findall(nodes.container)):
         if "amytis-code-group-source" not in (container.get("classes") or []):
             continue
 
         inner_blocks = list(container.findall(nodes.literal_block))
         if not inner_blocks:
-            # Empty/malformed code-group: drop it silently rather than error out.
-            container.parent.remove(container)
-            continue
+            raise RstRenderError(
+                "Empty or malformed '.. code-group::' directive: expected at least one nested .. code-block:: child."
+            )
 
         markers: list[str] = []
         labels: list[str] = []
@@ -676,7 +680,8 @@ def transform_literal_blocks_to_markers(document: Any) -> None:
             markers.append(marker)
             labels.append(label)
 
-        group_id = f"rst-{abs(hash(tuple(labels))) % (10 ** 8):08x}"
+        group_counter += 1
+        group_id = f"rst-{group_counter}"
         labels_json = html.escape(json.dumps(labels, ensure_ascii=False), quote=True)
         wrapper_html = (
             f'<div data-amytis-code-group="" data-labels="{labels_json}" '

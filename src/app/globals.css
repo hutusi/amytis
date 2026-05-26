@@ -237,7 +237,7 @@ html.dark .shiki .line.diff.remove {
   background: color-mix(in srgb, var(--muted) 8%, transparent);
 }
 
-.code-group > input[type="radio"]:focus-visible + .cg-tablist .cg-tab,
+.code-group > input[type="radio"]:focus-visible ~ .cg-tablist .cg-tab,
 .code-group .cg-tab:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;

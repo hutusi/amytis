@@ -120,6 +120,31 @@ describe('Integration: Code Group Tabs', () => {
       expect(html).toContain('>yarn<');
     });
 
+    test('two adjacent code-groups with identical labels keep independent radio groups', async () => {
+      // Regression test for the coderabbit-flagged collision: two groups with the
+      // same tab labels used to get the same data-group-id (hashed from labels),
+      // which coupled their radio buttons. Each group must have its own name="".
+      const wrapperHtml =
+        '<div data-amytis-code-group="" data-labels="[&quot;npm&quot;,&quot;yarn&quot;]" data-group-id="rst-1">' +
+        '<pre data-amytis-code="" data-language="bash"><code>npm install a</code></pre>' +
+        '<pre data-amytis-code="" data-language="bash"><code>yarn add a</code></pre>' +
+        '</div>' +
+        '<div data-amytis-code-group="" data-labels="[&quot;npm&quot;,&quot;yarn&quot;]" data-group-id="rst-2">' +
+        '<pre data-amytis-code="" data-language="bash"><code>npm install b</code></pre>' +
+        '<pre data-amytis-code="" data-language="bash"><code>yarn add b</code></pre>' +
+        '</div>';
+
+      const html = await renderAsync(RstRenderer({ content: 'unused', html: wrapperHtml }));
+
+      // Each group's radios must use a distinct `name` attribute so checking a tab
+      // in one doesn't deselect a tab in the other.
+      expect(html).toContain('name="cg-rst-1"');
+      expect(html).toContain('name="cg-rst-2"');
+      // 4 radios total (2 per group), 4 panels total.
+      expect((html.match(/type="radio"/g) || []).length).toBe(4);
+      expect((html.match(/class="cg-panel"/g) || []).length).toBe(4);
+    });
+
     test('non-radio inputs are downgraded by transformTags', async () => {
       // If an rST author tries to inject a non-radio input through raw HTML, the
       // transformTags rule should strip the tagName down to <span>.
