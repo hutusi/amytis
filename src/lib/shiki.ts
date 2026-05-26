@@ -81,12 +81,24 @@ export interface ParsedFenceMeta {
   title?: string;
   showLineNumbers?: boolean;
   highlightLines?: number[];
+  tabLabel?: string;
   raw?: string;
 }
 
 export function parseFenceMeta(meta: string | undefined | null): ParsedFenceMeta {
   if (!meta) return {};
   const result: ParsedFenceMeta = { raw: meta };
+
+  // Docusaurus-style [label] at the start of the meta — used by tabbed code groups
+  // to name each tab. Stays harmlessly attached to non-grouped blocks too. Square
+  // brackets are unambiguous against the curly-brace {1,3-5} highlight syntax.
+  const labelMatch = meta.match(/^\s*\[([^\]]+)\]/);
+  if (labelMatch) {
+    // Trim and discard if empty — `[   ]` would otherwise leak an empty-string
+    // label that bypasses downstream `?? language` fallbacks (empty isn't nullish).
+    const label = labelMatch[1].trim();
+    if (label) result.tabLabel = label;
+  }
 
   const titleMatch = meta.match(/title=(?:"([^"]*)"|'([^']*)')/);
   if (titleMatch) result.title = titleMatch[1] ?? titleMatch[2] ?? '';

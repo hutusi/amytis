@@ -2,9 +2,12 @@ import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import RssFeedWidget from '@/components/RssFeedWidget';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
+import CodeGroup from '@/components/CodeGroup';
 import KatexStyles from '@/components/KatexStyles';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
+import remarkDirective from 'remark-directive';
+import remarkCodeGroup from '@/lib/remark-code-group';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -28,7 +31,10 @@ interface MarkdownRendererProps {
 }
 
 export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
-  const remarkPlugins: PluggableList = [remarkGfm];
+  // remark-directive must precede remark-code-group so the latter sees parsed
+  // containerDirective nodes. Order vs remark-gfm doesn't matter — they touch
+  // disjoint node types.
+  const remarkPlugins: PluggableList = [remarkGfm, remarkDirective, remarkCodeGroup];
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
   // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
   // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
@@ -177,9 +183,10 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     },
   };
 
-  // Merge custom HTML elements not in the Components type (e.g. web components used in MDX)
+  // Merge custom HTML elements not in the Components type (e.g. web components used in MDX,
+  // and the synthetic <code-group> tagName emitted by remark-code-group).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allComponents = { ...components, 'rss-feed': () => <RssFeedWidget /> } as any;
+  const allComponents = { ...components, 'rss-feed': () => <RssFeedWidget />, 'code-group': CodeGroup } as any;
 
   return (
     <>

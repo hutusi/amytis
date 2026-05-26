@@ -603,44 +603,98 @@ def _build_amytis_code_marker(
     return f'<pre {" ".join(attrs)}><code>{escaped}</code></pre>'
 
 
+def _build_inner_block_marker(block: Any) -> tuple[str, str]:
+    """Helper: build the per-block <pre data-amytis-code> marker AND return the
+    tab label (from the new `:label:` option, or the language as fallback).
+    Used by both the standalone-literal_block path and the code-group path.
+    """
+    classes = list(block.get("classes") or [])
+    language = block.get("language") or _language_from_classes(classes)
+    highlight_args = block.get("highlight_args") or {}
+    hl_lines = list(highlight_args.get("hl_lines") or [])
+    linenos = "linenos" in classes
+    caption_text = block.get("amytis_caption")  # set by the directive when :caption: is present
+    label = block.get("amytis_label") or language or ""
+
+    marker = _build_amytis_code_marker(
+        text=block.astext(),
+        language=language,
+        highlight_lines=hl_lines,
+        linenos=linenos,
+        title=caption_text,
+    )
+    return marker, label
+
+
 def transform_literal_blocks_to_markers(document: Any) -> None:
     """Replace every literal_block with an opaque <pre data-amytis-code> marker
     so the JS-side post-processor can run Shiki uniformly. Caption-bearing
     literal-block-wrapper containers are flattened into the marker's data-title.
+
+    Code-group containers (emitted by the .. code-group:: directive) are
+    handled FIRST so their child literal_blocks are consumed before the
+    standalone-block pass sees them — otherwise the standalone pass would
+    replace them and we'd lose the grouping wrapper.
     """
     from docutils import nodes
+    import json
 
-    for block in list(document.findall(nodes.literal_block)):
-        classes = list(block.get("classes") or [])
-        language = block.get("language") or _language_from_classes(classes)
-        highlight_args = block.get("highlight_args") or {}
-        hl_lines = list(highlight_args.get("hl_lines") or [])
-        linenos = "linenos" in classes
-
-        replace_target = block
-        caption_text: str | None = None
-        parent = block.parent
-        if (
-            isinstance(parent, nodes.container)
-            and "literal-block-wrapper" in (parent.get("classes") or [])
-        ):
-            caption_node = next(
-                (c for c in parent.children if isinstance(c, nodes.caption)),
-                None,
-            )
-            if caption_node is not None:
-                caption_text = caption_node.astext().strip() or None
-            replace_target = parent
-
-        marker_html = _build_amytis_code_marker(
-            text=block.astext(),
-            language=language,
-            highlight_lines=hl_lines,
-            linenos=linenos,
-            title=caption_text,
+    # Pass 1: collapse caption containers so child literal_blocks carry their caption
+    # as a custom attribute. (Doing this once here means the helper doesn't need to
+    # walk back up to find a parent literal-block-wrapper.)
+    for container in list(document.findall(nodes.container)):
+        if "literal-block-wrapper" not in (container.get("classes") or []):
+            continue
+        caption_node = next(
+            (c for c in container.children if isinstance(c, nodes.caption)),
+            None,
         )
-        raw_node = nodes.raw("", marker_html, format="html")
-        replace_target.parent.replace(replace_target, raw_node)
+        inner_block = next(
+            (c for c in container.children if isinstance(c, nodes.literal_block)),
+            None,
+        )
+        if caption_node is not None and inner_block is not None:
+            inner_block["amytis_caption"] = caption_node.astext().strip()
+            container.parent.replace(container, inner_block)
+
+    # Pass 2: handle code-group containers. The directive marks them with the
+    # 'amytis-code-group-source' class. Per CLAUDE.md "strict build over silent
+    # runtime failure", malformed groups raise rather than getting dropped, and
+    # group ids are issued from a monotonic counter so two groups with identical
+    # label sets never share an id (which would couple their tab radios).
+    group_counter = 0
+    for container in list(document.findall(nodes.container)):
+        if "amytis-code-group-source" not in (container.get("classes") or []):
+            continue
+
+        inner_blocks = list(container.findall(nodes.literal_block))
+        if not inner_blocks:
+            raise RstRenderError(
+                "Empty or malformed '.. code-group::' directive: expected at least one nested .. code-block:: child."
+            )
+
+        markers: list[str] = []
+        labels: list[str] = []
+        for block in inner_blocks:
+            marker, label = _build_inner_block_marker(block)
+            markers.append(marker)
+            labels.append(label)
+
+        group_counter += 1
+        group_id = f"rst-{group_counter}"
+        labels_json = html.escape(json.dumps(labels, ensure_ascii=False), quote=True)
+        wrapper_html = (
+            f'<div data-amytis-code-group="" data-labels="{labels_json}" '
+            f'data-group-id="{group_id}">'
+            + "".join(markers)
+            + "</div>"
+        )
+        container.parent.replace(container, nodes.raw("", wrapper_html, format="html"))
+
+    # Pass 3: replace remaining (non-grouped) literal_blocks.
+    for block in list(document.findall(nodes.literal_block)):
+        marker, _ = _build_inner_block_marker(block)
+        block.parent.replace(block, nodes.raw("", marker, format="html"))
 
 
 def extract_html_body_from_doctree(document: Any) -> str:
@@ -697,9 +751,73 @@ def build_output(document: Any, source_file: Path, image_base_slug: str, warning
     }
 
 
+_amytis_directives_registered = False
+
+
+def register_amytis_directives() -> None:
+    """Register the .. code-group:: directive and a code-block subclass that
+    accepts a :label: option. Both are global to the docutils registry, so
+    registering once per process is enough.
+
+    The code-block override only ADDS the :label: option; standard behavior
+    (language argument, :linenos:, :emphasize-lines:, :caption:) goes through
+    docutils' built-in implementation unchanged. The label is stashed on the
+    resulting literal_block via a custom amytis_label attribute and consumed
+    by transform_literal_blocks_to_markers.
+    """
+    global _amytis_directives_registered
+    if _amytis_directives_registered:
+        return
+
+    from docutils import nodes
+    from docutils.parsers.rst import Directive, directives
+    from docutils.parsers.rst.directives.body import CodeBlock as BaseCodeBlock
+
+    class LabeledCodeBlock(BaseCodeBlock):
+        option_spec = {
+            **BaseCodeBlock.option_spec,
+            "label": directives.unchanged,
+        }
+
+        def run(self):
+            result = super().run()
+            label = self.options.get("label")
+            if label:
+                for node in result:
+                    for lb in node.findall(nodes.literal_block):
+                        lb["amytis_label"] = label
+            return result
+
+    class CodeGroup(Directive):
+        """Wrap nested code-blocks into a tabbed code-group.
+
+        Body content is parsed as rST and contributes literal_block children;
+        transform_literal_blocks_to_markers later consumes the whole subtree
+        and emits the <div data-amytis-code-group> wrapper marker.
+        """
+
+        has_content = True
+        required_arguments = 0
+        optional_arguments = 0
+        option_spec = {}
+
+        def run(self):
+            wrapper = nodes.container()
+            wrapper["classes"].append("amytis-code-group-source")
+            self.state.nested_parse(self.content, self.content_offset, wrapper)
+            return [wrapper]
+
+    directives.register_directive("code-block", LabeledCodeBlock)
+    directives.register_directive("code", LabeledCodeBlock)
+    directives.register_directive("sourcecode", LabeledCodeBlock)
+    directives.register_directive("code-group", CodeGroup)
+    _amytis_directives_registered = True
+
+
 def render_single_file(source_file: Path, image_base_slug: str, strict: bool) -> dict[str, Any]:
     from docutils.core import publish_doctree
 
+    register_amytis_directives()
     warnings: list[str] = []
     source = normalize_legacy_doc_role_syntax(source_file.read_text(encoding="utf-8"))
     with temporary_role_overrides(source_file, warnings):

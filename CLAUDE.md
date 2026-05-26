@@ -48,6 +48,7 @@ Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.
 - **rST sanitize-html allowlist must keep `style` + `data-*` on `pre`/`code`/`span`/`div`.** Stripping any of these silently kills Shiki output (monochrome text in prod, looks fine locally because dev rST isn't sanitized). See `src/components/RstRenderer.tsx`.
 - **Bump `RST_RENDERER_DISK_CACHE_VERSION` (`src/lib/rst-renderer.ts`) on highlighter-output changes.** Stale on-disk caches in `.cache/rst-renderer/` will serve old markup otherwise. Run `rm -rf .cache/rst-renderer` after pulling such a change.
 - **Fence meta needs `rehype-fence-meta` BEFORE `rehype-raw`.** `mdast-util-to-hast` stores fence meta on `node.data.meta`, which `rehype-raw` drops during HTML round-trip. The plugin copies it to a real `data-meta` attribute first. Order matters in `MarkdownRenderer.tsx`.
+- **Code-group tabs add `<input type="radio">` + `<label>` to the rST sanitize-html allowlist.** Keep the `transformTags` guard in `RstRenderer.tsx` that strips any `<input>` whose `type !== "radio"` — that's the defense against an rST author injecting password/file/etc. inputs through raw HTML.
 
 ## Git conventions
 
