@@ -18,8 +18,11 @@
 ## Writing Content
 
 For code-block features (line numbers, line highlighting, title bars, diff
-backgrounds, word-wrap toggle) and the per-format fence/directive syntax,
-see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md).
+backgrounds, word-wrap toggle, notation comments, tabbed groups) and the
+per-format fence/directive syntax, see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md).
+
+For GitHub-flavored alert callouts (`> [!NOTE]`, `.. note::`, etc.) and the
+five supported alert types, see [`docs/ALERTS.md`](./ALERTS.md).
 
 ### Creating Posts
 

@@ -3,11 +3,13 @@ import RssFeedWidget from '@/components/RssFeedWidget';
 import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
 import CodeGroup from '@/components/CodeGroup';
+import GithubAlert from '@/components/GithubAlert';
 import KatexStyles from '@/components/KatexStyles';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
+import remarkGithubAlerts from '@/lib/remark-github-alerts';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -34,7 +36,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   // remark-directive must precede remark-code-group so the latter sees parsed
   // containerDirective nodes. Order vs remark-gfm doesn't matter — they touch
   // disjoint node types.
-  const remarkPlugins: PluggableList = [remarkGfm, remarkDirective, remarkCodeGroup];
+  const remarkPlugins: PluggableList = [remarkGfm, remarkGithubAlerts, remarkDirective, remarkCodeGroup];
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
   // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
   // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
@@ -184,9 +186,14 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   };
 
   // Merge custom HTML elements not in the Components type (e.g. web components used in MDX,
-  // and the synthetic <code-group> tagName emitted by remark-code-group).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allComponents = { ...components, 'rss-feed': () => <RssFeedWidget />, 'code-group': CodeGroup } as any;
+  // and the synthetic <code-group> / <github-alert> tagNames emitted by our remark plugins).
+  const allComponents = {
+    ...components,
+    'rss-feed': () => <RssFeedWidget />,
+    'code-group': CodeGroup,
+    'github-alert': GithubAlert,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { parseFenceMeta } from './shiki';
+import { getLanguageDisplayName, parseFenceMeta } from './shiki';
 
 describe('parseFenceMeta', () => {
   test('returns empty object for empty input', () => {
@@ -51,5 +51,36 @@ describe('parseFenceMeta', () => {
     // `?? language` fallbacks (empty string isn't nullish). Result: blank tabs.
     expect(parseFenceMeta('[   ]').tabLabel).toBeUndefined();
     expect(parseFenceMeta('[]').tabLabel).toBeUndefined();
+  });
+});
+
+describe('getLanguageDisplayName', () => {
+  test('returns the proper-case brand form for a canonical language', () => {
+    expect(getLanguageDisplayName('typescript')).toBe('TypeScript');
+    expect(getLanguageDisplayName('python')).toBe('Python');
+    expect(getLanguageDisplayName('ocaml')).toBe('OCaml');
+  });
+
+  test('resolves aliases to the canonical display name', () => {
+    expect(getLanguageDisplayName('ts')).toBe('TypeScript');
+    expect(getLanguageDisplayName('js')).toBe('JavaScript');
+    expect(getLanguageDisplayName('py')).toBe('Python');
+  });
+
+  test('handles alias tokens with special characters', () => {
+    // `c++` is a LANG_ALIASES key that resolves to `cpp` → `C++` display.
+    expect(getLanguageDisplayName('c++')).toBe('C++');
+  });
+
+  test('falls back to the raw input for unrecognized languages', () => {
+    // Defensive — highlightToHast throws on unknown langs, so this branch is
+    // only reachable for callers that opt to render a label without highlighting.
+    expect(getLanguageDisplayName('totally-fake')).toBe('totally-fake');
+  });
+
+  test('handles plaintext aliases', () => {
+    expect(getLanguageDisplayName('plaintext')).toBe('Plain text');
+    expect(getLanguageDisplayName('text')).toBe('Plain text');
+    expect(getLanguageDisplayName('txt')).toBe('Plain text');
   });
 });

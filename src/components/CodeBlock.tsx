@@ -1,6 +1,6 @@
 import { toHtml } from 'hast-util-to-html';
 import CodeBlockToolbar from './CodeBlockToolbar';
-import { highlightToHast } from '@/lib/shiki';
+import { getLanguageDisplayName, highlightToHast } from '@/lib/shiki';
 
 interface CodeBlockProps {
   language: string;
@@ -23,7 +23,7 @@ export default async function CodeBlock({
     title,
   });
   const html = toHtml(hast);
-  const displayLang = (language || 'text').toLowerCase();
+  const displayLang = getLanguageDisplayName(language || 'text');
 
   return (
     <div
@@ -32,7 +32,7 @@ export default async function CodeBlock({
     >
       <div className="cb-header flex items-center justify-between px-4 py-2 border-b border-muted/10 bg-muted/5 gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="cb-lang text-xs font-mono text-muted uppercase tracking-wider">
+          <span className="cb-lang text-xs font-mono text-muted tracking-wider">
             {displayLang}
           </span>
           {title && (

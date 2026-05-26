@@ -1,4 +1,10 @@
 import { createHighlighter, type Highlighter, type ShikiTransformer } from 'shiki';
+import {
+  transformerNotationDiff,
+  transformerNotationErrorLevel,
+  transformerNotationFocus,
+  transformerNotationHighlight,
+} from '@shikijs/transformers';
 import type { Root } from 'hast';
 
 export const SHIKI_LANGS = [
@@ -51,6 +57,44 @@ const LANG_ALIASES: Record<string, ShikiLang> = {
 };
 
 const SHIKI_LANG_SET = new Set<string>(SHIKI_LANGS);
+
+// Proper-case display names for code-block headers. Tracks community-standard
+// brand casing (TypeScript, JavaScript, OCaml, C++) rather than the lowercase
+// fence token, so the chrome reads like editor mode labels (GitHub, VS Code).
+// Keyed by the canonical ShikiLang — aliases resolve via normalizeLang first.
+const DISPLAY_NAMES: Record<ShikiLang, string> = {
+  tsx: 'TSX',
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
+  bash: 'Bash',
+  markdown: 'Markdown',
+  json: 'JSON',
+  css: 'CSS',
+  python: 'Python',
+  rust: 'Rust',
+  go: 'Go',
+  c: 'C',
+  cpp: 'C++',
+  java: 'Java',
+  ruby: 'Ruby',
+  sql: 'SQL',
+  yaml: 'YAML',
+  diff: 'Diff',
+  html: 'HTML',
+  xml: 'XML',
+  nginx: 'Nginx',
+  haskell: 'Haskell',
+  ocaml: 'OCaml',
+  plaintext: 'Plain text',
+};
+
+export function getLanguageDisplayName(language: string): string {
+  const { lang, recognized } = normalizeLang(language);
+  if (recognized) return DISPLAY_NAMES[lang];
+  // Defensive — highlightToHast throws on unknown langs, so this branch
+  // shouldn't trigger at render time. Returns the raw input for safety.
+  return language;
+}
 
 export function normalizeLang(language: string): { lang: ShikiLang; recognized: boolean } {
   const lower = (language || '').toLowerCase();
@@ -235,6 +279,19 @@ export async function highlightToHast(
       transformerTitle(opts.title),
       transformerHighlightLines(opts.highlightLines),
       transformerDiffBg(lang, code),
+      // VitePress-style notation comments inside the source:
+      //   // [!code focus]         dim/blur non-focused lines (hover to reveal)
+      //   // [!code error]         red line tinting
+      //   // [!code warning]       amber line tinting
+      //   // [!code highlight]     same .highlighted class as the meta {1,3-5} syntax
+      //   // [!code ++] / [!code --] same .diff.add / .diff.remove classes as the
+      //                            raw +/- transformer in diff fences; they coexist.
+      // The class names emitted (.focused/.error/.warning/.highlighted/.diff.add/.diff.remove)
+      // are styled by globals.css alongside our existing rules.
+      transformerNotationFocus({ classActivePre: 'has-focused' }),
+      transformerNotationErrorLevel(),
+      transformerNotationHighlight(),
+      transformerNotationDiff(),
     ],
   });
 }
