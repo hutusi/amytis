@@ -17,6 +17,10 @@
 
 ## Writing Content
 
+For code-block features (line numbers, line highlighting, title bars, diff
+backgrounds, word-wrap toggle) and the per-format fence/directive syntax,
+see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md).
+
 ### Creating Posts
 
 Use the CLI to scaffold new content:

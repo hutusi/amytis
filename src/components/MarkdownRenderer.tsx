@@ -10,12 +10,14 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/markdown';
 import { shouldBypassImageOptimization } from '@/lib/image-utils';
+import { parseFenceMeta } from '@/lib/shiki';
 
 
 interface MarkdownRendererProps {
@@ -28,7 +30,10 @@ interface MarkdownRendererProps {
 export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
   const remarkPlugins: PluggableList = [remarkGfm];
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
-  const rehypePlugins: PluggableList = [rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
+  // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
+  // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
+  // real data-meta attribute first lets it survive the round trip.
+  const rehypePlugins: PluggableList = [rehypeFenceMeta, rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
 
   if (slugRegistry && slugRegistry.size > 0) {
     remarkPlugins.push([remarkWikilinks, { slugRegistry }]);
@@ -81,27 +86,37 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
     code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { className, children, node: _node, ...rest } = props;
-      const match = /language-(\w+)/.exec(className || '');
+      const { className, children } = props;
+      // [^\s]+ rather than \w+ so fences like ```c++ or ```objective-c++ are detected
+      // as `c++` / `objective-c++` and not truncated to `c` at the punctuation boundary.
+      const match = /language-([^\s]+)/.exec(className || '');
       const language = match ? match[1] : '';
       const isMultiLine = String(children).includes('\n');
-      
-      // In react-markdown v10, 'inline' prop is removed. 
+
+      // In react-markdown v10, 'inline' prop is removed.
       // We use className presence (e.g. language-js) or newline presence to detect code blocks.
       if (match || isMultiLine) {
         if (language === 'mermaid') {
           return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
+        // react-markdown v10 strips node.data before invoking overrides, so the
+        // fence meta is surfaced as a real `data-meta` attribute by rehypeFenceMeta.
+        const meta = (props as unknown as Record<string, unknown>)['data-meta'];
+        const parsedMeta = parseFenceMeta(typeof meta === 'string' ? meta : undefined);
         return (
-          <CodeBlock language={language} {...rest}>
+          <CodeBlock
+            language={language}
+            title={parsedMeta.title}
+            showLineNumbers={parsedMeta.showLineNumbers}
+            highlightLines={parsedMeta.highlightLines}
+          >
             {String(children).replace(/\n$/, '')}
           </CodeBlock>
         );
       }
 
       return (
-        <code className={className} {...rest}>
+        <code className={className}>
           {children}
         </code>
       );

@@ -41,6 +41,35 @@ describe('rst utils', () => {
     expect(markdown).toContain('![Test image](./images/test.svg)');
   });
 
+  test('propagates :linenos:, :emphasize-lines:, and :caption: into the fence info string', () => {
+    const markdown = rstToMarkdown([
+      '.. code-block:: python',
+      '   :linenos:',
+      '   :emphasize-lines: 1,3-5',
+      '   :caption: app.py',
+      '',
+      '  def fib(n):',
+      '      if n < 2:',
+      '          return n',
+      '      return fib(n - 1) + fib(n - 2)',
+    ].join('\n'));
+
+    expect(markdown).toContain('```python title="app.py" linenos {1,3-5}');
+    expect(markdown).toContain('def fib(n):');
+  });
+
+  test(':language: option overrides the directive language', () => {
+    const markdown = rstToMarkdown([
+      '.. code-block::',
+      '   :language: rust',
+      '',
+      '  fn main() {}',
+    ].join('\n'));
+
+    expect(markdown).toContain('```rust');
+    expect(markdown).toContain('fn main() {}');
+  });
+
   test('converts figure directives the same way as image directives', () => {
     const bare = rstToMarkdown('.. figure:: _static/redis.svg');
     expect(bare).toContain('![](_static/redis.svg)');

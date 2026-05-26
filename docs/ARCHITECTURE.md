@@ -102,8 +102,8 @@ Layout & navigation:
 
 Content renderers:
 
-- `MarkdownRenderer` — MDX with GFM, KaTeX math, syntax highlighting, Mermaid
-- `CodeBlock`, `Mermaid`
+- `MarkdownRenderer` — MDX with GFM, KaTeX math, build-time syntax highlighting via Shiki, Mermaid
+- `CodeBlock` (async server component, calls Shiki) and `CodeBlockToolbar` (client: copy + word-wrap toggle), `Mermaid`
 - `CoverImage` — optimized image component with WebP support
 
 Post & series surfaces:
@@ -141,6 +141,15 @@ Integrations:
 - Flows: `getAllFlows`, `getFlowBySlug`, `getFlowsByYear`, `getFlowsByMonth`
 - Notes: `getAllNotes`, `getNoteBySlug`, `getNotesByTag`
 - Discovery: `buildSlugRegistry`, `getBacklinks`, `getAllTags`, `getAllAuthors`
+
+## Code Block Highlighting
+
+- Highlighter: **Shiki** (build-time, dual `github-light` / `github-dark` theme via CSS variables). See `docs/CODE-BLOCKS.md` for author-facing fence/directive metadata.
+- Singleton lives at `src/lib/shiki.ts` (`getHighlighter()`, cached on `globalThis` for HMR). It exposes `highlightToHast(code, language, opts)` and `parseFenceMeta(meta)`.
+- Transformers: `transformerMetaHighlight` from `@shikijs/transformers` plus three custom transformers in `src/lib/shiki.ts` for the line-numbers data attribute, the title data attribute, and raw-`diff` line backgrounds.
+- MDX/Markdown path: `MarkdownRenderer.tsx` → `rehype-fence-meta` (copies `node.data.meta` to a real `data-meta` HTML attribute so it survives `react-markdown`'s prop filtering and the `rehypeRaw` round-trip) → `CodeBlock` (async server component) → Shiki → inline HTML. Mermaid blocks are short-circuited before `CodeBlock` is reached.
+- rST path: `scripts/render-rst.py` rewrites every `literal_block` into a `<pre data-amytis-code …>` marker carrying option attributes (`data-language`, `data-line-numbers`, `data-highlight-lines`, `data-title`); `src/lib/shiki-rst.ts` walks the rendered HTML inside `RstRenderer` (async server component) and replaces each marker with Shiki output. The fallback rST parser routes through `rstToMarkdown` and lands in the MDX path — single highlighter, single source of truth.
+- Cache: `RST_RENDERER_DISK_CACHE_VERSION` in `src/lib/rst-renderer.ts` must be bumped whenever the docutils output shape or Shiki theme changes, otherwise stale cached entries in `.cache/rst-renderer/` keep rendering with the old markup.
 
 ## rST Notes
 

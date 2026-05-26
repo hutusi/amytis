@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { renderToStaticMarkup } from 'react-dom/server';
 import RstRenderer from './RstRenderer';
+import { renderAsync } from '@/test-utils/render';
 
 describe('RstRenderer', () => {
-  test('renders pre-rendered html when available', () => {
-    const html = renderToStaticMarkup(
+  test('renders pre-rendered html when available', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content="Fallback body"
         html={
@@ -28,8 +28,8 @@ describe('RstRenderer', () => {
     expect(html).not.toContain('javascript:alert(4)');
   });
 
-  test('blocks data urls on images', () => {
-    const html = renderToStaticMarkup(
+  test('blocks data urls on images', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content="Fallback body"
         html={'<p><img src="data:image/svg+xml,<svg onload=alert(1)>" alt="Bad" /></p>'}
@@ -40,8 +40,8 @@ describe('RstRenderer', () => {
     expect(html).not.toContain('data:image');
   });
 
-  test('preserves MathML elements', () => {
-    const html = renderToStaticMarkup(
+  test('preserves MathML elements', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content="Fallback body"
         html={'<math xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>x</mi><mo>=</mo><mn>2</mn></mrow></math>'}
@@ -53,8 +53,8 @@ describe('RstRenderer', () => {
     expect(html).toContain('<mi>x</mi>');
   });
 
-  test('wraps rendered rst tables with the same scroll container pattern as markdown', () => {
-    const html = renderToStaticMarkup(
+  test('wraps rendered rst tables with the same scroll container pattern as markdown', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content="Fallback body"
         html={'<table><thead><tr><th>A</th></tr></thead><tbody><tr><td>B</td></tr></tbody></table>'}
@@ -67,8 +67,8 @@ describe('RstRenderer', () => {
     expect(html).toContain('<td>B</td>');
   });
 
-  test('renders converted headings, links, and code blocks through the markdown renderer', () => {
-    const html = renderToStaticMarkup(
+  test('renders converted headings, links, and code blocks through the markdown renderer', async () => {
+    const html = await renderAsync(
       <RstRenderer
         content={[
           'Section',
@@ -85,9 +85,9 @@ describe('RstRenderer', () => {
 
     expect(html).toContain('Section');
     expect(html).toContain('https://example.com');
-    expect(html).toContain('language-ts');
-    expect(html).toContain('<code class="language-ts"');
-    expect(html).toContain('token keyword');
-    expect(html).toContain('token number');
+    // Shiki produces a .shiki container with language-aware token spans, not Prism's
+    // legacy class="language-ts" + token markup. Assert the new highlighter ran.
+    expect(html).toContain('class="shiki');
+    expect(html).toContain('export');
   });
 });

@@ -2,6 +2,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import KatexStyles from '@/components/KatexStyles';
 import type { SlugRegistryEntry } from '@/lib/markdown';
 import { rstToMarkdown } from '@/lib/rst';
+import { applyShikiToRstHtml } from '@/lib/shiki-rst';
 import sanitizeHtml from 'sanitize-html';
 
 interface RstRendererProps {
@@ -64,6 +65,13 @@ const allowedTags = [
   'semantics',
 ];
 
+// Shiki emits inline `style="--shiki-light:#...; --shiki-dark:#..."` CSS vars on
+// every token <span> when running in dual-theme mode, plus our custom transformers
+// add `data-language`, `data-line-numbers`, `data-highlighted-line`, and `data-title`
+// to <pre>/<span>. Stripping any of these silently kills syntax highlighting in rST
+// output while leaving Markdown unaffected — covered by RstRenderer.test.tsx.
+const codeBlockAttrs = ['style', 'data-language', 'data-line', 'data-line-numbers', 'data-highlighted-line', 'data-title', 'tabindex'];
+
 const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   ...sanitizeHtml.defaults.allowedAttributes,
   '*': ['id', 'class', 'title', 'lang', 'dir', 'role', 'aria-label', 'aria-hidden'],
@@ -77,6 +85,10 @@ const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   math: ['display', 'xmlns'],
   annotation: ['encoding'],
   'annotation-xml': ['encoding'],
+  pre: ['class', 'style', ...codeBlockAttrs],
+  code: ['class', 'style', ...codeBlockAttrs],
+  span: ['class', 'style', ...codeBlockAttrs],
+  div: ['class', 'style', ...codeBlockAttrs],
 };
 
 function sanitizeRenderedHtml(html: string): string {
@@ -91,9 +103,12 @@ function sanitizeRenderedHtml(html: string): string {
   });
 }
 
-export default function RstRenderer({ content, html, latex = false, slug, slugRegistry }: RstRendererProps) {
+export default async function RstRenderer({ content, html, latex = false, slug, slugRegistry }: RstRendererProps) {
   if (html) {
-    const sanitizedHtml = sanitizeRenderedHtml(html).replace(
+    // The docutils pass emits opaque <pre data-amytis-code> markers; run them through
+    // Shiki here (server-side, build-time for SSG) before sanitizing.
+    const highlighted = await applyShikiToRstHtml(html);
+    const sanitizedHtml = sanitizeRenderedHtml(highlighted).replace(
       /<table\b([^>]*)>/g,
       '<div class="rst-table-wrapper"><table$1>'
     ).replace(/<\/table>/g, '</table></div>');
