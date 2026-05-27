@@ -140,6 +140,9 @@ describe('highlightToHast strict-build behavior', () => {
     } finally {
       warn.mockRestore();
       mock.restore();
+      // Reset on the way out too so subsequent tests / re-runs don't inherit
+      // the dedup state populated by this test.
+      resetUnknownLangWarningsForTests();
     }
   });
 
