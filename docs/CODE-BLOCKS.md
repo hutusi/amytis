@@ -153,8 +153,11 @@ For the full list of supported language IDs and aliases, see Shiki's
 [bundle reference](https://shiki.style/languages) or:
 
 ```bash
-node -e "console.log(require('shiki').bundledLanguagesInfo.map(l => l.id))"
+node --input-type=module -e "import('shiki').then(m => console.log(m.bundledLanguagesInfo.map(l => l.id)))"
 ```
+
+Shiki v4 is ESM-only, so the snippet uses dynamic `import()` rather than
+`require()`.
 
 ## Diff fences
 
