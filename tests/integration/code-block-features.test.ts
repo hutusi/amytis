@@ -58,17 +58,17 @@ describe('Integration: Code Block Features', () => {
       expect(html.toLowerCase()).toContain('mermaid');
     });
 
-    test('unknown language throws at build time (strict build)', async () => {
-      const content = ['```fakelang', 'should fail loudly', '```'].join('\n');
+    test('unknown language renders as plaintext (warn-and-degrade)', async () => {
+      // Production deploys can't fail on a single unknown fence — render as
+      // plaintext and emit a build-time warn instead. Three previous failures
+      // (make, golang, plus the alias overlay) demonstrated that strict-build
+      // at the fence-language layer was the wrong trade-off.
+      const content = ['```fakelang', 'should still render', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
 
-      let thrown: unknown = null;
-      try {
-        await renderAsync(MarkdownRenderer({ content }));
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown).toBeInstanceOf(Error);
-      expect(String(thrown)).toMatch(/fakelang/);
+      expect(html).toContain('class="shiki');
+      expect(html).toContain('should still render');
+      // Should NOT throw.
     });
 
     test('explicit `plaintext` fences render unhighlighted without erroring', async () => {

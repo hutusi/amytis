@@ -232,21 +232,32 @@ export interface HighlightOpts {
   title?: string;
 }
 
+// Module-level dedup so we don't spam build logs when the same unknown lang
+// appears in many posts. Reset between processes; not a leak across builds.
+const warnedUnknownLangs = new Set<string>();
+
+export function resetUnknownLangWarningsForTests(): void {
+  warnedUnknownLangs.clear();
+}
+
 export async function highlightToHast(
   code: string,
   language: string,
   opts: HighlightOpts = {},
 ): Promise<Root> {
   const canonical = resolveCanonical(language);
-  // Strict build per CLAUDE.md "strict build over silent runtime failure": a typo'd
-  // or truly-unknown fence language is misconfiguration. Throwing here surfaces it at
-  // build time rather than silently shipping degraded plaintext output. Note this only
-  // fires when the language isn't in Shiki's ~235-language bundle at all — any bundled
-  // language (or its aliases) resolves and loads lazily. To render unhighlighted on
-  // purpose, write the fence as `plaintext` (or `text` / `txt` / `plain`).
-  if (!canonical && language) {
-    throw new Error(
-      `[shiki] Unknown code-block language "${language}". Not in Shiki's ~235-language bundle and not in the COMMUNITY_ALIASES overlay. Options: (1) check the spelling, (2) use a recognized name or alias, (3) add an entry to COMMUNITY_ALIASES in src/lib/shiki.ts if this is a legitimate community alias, (4) use \`plaintext\` for unhighlighted content.`,
+  // Soft fallback for unknown fence languages: render as plaintext + warn (deduped).
+  // The CLAUDE.md "strict build over silent runtime failure" principle is correct
+  // for structural misconfiguration (frontmatter, slugs, redirects), but wrong here:
+  // "typo" and "community alias" look identical from our side, and Shiki's alias
+  // coverage is narrower than what blog authors routinely write. Failing a whole
+  // production deploy because one fence used `\`\`\`golang` is worse than the block
+  // rendering as monochrome monospace with a build-time warn. Authors running a
+  // clean local build still see real typos in the warn output.
+  if (!canonical && language && !warnedUnknownLangs.has(language)) {
+    warnedUnknownLangs.add(language);
+    console.warn(
+      `[shiki] Unknown code-block language "${language}" — rendering as plaintext. To fix highlighting, add an entry to COMMUNITY_ALIASES in src/lib/shiki.ts, or use a recognized name. Use \`plaintext\` explicitly to silence this warning.`,
     );
   }
 

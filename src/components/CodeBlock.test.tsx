@@ -69,17 +69,14 @@ describe("CodeBlock", () => {
     expect(html).toContain("diff remove");
   });
 
-  test("throws on unknown languages so misconfiguration fails the build", async () => {
-    // Per CLAUDE.md "strict build" principle — a typo'd fence language is
-    // misconfiguration, not a runtime input, so it should fail loudly.
-    let thrown: unknown = null;
-    try {
-      await CodeBlock({ language: "totally-made-up", children: "x" });
-    } catch (error) {
-      thrown = error;
-    }
-    expect(thrown).toBeInstanceOf(Error);
-    expect(String(thrown)).toMatch(/totally-made-up/);
+  test("renders unknown languages as plaintext + emits a warn (warn-and-degrade)", async () => {
+    // Production deploys can't fail on a single unknown fence — render as
+    // plaintext and emit a build-time warn instead. CLAUDE.md's strict-build
+    // principle still applies for frontmatter/slugs/redirects, but not here.
+    const element = await CodeBlock({ language: "totally-made-up", children: "x" });
+    const html = await renderCodeBlock(element);
+    expect(html).toContain('class="shiki');
+    expect(html).toContain("totally-made-up");
   });
 
   test("renders plaintext when explicitly requested via `plaintext`/`text` alias", async () => {

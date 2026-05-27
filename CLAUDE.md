@@ -22,6 +22,7 @@ Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.
 ## Design principles
 
 - **Strict build over silent runtime failure.** Static export means misconfiguration must fail at build time. Use `throw` in `generateStaticParams` and similar — never silent skips or `console.warn`. Precedent: `validateSeriesAutoPaths` throws on slug collisions; `redirectFrom` alias conflicts (reserved slug or duplicate) should also throw, not produce broken redirects.
+  - **Exception**: fence-language resolution in `src/lib/shiki.ts` deliberately degrades to `plaintext` + a deduped `console.warn` instead of throwing. Authors can't reliably predict Shiki's alias coverage, and "typo" vs "legitimate community alias" are indistinguishable from our side, so production deploys shouldn't fail on a single unhighlighted code block. Real typos still surface via the warn output in local/CI build logs.
 
 ## Integration-point rules (always go through X)
 

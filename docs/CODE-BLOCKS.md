@@ -147,12 +147,17 @@ in Shiki's native alias table: `golang` → Go, `node` / `nodejs` →
 JavaScript, `obj-c` → Objective-C, `gnumakefile` / `bsdmakefile` → Make.
 To add more, extend `COMMUNITY_ALIASES` in `src/lib/shiki.ts`.
 
-Unknown languages **still fail the build** with an explicit error — per
-the "strict build over silent runtime failure" principle in `CLAUDE.md`, a
-typo'd fence language is treated as misconfiguration. The throw fires
-only when the language isn't in Shiki's bundle at all (e.g. a typo like
-`\`\`\`ocml` instead of `\`\`\`ocaml`). To render unhighlighted code on
-purpose, use `plaintext` (or its aliases `text` / `txt` / `plain`).
+Unknown languages **render as plaintext** with a one-line build-time
+warning (deduped per language). This is a deliberate exception to the
+`CLAUDE.md` "strict build over silent runtime failure" principle: at the
+fence-language layer, "typo" and "community alias" are indistinguishable
+from our side, and production deploys shouldn't fail on a single
+unhighlighted code block. Authors running a clean local build still see
+real typos in the warn output. For better highlighting on a known
+community name that Shiki doesn't ship as an alias, add an entry to
+`COMMUNITY_ALIASES` in `src/lib/shiki.ts`. To render unhighlighted code
+on purpose without the warn, use `plaintext` (or `text` / `txt` /
+`plain`).
 
 For the full list of supported language IDs and aliases, see Shiki's
 [bundle reference](https://shiki.style/languages) or:
