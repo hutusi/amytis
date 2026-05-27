@@ -43,6 +43,22 @@ ALIAS_MAP[''] = 'plaintext';
 ALIAS_MAP['svg'] = ALIAS_MAP['xml'] ?? 'xml';
 DISPLAY_MAP['plaintext'] = PLAINTEXT_DISPLAY;
 
+// Community aliases Shiki doesn't ship as official aliases in bundledLanguagesInfo.
+// Each entry maps a name authors commonly write to a verified-bundled canonical id.
+// Slow-growing list — Shiki's official aliases cover most cases. Extend here when a
+// build hits an unknown-lang throw for a real community-name alias (not a typo).
+const COMMUNITY_ALIASES: Record<string, string> = {
+  golang: 'go',                  // `go` ships without `golang` in Shiki's aliases
+  node: 'javascript',            // node code snippets routinely written as ```node
+  nodejs: 'javascript',
+  'obj-c': 'objective-c',        // Shiki ships `objc` and `objective-c` but not `obj-c`
+  gnumakefile: 'make',           // GNU/BSD-disambiguated makefile names
+  bsdmakefile: 'make',
+};
+for (const [alias, canonical] of Object.entries(COMMUNITY_ALIASES)) {
+  ALIAS_MAP[alias] = canonical;
+}
+
 function resolveCanonical(language: string): string | null {
   const key = (language || '').toLowerCase();
   return ALIAS_MAP[key] ?? null;
@@ -230,7 +246,7 @@ export async function highlightToHast(
   // purpose, write the fence as `plaintext` (or `text` / `txt` / `plain`).
   if (!canonical && language) {
     throw new Error(
-      `[shiki] Unknown code-block language "${language}". Not in Shiki's bundle — check the spelling, or use \`plaintext\` for unhighlighted content.`,
+      `[shiki] Unknown code-block language "${language}". Not in Shiki's ~235-language bundle and not in the COMMUNITY_ALIASES overlay. Options: (1) check the spelling, (2) use a recognized name or alias, (3) add an entry to COMMUNITY_ALIASES in src/lib/shiki.ts if this is a legitimate community alias, (4) use \`plaintext\` for unhighlighted content.`,
     );
   }
 

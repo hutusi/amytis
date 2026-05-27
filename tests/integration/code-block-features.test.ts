@@ -93,6 +93,19 @@ describe('Integration: Code Block Features', () => {
       expect(html).toContain('all');
       expect(html).toContain('gcc');
     });
+
+    test('community-alias `golang` resolves to Go (regression: production build)', async () => {
+      // Shiki does NOT list `golang` as an alias of `go` in its bundledLanguagesInfo,
+      // so a fence using ```golang would throw before the COMMUNITY_ALIASES overlay
+      // was added. The overlay maps it to the bundled `go` grammar.
+      const content = ['```golang', 'package main', '', 'func main() {', '\tprintln("hi")', '}', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+
+      expect(html).toContain('class="shiki');
+      expect(html).toContain('>Go<');
+      expect(html).toContain('package');
+      expect(html).toContain('main');
+    });
   });
 
   describe('rST', () => {

@@ -93,6 +93,18 @@ describe('getLanguageDisplayName', () => {
     expect(getLanguageDisplayName('toml')).toBe('TOML');
     expect(getLanguageDisplayName('kotlin')).toBe('Kotlin');
   });
+
+  test('resolves community aliases Shiki does not ship natively (regression: golang)', () => {
+    // Shiki's bundledLanguagesInfo for `go` does not list `golang` as an alias,
+    // and similarly for several other community-written names. The
+    // COMMUNITY_ALIASES overlay in shiki.ts adds them.
+    expect(getLanguageDisplayName('golang')).toBe('Go');
+    expect(getLanguageDisplayName('node')).toBe('JavaScript');
+    expect(getLanguageDisplayName('nodejs')).toBe('JavaScript');
+    expect(getLanguageDisplayName('obj-c')).toBe('Objective-C');
+    expect(getLanguageDisplayName('gnumakefile')).toBe('Makefile');
+    expect(getLanguageDisplayName('bsdmakefile')).toBe('Makefile');
+  });
 });
 
 describe('highlightToHast strict-build behavior', () => {

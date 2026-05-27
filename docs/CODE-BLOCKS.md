@@ -142,6 +142,11 @@ Grammars are loaded lazily on first use — there's no curated allowlist to
 maintain. Adding a new language to a post just works: write the fence with
 Shiki's id or any of its aliases.
 
+A small overlay also recognizes community-conventional aliases that aren't
+in Shiki's native alias table: `golang` → Go, `node` / `nodejs` →
+JavaScript, `obj-c` → Objective-C, `gnumakefile` / `bsdmakefile` → Make.
+To add more, extend `COMMUNITY_ALIASES` in `src/lib/shiki.ts`.
+
 Unknown languages **still fail the build** with an explicit error — per
 the "strict build over silent runtime failure" principle in `CLAUDE.md`, a
 typo'd fence language is treated as misconfiguration. The throw fires
