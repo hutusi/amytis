@@ -78,6 +78,21 @@ describe('Integration: Code Block Features', () => {
       expect(html).toContain('class="shiki');
       expect(html).toContain('just prose');
     });
+
+    test('previously-unregistered Shiki languages (make, dockerfile, etc.) lazy-load on demand', async () => {
+      // Regression: production build broke when a real post used ```make. The fix
+      // resolves any of Shiki's ~235 bundled languages via its own metadata; the lang
+      // is loaded the first time it's seen, no hand-maintained allowlist required.
+      const content = ['```make', 'all:', '\t@echo "Building..."', '\tgcc -o app main.c', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+
+      expect(html).toContain('class="shiki');
+      // Header label uses Shiki's proper-case name from bundledLanguagesInfo.
+      expect(html).toContain('>Makefile<');
+      // Source lines survive and get token coloring.
+      expect(html).toContain('all');
+      expect(html).toContain('gcc');
+    });
   });
 
   describe('rST', () => {

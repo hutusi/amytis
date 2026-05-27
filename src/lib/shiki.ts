@@ -1,4 +1,11 @@
-import { createHighlighter, type Highlighter, type ShikiTransformer } from 'shiki';
+import {
+  bundledLanguages,
+  bundledLanguagesInfo,
+  createHighlighter,
+  type BundledLanguage,
+  type Highlighter,
+  type ShikiTransformer,
+} from 'shiki';
 import {
   transformerNotationDiff,
   transformerNotationErrorLevel,
@@ -7,100 +14,46 @@ import {
 } from '@shikijs/transformers';
 import type { Root } from 'hast';
 
-export const SHIKI_LANGS = [
-  'tsx',
-  'typescript',
-  'javascript',
-  'bash',
-  'markdown',
-  'json',
-  'css',
-  'python',
-  'rust',
-  'go',
-  'c',
-  'cpp',
-  'java',
-  'ruby',
-  'sql',
-  'yaml',
-  'diff',
-  'html',
-  'xml',
-  'nginx',
-  'haskell',
-  'ocaml',
-  'plaintext',
-] as const;
-export type ShikiLang = (typeof SHIKI_LANGS)[number];
-
 export const SHIKI_THEMES = { light: 'github-light', dark: 'github-dark' } as const;
 
-const LANG_ALIASES: Record<string, ShikiLang> = {
-  js: 'javascript',
-  ts: 'typescript',
-  jsx: 'tsx',
-  sh: 'bash',
-  shell: 'bash',
-  zsh: 'bash',
-  md: 'markdown',
-  py: 'python',
-  golang: 'go',
-  'c++': 'cpp',
-  rb: 'ruby',
-  yml: 'yaml',
-  text: 'plaintext',
-  txt: 'plaintext',
-  plain: 'plaintext',
-  '': 'plaintext',
-  svg: 'xml',
-};
+// Discovery from Shiki's own metadata, not a hand-maintained list. `bundledLanguagesInfo`
+// gives us every canonical id, its proper-case display name, and the aliases Shiki natively
+// understands (e.g. ts/cts/mts → typescript). Building ALIAS_MAP and DISPLAY_MAP once at
+// module init lets us resolve any of Shiki's ~235 bundled languages without curating a list.
+const ALIAS_MAP: Record<string, string> = {};
+const DISPLAY_MAP: Record<string, string> = {};
+for (const info of bundledLanguagesInfo) {
+  ALIAS_MAP[info.id] = info.id;
+  DISPLAY_MAP[info.id] = info.name ?? info.id;
+  for (const alias of info.aliases ?? []) {
+    ALIAS_MAP[alias] = info.id;
+  }
+}
 
-const SHIKI_LANG_SET = new Set<string>(SHIKI_LANGS);
+// Amytis-specific overlay. `plaintext` is Shiki's built-in "special" language (always
+// available without a grammar load), but Shiki doesn't list it in bundledLanguagesInfo,
+// so we register it explicitly. The empty-string fence (```\n...\n```) maps to plaintext
+// too. svg/plain/text/txt are our own conventional aliases.
+const PLAINTEXT_DISPLAY = 'Plain text';
+ALIAS_MAP['plaintext'] = 'plaintext';
+ALIAS_MAP['text'] = 'plaintext';
+ALIAS_MAP['txt'] = 'plaintext';
+ALIAS_MAP['plain'] = 'plaintext';
+ALIAS_MAP[''] = 'plaintext';
+ALIAS_MAP['svg'] = ALIAS_MAP['xml'] ?? 'xml';
+DISPLAY_MAP['plaintext'] = PLAINTEXT_DISPLAY;
 
-// Proper-case display names for code-block headers. Tracks community-standard
-// brand casing (TypeScript, JavaScript, OCaml, C++) rather than the lowercase
-// fence token, so the chrome reads like editor mode labels (GitHub, VS Code).
-// Keyed by the canonical ShikiLang — aliases resolve via normalizeLang first.
-const DISPLAY_NAMES: Record<ShikiLang, string> = {
-  tsx: 'TSX',
-  typescript: 'TypeScript',
-  javascript: 'JavaScript',
-  bash: 'Bash',
-  markdown: 'Markdown',
-  json: 'JSON',
-  css: 'CSS',
-  python: 'Python',
-  rust: 'Rust',
-  go: 'Go',
-  c: 'C',
-  cpp: 'C++',
-  java: 'Java',
-  ruby: 'Ruby',
-  sql: 'SQL',
-  yaml: 'YAML',
-  diff: 'Diff',
-  html: 'HTML',
-  xml: 'XML',
-  nginx: 'Nginx',
-  haskell: 'Haskell',
-  ocaml: 'OCaml',
-  plaintext: 'Plain text',
-};
+function resolveCanonical(language: string): string | null {
+  const key = (language || '').toLowerCase();
+  return ALIAS_MAP[key] ?? null;
+}
 
 export function getLanguageDisplayName(language: string): string {
-  const { lang, recognized } = normalizeLang(language);
-  if (recognized) return DISPLAY_NAMES[lang];
+  const canonical = resolveCanonical(language);
+  if (canonical && DISPLAY_MAP[canonical]) return DISPLAY_MAP[canonical];
   // Defensive — highlightToHast throws on unknown langs, so this branch
   // shouldn't trigger at render time. Returns the raw input for safety.
   return language;
-}
-
-export function normalizeLang(language: string): { lang: ShikiLang; recognized: boolean } {
-  const lower = (language || '').toLowerCase();
-  if (lower in LANG_ALIASES) return { lang: LANG_ALIASES[lower], recognized: true };
-  if (SHIKI_LANG_SET.has(lower)) return { lang: lower as ShikiLang, recognized: true };
-  return { lang: 'plaintext', recognized: false };
 }
 
 declare global {
@@ -109,9 +62,12 @@ declare global {
 
 export function getHighlighter(): Promise<Highlighter> {
   if (!globalThis.__amytisShikiHighlighter) {
+    // Preload only `plaintext` — Shiki's special always-available lang. Every other
+    // bundled grammar is loaded lazily on first use via ensureLanguageLoaded below.
+    // Drastically smaller cold-start than eagerly loading 20+ grammars.
     globalThis.__amytisShikiHighlighter = createHighlighter({
       themes: [SHIKI_THEMES.light, SHIKI_THEMES.dark],
-      langs: [...SHIKI_LANGS],
+      langs: ['plaintext'],
     });
   }
   return globalThis.__amytisShikiHighlighter;
@@ -119,6 +75,14 @@ export function getHighlighter(): Promise<Highlighter> {
 
 export function resetHighlighterForTests(): void {
   globalThis.__amytisShikiHighlighter = undefined;
+}
+
+async function ensureLanguageLoaded(highlighter: Highlighter, canonical: string): Promise<void> {
+  if (canonical === 'plaintext') return; // Shiki's special lang — always available.
+  if (highlighter.getLoadedLanguages().includes(canonical)) return;
+  const loader = bundledLanguages[canonical as BundledLanguage];
+  if (!loader) return; // Defensive — shouldn't happen since resolveCanonical gates entry.
+  await highlighter.loadLanguage(loader);
 }
 
 export interface ParsedFenceMeta {
@@ -257,19 +221,23 @@ export async function highlightToHast(
   language: string,
   opts: HighlightOpts = {},
 ): Promise<Root> {
-  const { lang, recognized } = normalizeLang(language);
+  const canonical = resolveCanonical(language);
   // Strict build per CLAUDE.md "strict build over silent runtime failure": a typo'd
-  // or unsupported fence language is misconfiguration. Throwing here surfaces it at
-  // build time with a clear error rather than silently shipping degraded plaintext
-  // output. To genuinely render as plaintext, write the fence as `plaintext` (or
-  // `text`/`txt`/`plain`, which alias to it).
-  if (!recognized && language) {
+  // or truly-unknown fence language is misconfiguration. Throwing here surfaces it at
+  // build time rather than silently shipping degraded plaintext output. Note this only
+  // fires when the language isn't in Shiki's ~235-language bundle at all — any bundled
+  // language (or its aliases) resolves and loads lazily. To render unhighlighted on
+  // purpose, write the fence as `plaintext` (or `text` / `txt` / `plain`).
+  if (!canonical && language) {
     throw new Error(
-      `[shiki] Unknown code-block language "${language}". Add it to SHIKI_LANGS or LANG_ALIASES in src/lib/shiki.ts, or use a recognized language. Use \`plaintext\` for unhighlighted content.`,
+      `[shiki] Unknown code-block language "${language}". Not in Shiki's bundle — check the spelling, or use \`plaintext\` for unhighlighted content.`,
     );
   }
 
+  const lang = canonical ?? 'plaintext';
   const highlighter = await getHighlighter();
+  await ensureLanguageLoaded(highlighter, lang);
+
   return highlighter.codeToHast(code, {
     lang,
     themes: SHIKI_THEMES,

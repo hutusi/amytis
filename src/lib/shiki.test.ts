@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { getLanguageDisplayName, parseFenceMeta } from './shiki';
+import { getLanguageDisplayName, highlightToHast, parseFenceMeta } from './shiki';
 
 describe('parseFenceMeta', () => {
   test('returns empty object for empty input', () => {
@@ -68,7 +68,7 @@ describe('getLanguageDisplayName', () => {
   });
 
   test('handles alias tokens with special characters', () => {
-    // `c++` is a LANG_ALIASES key that resolves to `cpp` → `C++` display.
+    // `c++` is a Shiki alias that resolves to `cpp` → `C++` display.
     expect(getLanguageDisplayName('c++')).toBe('C++');
   });
 
@@ -82,5 +82,40 @@ describe('getLanguageDisplayName', () => {
     expect(getLanguageDisplayName('plaintext')).toBe('Plain text');
     expect(getLanguageDisplayName('text')).toBe('Plain text');
     expect(getLanguageDisplayName('txt')).toBe('Plain text');
+  });
+
+  test('resolves previously-unregistered Shiki langs (regression: production build)', () => {
+    // Before the lazy-load refactor, `make` was rejected at build time because it
+    // wasn't in a hand-maintained SHIKI_LANGS list. Now resolved via Shiki's bundle.
+    expect(getLanguageDisplayName('make')).toBe('Makefile');
+    expect(getLanguageDisplayName('makefile')).toBe('Makefile');
+    expect(getLanguageDisplayName('dockerfile')).toBe('Dockerfile');
+    expect(getLanguageDisplayName('toml')).toBe('TOML');
+    expect(getLanguageDisplayName('kotlin')).toBe('Kotlin');
+  });
+});
+
+describe('highlightToHast strict-build behavior', () => {
+  test('lazy-loads any language in Shiki bundle (previously-unregistered: make)', async () => {
+    // Regression: the production build broke when a real post used ```make. Strict-build
+    // is supposed to fail typos, not legitimate bundled languages — this test locks in
+    // that any bundled lang works without prior registration.
+    const hast = await highlightToHast('all:\n\t@echo hi\n', 'make');
+    expect(hast.type).toBe('root');
+    // The highlighted output should contain at least one element.
+    expect(hast.children.length).toBeGreaterThan(0);
+  });
+
+  test('throws on truly unknown languages (typos)', async () => {
+    // Strict-build behavior preserved: a language not in Shiki's ~235-lang bundle
+    // (e.g. typo like `ocml`) fails the build with a clear error.
+    await expect(highlightToHast('x', 'totally-not-a-real-lang')).rejects.toThrow(
+      /\[shiki\] Unknown code-block language/,
+    );
+  });
+
+  test('empty fence language renders as plaintext without throwing', async () => {
+    const hast = await highlightToHast('plain content', '');
+    expect(hast.type).toBe('root');
   });
 });

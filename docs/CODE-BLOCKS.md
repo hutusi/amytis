@@ -131,20 +131,30 @@ for where they're registered.
 
 ## Supported languages
 
-The Shiki bundle is loaded with this curated list (see `src/lib/shiki.ts`):
+**Any of Shiki's ~235 bundled languages works automatically** — including
+TypeScript, Python, Rust, Go, Bash, Make, Dockerfile, TOML, Kotlin, Swift,
+GraphQL, PHP, Lua, SQL, YAML, JSON, and many more. Display names and
+aliases come from Shiki's own metadata (e.g. ```ts``` / ```cts``` /
+```mts``` all resolve to TypeScript), so authors don't need to look up the
+canonical id.
 
-`tsx`, `typescript` (`ts`), `javascript` (`js`), `bash` (`sh`, `shell`,
-`zsh`), `markdown` (`md`), `json`, `css`, `python` (`py`), `rust`, `go`
-(`golang`), `c`, `cpp` (`c++`), `java`, `ruby` (`rb`), `sql`, `yaml`
-(`yml`), `diff`, `html`, `xml`, `svg` (aliased to `xml`), `nginx`,
-`haskell`, `ocaml`, `plaintext` (`text`, `txt`, `plain`).
+Grammars are loaded lazily on first use — there's no curated allowlist to
+maintain. Adding a new language to a post just works: write the fence with
+Shiki's id or any of its aliases.
 
-Unknown languages **fail the build** with an explicit error — per the
-"strict build over silent runtime failure" principle in `CLAUDE.md`, a
-typo'd fence language is treated as misconfiguration. To add a language,
-extend `SHIKI_LANGS` or `LANG_ALIASES` in `src/lib/shiki.ts`. To render
-unhighlighted code on purpose, use `plaintext` (or its aliases `text` /
-`txt` / `plain`).
+Unknown languages **still fail the build** with an explicit error — per
+the "strict build over silent runtime failure" principle in `CLAUDE.md`, a
+typo'd fence language is treated as misconfiguration. The throw fires
+only when the language isn't in Shiki's bundle at all (e.g. a typo like
+`\`\`\`ocml` instead of `\`\`\`ocaml`). To render unhighlighted code on
+purpose, use `plaintext` (or its aliases `text` / `txt` / `plain`).
+
+For the full list of supported language IDs and aliases, see Shiki's
+[bundle reference](https://shiki.style/languages) or:
+
+```bash
+node -e "console.log(require('shiki').bundledLanguagesInfo.map(l => l.id))"
+```
 
 ## Diff fences
 
