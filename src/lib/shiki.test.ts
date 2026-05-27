@@ -1,5 +1,10 @@
-import { describe, expect, test } from 'bun:test';
-import { getLanguageDisplayName, highlightToHast, parseFenceMeta } from './shiki';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
+import {
+  getLanguageDisplayName,
+  highlightToHast,
+  parseFenceMeta,
+  resetUnknownLangWarningsForTests,
+} from './shiki';
 
 describe('parseFenceMeta', () => {
   test('returns empty object for empty input', () => {
@@ -93,6 +98,18 @@ describe('getLanguageDisplayName', () => {
     expect(getLanguageDisplayName('toml')).toBe('TOML');
     expect(getLanguageDisplayName('kotlin')).toBe('Kotlin');
   });
+
+  test('resolves community aliases Shiki does not ship natively (regression: golang)', () => {
+    // Shiki's bundledLanguagesInfo for `go` does not list `golang` as an alias,
+    // and similarly for several other community-written names. The
+    // COMMUNITY_ALIASES overlay in shiki.ts adds them.
+    expect(getLanguageDisplayName('golang')).toBe('Go');
+    expect(getLanguageDisplayName('node')).toBe('JavaScript');
+    expect(getLanguageDisplayName('nodejs')).toBe('JavaScript');
+    expect(getLanguageDisplayName('obj-c')).toBe('Objective-C');
+    expect(getLanguageDisplayName('gnumakefile')).toBe('Makefile');
+    expect(getLanguageDisplayName('bsdmakefile')).toBe('Makefile');
+  });
 });
 
 describe('highlightToHast strict-build behavior', () => {
@@ -106,12 +123,27 @@ describe('highlightToHast strict-build behavior', () => {
     expect(hast.children.length).toBeGreaterThan(0);
   });
 
-  test('throws on truly unknown languages (typos)', async () => {
-    // Strict-build behavior preserved: a language not in Shiki's ~235-lang bundle
-    // (e.g. typo like `ocml`) fails the build with a clear error.
-    await expect(highlightToHast('x', 'totally-not-a-real-lang')).rejects.toThrow(
-      /\[shiki\] Unknown code-block language/,
-    );
+  test('renders unknown languages as plaintext + emits a deduped warn', async () => {
+    // Warn-and-degrade: a typo'd or otherwise unknown fence language renders as
+    // plaintext (so the production build never fails on a single fence) and emits
+    // a one-line console.warn that authors running a clean local build can spot.
+    // The warning dedupes per-process so noisy content doesn't spam the log.
+    resetUnknownLangWarningsForTests();
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const hast1 = await highlightToHast('x = 1', 'totally-not-a-real-lang');
+      const hast2 = await highlightToHast('y = 2', 'totally-not-a-real-lang');
+      expect(hast1.type).toBe('root');
+      expect(hast2.type).toBe('root');
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0]?.[0]).toMatch(/\[shiki\] Unknown code-block language "totally-not-a-real-lang"/);
+    } finally {
+      warn.mockRestore();
+      mock.restore();
+      // Reset on the way out too so subsequent tests / re-runs don't inherit
+      // the dedup state populated by this test.
+      resetUnknownLangWarningsForTests();
+    }
   });
 
   test('empty fence language renders as plaintext without throwing', async () => {

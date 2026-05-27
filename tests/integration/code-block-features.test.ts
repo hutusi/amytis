@@ -58,17 +58,17 @@ describe('Integration: Code Block Features', () => {
       expect(html.toLowerCase()).toContain('mermaid');
     });
 
-    test('unknown language throws at build time (strict build)', async () => {
-      const content = ['```fakelang', 'should fail loudly', '```'].join('\n');
+    test('unknown language renders as plaintext (warn-and-degrade)', async () => {
+      // Production deploys can't fail on a single unknown fence — render as
+      // plaintext and emit a build-time warn instead. Three previous failures
+      // (make, golang, plus the alias overlay) demonstrated that strict-build
+      // at the fence-language layer was the wrong trade-off.
+      const content = ['```fakelang', 'should still render', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
 
-      let thrown: unknown = null;
-      try {
-        await renderAsync(MarkdownRenderer({ content }));
-      } catch (error) {
-        thrown = error;
-      }
-      expect(thrown).toBeInstanceOf(Error);
-      expect(String(thrown)).toMatch(/fakelang/);
+      expect(html).toContain('class="shiki');
+      expect(html).toContain('should still render');
+      // Should NOT throw.
     });
 
     test('explicit `plaintext` fences render unhighlighted without erroring', async () => {
@@ -92,6 +92,19 @@ describe('Integration: Code Block Features', () => {
       // Source lines survive and get token coloring.
       expect(html).toContain('all');
       expect(html).toContain('gcc');
+    });
+
+    test('community-alias `golang` resolves to Go (regression: production build)', async () => {
+      // Shiki does NOT list `golang` as an alias of `go` in its bundledLanguagesInfo,
+      // so a fence using ```golang would throw before the COMMUNITY_ALIASES overlay
+      // was added. The overlay maps it to the bundled `go` grammar.
+      const content = ['```golang', 'package main', '', 'func main() {', '\tprintln("hi")', '}', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+
+      expect(html).toContain('class="shiki');
+      expect(html).toContain('>Go<');
+      expect(html).toContain('package');
+      expect(html).toContain('main');
     });
   });
 

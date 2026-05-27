@@ -43,6 +43,22 @@ ALIAS_MAP[''] = 'plaintext';
 ALIAS_MAP['svg'] = ALIAS_MAP['xml'] ?? 'xml';
 DISPLAY_MAP['plaintext'] = PLAINTEXT_DISPLAY;
 
+// Community aliases Shiki doesn't ship as official aliases in bundledLanguagesInfo.
+// Each entry maps a name authors commonly write to a verified-bundled canonical id.
+// Slow-growing list — Shiki's official aliases cover most cases. Extend here when a
+// build hits an unknown-lang throw for a real community-name alias (not a typo).
+const COMMUNITY_ALIASES: Record<string, string> = {
+  golang: 'go',                  // `go` ships without `golang` in Shiki's aliases
+  node: 'javascript',            // node code snippets routinely written as ```node
+  nodejs: 'javascript',
+  'obj-c': 'objective-c',        // Shiki ships `objc` and `objective-c` but not `obj-c`
+  gnumakefile: 'make',           // GNU/BSD-disambiguated makefile names
+  bsdmakefile: 'make',
+};
+for (const [alias, canonical] of Object.entries(COMMUNITY_ALIASES)) {
+  ALIAS_MAP[alias] = canonical;
+}
+
 function resolveCanonical(language: string): string | null {
   const key = (language || '').toLowerCase();
   return ALIAS_MAP[key] ?? null;
@@ -216,21 +232,32 @@ export interface HighlightOpts {
   title?: string;
 }
 
+// Module-level dedup so we don't spam build logs when the same unknown lang
+// appears in many posts. Reset between processes; not a leak across builds.
+const warnedUnknownLangs = new Set<string>();
+
+export function resetUnknownLangWarningsForTests(): void {
+  warnedUnknownLangs.clear();
+}
+
 export async function highlightToHast(
   code: string,
   language: string,
   opts: HighlightOpts = {},
 ): Promise<Root> {
   const canonical = resolveCanonical(language);
-  // Strict build per CLAUDE.md "strict build over silent runtime failure": a typo'd
-  // or truly-unknown fence language is misconfiguration. Throwing here surfaces it at
-  // build time rather than silently shipping degraded plaintext output. Note this only
-  // fires when the language isn't in Shiki's ~235-language bundle at all — any bundled
-  // language (or its aliases) resolves and loads lazily. To render unhighlighted on
-  // purpose, write the fence as `plaintext` (or `text` / `txt` / `plain`).
-  if (!canonical && language) {
-    throw new Error(
-      `[shiki] Unknown code-block language "${language}". Not in Shiki's bundle — check the spelling, or use \`plaintext\` for unhighlighted content.`,
+  // Soft fallback for unknown fence languages: render as plaintext + warn (deduped).
+  // The CLAUDE.md "strict build over silent runtime failure" principle is correct
+  // for structural misconfiguration (frontmatter, slugs, redirects), but wrong here:
+  // "typo" and "community alias" look identical from our side, and Shiki's alias
+  // coverage is narrower than what blog authors routinely write. Failing a whole
+  // production deploy because one fence used `\`\`\`golang` is worse than the block
+  // rendering as monochrome monospace with a build-time warn. Authors running a
+  // clean local build still see real typos in the warn output.
+  if (!canonical && language && !warnedUnknownLangs.has(language)) {
+    warnedUnknownLangs.add(language);
+    console.warn(
+      `[shiki] Unknown code-block language "${language}" — rendering as plaintext. To fix highlighting, add an entry to COMMUNITY_ALIASES in src/lib/shiki.ts, or use a recognized name. Use \`plaintext\` explicitly to silence this warning.`,
     );
   }
 
