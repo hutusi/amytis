@@ -4,6 +4,7 @@ import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import type { Element, Root, RootContent } from 'hast';
 import { expandLineRanges, highlightToHast } from './shiki';
+import { resolveCodeGroupIcon } from './code-group-icons';
 
 interface AmytisCodeMarker {
   element: Element;
@@ -138,16 +139,20 @@ export async function applyShikiToRstHtml(html: string): Promise<string> {
       children: [],
     }));
 
-    const tabLabels: Element[] = tabs.map((label, i) => ({
-      type: 'element',
-      tagName: 'label',
-      properties: {
-        htmlFor: `cg-${groupId}-${i}`,
-        className: ['cg-tab'],
-        role: 'tab',
-      },
-      children: [{ type: 'text', value: label }],
-    }));
+    const tabLabels: Element[] = tabs.map((label, i) => {
+      const icon = resolveCodeGroupIcon(label);
+      return {
+        type: 'element' as const,
+        tagName: 'label',
+        properties: {
+          htmlFor: `cg-${groupId}-${i}`,
+          className: ['cg-tab'],
+          role: 'tab',
+          ...(icon ? { 'data-cg-icon': icon } : {}),
+        },
+        children: [{ type: 'text' as const, value: label }],
+      };
+    });
 
     const tablist: Element = {
       type: 'element',

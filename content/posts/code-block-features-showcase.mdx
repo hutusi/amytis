@@ -100,6 +100,10 @@ Group adjacent fences into a single tabbed widget by wrapping them in a
 token after the language. The mechanism is pure CSS (radio inputs + sibling
 selectors) — zero JavaScript, zero hydration cost.
 
+When a tab label matches a known package manager, language, or common
+config filename, an icon appears automatically before the label. Resolution
+is handled by `resolveCodeGroupIcon` in `src/lib/code-group-icons.ts`.
+
 :::code-group
 ```bash [npm]
 npm install amytis
@@ -112,6 +116,25 @@ pnpm add amytis
 ```
 ```bash [bun]
 bun add amytis
+```
+:::
+
+Filename labels also resolve — e.g. `tsconfig.json`, `vite.config.ts`, or
+`Dockerfile`:
+
+:::code-group
+```json [tsconfig.json]
+{ "compilerOptions": { "target": "es2022", "module": "esnext" } }
+```
+```ts [vite.config.ts]
+import { defineConfig } from 'vite';
+export default defineConfig({ server: { port: 5173 } });
+```
+```dockerfile [Dockerfile]
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm ci && npm run build
 ```
 :::
 

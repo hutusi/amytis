@@ -267,6 +267,9 @@ html.dark .shiki .line.warning {
 }
 
 .code-group .cg-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1rem;
   font-size: 0.8rem;
   font-family: var(--font-mono);
@@ -275,6 +278,143 @@ html.dark .shiki .line.warning {
   border-bottom: 2px solid transparent;
   transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
   user-select: none;
+}
+
+/* Tab icons (inspired by vitepress-plugin-group-icons). The resolver in
+ * src/lib/code-group-icons.ts maps a tab label to an icon key; this CSS
+ * paints the matching icon via ::before. Per-key rules below activate
+ * rendering by setting `content: ''`; if the resolver returns a key for
+ * which no rule exists, no ::before renders (graceful fallback). Icons
+ * use brand-color rounded-square monograms — consistent visual style,
+ * scannable across light and dark themes, no runtime cost. */
+.cg-tab[data-cg-icon]::before {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+}
+
+/* Package managers */
+.cg-tab[data-cg-icon="npm"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23cb3837'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>n</text></svg>");
+}
+.cg-tab[data-cg-icon="yarn"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%232c8ebb'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>y</text></svg>");
+}
+.cg-tab[data-cg-icon="pnpm"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23f9ad00'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>p</text></svg>");
+}
+.cg-tab[data-cg-icon="bun"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23ce7c00'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>b</text></svg>");
+}
+.cg-tab[data-cg-icon="deno"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%234fb6e8'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>d</text></svg>");
+}
+
+/* Languages */
+.cg-tab[data-cg-icon="typescript"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%233178c6'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>TS</text></svg>");
+}
+.cg-tab[data-cg-icon="javascript"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23f7df1e'/><text x='12' y='17' fill='black' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>JS</text></svg>");
+}
+.cg-tab[data-cg-icon="python"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%233776ab'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>Py</text></svg>");
+}
+.cg-tab[data-cg-icon="rust"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23ce422b'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>Rs</text></svg>");
+}
+.cg-tab[data-cg-icon="go"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%2300add8'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>Go</text></svg>");
+}
+.cg-tab[data-cg-icon="java"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23ed8b00'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>J</text></svg>");
+}
+.cg-tab[data-cg-icon="ruby"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23cc342d'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='11' text-anchor='middle'>Rb</text></svg>");
+}
+.cg-tab[data-cg-icon="php"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23777bb4'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>php</text></svg>");
+}
+.cg-tab[data-cg-icon="c"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23659ad2'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>C</text></svg>");
+}
+.cg-tab[data-cg-icon="cpp"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%2300599c'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='9' text-anchor='middle'>C++</text></svg>");
+}
+.cg-tab[data-cg-icon="html"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23e34f26'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>HT</text></svg>");
+}
+.cg-tab[data-cg-icon="css"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%231572b6'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>CSS</text></svg>");
+}
+.cg-tab[data-cg-icon="json"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23555555'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='12' text-anchor='middle'>%7B%7D</text></svg>");
+}
+.cg-tab[data-cg-icon="yaml"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23cb171e'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='9' text-anchor='middle'>YML</text></svg>");
+}
+.cg-tab[data-cg-icon="markdown"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23555555'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>md</text></svg>");
+}
+.cg-tab[data-cg-icon="bash"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%234eaa25'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>%3E_</text></svg>");
+}
+
+/* Tools / frameworks */
+.cg-tab[data-cg-icon="docker"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%231d63ed'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>D</text></svg>");
+}
+.cg-tab[data-cg-icon="vite"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23646cff'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>V</text></svg>");
+}
+.cg-tab[data-cg-icon="react"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%2361dafb'/><text x='12' y='17' fill='black' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>R</text></svg>");
+}
+.cg-tab[data-cg-icon="vue"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%2342b883'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>Vue</text></svg>");
+}
+.cg-tab[data-cg-icon="nextjs"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23000000'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>N</text></svg>");
+}
+html.dark .cg-tab[data-cg-icon="nextjs"]::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='white'/><text x='12' y='17' fill='black' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>N</text></svg>");
+}
+.cg-tab[data-cg-icon="node"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%23339933'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='10' text-anchor='middle'>Nd</text></svg>");
+}
+.cg-tab[data-cg-icon="tailwind"]::before {
+  content: '';
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%2306b6d4'/><text x='12' y='17' fill='white' font-family='Inter,system-ui' font-weight='700' font-size='13' text-anchor='middle'>T</text></svg>");
 }
 
 .code-group .cg-tab:hover {
