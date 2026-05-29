@@ -164,12 +164,19 @@ html.dark .shiki span {
   user-select: none;
 }
 
-/* Highlighted lines (via {1,3-5} fence meta or :emphasize-lines:) */
+/* Highlighted lines (via {1,3-5} fence meta or :emphasize-lines:).
+ * Tint bumped from 14% so highlighted lines clearly stand out. Spans the full
+ * scroll width thanks to `code { display: grid }` above. */
 .shiki .line.highlighted,
 .shiki .line[data-highlighted-line] {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
   border-left: 3px solid var(--accent);
   padding-inline-start: calc(1.5rem - 3px);
+}
+
+html.dark .shiki .line.highlighted,
+html.dark .shiki .line[data-highlighted-line] {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* Diff fence backgrounds (raw + / - lines) */
