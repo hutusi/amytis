@@ -127,19 +127,22 @@ export function resolveCodeGroupIcon(label: string): string | null {
   const trimmed = label.trim().toLowerCase();
   if (!trimmed) return null;
 
-  if (trimmed in EXACT) return EXACT[trimmed];
+  // Use Object.hasOwn instead of the `in` operator so we don't accidentally
+  // return prototype-chain values (e.g. `constructor`, `toString`) for crafted
+  // labels — `'constructor' in EXACT` would otherwise be `true`.
+  if (Object.hasOwn(EXACT, trimmed)) return EXACT[trimmed];
 
   // Filename lookup uses the basename (strip any path prefix).
   const basename = trimmed.includes('/') ? trimmed.slice(trimmed.lastIndexOf('/') + 1) : trimmed;
-  if (basename in FILENAMES) return FILENAMES[basename];
+  if (Object.hasOwn(FILENAMES, basename)) return FILENAMES[basename];
 
   // Extension fallback — take the portion after the LAST dot in the basename.
   const dot = basename.lastIndexOf('.');
   if (dot >= 0 && dot < basename.length - 1) {
     const ext = basename.slice(dot + 1);
-    if (ext in EXTENSIONS) return EXTENSIONS[ext];
+    if (Object.hasOwn(EXTENSIONS, ext)) return EXTENSIONS[ext];
   }
 
-  if (trimmed in LANGUAGE_ALIASES) return LANGUAGE_ALIASES[trimmed];
+  if (Object.hasOwn(LANGUAGE_ALIASES, trimmed)) return LANGUAGE_ALIASES[trimmed];
   return null;
 }

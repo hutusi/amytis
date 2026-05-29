@@ -64,4 +64,15 @@ describe('resolveCodeGroupIcon', () => {
     expect(resolveCodeGroupIcon('')).toBeNull();
     expect(resolveCodeGroupIcon('   ')).toBeNull();
   });
+
+  test('does not match Object.prototype keys via the `in` operator', () => {
+    // `'constructor' in {}` is true because of the prototype chain; using
+    // Object.hasOwn (instead of `in`) prevents the resolver from returning
+    // prototype values for crafted labels.
+    expect(resolveCodeGroupIcon('constructor')).toBeNull();
+    expect(resolveCodeGroupIcon('toString')).toBeNull();
+    expect(resolveCodeGroupIcon('hasOwnProperty')).toBeNull();
+    expect(resolveCodeGroupIcon('valueOf')).toBeNull();
+    expect(resolveCodeGroupIcon('__proto__')).toBeNull();
+  });
 });
