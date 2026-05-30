@@ -32,6 +32,11 @@ describe('Integration: Code Group Tabs', () => {
       expect(html).toContain('>npm<');
       expect(html).toContain('>yarn<');
       expect(html).toContain('>bun<');
+      // Resolver-driven tab icons: each label gets a data-cg-icon attribute on
+      // the <label> element. The CSS in globals.css paints the matching icon.
+      expect(html).toContain('data-cg-icon="npm"');
+      expect(html).toContain('data-cg-icon="yarn"');
+      expect(html).toContain('data-cg-icon="bun"');
     });
 
     test('missing [label] falls back to the language name', async () => {
@@ -143,6 +148,25 @@ describe('Integration: Code Group Tabs', () => {
       // 4 radios total (2 per group), 4 panels total.
       expect((html.match(/type="radio"/g) || []).length).toBe(4);
       expect((html.match(/class="cg-panel"/g) || []).length).toBe(4);
+    });
+
+    test('rST tab labels get a data-cg-icon attribute that survives sanitize-html', async () => {
+      // The label allowlist in RstRenderer.tsx must permit `data-cg-icon` or the
+      // icons silently disappear on the rST path while MDX works. Synthesize the
+      // rST html-path input directly so we exercise applyShikiToRstHtml + sanitize.
+      const wrapperHtml =
+        '<div data-amytis-code-group="" data-labels="[&quot;npm&quot;,&quot;yarn&quot;,&quot;mystery&quot;]" data-group-id="rst-icon">' +
+        '<pre data-amytis-code="" data-language="bash"><code>npm i</code></pre>' +
+        '<pre data-amytis-code="" data-language="bash"><code>yarn add</code></pre>' +
+        '<pre data-amytis-code="" data-language="bash"><code>echo</code></pre>' +
+        '</div>';
+
+      const html = await renderAsync(RstRenderer({ content: 'unused', html: wrapperHtml }));
+
+      expect(html).toContain('data-cg-icon="npm"');
+      expect(html).toContain('data-cg-icon="yarn"');
+      // No icon resolves for `mystery`; the corresponding label has no attribute.
+      expect(html).not.toContain('data-cg-icon="mystery"');
     });
 
     test('non-radio inputs are downgraded by transformTags', async () => {

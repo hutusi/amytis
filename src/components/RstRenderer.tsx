@@ -98,7 +98,7 @@ const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   // Defense-in-depth: even if an unexpected attr slips in, the CSS-only tab
   // mechanism can't do anything dangerous with a stray radio button.
   input: ['type', 'name', 'id', 'checked', 'data-idx', 'aria-controls', 'tabindex', 'class'],
-  label: ['for', 'class', 'role', 'aria-controls', 'tabindex'],
+  label: ['for', 'class', 'role', 'aria-controls', 'tabindex', 'data-cg-icon'],
 };
 
 function sanitizeRenderedHtml(html: string): string {

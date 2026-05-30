@@ -91,6 +91,23 @@ tabs per group are supported out of the box (CSS rules hardcoded for
 `data-idx="0"` through `data-idx="9"`); extend the rules in
 `src/app/globals.css` if you need more.
 
+### Tab icons
+
+When a tab label matches a known package manager, language name, or common
+config filename, an icon renders before the label automatically. Resolution
+cascade (first hit wins): exact label → filename → extension → language
+alias. See `src/lib/code-group-icons.ts` for the maps.
+
+Built-in icon keys: `npm`, `yarn`, `pnpm`, `bun`, `deno`, `typescript`,
+`javascript`, `python`, `rust`, `go`, `java`, `ruby`, `php`, `c`, `cpp`,
+`html`, `css`, `json`, `yaml`, `markdown`, `bash`, `docker`, `vite`,
+`react`, `vue`, `nextjs`, `node`, `tailwind`.
+
+A label that doesn't resolve renders without an icon (graceful fallback).
+To add an icon: extend the resolver in `src/lib/code-group-icons.ts` with
+the new key, then add a matching `.cg-tab[data-cg-icon="<key>"]::before`
+rule to `src/app/globals.css` with the SVG data URI.
+
 ## Notation comments
 
 Six VitePress-style `[!code …]` markers can be embedded inline in any code

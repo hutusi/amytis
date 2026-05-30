@@ -1,4 +1,5 @@
 import { Children, type ReactNode } from 'react';
+import { resolveCodeGroupIcon } from '@/lib/code-group-icons';
 
 interface CodeGroupProps {
   'data-labels'?: string;
@@ -49,16 +50,20 @@ export default function CodeGroup(props: CodeGroupProps) {
         />
       ))}
       <div className="cg-tablist" role="tablist">
-        {tabs.map((label, i) => (
-          <label
-            key={`l-${i}`}
-            htmlFor={`cg-${groupId}-${i}`}
-            className="cg-tab"
-            role="tab"
-          >
-            {label}
-          </label>
-        ))}
+        {tabs.map((label, i) => {
+          const icon = resolveCodeGroupIcon(label);
+          return (
+            <label
+              key={`l-${i}`}
+              htmlFor={`cg-${groupId}-${i}`}
+              className="cg-tab"
+              role="tab"
+              {...(icon ? { 'data-cg-icon': icon } : {})}
+            >
+              {label}
+            </label>
+          );
+        })}
       </div>
       {panels.map((child, i) => (
         <div
