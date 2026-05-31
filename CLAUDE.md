@@ -4,7 +4,7 @@ Guidance for Claude Code in this repo. Rules, gotchas, and pointers — not refe
 
 ## Project
 
-Amytis: static digital-garden blog (Next.js 16 App Router, React 19, Tailwind v4, static export). Content in MDX / Markdown / rST; everything resolves at build time. Package manager: bun.
+Amytis: static digital-garden blog (Next.js 16 App Router, React 19, Tailwind v4, static export). Content in MDX / Markdown (primary), rST (legacy support); everything resolves at build time. Package manager: bun.
 
 ## Essential commands
 
@@ -19,10 +19,20 @@ bun run clean           # nuke .next, out, public/posts when caches misbehave
 
 Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.md`.
 
+## Architecture map
+
+Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
+
+- Standard routes follow folder names under `src/app/`: `/posts`, `/series`, `/tags`, `/notes`, `/books`, `/authors`, `/archive`, `/graph`, `/flows/[year]/[month]/[day]`.
+- **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
+- Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; search index at `search.json`.
+- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), redirects (`series-redirects.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
+
 ## Design principles
 
 - **Strict build over silent runtime failure.** Static export means misconfiguration must fail at build time. Use `throw` in `generateStaticParams` and similar — never silent skips or `console.warn`. Precedent: `validateSeriesAutoPaths` throws on slug collisions; `redirectFrom` alias conflicts (reserved slug or duplicate) should also throw, not produce broken redirects.
   - **Exception**: fence-language resolution in `src/lib/shiki.ts` deliberately degrades to `plaintext` + a deduped `console.warn` instead of throwing. Authors can't reliably predict Shiki's alias coverage, and "typo" vs "legitimate community alias" are indistinguishable from our side, so production deploys shouldn't fail on a single unhighlighted code block. Real typos still surface via the warn output in local/CI build logs.
+- **Validate author input at build time; keep content portable.** Frontmatter via Zod; slug / redirect conflicts throw. Files on disk stay valid `.md` / `.mdx` / `.rst` — no Amytis-specific syntax that breaks other tools.
 
 ## Integration-point rules (always go through X)
 
@@ -52,11 +62,14 @@ Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.
 - **Code-group tabs add `<input type="radio">` + `<label>` to the rST sanitize-html allowlist.** Keep the `transformTags` guard in `RstRenderer.tsx` that strips any `<input>` whose `type !== "radio"` — that's the defense against an rST author injecting password/file/etc. inputs through raw HTML.
 - **GitHub alerts (`> [!NOTE]`, etc.) need the custom `remarkGithubAlerts` plugin.** `remark-gfm` v4 does NOT transform `[!TYPE]` blockquotes — they pass through as plain blockquotes with the literal marker visible. The custom plugin in `src/lib/remark-github-alerts.ts` is what detects them and routes to `<GithubAlert>`. If a future remark-gfm adds native alert support, that's a regression to watch for (covered by an integration test).
 
-## Git conventions
+## Development workflow
 
-- **Commits** follow Conventional Commits (already consistent in `git log`): `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
-- **Branches:** `<type>/<kebab-slug>` matching the commit prefixes (e.g. `fix/create-amytis-windows-extract`, `perf/build-time`, `docs/claude-md-trim`).
-- Not enforced by hooks — convention only. CI (`.github/workflows/ci.yml`) runs lint → test → build:dev; all three must pass.
+- **Don't push or open PRs unless asked.** Local commits are fine; anything touching the remote needs explicit go-ahead.
+- **Commit in focused slices.** Keep `bun run validate` green at each commit so the branch stays bisectable.
+- **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
+- **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
+- **Branches:** `<type>/<kebab-slug>` matching commit prefixes.
+- CI (`.github/workflows/ci.yml`) runs lint → test → build:dev; all three must pass. Not enforced by hooks.
 
 ## Verifying a change
 
@@ -64,6 +77,17 @@ Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.
 - Touched routes or content? `bun run build:dev` and spot-check the affected page — also re-runs Pagefind so search reflects your change.
 - Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
 - Touched any dynamic route? Verify both ASCII and Unicode slugs render.
+
+## Context compression hints
+
+When compressing history, preserve in priority order:
+
+1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/markdown.ts`.
+2. **Modified files and why** — file list with one-line reasons, not the diff.
+3. **Verification status** — `bun run lint && bun test` (and `build:dev` if run) pass/fail.
+4. **Cache version bumps** — `RST_RENDERER_DISK_CACHE_VERSION` etc.; easy to lose after compression.
+5. **Open TODOs and rollback notes.**
+6. **Tool output**: drop; keep pass/fail summary only.
 
 ## Where to find more
 
