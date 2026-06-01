@@ -275,6 +275,14 @@ every chapter in the book without having to annotate each chapter file. Chapter-
 `latex: true` still works and takes precedence. Math-heavy books (e.g. ML textbooks) should
 set the book-level flag rather than copy it onto every chapter.
 
+#### Book-level `showChapterExcerpt: false`
+
+Book frontmatter accepts an optional `showChapterExcerpt` flag (default `true`) controlling
+whether the chapter-page header renders the chapter's `excerpt` underneath the title. Set
+it to `false` for books whose chapters open with their own lede paragraph, so the same
+text doesn't appear twice (header excerpt + first body paragraph). The excerpt is still
+used in metadata (OpenGraph, JSON-LD, search) regardless of this flag.
+
 #### Book-specific markdown extensions
 
 When `MarkdownRenderer` renders a book chapter (i.e. `bookContext` prop is set, which

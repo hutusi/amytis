@@ -100,6 +100,7 @@ leaves the rest of the frontmatter alone if it's already populated:
 | `draft`      | Preserved (defaults to `false` on first sync) |
 | `authors`    | Preserved |
 | `latex`      | Preserved — set to `true` for math-heavy books to enable KaTeX globally for the book |
+| `showChapterExcerpt` | Preserved (defaults to `true`). Set to `false` to suppress the excerpt line under the chapter title — useful when chapters open with their own lede paragraph and you don't want it duplicated in the header. |
 | `chapters`   | **Always rewritten** from the sidebar |
 
 The prose body below the frontmatter is also preserved, so you can write a

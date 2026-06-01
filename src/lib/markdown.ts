@@ -1496,6 +1496,10 @@ export interface BookData {
    *  own frontmatter omits `latex: true`. Cheaper for math-heavy books than
    *  annotating every chapter file. */
   latex: boolean;
+  /** Whether the chapter-page header renders the chapter's `excerpt`. Defaults
+   *  to true. Set to false on books whose chapters open with their own lede
+   *  paragraph so the same text doesn't appear twice. */
+  showChapterExcerpt: boolean;
   content: string;
   toc: BookTocItem[];
   chapters: BookChapterEntry[];
@@ -1550,6 +1554,7 @@ export const BookSchema = z.object({
   draft: z.boolean().optional().default(false),
   authors: z.array(z.string()).optional().default([]),
   latex: z.boolean().optional().default(false),
+  showChapterExcerpt: z.boolean().optional().default(true),
   chapters: z.array(BookTocItemSchema),
 });
 
@@ -1685,6 +1690,7 @@ export function getBookData(slug: string): BookData | null {
     draft: data.draft,
     authors,
     latex: data.latex,
+    showChapterExcerpt: data.showChapterExcerpt,
     content: content.trim(),
     toc: data.chapters,
     chapters,

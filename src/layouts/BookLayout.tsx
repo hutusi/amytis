@@ -74,7 +74,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
               {chapter.title}
             </h1>
 
-            {chapter.excerpt && (
+            {book.showChapterExcerpt && chapter.excerpt && (
               <p className="text-lg text-muted font-serif italic leading-relaxed">
                 {chapter.excerpt}
               </p>
