@@ -1,3 +1,4 @@
+import path from 'path';
 import { BookData, BookChapterData, getBookDirPath } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import BookSidebar from '@/components/BookSidebar';
@@ -18,6 +19,20 @@ interface BookLayoutProps {
 export default function BookLayout({ book, chapter }: BookLayoutProps) {
   const bookDir = getBookDirPath(book.slug);
   const validChapterIds = new Set(book.chapters.map(c => c.id));
+
+  // `slug` is the public-relative directory used by rehype-image-metadata to
+  // resolve `![](./assets/...)`-style refs. For nested flat chapters
+  // (e.g. id `maths/linear/vectors`) the image's parent dir is the chapter's
+  // parent dir, not the book root — without this, all chapter images point
+  // at `/books/<slug>/assets/...` instead of `/books/<slug>/<dir>/assets/...`.
+  let imageSlug: string;
+  if (chapter.isFolder) {
+    imageSlug = `books/${book.slug}/${chapter.slug}`;
+  } else {
+    const parentDir = path.posix.dirname(chapter.slug);
+    imageSlug = parentDir === '.' ? `books/${book.slug}` : `books/${book.slug}/${parentDir}`;
+  }
+
   return (
     <div className="layout-container lg:max-w-7xl">
       <ReadingProgressBar />
@@ -70,7 +85,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
           <MarkdownRenderer
             content={chapter.content}
             latex={chapter.latex}
-            slug={chapter.isFolder ? `books/${book.slug}/${chapter.slug}` : `books/${book.slug}`}
+            slug={imageSlug}
             bookContext={{
               bookSlug: book.slug,
               bookDir,
