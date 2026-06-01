@@ -183,6 +183,40 @@ describe("Integration: sync-vuepress-book script", () => {
     }
   });
 
+  test("drops a leaf with id 'contents' from the TOC (Amytis renders its own)", () => {
+    const withContents = mkdtempSync(path.join(tmpdir(), "sync-contents-"));
+    try {
+      const docs = path.join(withContents, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `export default {
+          title: 'TOC-Heavy Book',
+          theme: {
+            sidebar: [
+              { text: '目录', link: 'contents' },
+              { text: 'Real', link: '/real-chapter' },
+            ],
+          },
+        }
+        `,
+      );
+      writeFileSync(path.join(docs, "contents.md"), "# Table of Contents\n- [Real](real-chapter.md)\n");
+      writeFileSync(path.join(docs, "real-chapter.md"), "---\ntitle: Real\n---\n# Real\n");
+
+      const res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+      const { data } = matter(readFileSync(path.join(dest, "index.mdx"), "utf8")) as unknown as { data: Record<string, unknown> };
+      const chapterIds = (data.chapters as Array<{ id?: string; section?: string }>).map(c => c.id ?? c.section);
+      expect(chapterIds).toEqual(["real-chapter"]);
+      // The summary mentions the dropped leaf so the run isn't silent.
+      expect(res.stdout).toMatch(/contents/);
+    } finally {
+      rmSync(withContents, { recursive: true, force: true });
+    }
+  });
+
   test("exits with an error when a sidebar leaf points to a missing source file", () => {
     // Create a corrupt config with a broken link.
     const broken = mkdtempSync(path.join(tmpdir(), "sync-broken-"));

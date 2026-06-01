@@ -230,10 +230,16 @@ function isSectionGroup(item: Record<string, unknown>): item is { text: string; 
   return Array.isArray(item.children);
 }
 
+// Sidebar leaves whose normalized id matches one of these are dropped from the
+// generated TOC. They're VuePress conventions for a hand-written table-of-
+// contents page that duplicates what Amytis's book landing page already renders.
+const SKIPPED_LEAF_IDS = new Set(['contents']);
+
 interface ConvertWarnings {
   emptySections: string[];           // sections with no items
   sectionWithOwnLink: string[];      // ignored own-page link on a group header
   unsupported: string[];             // strings or other forms we skip
+  skippedMetaLeaves: string[];       // leaves dropped because their id is a known meta-nav slug
 }
 
 function convertSidebar(sidebar: SidebarItem[], warnings: ConvertWarnings): TocItem[] {
@@ -264,7 +270,12 @@ function convertSidebar(sidebar: SidebarItem[], warnings: ConvertWarnings): TocI
     }
 
     if (isChapterLeaf(item)) {
-      result.push({ title: text, id: normalizeLink(item.link) });
+      const id = normalizeLink(item.link);
+      if (SKIPPED_LEAF_IDS.has(id)) {
+        warnings.skippedMetaLeaves.push(`${text} (${id})`);
+        continue;
+      }
+      result.push({ title: text, id });
       continue;
     }
 
@@ -449,7 +460,7 @@ function main() {
   console.log(`[sync-vuepress-book] Reading sidebar from ${path.relative(process.cwd(), configPath)}`);
 
   const sidebar = extractSidebar(configPath);
-  const warnings: ConvertWarnings = { emptySections: [], sectionWithOwnLink: [], unsupported: [] };
+  const warnings: ConvertWarnings = { emptySections: [], sectionWithOwnLink: [], unsupported: [], skippedMetaLeaves: [] };
   const toc = convertSidebar(sidebar, warnings);
 
   const chapters = collectChapterIds(toc);
@@ -479,6 +490,9 @@ function main() {
   }
   if (warnings.unsupported.length > 0) {
     console.warn(`[sync-vuepress-book] Skipped unsupported sidebar entries: ${warnings.unsupported.join(', ')}`);
+  }
+  if (warnings.skippedMetaLeaves.length > 0) {
+    console.log(`[sync-vuepress-book] Dropped meta-nav leaves from TOC (Amytis already renders one): ${warnings.skippedMetaLeaves.join(', ')}`);
   }
 }
 
