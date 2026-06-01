@@ -4,6 +4,26 @@ import React, { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
 import { useTheme } from "next-themes";
 
+// Mermaid bundles its own KaTeX and invokes it with `{throwOnError: true,
+// displayMode: true, output: 'mathml'}` — no `strict` option, so KaTeX
+// defaults to `'warn'` and floods the console with one warning per CJK
+// character in math labels (e.g. `S["$$解码器状态：s_{t-1}$$"]`). There is
+// no `mermaid.initialize()` setting to override this. Filter the very
+// specific KaTeX warning template at the console layer; everything else
+// passes through. Idempotent under HMR.
+let consoleWarnFilterInstalled = false;
+function installConsoleWarnFilter(): void {
+  if (consoleWarnFilterInstalled || typeof window === "undefined") return;
+  consoleWarnFilterInstalled = true;
+  const originalWarn = console.warn.bind(console);
+  console.warn = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].includes("[unicodeTextInMathMode]")) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
+
 interface MermaidProps {
   chart: string;
   /** When true (set via the `compact` fence-meta flag in markdown), drops the
@@ -32,6 +52,7 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, compact = false }) => {
 
   useEffect(() => {
     if (ref.current && chart && mounted) {
+      installConsoleWarnFilter();
       const currentTheme = theme === 'system' ? systemTheme : theme;
       const isDark = currentTheme === 'dark';
 
