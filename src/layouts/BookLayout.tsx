@@ -6,7 +6,7 @@ import BookMobileNav from '@/components/BookMobileNav';
 import PrevNextNav from '@/components/PrevNextNav';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
 import Comments from '@/components/Comments';
-import { t } from '@/lib/i18n';
+import ArticleMeta from '@/components/ArticleMeta';
 import { getBookChapterUrl } from '@/lib/urls';
 import { siteConfig } from '../../site.config';
 import { resolveCommentable } from '@/lib/comments';
@@ -62,17 +62,12 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
 
           {/* Chapter header */}
           <header className="mb-12 pb-8 border-b border-muted/10">
-            <div className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
-              <span className="uppercase tracking-widest font-semibold text-accent">
-                {t('chapter')}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <span className="font-mono">
-                {chapter.wordCount.toLocaleString()} {t('words')}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <span className="font-mono text-muted/70">{chapter.readingMinutes} {t('reading_time')}</span>
-            </div>
+            <ArticleMeta
+              headerKey="chapter"
+              wordCount={chapter.wordCount}
+              readingMinutes={chapter.readingMinutes}
+              className="mb-4"
+            />
 
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading leading-tight mb-4">
               {chapter.title}
