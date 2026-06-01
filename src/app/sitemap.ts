@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getAllPosts, getAllPages, getAllBooks, getAllFlows } from '@/lib/markdown';
 import { siteConfig } from '../../site.config';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
 
 export const dynamic = 'force-static';
 
@@ -29,13 +29,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const bookUrls = books.flatMap((book) => [
     {
-      url: `${baseUrl}/books/${book.slug}`,
+      url: `${baseUrl}${getBookUrl(book.slug)}`,
       lastModified: book.date,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     },
     ...book.chapters.map((ch) => ({
-      url: `${baseUrl}/books/${book.slug}/${ch.id}`,
+      url: `${baseUrl}${getBookChapterUrl(book.slug, ch.id)}`,
       lastModified: book.date,
       changeFrequency: 'monthly' as const,
       priority: 0.7,

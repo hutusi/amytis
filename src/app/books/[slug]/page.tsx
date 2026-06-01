@@ -7,34 +7,48 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { buildBookJsonLd, serializeJsonLd } from '@/lib/json-ld';
-import { getBookUrl } from '@/lib/urls';
+import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { safeDecodeParam } from '@/lib/series-redirects';
 
-function renderTocSection(section: BookTocSection, slug: string, keyPrefix: string): React.ReactNode {
+// Visual depth limit for nested-section headings. After the first two levels
+// we keep nesting structurally but stop bumping the heading style so deeply
+// nested books don't degrade into tiny text.
+const MAX_HEADING_DEPTH = 2;
+
+function chapterRow(ref: BookChapterRef, slug: string, key: string) {
   return (
-    <div key={keyPrefix}>
-      <h3 className="text-sm font-sans font-bold uppercase tracking-wider text-muted mb-3">
-        {section.section}
-      </h3>
+    <li key={key}>
+      <Link
+        href={getBookChapterUrl(slug, ref.id)}
+        className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
+      >
+        <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+        <span className="text-base">{ref.title}</span>
+      </Link>
+    </li>
+  );
+}
+
+function renderTocSection(section: BookTocSection, slug: string, keyPrefix: string, depth: number): React.ReactNode {
+  const headingDepth = Math.min(depth, MAX_HEADING_DEPTH);
+  const headingClass =
+    headingDepth === 0
+      ? 'text-lg font-serif font-bold text-heading mb-3'
+      : headingDepth === 1
+      ? 'text-sm font-sans font-bold uppercase tracking-wider text-muted mb-3'
+      : 'text-xs font-sans font-semibold uppercase tracking-wider text-muted/80 mb-2';
+
+  return (
+    <div key={keyPrefix} className={depth === 0 ? '' : 'mt-3'}>
+      <h3 className={headingClass}>{section.section}</h3>
       <ol className="space-y-2 pl-4 border-l-2 border-muted/10">
-        {section.items.map((child, idx) => {
-          if ('section' in child) {
-            return <li key={`${keyPrefix}-${idx}`}>{renderTocSection(child, slug, `${keyPrefix}-${idx}`)}</li>;
-          }
-          const ref = child as BookChapterRef;
-          return (
-            <li key={`${keyPrefix}-${ref.id}`}>
-              <Link
-                href={`/books/${slug}/${ref.id}`}
-                className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
-              >
-                <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-                <span className="text-base">{ref.title}</span>
-              </Link>
-            </li>
-          );
-        })}
+        {section.items.map((child, idx) =>
+          'section' in child
+            ? <li key={`${keyPrefix}-${idx}`}>{renderTocSection(child, slug, `${keyPrefix}-${idx}`, depth + 1)}</li>
+            : chapterRow(child, slug, `${keyPrefix}-${child.id}`)
+        )}
       </ol>
     </div>
   );
@@ -50,7 +64,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBookData(decodeURIComponent(slug));
+  const book = getBookData(safeDecodeParam(slug));
 
   if (!book) {
     return { title: 'Book Not Found' };
@@ -67,7 +81,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: book.title,
       description: book.excerpt,
       type: 'website',
-      url: `${siteConfig.baseUrl}/books/${slug}`,
+      url: `${siteConfig.baseUrl}${getBookUrl(book.slug)}`,
       siteName: resolveLocale(siteConfig.title),
       images: [{ url: ogImage, width: 1200, height: 630, alt: book.title }],
     },
@@ -82,7 +96,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BookLandingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = safeDecodeParam(rawSlug);
   const book = getBookData(slug);
 
   if (!book || (process.env.NODE_ENV === 'production' && book.draft)) {
@@ -149,7 +163,7 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
           {firstChapter && (
             <div className="mt-8">
               <Link
-                href={`/books/${book.slug}/${firstChapter.id}`}
+                href={getBookChapterUrl(book.slug, firstChapter.id)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
               >
                 {t('start_reading')}
@@ -174,30 +188,18 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
                     {item.part}
                   </h3>
                   <ol className="space-y-2 pl-4 border-l-2 border-muted/10">
-                    {item.chapters.map(ch => (
-                      <li key={ch.id}>
-                        <Link
-                          href={`/books/${book.slug}/${ch.id}`}
-                          className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
-                        >
-                          <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                          </svg>
-                          <span className="text-base">{ch.title}</span>
-                        </Link>
-                      </li>
-                    ))}
+                    {item.chapters.map(ch => chapterRow(ch, book.slug, ch.id))}
                   </ol>
                 </div>
               );
             }
             if ('section' in item) {
-              return renderTocSection(item, book.slug, `section-${idx}`);
+              return renderTocSection(item, book.slug, `section-${idx}`, 0);
             }
             return (
               <Link
                 key={item.id}
-                href={`/books/${book.slug}/${item.id}`}
+                href={getBookChapterUrl(book.slug, item.id)}
                 className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
               >
                 <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
