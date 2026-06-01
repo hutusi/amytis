@@ -6,12 +6,14 @@ const FENCE_OPEN_RE = /^[ \t]*(`{3,}|~{3,})/;
  * and `\end{bmatrix} $$` closing. `remark-math` (the upstream micromark
  * extension) is stricter: a block-math opener must be on its own line and
  * the closer must be on its own line. When that's violated, the parser
- * falls back to *inline* math, which then explodes in KaTeX because
- * `\\` line breaks and `&` column separators aren't legal in inline mode.
+ * falls back to *inline* math — which either explodes in KaTeX (when the
+ * body contains `\\` line breaks or `&` column separators) or silently
+ * mis-renders as inline (no `katex-display` wrapper, so it loses block
+ * margin and centering even though it visually looks fine).
  *
- * This pre-processor splits the VuePress-style fences onto their own
- * lines before parsing, so the imported dmla chapters render correctly
- * without touching their source files:
+ * This pre-processor splits VuePress-style fences onto their own lines
+ * before parsing, so imported chapters render correctly without touching
+ * their source files. Two cases:
  *
  *   $$ \mathbf{A} = \begin{bmatrix}        $$
  *   a & b \\               becomes →       \mathbf{A} = \begin{bmatrix}
@@ -20,8 +22,12 @@ const FENCE_OPEN_RE = /^[ \t]*(`{3,}|~{3,})/;
  *                                          \end{bmatrix}
  *                                          $$
  *
- * - Single-line block math (`$$ x $$`) is left alone.
+ *                                          $$
+ *   $$ x = y $$           becomes →        x = y
+ *                                          $$
+ *
  * - Inline math (`$x$`, with a single `$`) is never matched — only `$$`.
+ * - Empty single-line blocks (`$$$$`, `$$  $$`) are left alone.
  * - Fenced code blocks (``` and ~~~) are skipped so code samples that
  *   *show* the VuePress syntax verbatim aren't mutated. Fence semantics
  *   match CommonMark: closer must be the same character type and at
@@ -63,8 +69,18 @@ export function normalizeVuepressBlockMath(source: string): string {
       if (m) {
         const rest = m[2].trimEnd();
         if (rest.endsWith('$$')) {
-          // Single-line block math like `$$ x $$` — leave it alone.
-          out.push(line);
+          // Single-line block math like `$$ x $$`. micromark-extension-math
+          // parses this as *inline* math (no `katex-display` wrapper), so
+          // expand it to opener / body / closer on three lines.
+          const body = rest.slice(0, -2).trim();
+          if (body.length === 0) {
+            // `$$$$` or `$$  $$` — degenerate, leave alone.
+            out.push(line);
+            continue;
+          }
+          out.push(`${m[1]}$$`);
+          out.push(`${m[1]}${body}`);
+          out.push(`${m[1]}$$`);
           continue;
         }
         blockIndent = m[1];
