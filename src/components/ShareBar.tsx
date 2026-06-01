@@ -77,6 +77,10 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
   const btnClass = 'inline-flex items-center justify-center w-8 h-8 rounded text-muted hover:text-accent hover:bg-muted/10 transition-colors';
 
   return (
+    // suppressHydrationWarning on locale-bound nodes is a band-aid for the
+    // known static-export + client-i18n drift: SSR renders defaultLocale,
+    // `useLanguage()` hook serves the user's saved locale on hydration. The
+    // real fix is per-locale URL routing, tracked as a separate refactor.
     <div className={`flex flex-row flex-wrap gap-1 ${className}`}>
       {platforms.map((platform) => {
         const { label, Icon } = PLATFORM_META[platform];
@@ -90,6 +94,7 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
               title={copyLabel}
               aria-label={copyLabel}
               className={`${btnClass} ${copied ? 'text-accent' : ''}`}
+              suppressHydrationWarning
             >
               {copied ? <LuCheck size={16} /> : <Icon size={16} />}
             </button>

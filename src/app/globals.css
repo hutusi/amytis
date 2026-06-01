@@ -946,8 +946,16 @@ html.dark .rst-rendered aside.admonition-danger {
  * tables align with surrounding paragraph text. Our `MarkdownRenderer` wraps
  * every table in a bordered container, which makes that zero-padding push
  * content flush against the border. Restore symmetric horizontal padding
- * on every cell so framed tables breathe inside their wrapper. */
-.prose :where(thead th, tbody td, tfoot td):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+ * on every cell so framed tables breathe inside their wrapper.
+ *
+ * Selector deliberately avoids the plugin's
+ * `.prose :where(...):not(:where(.not-prose, .not-prose *))` shape:
+ * Tailwind v4 / Lightning CSS silently strips user rules that match that
+ * pattern from the compiled bundle (verified by inspecting the built CSS).
+ * Bare descendant selectors survive compilation and have specificity
+ * (0,1,2), beating the plugin's (0,1,0) first/last-child rules
+ * regardless of source order. */
+.prose thead th, .prose tbody td, .prose tfoot td {
   padding-inline: 0.75rem;
 }
 
@@ -955,13 +963,14 @@ html.dark .rst-rendered aside.admonition-danger {
  * that it's interactive. Color it like a link (accent + pointer + hover
  * underline) so it carries the same affordance as other clickable text in
  * prose. The native disclosure marker stays — it's the redundant visual
- * cue that confirms "this expands." */
-.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+ * cue that confirms "this expands." Same selector shape as the cell-padding
+ * override above and for the same reason. */
+.prose summary {
   color: var(--accent);
   cursor: pointer;
 }
 
-.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)):hover {
+.prose summary:hover {
   text-decoration: underline;
 }
 

@@ -26,17 +26,13 @@ function installConsoleWarnFilter(): void {
 
 interface MermaidProps {
   chart: string;
-  /** When true (set via the `compact` fence-meta flag in markdown), drops the
-   *  framed wrapper — border, background, padding, shadow — so the SVG can
-   *  use the full column width. Authors opt in per-graph with ```` ```mermaid compact ````. */
-  compact?: boolean;
 }
 
 /**
  * Client-side component for rendering Mermaid charts.
  * Takes a mermaid chart definition string and renders it to SVG.
  */
-const Mermaid: React.FC<MermaidProps> = ({ chart, compact = false }) => {
+const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>("");
   const { theme, systemTheme } = useTheme();
@@ -100,12 +96,8 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, compact = false }) => {
     }
   }, [chart, theme, systemTheme, mounted]);
 
-  const wrapperClass = compact
-    ? "my-6 overflow-x-auto"
-    : "my-8 p-4 md:p-8 rounded-lg border border-muted/20 bg-muted/5 overflow-x-auto shadow-sm";
-
   return (
-    <div className={wrapperClass}>
+    <div className="my-6 overflow-x-auto">
       {/*
         suppressHydrationWarning is intentional: Mermaid runs client-side
         in `useEffect`, injects its SVG via `dangerouslySetInnerHTML`, and

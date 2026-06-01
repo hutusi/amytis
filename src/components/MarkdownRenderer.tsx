@@ -155,9 +155,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       // We use className presence (e.g. language-js) or newline presence to detect code blocks.
       if (match || isMultiLine) {
         if (language === 'mermaid') {
-          const meta = (props as unknown as Record<string, unknown>)['data-meta'];
-          const compact = typeof meta === 'string' && /(?:^|\s)compact(?:\s|$)/.test(meta);
-          return <Mermaid chart={String(children).replace(/\n$/, '')} compact={compact} />;
+          return <Mermaid chart={String(children).replace(/\n$/, '')} />;
         }
         // react-markdown v10 strips node.data before invoking overrides, so the
         // fence meta is surfaced as a real `data-meta` attribute by rehypeFenceMeta.
