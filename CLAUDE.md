@@ -69,7 +69,6 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
 - **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
 - **Branches:** `<type>/<kebab-slug>` matching commit prefixes.
-- CI (`.github/workflows/ci.yml`) runs lint → test → build:dev; all three must pass. Not enforced by hooks.
 
 ## Verifying a change
 
@@ -95,4 +94,5 @@ When compressing history, preserve in priority order:
 - `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
 - `docs/TROUBLESHOOTING.md` — known issues (AVIF, dev-mode browser-extension CSP/SharedStorage noise)
 - `docs/deployment.md` — production deploy steps
+- `docs/guides/` — task-oriented walkthroughs (e.g. `importing-vuepress-books.md`)
 - `site.config.ts` — live config (read it directly; don't infer from this file)

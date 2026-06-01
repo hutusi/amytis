@@ -95,13 +95,7 @@ bun run new-from-images ./photos --title "Gallery"
 bun run new-flow-from-chat
 
 # VuePress 2 book → Amytis book directory.
-# Reads .vuepress/config.{js,mjs} (TypeScript configs need to be compiled to
-# JS first — acorn parses JS only), AST-extracts the sidebar, mirrors the
-# docs/ tree into <dest> (excluding `.vuepress`, `node_modules`, `.git`, and
-# dotfiles), and rewrites <dest>/index.mdx with the nested {section, items}
-# TOC. Idempotent — re-running deletes dest files removed upstream and
-# preserves user-controlled frontmatter (coverImage, featured, authors,
-# excerpt, draft, latex).
+# Full walkthrough at docs/guides/importing-vuepress-books.md.
 bun run sync-vuepress-book --source /path/to/dmla/docs --dest content/books/dmla
 ```
 
