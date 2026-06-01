@@ -6,6 +6,7 @@ import { RstParseError } from "./rst";
 import {
   generateExcerpt,
   calculateReadingTime,
+  calculateWordCount,
   getHeadings,
   getAuthorSlug,
   getPythonRstRendererAvailabilityForTests,
@@ -98,6 +99,49 @@ describe("markdown utils", () => {
       const han = "中".repeat(300);
       const mixed = `${latinWords} ${han}`;
       expect(calculateReadingTime(mixed)).toBe("2 min read");
+    });
+  });
+
+  describe("calculateWordCount", () => {
+    test("empty content returns 0", () => {
+      expect(calculateWordCount("")).toBe(0);
+    });
+
+    test("Latin words: each whitespace-bounded token counts once", () => {
+      expect(calculateWordCount("Hello world, this is a short post.")).toBe(7);
+      expect(calculateWordCount(Array(600).fill("word").join(" "))).toBe(600);
+    });
+
+    test("Chinese characters count per-character", () => {
+      expect(calculateWordCount("中".repeat(600))).toBe(600);
+    });
+
+    test("mixed Latin + Chinese sums both counts", () => {
+      const latin = Array(200).fill("word").join(" ");
+      const han = "中".repeat(300);
+      expect(calculateWordCount(`${latin} ${han}`)).toBe(500);
+    });
+
+    test("strips fenced code blocks before counting", () => {
+      const src = ["pre", "```", "code line one two three", "```", "post"].join("\n");
+      // Only "pre" and "post" count.
+      expect(calculateWordCount(src)).toBe(2);
+    });
+
+    test("strips inline HTML tags before counting", () => {
+      expect(calculateWordCount("hello <span>world</span> again")).toBe(3);
+    });
+
+    test("strips markdown link syntax, keeps link text", () => {
+      expect(calculateWordCount("See [the docs](https://example.com) here")).toBe(4);
+    });
+
+    test("matches calculateReadingTime on the same input", () => {
+      // The two metrics share a tokenizer; both should agree on the underlying
+      // token counts. 600 Latin words → 600 wordCount, 3 min reading time.
+      const text = Array(600).fill("word").join(" ");
+      expect(calculateWordCount(text)).toBe(600);
+      expect(calculateReadingTime(text)).toBe("3 min read");
     });
   });
 

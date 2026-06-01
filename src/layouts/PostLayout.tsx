@@ -86,6 +86,10 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
               <time className="font-mono" data-pagefind-meta="date[content]">{post.date}</time>
               <span className="w-1 h-1 rounded-full bg-muted/30" />
               <span className="font-mono">{post.readingTime}</span>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <span className="font-mono text-muted/70">
+                {post.wordCount.toLocaleString()} {t('words')}
+              </span>
             </div>
 
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">

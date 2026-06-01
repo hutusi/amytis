@@ -35,6 +35,7 @@ export interface RenderedRstDocument {
   metadata: RstMetadata;
   excerpt: string;
   readingTime: string;
+  wordCount: number;
   assets: PythonRstAsset[];
   warnings: string[];
 }
@@ -359,6 +360,12 @@ function calculateReadingTimeFromText(text: string): string {
   return `${Math.max(1, Math.ceil(estimatedMinutes))} min read`;
 }
 
+function calculateWordCountFromText(text: string): number {
+  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
+  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
+  return latinWordCount + hanCharCount;
+}
+
 export function validatePythonRstResult(result: PythonRstRenderResult, filePath: string): void {
   if (!result || typeof result !== 'object') {
     throw new RstParseError(`Invalid renderer output for ${filePath}: expected object.`);
@@ -558,6 +565,7 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
     metadata,
     excerpt: metadata.excerpt ?? '',
     readingTime: calculateReadingTimeFromText(result.text),
+    wordCount: calculateWordCountFromText(result.text),
     assets: result.assets ?? [],
     warnings: (result.warnings ?? []).map((warning) => String(warning)),
   };
@@ -608,6 +616,7 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
       metadata,
       excerpt: metadata.excerpt ?? '',
       readingTime: calculateReadingTimeFromText(result.text),
+      wordCount: calculateWordCountFromText(result.text),
       assets: result.assets ?? [],
       warnings: (result.warnings ?? []).map((warning) => String(warning)),
     };

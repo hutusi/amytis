@@ -124,6 +124,7 @@ export interface PostData {
   externalLinks?: ExternalLink[];
   redirectFrom?: string[];
   readingTime: string;
+  wordCount: number;
   content: string;
   renderedHtml?: string;
   plainText?: string;
@@ -263,11 +264,10 @@ function shouldUsePythonRstRenderer(): boolean {
   return process.env.NODE_ENV !== 'test';
 }
 
-export function calculateReadingTime(content: string): string {
-  const wordsPerMinute = 200;
-  const hanCharsPerMinute = 300;
-
-  // Strip tags and common markdown syntax before counting.
+// Shared text-stripping + tokenization used by both `calculateReadingTime`
+// and `calculateWordCount`. Both metrics need the same view of "what counts
+// as a word," so funnel them through a single source of truth.
+function countContentTokens(content: string): { latinWords: number; hanChars: number } {
   const text = content
     .replace(/<\/?[^>]+(>|$)/g, "")
     .replace(/```[\s\S]*?```/g, "")
@@ -275,14 +275,40 @@ export function calculateReadingTime(content: string): string {
     .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/[#*_~>\-[\]()]/g, " ");
-
-  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
-
-  const estimatedMinutes = (latinWordCount / wordsPerMinute) + (hanCharCount / hanCharsPerMinute);
-  const minutes = Math.max(1, Math.ceil(estimatedMinutes));
-  return `${minutes} min read`;
+  return countTokenizedText(text);
 }
+
+function countTokenizedText(text: string): { latinWords: number; hanChars: number } {
+  const hanChars = (text.match(HAN_CHAR_RE) || []).length;
+  const latinWords = (text.match(LATIN_WORD_RE) || []).length;
+  return { latinWords, hanChars };
+}
+
+// Han character ranges: CJK Unified Ideographs Extension A, CJK Unified
+// Ideographs, CJK Compatibility Ideographs.
+const HAN_CHAR_RE = /[㐀-䶿一-鿿豈-﫿]/g;
+// Latin word: alphanumeric runs allowing apostrophes/hyphens between runs.
+const LATIN_WORD_RE = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
+
+export function calculateReadingTime(content: string): string {
+  const wordsPerMinute = 200;
+  const hanCharsPerMinute = 300;
+  const { latinWords, hanChars } = countContentTokens(content);
+  const estimatedMinutes = (latinWords / wordsPerMinute) + (hanChars / hanCharsPerMinute);
+  return `${Math.max(1, Math.ceil(estimatedMinutes))} min read`;
+}
+
+/**
+ * Aggregate word count: Latin word matches plus Han characters.
+ * Han is counted per-character (the convention in Chinese typography
+ * — "字数" literally means "character count") while Latin counts per
+ * whitespace-bounded token. Returns 0 for empty input.
+ */
+export function calculateWordCount(content: string): number {
+  const { latinWords, hanChars } = countContentTokens(content);
+  return latinWords + hanChars;
+}
+
 
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
@@ -609,7 +635,8 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
 
   const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
   const readingTime = calculateReadingTime(contentWithoutH1);
-  
+  const wordCount = calculateWordCount(contentWithoutH1);
+
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
   if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
@@ -648,6 +675,7 @@ function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: st
     externalLinks: data.externalLinks,
     redirectFrom: data.redirectFrom,
     readingTime,
+    wordCount,
     content: contentWithoutH1,
     headings,
     imageBaseSlug,
@@ -681,6 +709,7 @@ function parseRstFile(
     let parsedHeadings: Heading[];
     let parsedExcerpt: string;
     let parsedReadingTime: string;
+    let parsedWordCount: number;
     let parsedHtml: string | undefined;
     let data: ReturnType<typeof parseRstDocument>['metadata'];
     try {
@@ -692,6 +721,7 @@ function parseRstFile(
         parsedHeadings = rendered.headings;
         parsedExcerpt = rendered.excerpt;
         parsedReadingTime = rendered.readingTime;
+        parsedWordCount = rendered.wordCount;
         parsedHtml = rendered.html;
         data = rendered.metadata;
       } else if (shouldUsePythonRstRenderer() && pythonRstRendererAvailable !== false) {
@@ -703,6 +733,7 @@ function parseRstFile(
         parsedHeadings = rendered.headings;
         parsedExcerpt = rendered.excerpt;
         parsedReadingTime = rendered.readingTime;
+        parsedWordCount = rendered.wordCount;
         parsedHtml = rendered.html;
         data = rendered.metadata;
       } else {
@@ -721,6 +752,7 @@ function parseRstFile(
       parsedHeadings = parsed.headings;
       parsedExcerpt = parsed.excerpt;
       parsedReadingTime = parsed.readingTime;
+      parsedWordCount = parsed.wordCount;
       data = parsed.metadata;
     }
 
@@ -784,6 +816,7 @@ function parseRstFile(
       commentable: data.commentable,
       redirectFrom: data.redirectFrom ?? [],
       readingTime: parsedReadingTime,
+      wordCount: parsedWordCount,
       content: parsedBody,
       renderedHtml: parsedHtml,
       plainText: parsedText,
@@ -1517,6 +1550,7 @@ export interface BookChapterData {
   latex: boolean;
   commentable?: boolean;
   readingTime: string;
+  wordCount: number;
   isFolder: boolean;
   /** Absolute path of the markdown source file. Used to resolve relative `.md` links. */
   sourcePath: string;
@@ -1725,6 +1759,7 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
   const headings = getHeadings(content);
   const readingTime = calculateReadingTime(contentWithoutH1);
+  const wordCount = calculateWordCount(contentWithoutH1);
   const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
 
   // Find prev/next
@@ -1752,6 +1787,7 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
     latex: data.latex || book.latex,
     commentable: data.commentable,
     readingTime,
+    wordCount,
     isFolder,
     sourcePath: fullPath,
     prevChapter: prevChapter ? { title: prevChapter.title, id: prevChapter.id } : null,
@@ -1983,6 +2019,7 @@ export interface NoteData {
   excerpt: string;
   headings: Heading[];
   readingTime: string;
+  wordCount: number;
 }
 
 function parseNoteFile(fullPath: string, slug: string): NoteData {
@@ -2001,6 +2038,7 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
   const excerpt = generateExcerpt(contentWithoutH1);
   const headings = getHeadings(content);
   const readingTime = calculateReadingTime(contentWithoutH1);
+  const wordCount = calculateWordCount(contentWithoutH1);
 
   return {
     slug,
@@ -2016,6 +2054,7 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
     excerpt,
     headings,
     readingTime,
+    wordCount,
   };
 }
 

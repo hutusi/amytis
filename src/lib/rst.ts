@@ -37,6 +37,7 @@ export interface ParsedRstDocument {
   headings: RstHeading[];
   excerpt: string;
   readingTime: string;
+  wordCount: number;
 }
 
 export class RstParseError extends Error {
@@ -629,6 +630,19 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`;
 }
 
+function calculateWordCount(content: string): number {
+  const text = content
+    .replace(/<\/?[^>]+(>|$)/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#*_~>\-[\]()]/g, ' ');
+  const hanCharCount = (text.match(/[㐀-䶿一-鿿豈-﫿]/g) || []).length;
+  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
+  return latinWordCount + hanCharCount;
+}
+
 function getHeadings(content: string): RstHeading[] {
   const regex = /^(#{2,3})\s+(.*)$/gm;
   const headings: RstHeading[] = [];
@@ -660,5 +674,6 @@ export function parseRstDocument(source: string): ParsedRstDocument {
     headings: getHeadings(markdownBody),
     excerpt: metadata.excerpt ?? '',
     readingTime: calculateReadingTime(markdownBody),
+    wordCount: calculateWordCount(markdownBody),
   };
 }
