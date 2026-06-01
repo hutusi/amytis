@@ -934,6 +934,37 @@ html.dark .rst-rendered aside.admonition-danger {
   vertical-align: middle;
 }
 
+.katex-display {
+  text-align: center;
+}
+
+.katex-display > .katex {
+  text-align: center;
+}
+
+/* Tailwind Typography zeros padding on first/last table cells so unframed
+ * tables align with surrounding paragraph text. Our `MarkdownRenderer` wraps
+ * every table in a bordered container, which makes that zero-padding push
+ * content flush against the border. Restore symmetric horizontal padding
+ * on every cell so framed tables breathe inside their wrapper. */
+.prose :where(thead th, tbody td, tfoot td):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  padding-inline: 0.75rem;
+}
+
+/* Browser-default <summary> looks like an unstyled heading — readers miss
+ * that it's interactive. Color it like a link (accent + pointer + hover
+ * underline) so it carries the same affordance as other clickable text in
+ * prose. The native disclosure marker stays — it's the redundant visual
+ * cue that confirms "this expands." */
+.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)):hover {
+  text-decoration: underline;
+}
+
 .rst-rendered a[role="doc-noteref"] {
   font-size: 0.82em;
   vertical-align: super;

@@ -61,7 +61,7 @@ export default function PostList({
                       <span className="shrink-0">·</span>
                     </>
                   )}
-                  <span className="shrink-0 hidden sm:inline">{post.readingTime}</span>
+                  <span className="shrink-0 hidden sm:inline">{post.readingMinutes} {t('reading_time')}</span>
                   <span className="shrink-0 hidden sm:inline">·</span>
                   <span className="shrink-0 whitespace-nowrap">{post.date}</span>
                   {post.draft && (

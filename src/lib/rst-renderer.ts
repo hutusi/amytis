@@ -34,7 +34,8 @@ export interface RenderedRstDocument {
   headings: PythonRstHeading[];
   metadata: RstMetadata;
   excerpt: string;
-  readingTime: string;
+  readingMinutes: number;
+  wordCount: number;
   assets: PythonRstAsset[];
   warnings: string[];
 }
@@ -348,15 +349,21 @@ export function normalizePythonRstMetadata(metadata: Record<string, unknown>): R
   return normalized;
 }
 
-function calculateReadingTimeFromText(text: string): string {
+function calculateReadingMinutesFromText(text: string): number {
   const wordsPerMinute = 200;
   const hanCharsPerMinute = 300;
 
   const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
+  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
 
   const estimatedMinutes = (latinWordCount / wordsPerMinute) + (hanCharCount / hanCharsPerMinute);
-  return `${Math.max(1, Math.ceil(estimatedMinutes))} min read`;
+  return Math.max(1, Math.ceil(estimatedMinutes));
+}
+
+function calculateWordCountFromText(text: string): number {
+  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
+  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
+  return latinWordCount + hanCharCount;
 }
 
 export function validatePythonRstResult(result: PythonRstRenderResult, filePath: string): void {
@@ -557,7 +564,8 @@ export function renderRstFile(filePath: string, imageBaseSlug: string): Rendered
     headings: result.headings,
     metadata,
     excerpt: metadata.excerpt ?? '',
-    readingTime: calculateReadingTimeFromText(result.text),
+    readingMinutes: calculateReadingMinutesFromText(result.text),
+    wordCount: calculateWordCountFromText(result.text),
     assets: result.assets ?? [],
     warnings: (result.warnings ?? []).map((warning) => String(warning)),
   };
@@ -607,7 +615,8 @@ export function renderRstFilesBatch(entries: PythonRstBatchEntry[]): Map<string,
       headings: result.headings,
       metadata,
       excerpt: metadata.excerpt ?? '',
-      readingTime: calculateReadingTimeFromText(result.text),
+      readingMinutes: calculateReadingMinutesFromText(result.text),
+      wordCount: calculateWordCountFromText(result.text),
       assets: result.assets ?? [],
       warnings: (result.warnings ?? []).map((warning) => String(warning)),
     };

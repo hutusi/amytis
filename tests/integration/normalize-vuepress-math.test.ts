@@ -22,9 +22,29 @@ describe("Integration: normalizeVuepressBlockMath", () => {
     ]);
   });
 
-  test("leaves a single-line $$ x $$ block alone", () => {
+  test("expands single-line $$ x $$ onto three lines so remark-math treats it as block", () => {
+    // micromark-extension-math requires `$$` on its own line; single-line
+    // collapses to inline (no katex-display, no centering, no block margin).
     const src = "$$ x^2 + y^2 = 1 $$";
-    expect(normalizeVuepressBlockMath(src)).toBe(src);
+    expect(normalizeVuepressBlockMath(src).split("\n")).toEqual([
+      "$$",
+      "x^2 + y^2 = 1",
+      "$$",
+    ]);
+  });
+
+  test("leaves degenerate empty $$$$ alone", () => {
+    expect(normalizeVuepressBlockMath("$$$$")).toBe("$$$$");
+    expect(normalizeVuepressBlockMath("$$  $$")).toBe("$$  $$");
+  });
+
+  test("preserves the opener indent when expanding a single-line block", () => {
+    const src = "    $$ y = mx + b $$";
+    expect(normalizeVuepressBlockMath(src).split("\n")).toEqual([
+      "    $$",
+      "    y = mx + b",
+      "    $$",
+    ]);
   });
 
   test("does not touch inline $...$ math", () => {
@@ -53,8 +73,10 @@ describe("Integration: normalizeVuepressBlockMath", () => {
     const out = normalizeVuepressBlockMath(src);
     // The code-block example is preserved verbatim — no split.
     expect(out).toContain("$$ \\mathbf{A} = \\begin{bmatrix} a \\end{bmatrix} $$");
-    // The real single-line block math after the fence is also untouched.
-    expect(out).toContain("$$ y = mx + b $$");
+    // The real single-line block math after the fence is expanded onto its
+    // own three lines so remark-math recognizes it as block.
+    expect(out).toContain("$$\ny = mx + b\n$$");
+    expect(out).not.toContain("$$ y = mx + b $$");
   });
 
   test("preserves opener indent on split lines for list-nested block math", () => {

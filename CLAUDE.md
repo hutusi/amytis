@@ -61,6 +61,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Fence meta needs `rehype-fence-meta` BEFORE `rehype-raw`.** `mdast-util-to-hast` stores fence meta on `node.data.meta`, which `rehype-raw` drops during HTML round-trip. The plugin copies it to a real `data-meta` attribute first. Order matters in `MarkdownRenderer.tsx`.
 - **Code-group tabs add `<input type="radio">` + `<label>` to the rST sanitize-html allowlist.** Keep the `transformTags` guard in `RstRenderer.tsx` that strips any `<input>` whose `type !== "radio"` — that's the defense against an rST author injecting password/file/etc. inputs through raw HTML.
 - **GitHub alerts (`> [!NOTE]`, etc.) need the custom `remarkGithubAlerts` plugin.** `remark-gfm` v4 does NOT transform `[!TYPE]` blockquotes — they pass through as plain blockquotes with the literal marker visible. The custom plugin in `src/lib/remark-github-alerts.ts` is what detects them and routes to `<GithubAlert>`. If a future remark-gfm adds native alert support, that's a regression to watch for (covered by an integration test).
+- **Single-line block math `$$ x $$` is silently inline.** `micromark-extension-math` (under `remark-math` v6) requires the `$$` markers on their own lines — single-line collapses to *inline* math (no `katex-display` wrapper, no centering, no display margin) and looks like a subtly under-styled formula. `src/lib/normalize-vuepress-math.ts` expands single-line `$$ x $$` to opener / body / closer before parsing, so authored content stays portable. If a chapter formula stops centering, suspect the normalizer's regex first.
 
 ## Development workflow
 
@@ -72,14 +73,10 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 ## Verifying a change
 
-- **Per-commit default: `bun run lint && bun run test` only — do NOT run `bun run build:dev` on every commit or after every small step.** `build:dev` takes ~1–2 minutes (Turbopack compile + 800+ static pages + Pagefind index) and that cost adds up across many small commits. Keep the loop fast.
-- Run `bun run build:dev` only when:
-  - You moved or added a route (`src/app/**/page.tsx` rename, new dynamic segment).
-  - You changed the markdown/MDX pipeline (`MarkdownRenderer.tsx`, a remark/rehype plugin, Shiki config).
-  - You changed a Zod schema, a strict-build invariant, or `site.config.ts` shape.
-  - You need to spot-check a specific page in the browser (also re-runs Pagefind so search reflects the change).
-  - You're about to push or open a PR.
-- `bun run validate` chains lint + test + build:dev — use it at PR-readiness time, not as the per-commit loop.
+- **Default verify loop: `bun run lint && bun run test` only.** Stop here.
+- **Do NOT run `bun run build:dev` (or `bun run build` / `bun run validate`) unless the user asks OR it is genuinely needed.** It takes ~1–2 minutes (Turbopack compile + 800+ static pages + Pagefind index) and the cost adds up fast across many small steps. None of these are "needed" on their own: markdown pipeline edits, schema changes, route moves, branch tip, pre-PR readiness, "just to be safe."
+- "Genuinely needed" means lint+test **cannot** catch the failure mode you're worried about — e.g. a strict-build invariant that only fires during static export (a `throw` in `generateStaticParams`, a `redirectFrom` collision, a Zod-schema failure that only triggers on real content). If unsure, prefer asking over running.
+- `bun run validate` chains lint + test + build:dev; same rule — same bar.
 - Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
 - Touched any dynamic route? Verify both ASCII and Unicode slugs render.
 

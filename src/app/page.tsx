@@ -109,7 +109,7 @@ export default function Home() {
         excerpt: p.excerpt,
         date: p.date,
         category: p.category,
-        readingTime: p.readingTime,
+        readingMinutes: p.readingMinutes,
         coverImage: p.coverImage,
         series: p.series,
         pinned: p.pinned,

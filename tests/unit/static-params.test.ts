@@ -653,7 +653,8 @@ describe('generateStaticParams — placeholder when content is empty', () => {
         imageBaseSlug: 'posts',
         category: 'Test',
         tags: [],
-        readingTime: '1 min read',
+        readingMinutes: 1,
+        wordCount: 0,
       }];
 
       const page = await import('../../src/app/[slug]/[postSlug]/page');
