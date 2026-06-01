@@ -36,7 +36,7 @@ export interface ParsedRstDocument {
   metadata: RstMetadata;
   headings: RstHeading[];
   excerpt: string;
-  readingTime: string;
+  readingMinutes: number;
   wordCount: number;
 }
 
@@ -610,10 +610,17 @@ export function rstToMarkdown(body: string): string {
   return out.join('\n').trim();
 }
 
-function calculateReadingTime(content: string): string {
+function calculateReadingMinutes(content: string): number {
   const wordsPerMinute = 200;
   const hanCharsPerMinute = 300;
+  const { latinWords, hanChars } = countRstTokens(content);
+  const estimatedMinutes = (latinWords / wordsPerMinute) + (hanChars / hanCharsPerMinute);
+  return Math.max(1, Math.ceil(estimatedMinutes));
+}
 
+// Shared token counter — both reading-minutes and word-count need the same
+// view of what counts as a word so they never disagree on the same input.
+function countRstTokens(content: string): { latinWords: number; hanChars: number } {
   const text = content
     .replace(/<\/?[^>]+(>|$)/g, '')
     .replace(/```[\s\S]*?```/g, '')
@@ -621,26 +628,14 @@ function calculateReadingTime(content: string): string {
     .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/[#*_~>\-[\]()]/g, ' ');
-
-  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
-
-  const estimatedMinutes = (latinWordCount / wordsPerMinute) + (hanCharCount / hanCharsPerMinute);
-  const minutes = Math.max(1, Math.ceil(estimatedMinutes));
-  return `${minutes} min read`;
+  const hanChars = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
+  const latinWords = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
+  return { latinWords, hanChars };
 }
 
 function calculateWordCount(content: string): number {
-  const text = content
-    .replace(/<\/?[^>]+(>|$)/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]*`/g, '')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[#*_~>\-[\]()]/g, ' ');
-  const hanCharCount = (text.match(/[㐀-䶿一-鿿豈-﫿]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []).length;
-  return latinWordCount + hanCharCount;
+  const { latinWords, hanChars } = countRstTokens(content);
+  return latinWords + hanChars;
 }
 
 function getHeadings(content: string): RstHeading[] {
@@ -673,7 +668,7 @@ export function parseRstDocument(source: string): ParsedRstDocument {
     metadata,
     headings: getHeadings(markdownBody),
     excerpt: metadata.excerpt ?? '',
-    readingTime: calculateReadingTime(markdownBody),
+    readingMinutes: calculateReadingMinutes(markdownBody),
     wordCount: calculateWordCount(markdownBody),
   };
 }

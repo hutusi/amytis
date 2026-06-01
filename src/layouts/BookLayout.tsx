@@ -71,7 +71,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
                 {chapter.wordCount.toLocaleString()} {t('words')}
               </span>
               <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <span className="font-mono text-muted/70">{chapter.readingTime}</span>
+              <span className="font-mono text-muted/70">{chapter.readingMinutes} {t('reading_time')}</span>
             </div>
 
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading leading-tight mb-4">

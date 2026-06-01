@@ -89,7 +89,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
                 {post.wordCount.toLocaleString()} {t('words')}
               </span>
               <span className="w-1 h-1 rounded-full bg-muted/30" />
-              <span className="font-mono text-muted/70">{post.readingTime}</span>
+              <span className="font-mono text-muted/70">{post.readingMinutes} {t('reading_time')}</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">

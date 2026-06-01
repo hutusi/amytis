@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { RstParseError } from "./rst";
 import {
   generateExcerpt,
-  calculateReadingTime,
+  calculateReadingMinutes,
   calculateWordCount,
   getHeadings,
   getAuthorSlug,
@@ -67,38 +67,37 @@ describe("markdown utils", () => {
     });
   });
 
-  describe("calculateReadingTime", () => {
-    test("short content returns 1 min read", () => {
+  describe("calculateReadingMinutes", () => {
+    test("short content returns 1 minute (floor)", () => {
       const text = "Hello world, this is a short post.";
-      expect(calculateReadingTime(text)).toBe("1 min read");
+      expect(calculateReadingMinutes(text)).toBe(1);
     });
 
-    test("600 words returns 3 min read", () => {
+    test("600 words returns 3 minutes", () => {
       const words = Array(600).fill("word").join(" ");
-      expect(calculateReadingTime(words)).toBe("3 min read");
+      expect(calculateReadingMinutes(words)).toBe(3);
     });
 
-    test("empty content returns 1 min read", () => {
-      expect(calculateReadingTime("")).toBe("1 min read");
+    test("empty content returns 1 (floor)", () => {
+      expect(calculateReadingMinutes("")).toBe(1);
     });
 
     test("strips markdown formatting before counting", () => {
       // 400 actual words surrounded by markdown syntax
       const words = Array(400).fill("**word**").join(" ");
-      const result = calculateReadingTime(words);
-      expect(result).toBe("2 min read");
+      expect(calculateReadingMinutes(words)).toBe(2);
     });
 
-    test("counts Chinese characters for reading time", () => {
+    test("counts Chinese characters at 300 cpm", () => {
       const han = "中".repeat(600);
-      expect(calculateReadingTime(han)).toBe("2 min read");
+      expect(calculateReadingMinutes(han)).toBe(2);
     });
 
     test("combines Latin words and Chinese characters", () => {
       const latinWords = Array(200).fill("word").join(" ");
       const han = "中".repeat(300);
       const mixed = `${latinWords} ${han}`;
-      expect(calculateReadingTime(mixed)).toBe("2 min read");
+      expect(calculateReadingMinutes(mixed)).toBe(2);
     });
   });
 
@@ -136,12 +135,12 @@ describe("markdown utils", () => {
       expect(calculateWordCount("See [the docs](https://example.com) here")).toBe(4);
     });
 
-    test("matches calculateReadingTime on the same input", () => {
+    test("matches calculateReadingMinutes on the same input", () => {
       // The two metrics share a tokenizer; both should agree on the underlying
-      // token counts. 600 Latin words → 600 wordCount, 3 min reading time.
+      // token counts. 600 Latin words → 600 wordCount, 3-minute reading time.
       const text = Array(600).fill("word").join(" ");
       expect(calculateWordCount(text)).toBe(600);
-      expect(calculateReadingTime(text)).toBe("3 min read");
+      expect(calculateReadingMinutes(text)).toBe(3);
     });
   });
 

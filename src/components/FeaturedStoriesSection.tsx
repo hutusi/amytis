@@ -14,7 +14,7 @@ export interface FeaturedPost {
   excerpt: string;
   date: string;
   category: string;
-  readingTime: string;
+  readingMinutes: number;
   coverImage?: string;
   series?: string;
   pinned?: boolean;
@@ -110,7 +110,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
                 <div className="flex items-center gap-2 text-xs font-mono text-white/60 mb-3 overflow-hidden">
                   <span className="text-accent uppercase tracking-wider truncate min-w-0">{hero.category}</span>
                   <span className="shrink-0">·</span>
-                  <span className="shrink-0 whitespace-nowrap">{hero.readingTime}</span>
+                  <span className="shrink-0 whitespace-nowrap">{hero.readingMinutes} {t('reading_time')}</span>
                   <span className="shrink-0">·</span>
                   <span className="shrink-0 whitespace-nowrap">{hero.date}</span>
                 </div>
@@ -141,7 +141,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems }: Featur
                   <div className="flex items-center gap-2 text-xs font-mono text-muted mb-2">
                     <span className="text-accent uppercase tracking-wider truncate max-w-[4rem]">{post.category}</span>
                     <span className="shrink-0 hidden sm:inline">·</span>
-                    <span className="shrink-0 hidden sm:inline">{post.readingTime}</span>
+                    <span className="shrink-0 hidden sm:inline">{post.readingMinutes} {t('reading_time')}</span>
                     <span className="shrink-0">·</span>
                     <span className="shrink-0">{post.date}</span>
                   </div>

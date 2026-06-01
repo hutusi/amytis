@@ -2,22 +2,24 @@ import { describe, expect, test } from "bun:test";
 import { getAllPosts, getPostBySlug } from "../../src/lib/markdown";
 
 describe("Integration: Reading Time & Headings", () => {
-  test("posts have readingTime matching expected format", () => {
+  test("posts have a positive whole-minute readingMinutes", () => {
     const posts = getAllPosts();
     expect(posts.length).toBeGreaterThan(0);
 
     posts.forEach((post) => {
-      expect(post.readingTime).toMatch(/^\d+ min read$/);
+      expect(Number.isInteger(post.readingMinutes)).toBe(true);
+      expect(post.readingMinutes).toBeGreaterThanOrEqual(1);
     });
   });
 
-  test("kitchen-sink post has readingTime in correct format", () => {
+  test("kitchen-sink post has a positive readingMinutes", () => {
     const post = getPostBySlug("kitchen-sink");
     if (!post) {
       console.warn("Skipping: kitchen-sink post not found");
       return;
     }
-    expect(post.readingTime).toMatch(/^\d+ min read$/);
+    expect(Number.isInteger(post.readingMinutes)).toBe(true);
+    expect(post.readingMinutes).toBeGreaterThanOrEqual(1);
   });
 
   test("headings on real posts have correct structure", () => {
@@ -49,13 +51,13 @@ describe("Integration: Reading Time & Headings", () => {
     });
   });
 
-  test("short posts have 1 min read", () => {
+  test("short posts have readingMinutes === 1 (floor)", () => {
     const shortPost = getPostBySlug("legacy-markdown");
     expect(shortPost).toBeDefined();
     if (!shortPost) {
       throw new Error("fixture 'legacy-markdown' not found");
     }
-    expect(shortPost.readingTime).toBe("1 min read");
+    expect(shortPost.readingMinutes).toBe(1);
   });
 
   test("multilingual post has headings with correct IDs", () => {

@@ -68,7 +68,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, colle
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted mb-3">
                       <span>{post.date}</span>
                       <span className="hidden sm:inline">•</span>
-                      <span className="text-accent/80">{post.readingTime}</span>
+                      <span className="text-accent/80">{post.readingMinutes} {t('reading_time')}</span>
                       {post.category && (
                         <>
                           <span className="hidden sm:inline">•</span>
