@@ -11,6 +11,7 @@ import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
 import remarkGithubAlerts from '@/lib/remark-github-alerts';
 import remarkVuepressContainers, { normalizeVuepressContainerSyntax } from '@/lib/remark-vuepress-containers';
+import { normalizeVuepressBlockMath } from '@/lib/normalize-vuepress-math';
 import remarkBookChapterLinks, { type BookChapterLinksOptions } from '@/lib/remark-book-chapter-links';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
@@ -268,7 +269,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
           rehypePlugins={rehypePlugins}
           components={allComponents}
         >
-          {normalizeVuepressContainerSyntax(content)}
+          {latex
+            ? normalizeVuepressBlockMath(normalizeVuepressContainerSyntax(content))
+            : normalizeVuepressContainerSyntax(content)}
         </ReactMarkdown>
       </div>
     </ArticleCopyCleaner>
