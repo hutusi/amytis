@@ -93,6 +93,14 @@ bun run new-from-images ./photos --title "Gallery"
 
 # Chat logs to flows
 bun run new-flow-from-chat
+
+# VuePress 2 book → Amytis book directory.
+# Reads .vuepress/config.{js,mjs,ts}, AST-extracts the sidebar, copies the
+# docs/ tree verbatim into <dest>, and rewrites <dest>/index.mdx with the
+# nested {section, items} TOC. Idempotent — re-running mirrors the current
+# state of <source> and preserves user-controlled frontmatter (coverImage,
+# featured, authors, excerpt, draft).
+bun run sync-vuepress-book --source /path/to/dmla/docs --dest content/books/dmla
 ```
 
 ### Maintenance Tools
