@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-06-01
+
+### Added
+- **VuePress Book Pipeline**: Books are now first-class with nested chapter ids and TOCs, a catch-all chapter route, collapsible sections in the chapter sidebar, book-level LaTeX/math, VuePress `:::container` admonitions, and inter-chapter links. Includes a new `bun run sync-vuepress-book` importer that handles frontmatter-less chapters and stale `.md` references gracefully.
+- **Shiki Syntax Highlighting**: Replaced `react-syntax-highlighter`/Prism with a build-time Shiki pipeline across both Markdown/MDX and rST. Unknown fence languages now degrade to plaintext with a build-log warning instead of crashing the build, and any bundled Shiki language is lazy-loaded on demand.
+- **Code-Group Tabs**: New `:::code-group` (Markdown) and `.. code-group::` (rST) directives render fenced blocks as switchable tabs, with auto-detected icons for languages, package managers, and config files.
+- **Shiki Notation Comments**: Inline `// [!code focus]`, `[!code error]`, `[!code warning]`, `[!code highlight]`, and diff markers render with visual indicators inside code blocks.
+- **GitHub-Flavored Alert Blockquotes**: `> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]` render as styled callouts in both Markdown and rST (admonition visual parity).
+- **Reading Meta**: Word count appears alongside reading time on post and chapter headers, with Chinese localization (`5 分钟阅读`).
+- **External Link Affordance**: Outward-arrow icon on external links, opened in a new tab.
+- **Code Block Polish**: Real tab icons via Iconify for code-group headers, proper-case language labels, a more prominent highlighted-line background, and rST `:linenos:` / `:emphasize-lines:` / `:caption:` support.
+
+### Changed
+- **Mermaid Diagrams** now render frameless by default — no outer border, padding, background, or shadow. Diagram SVGs use the full column width.
+- **`showChapterExcerpt`** defaults to `false` on books; opt back in per-book.
+- **Markdown Rendering Fidelity**: Single-line `$$ x $$` block math now expands and parses as display math; block math centers via `.katex-display`; VuePress inline `<img>` styling is preserved through import; KaTeX `unicodeTextInMathMode` warnings (noise on CJK math labels) are scoped-silenced.
+- **Dependency Refresh**: TypeScript 5.9 → 6.0, ESLint 9 → 10 (config rewritten without `eslint-config-next`), Next.js + safe minor/patch sweep, `@types/node` 24 → 25, `pdf-to-img` 5 → 6.
+
+### Fixed
+- **Hydration Mismatches**: Locale-bound text in `TocPanel`, `PostNavigation`, `PostSidebar`, and `ShareBar` no longer logs a hydration error on first paint for users whose stored locale differs from `siteConfig.i18n.defaultLocale`. Mermaid's mutation-prone wrapper is likewise marked.
+- **Table Padding**: Restored horizontal padding on prose table cells (the earlier `:where()`-based override was silently stripped by Tailwind v4 / Lightning CSS; replaced with a plain descendant selector that survives compilation).
+- **rST Fallback Parser**: Added rendering for `.. figure::`, line blocks, admonitions (including custom `.. cnote::` with caption), `:doc:` / `:ref:` / `:numref:` roles; suppresses `.. toctree::` from rendered body; normalizes escaped whitespace in inline rST.
+- **React 19 Warnings**: Resolved `react-hooks/set-state-in-effect` warnings and silenced image-preload warnings for local images. Eager `CoverImage` variants are no longer deprioritized.
+- **Copy-Paste UX**: Stripped per-paragraph backgrounds on article copy to prevent "striping" when pasting into rich-text editors. Clipboard-API guard before `preventDefault`.
+- **Misc**: `<summary>` styled as an interactive link; code-group icon lookups via `Object.hasOwn`; shiki dedup state reset in `finally`; `<style>` element scoping for shiki output; book import edge cases (URI decode, Vue component warnings, fenced blocks in container normalizer, chapter image paths relative to parent dir).
+
 ## [1.15.0] - 2026-04-12
 
 ### Added
