@@ -1,21 +1,54 @@
 import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 
+const CONTAINER_OPENER_RE = /^:::[ \t]+([a-zA-Z][\w-]*)(?:[ \t]+([^\n]+))?[ \t]*$/;
+const FENCE_OPEN_RE = /^[ \t]*(`{3,}|~{3,})/;
+
+function normalizeContainerLine(line: string): string {
+  return line.replace(
+    CONTAINER_OPENER_RE,
+    (_match, name: string, label: string | undefined) =>
+      label ? `:::${name}[${label.trim()}]` : `:::${name}`,
+  );
+}
+
 /**
  * Pre-process VuePress's relaxed container opener (`::: name [optional title]`)
  * into remark-directive's canonical form (`:::name[title]`). The Markdown spec
  * variant remark-directive recognizes is space-less; the dmla source — and
  * VuePress in general — uses a space-after-colons style with an inline title.
  *
+ * Skips fenced code blocks (`` ``` `` / `~~~`) so a documentation example that
+ * shows VuePress container syntax verbatim doesn't get rewritten as if it were
+ * the syntax itself. The fence tracker is character-type-aware: a `~~~` fence
+ * isn't closed by `` ``` `` and vice-versa, matching CommonMark.
+ *
  * Runs as a string-level pass before the AST is built, so the existing
  * `:::code-group` usage already in this repo (no space) is unaffected.
  */
 export function normalizeVuepressContainerSyntax(source: string): string {
-  return source.replace(
-    /^:::[ \t]+([a-zA-Z][\w-]*)(?:[ \t]+([^\n]+))?[ \t]*$/gm,
-    (_match, name: string, label: string | undefined) =>
-      label ? `:::${name}[${label.trim()}]` : `:::${name}`,
-  );
+  const lines = source.split('\n');
+  const out: string[] = [];
+  let openFence: string | null = null;
+
+  for (const line of lines) {
+    if (openFence === null) {
+      const openMatch = line.match(FENCE_OPEN_RE);
+      if (openMatch) {
+        openFence = openMatch[1];
+        out.push(line);
+        continue;
+      }
+      out.push(normalizeContainerLine(line));
+    } else {
+      // A closing fence is one with the same character type and at least as
+      // many characters as the opener, optionally indented, with nothing after.
+      const closeRe = new RegExp(`^[ \\t]*${openFence[0]}{${openFence.length},}\\s*$`);
+      if (closeRe.test(line)) openFence = null;
+      out.push(line);
+    }
+  }
+  return out.join('\n');
 }
 
 // VuePress container names → GitHub-flavored alert types. Maps the four
