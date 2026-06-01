@@ -942,6 +942,15 @@ html.dark .rst-rendered aside.admonition-danger {
   text-align: center;
 }
 
+/* Tailwind Typography zeros padding on first/last table cells so unframed
+ * tables align with surrounding paragraph text. Our `MarkdownRenderer` wraps
+ * every table in a bordered container, which makes that zero-padding push
+ * content flush against the border. Restore symmetric horizontal padding
+ * on every cell so framed tables breathe inside their wrapper. */
+.prose :where(thead th, tbody td, tfoot td):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  padding-inline: 0.75rem;
+}
+
 .rst-rendered a[role="doc-noteref"] {
   font-size: 0.82em;
   vertical-align: super;
