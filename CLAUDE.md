@@ -70,6 +70,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
 - **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
 - **Branches:** `<type>/<kebab-slug>` matching commit prefixes.
+- **No Claude attribution.** Do not add `Co-Authored-By: Claude ...` trailers to commit messages or the `🤖 Generated with [Claude Code]` footer to PR descriptions. The default templates in the harness include both — strip them.
 
 ## Verifying a change
 
