@@ -58,27 +58,41 @@ describe('Integration: Code Block Features', () => {
       expect(html.toLowerCase()).toContain('mermaid');
     });
 
+    // Extract the Mermaid outer-wrapper class string so token assertions are
+    // order-independent and scoped to the wrapper — not the surrounding prose
+    // chrome (which carries `prose-code:*` utilities that share substrings).
+    const findMermaidWrapperClass = (html: string): string => {
+      // The wrapper precedes the inner `class="mermaid ..."` element. Match the
+      // *previous* class attribute by anchoring on the inner mermaid class.
+      const m = html.match(/class="([^"]*)"\s*><div class="mermaid /);
+      return m?.[1] ?? '';
+    };
+
     test('mermaid default fence renders with the framed wrapper', async () => {
       const content = ['```mermaid', 'graph TD; A-->B;', '```'].join('\n');
       const html = await renderAsync(MarkdownRenderer({ content }));
+      const wrapper = findMermaidWrapperClass(html);
 
-      // Framed wrapper carries padding + shadow + the my-8 margin. These
-      // tokens appear only on the Mermaid wrapper — using them rather than
-      // substrings like `border-muted/20` avoids matching prose-code:*
-      // utilities present on the surrounding article wrapper.
-      expect(html).toMatch(/class="my-8 p-4 md:p-8[^"]*shadow-sm"/);
+      expect(wrapper).toContain('my-8');
+      expect(wrapper).toContain('p-4');
+      expect(wrapper).toContain('md:p-8');
+      expect(wrapper).toContain('shadow-sm');
+      expect(wrapper).toContain('border');
     });
 
     test('mermaid `compact` fence meta drops the framed wrapper', async () => {
       const content = ['```mermaid compact', 'graph TD; A-->B;', '```'].join('\n');
       const html = await renderAsync(MarkdownRenderer({ content }));
+      const wrapper = findMermaidWrapperClass(html);
 
-      // `compact` is detected from the fence meta and the Mermaid component
-      // swaps to a frameless wrapper (my-6 + overflow only, no padding /
-      // border / shadow) so the SVG can use the full column width.
-      expect(html).toMatch(/class="my-6 overflow-x-auto"/);
-      expect(html).not.toContain('shadow-sm');
-      expect(html).not.toMatch(/class="[^"]*p-4 md:p-8/);
+      // `compact` swaps to a frameless wrapper (my-6 + overflow only, no
+      // padding / border / shadow) so the SVG can use the full column width.
+      expect(wrapper).toContain('my-6');
+      expect(wrapper).toContain('overflow-x-auto');
+      expect(wrapper).not.toContain('shadow-sm');
+      expect(wrapper).not.toContain('p-4');
+      expect(wrapper).not.toContain('md:p-8');
+      expect(wrapper).not.toContain('border');
       // Still wrapped — assert the inner mermaid container is present.
       expect(html.toLowerCase()).toContain('mermaid');
     });

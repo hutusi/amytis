@@ -21,6 +21,16 @@ describe('Unit: isExternalUrl', () => {
     expect(isExternalUrl(`//${u.host}/posts/foo`)).toBe(false);
   });
 
+  test('protocol-relative with auth or port: classified by parsed host', () => {
+    // `//user:pass@host/...` — host is `host`, NOT `user:pass@host`. Substring
+    // splitting on `/` would have got this wrong.
+    expect(isExternalUrl('//user:pass@en.wikipedia.org/wiki/Vector')).toBe(true);
+    // `//host:8080/...` — port is part of host.
+    expect(isExternalUrl('//en.wikipedia.org:8080/wiki/Vector')).toBe(true);
+    // `//:80/path` — no host, URL parsing rejects it → false (non-external).
+    expect(isExternalUrl('//:80/path')).toBe(false);
+  });
+
   test('relative paths, hash, and query are internal', () => {
     expect(isExternalUrl('/posts/foo')).toBe(false);
     expect(isExternalUrl('foo.md')).toBe(false);
@@ -76,7 +86,11 @@ describe('Integration: external-link icon in MarkdownRenderer', () => {
     const u = new URL(siteConfig.baseUrl);
     const content = `See [home](${u.origin}/posts/foo).`;
     const html = await renderAsync(MarkdownRenderer({ content }));
-    expect(html).not.toMatch(new RegExp(`href="${u.origin}/posts/foo"[^>]*target="_blank"`));
+    // Escape regex metacharacters in the interpolated origin — without this,
+    // dots in e.g. `amytis.vercel.app` would match any character, making the
+    // `not.toMatch` assertion too lax.
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    expect(html).not.toMatch(new RegExp(`href="${escapeRegex(u.origin)}/posts/foo"[^>]*target="_blank"`));
   });
 
   test('image-as-link skips the icon (image already signals the destination)', async () => {

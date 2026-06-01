@@ -139,8 +139,14 @@ export function isExternalUrl(href: string | undefined | null): boolean {
   if (!siteHost) return false;
 
   if (href.startsWith('//')) {
-    const host = href.slice(2).split('/')[0];
-    return host !== '' && host !== siteHost;
+    // Prefix a dummy scheme so the URL parser handles auth (`//user:pass@host`),
+    // port-only (`//:80`), and IPv6 forms correctly — substring splitting on
+    // `/` is too coarse for any of those.
+    try {
+      return new URL(`https:${href}`).host !== siteHost;
+    } catch {
+      return false;
+    }
   }
   if (/^https?:\/\//i.test(href)) {
     try {
