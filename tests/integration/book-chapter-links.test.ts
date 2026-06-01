@@ -70,15 +70,16 @@ describe("Integration: remark-book-chapter-links", () => {
     expect(html).toContain('href="#top"');
   });
 
-  test("throws on a link pointing to a chapter id not in the TOC", async () => {
-    await expect(
-      renderAsync(
-        MarkdownRenderer({
-          content: "Broken [link](nonexistent.md).",
-          bookContext,
-        }),
-      ),
-    ).rejects.toThrow(/not declared in the book's TOC/);
+  test("warns and leaves the link unrewritten when target is not in the TOC", async () => {
+    const html = await renderAsync(
+      MarkdownRenderer({
+        content: "Broken [link](nonexistent.md).",
+        bookContext,
+      }),
+    );
+    // The unmatched link is kept as-is — it will 404 if clicked, but doesn't
+    // block the build. Matches the Shiki "unknown language → warn" precedent.
+    expect(html).toContain('href="nonexistent.md"');
   });
 
   test("non-book content (no bookContext) is not rewritten", async () => {

@@ -31,9 +31,17 @@ const MD_LINK_RE = /\.(?:md|mdx)(?:#([^?]*))?$/i;
  * - Resolve the remaining path relative to `chapterSourcePath`'s directory.
  * - Make the result relative to `bookDir`, drop the `.md`/`.mdx` extension,
  *   and treat the resulting POSIX path as the chapter id.
- * - Validate the id against `validChapterIds`. If absent, throw — broken
- *   inter-chapter links are a build-time error (strict-build invariant).
+ * - Validate the id against `validChapterIds`.
+ *   - If the link escapes the book directory, **throw** — that's almost
+ *     always a real bug (typo in `../../../somewhere`).
+ *   - If the chapter id is well-formed but not in the TOC (e.g. the author
+ *     links to a chapter they haven't written yet, or that's commented out
+ *     of the sidebar), **warn and leave the link unrewritten** instead of
+ *     blocking the build. Matches the Shiki precedent in CLAUDE.md: a
+ *     single broken cross-reference shouldn't fail a production deploy.
+ *     The warning still surfaces in CI build logs.
  */
+const warned = new Set<string>();
 export default function remarkBookChapterLinks(options: BookChapterLinksOptions) {
   const { bookSlug, bookDir, chapterSourcePath, validChapterIds } = options;
   const chapterDir = path.dirname(chapterSourcePath);
@@ -67,11 +75,17 @@ export default function remarkBookChapterLinks(options: BookChapterLinksOptions)
       const chapterId = rel.replace(/\.(?:md|mdx)$/i, '').replace(/\/index$/i, '');
 
       if (!validChapterIds.has(chapterId)) {
-        throw new Error(
-          `[amytis] Book chapter link "${url}" in ${chapterSourcePath} points to ` +
-          `chapter id "${chapterId}", which is not declared in the book's TOC. ` +
-          `Either add it to index.mdx's chapters list or remove the link.`
-        );
+        const warnKey = `${bookSlug}::${chapterId}`;
+        if (!warned.has(warnKey)) {
+          warned.add(warnKey);
+          console.warn(
+            `[amytis] Book chapter link "${url}" in ${chapterSourcePath} points to ` +
+            `chapter id "${chapterId}", which is not in book "${bookSlug}"'s TOC. ` +
+            `Leaving link unrewritten — it will 404 if clicked. To fix, add the ` +
+            `chapter to index.mdx or remove the link.`
+          );
+        }
+        return;
       }
 
       node.url = fragment

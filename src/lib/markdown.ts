@@ -1554,7 +1554,7 @@ export const BookSchema = z.object({
 });
 
 const BookChapterSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   excerpt: z.string().optional(),
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
@@ -1724,8 +1724,16 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
   const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
 
+  // Title resolution: frontmatter wins, then book TOC entry, then first H1
+  // in the body. VuePress chapters often omit frontmatter entirely and rely
+  // on the H1 as the title, so this fallback chain keeps the import flow lossless.
+  const fallbackFromToc = chapterIndex >= 0 ? book.chapters[chapterIndex].title : undefined;
+  const h1Match = content.match(/^\s*#\s+([^\n]+)/);
+  const fallbackFromH1 = h1Match?.[1].trim();
+  const title = data.title || fallbackFromToc || fallbackFromH1 || chapterSlug;
+
   return {
-    title: data.title,
+    title,
     slug: chapterSlug,
     bookSlug,
     content: contentWithoutH1,
