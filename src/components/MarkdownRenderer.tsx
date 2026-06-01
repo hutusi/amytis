@@ -175,10 +175,21 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // In development mode, use unoptimized images since WebP versions don't exist yet
     img: (props: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { src, alt, width, height, node: _node, ...rest } = props;
+      const { src, alt, width, height, node: _node, style, ...rest } = props;
       const isDev = process.env.NODE_ENV === 'development';
       const imageSrc = src as string;
       const isExternal = imageSrc?.startsWith('http') || imageSrc?.startsWith('//');
+
+      // Author-supplied inline `style` is a strong signal the <img> came from
+      // raw HTML inside the markdown (typically inline icons like social-media
+      // badges) rather than from a markdown `![alt](src)`. Markdown images
+      // never carry a style attribute. Preserve the author's styling and
+      // skip optimization for these — wrapping a 22px icon in <ExportedImage>
+      // strips the style and renders it at its natural 500px size.
+      if (style) {
+        // eslint-disable-next-line @next/next/no-img-element
+        return <img src={imageSrc} alt={alt || ''} style={style} {...rest} fetchPriority="low" />;
+      }
 
       if (!isExternal) {
         const shouldBypassOptimization = shouldBypassImageOptimization(imageSrc);
