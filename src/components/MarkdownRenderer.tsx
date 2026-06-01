@@ -229,11 +229,24 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
 
   // Merge custom HTML elements not in the Components type (e.g. web components used in MDX,
   // and the synthetic <code-group> / <github-alert> tagNames emitted by our remark plugins).
+  //
+  // VuePress component pass-throughs: imported VuePress books may use Vue
+  // components like <Swiper>/<Slide> (image carousel), <ClientOnly>, <HomeHero>,
+  // <ChatDemo>, <GlobalTOC>. hast/React lowercases these tags, and without a
+  // handler React logs "The tag <swiper> is unrecognized in this browser". Map
+  // each one to a passive renderer so the warnings go away and inner content
+  // (where it makes sense) still appears as a graceful degradation.
   const allComponents = {
     ...components,
     'rss-feed': () => <RssFeedWidget />,
     'code-group': CodeGroup,
     'github-alert': GithubAlert,
+    swiper: ({ children }: { children?: React.ReactNode }) => <div className="my-6 space-y-4">{children}</div>,
+    slide: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+    clientonly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    globaltoc: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    homehero: () => null,
+    chatdemo: () => null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 
