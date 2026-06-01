@@ -58,6 +58,31 @@ describe('Integration: Code Block Features', () => {
       expect(html.toLowerCase()).toContain('mermaid');
     });
 
+    test('mermaid default fence renders with the framed wrapper', async () => {
+      const content = ['```mermaid', 'graph TD; A-->B;', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+
+      // Framed wrapper carries padding + shadow + the my-8 margin. These
+      // tokens appear only on the Mermaid wrapper — using them rather than
+      // substrings like `border-muted/20` avoids matching prose-code:*
+      // utilities present on the surrounding article wrapper.
+      expect(html).toMatch(/class="my-8 p-4 md:p-8[^"]*shadow-sm"/);
+    });
+
+    test('mermaid `compact` fence meta drops the framed wrapper', async () => {
+      const content = ['```mermaid compact', 'graph TD; A-->B;', '```'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+
+      // `compact` is detected from the fence meta and the Mermaid component
+      // swaps to a frameless wrapper (my-6 + overflow only, no padding /
+      // border / shadow) so the SVG can use the full column width.
+      expect(html).toMatch(/class="my-6 overflow-x-auto"/);
+      expect(html).not.toContain('shadow-sm');
+      expect(html).not.toMatch(/class="[^"]*p-4 md:p-8/);
+      // Still wrapped — assert the inner mermaid container is present.
+      expect(html.toLowerCase()).toContain('mermaid');
+    });
+
     test('unknown language renders as plaintext (warn-and-degrade)', async () => {
       // Production deploys can't fail on a single unknown fence — render as
       // plaintext and emit a build-time warn instead. Three previous failures
