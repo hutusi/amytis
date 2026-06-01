@@ -17,7 +17,6 @@ import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
-import ArticleMeta from '@/components/ArticleMeta';
 import { getPostUrl, getStaticPageUrl } from '@/lib/urls';
 
 interface PostLayoutProps {
@@ -79,13 +78,19 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
                 </span>
               </div>
             )}
-            <ArticleMeta
-              headerLabel={post.category}
-              date={post.date}
-              wordCount={post.wordCount}
-              readingMinutes={post.readingMinutes}
-              className="mb-6"
-            />
+            <div className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
+              <span className="uppercase tracking-widest font-semibold text-accent">
+                {post.category}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <time className="font-mono" data-pagefind-meta="date[content]">{post.date}</time>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <span className="font-mono">
+                {post.wordCount.toLocaleString()} {t('words')}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-muted/30" />
+              <span className="font-mono text-muted/70">{post.readingMinutes} {t('reading_time')}</span>
+            </div>
 
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">
               {post.title}
