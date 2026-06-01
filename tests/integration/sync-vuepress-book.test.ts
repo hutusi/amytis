@@ -177,7 +177,9 @@ describe("Integration: sync-vuepress-book script", () => {
       const res = runSync(docs, dest);
       expect(res.status).not.toBe(0);
       expect(res.stderr).toMatch(/config\.ts/);
-      expect(res.stderr).toMatch(/Compile to JavaScript|JS-only|acorn/);
+      // Match the actionable phrasing only — if a regression let the raw
+      // acorn parse error through, that should fail this assertion.
+      expect(res.stderr).toMatch(/Compile to JavaScript|JS-only/);
     } finally {
       rmSync(tsConfig, { recursive: true, force: true });
     }

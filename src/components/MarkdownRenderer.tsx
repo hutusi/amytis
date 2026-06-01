@@ -187,8 +187,22 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       // skip optimization for these — wrapping a 22px icon in <ExportedImage>
       // strips the style and renders it at its natural 500px size.
       if (style) {
-        // eslint-disable-next-line @next/next/no-img-element
-        return <img src={imageSrc} alt={alt || ''} style={style} {...rest} fetchPriority="low" />;
+        // width / height were destructured out of `rest` above, so re-apply
+        // them here. Mixed author markup like `<img src="..." width="120"
+        // style="border-radius:4px">` should keep its explicit sizing rather
+        // than render at the SVG's natural dimensions.
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageSrc}
+            alt={alt || ''}
+            width={width}
+            height={height}
+            style={style}
+            {...rest}
+            fetchPriority="low"
+          />
+        );
       }
 
       if (!isExternal) {
