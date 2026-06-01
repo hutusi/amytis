@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
 import { padNumber } from '@/lib/format-utils';
@@ -11,13 +11,18 @@ interface FlowCalendarSidebarProps {
   tags?: Record<string, number>;
   selectedTag?: string | null;
   onTagSelect?: (tag: string) => void;
-  breadcrumb?: ReactNode;
+  /**
+   * 'panel' renders content only (consumer provides the slide-over chrome).
+   * 'sidebar' keeps the legacy sticky-aside chrome for any consumer that
+   * hasn't migrated.
+   */
+  variant?: 'panel' | 'sidebar';
 }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect, breadcrumb }: FlowCalendarSidebarProps) {
+export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect, variant = 'sidebar' }: FlowCalendarSidebarProps) {
   const { t } = useLanguage();
   const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
@@ -78,9 +83,13 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
     return cells;
   }, [firstDay, daysInMonth]);
 
+  const wrapperClass =
+    variant === 'panel'
+      ? 'block select-none'
+      : 'hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] select-none';
+
   return (
-    <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] select-none">
-      {breadcrumb && <div className="mb-4">{breadcrumb}</div>}
+    <aside className={wrapperClass}>
       <div className="border border-muted/20 rounded-lg p-4">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-3">

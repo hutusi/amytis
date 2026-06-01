@@ -1,4 +1,4 @@
-import { getAllFlows, getFlowsByYear, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowsByYear, getFlowTags, buildSlugRegistry } from '@/lib/markdown';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import FlowContent from '@/components/FlowContent';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export function generateStaticParams() {
   if (siteConfig.features?.flow?.enabled === false) return [{ year: '_' }];
@@ -27,16 +28,25 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
 export default async function FlowsYearPage({ params }: { params: Promise<{ year: string }> }) {
   if (siteConfig.features?.flow?.enabled === false) notFound();
   const { year } = await params;
-  const flows = getFlowsByYear(year);
-  if (flows.length === 0) notFound();
+  const yearFlows = getFlowsByYear(year);
+  if (yearFlows.length === 0) notFound();
 
   const allFlows = getAllFlows();
+  const slugRegistry = buildSlugRegistry();
   const entryDates = allFlows.map(f => f.date);
   const tags = getFlowTags();
 
+  const flows = yearFlows.map(f => ({
+    slug: f.slug,
+    date: f.date,
+    title: f.title,
+    tags: f.tags,
+    body: <MarkdownRenderer content={f.content} slug={`flows/${f.slug}`} slugRegistry={slugRegistry} />,
+  }));
+
   // Build month counts for this year
   const monthCounts: Record<string, number> = {};
-  for (const flow of flows) {
+  for (const flow of yearFlows) {
     const month = flow.date.split('-')[1];
     monthCounts[month] = (monthCounts[month] || 0) + 1;
   }
@@ -77,14 +87,14 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         titleKey="flows_in_year"
         titleParams={{ year }}
         subtitleKey="flow_subtitle"
-        subtitleParams={{ count: flows.length }}
+        subtitleParams={{ count: yearFlows.length }}
       />
 
       <FlowContent
         flows={flows}
         entryDates={entryDates}
         tags={tags}
-        currentDate={flows[0]?.date}
+        currentDate={yearFlows[0]?.date}
         breadcrumb={breadcrumb}
       />
     </div>

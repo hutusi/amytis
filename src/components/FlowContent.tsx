@@ -1,12 +1,21 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
-import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
+import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
+import FlowStreamEntry from '@/components/FlowStreamEntry';
 import FlowTimelineEntry from '@/components/FlowTimelineEntry';
 import Pagination from '@/components/Pagination';
 
-interface FlowItem {
+interface StreamFlowItem {
+  slug: string;
+  date: string;
+  title?: string;
+  tags: string[];
+  body: ReactNode;
+}
+
+interface CompactFlowItem {
   slug: string;
   date: string;
   title?: string;
@@ -15,8 +24,8 @@ interface FlowItem {
 }
 
 interface FlowContentProps {
-  flows: FlowItem[];
-  allFlows?: FlowItem[];
+  flows: StreamFlowItem[];
+  allFlows?: CompactFlowItem[];
   entryDates: string[];
   tags: Record<string, number>;
   currentDate?: string;
@@ -29,34 +38,39 @@ interface FlowContentProps {
 }
 
 export default function FlowContent({ flows, allFlows, entryDates, tags, currentDate, pagination, breadcrumb }: FlowContentProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const filteredFlows = useMemo(() => {
-    if (!selectedTag) return flows;
-    const source = allFlows ?? flows;
+  const filteredCompactFlows = useMemo(() => {
+    if (!selectedTag) return [];
+    const source = allFlows ?? flows.map(f => ({ slug: f.slug, date: f.date, title: f.title, excerpt: '', tags: f.tags }));
     return source.filter(f => f.tags.includes(selectedTag));
   }, [flows, allFlows, selectedTag]);
+
+  const groupedStream = useMemo(() => {
+    const map = new Map<string, StreamFlowItem[]>();
+    for (const f of flows) {
+      const key = f.date.slice(0, 7); // YYYY-MM
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(f);
+    }
+    return Array.from(map.entries());
+  }, [flows]);
 
   function handleTagSelect(tag: string) {
     setSelectedTag(prev => (prev === tag ? null : tag));
   }
 
   const hasTags = tags && Object.keys(tags).length > 0;
+  const locale = language === 'zh' ? 'zh-CN' : 'en-US';
+  const compactTotal = (allFlows ?? flows).length;
 
   return (
-    <div className="flex gap-10">
-      <FlowCalendarSidebar
-        entryDates={entryDates}
-        currentDate={currentDate}
-        tags={tags}
-        selectedTag={selectedTag}
-        onTagSelect={handleTagSelect}
-        breadcrumb={breadcrumb}
-      />
+    <div className="relative">
+      <div className="mx-auto max-w-2xl min-w-0">
+        {breadcrumb && <div className="mb-6">{breadcrumb}</div>}
 
-      <div className="flex-1 min-w-0">
-        {/* Mobile tag filter strip */}
+        {/* Mobile tag strip */}
         {hasTags && (
           <div className="lg:hidden mb-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -82,9 +96,7 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
 
         {selectedTag && (
           <div className="flex items-center gap-2 mb-4 text-sm text-muted">
-            <span>
-              {filteredFlows.length} / {(allFlows ?? flows).length}
-            </span>
+            <span>{filteredCompactFlows.length} / {compactTotal}</span>
             <button
               onClick={() => setSelectedTag(null)}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-muted/20 text-xs hover:border-accent hover:text-accent transition-colors"
@@ -94,21 +106,54 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
           </div>
         )}
 
-        {filteredFlows.length === 0 ? (
+        {selectedTag ? (
+          // Tag-filtered: compact list across all pages (no full body available)
+          filteredCompactFlows.length === 0 ? (
+            <p className="text-muted">{t('no_flows')}</p>
+          ) : (
+            <div>
+              {filteredCompactFlows.map(flow => (
+                <FlowTimelineEntry
+                  key={flow.slug}
+                  date={flow.date}
+                  title={flow.title}
+                  excerpt={flow.excerpt}
+                  tags={flow.tags}
+                  slug={flow.slug}
+                />
+              ))}
+            </div>
+          )
+        ) : flows.length === 0 ? (
           <p className="text-muted">{t('no_flows')}</p>
         ) : (
-          <div className="space-y-0">
-            {filteredFlows.map(flow => (
-              <FlowTimelineEntry
-                key={flow.slug}
-                date={flow.date}
-                title={flow.title}
-                excerpt={flow.excerpt}
-                tags={flow.tags}
-                slug={flow.slug}
-              />
-            ))}
-          </div>
+          // Stream mode: full content, grouped by month
+          groupedStream.map(([monthKey, monthFlows]) => {
+            const [y, m] = monthKey.split('-').map(Number);
+            const monthLabel = new Date(y, m - 1).toLocaleDateString(locale, {
+              year: 'numeric',
+              month: 'long',
+            });
+            return (
+              <section key={monthKey}>
+                <div className="flex items-center gap-4 mt-12 mb-2 text-[11px] uppercase tracking-[0.25em] text-muted/60 first:mt-0">
+                  <span className="flex-1 h-px bg-muted/15" />
+                  <span>{monthLabel}</span>
+                  <span className="flex-1 h-px bg-muted/15" />
+                </div>
+                {monthFlows.map(flow => (
+                  <FlowStreamEntry
+                    key={flow.slug}
+                    date={flow.date}
+                    slug={flow.slug}
+                    title={flow.title}
+                    body={flow.body}
+                    tags={flow.tags}
+                  />
+                ))}
+              </section>
+            );
+          })
         )}
 
         {!selectedTag && pagination && pagination.totalPages > 1 && (
@@ -121,6 +166,14 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
           </div>
         )}
       </div>
+
+      <FlowSidebarSlideOver
+        entryDates={entryDates}
+        currentDate={currentDate}
+        tags={tags}
+        selectedTag={selectedTag}
+        onTagSelect={handleTagSelect}
+      />
     </div>
   );
 }

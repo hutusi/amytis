@@ -1,4 +1,4 @@
-import { getAllFlows, getFlowsByMonth, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowsByMonth, getFlowTags, buildSlugRegistry } from '@/lib/markdown';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import FlowContent from '@/components/FlowContent';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export function generateStaticParams() {
   if (siteConfig.features?.flow?.enabled === false) return [{ year: '_', month: '_' }];
@@ -34,13 +35,22 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
 export default async function FlowsMonthPage({ params }: { params: Promise<{ year: string; month: string }> }) {
   if (siteConfig.features?.flow?.enabled === false) notFound();
   const { year, month } = await params;
-  const flows = getFlowsByMonth(year, month);
-  if (flows.length === 0) notFound();
+  const monthFlows = getFlowsByMonth(year, month);
+  if (monthFlows.length === 0) notFound();
 
   const allFlows = getAllFlows();
+  const slugRegistry = buildSlugRegistry();
   const entryDates = allFlows.map(f => f.date);
   const tags = getFlowTags();
   const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const flows = monthFlows.map(f => ({
+    slug: f.slug,
+    date: f.date,
+    title: f.title,
+    tags: f.tags,
+    body: <MarkdownRenderer content={f.content} slug={`flows/${f.slug}`} slugRegistry={slugRegistry} />,
+  }));
 
   const breadcrumb = (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
@@ -62,7 +72,7 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
         titleKey="flows_in_month"
         titleParams={{ month: monthLabel }}
         subtitleKey="flow_subtitle"
-        subtitleParams={{ count: flows.length }}
+        subtitleParams={{ count: monthFlows.length }}
       />
 
       <FlowContent
