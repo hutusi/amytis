@@ -151,7 +151,7 @@ export const siteConfig = {
   pagination: {
     posts: 5,
     series: 5,
-    flows: 20,
+    flows: 15,
     notes: 20,
   },
   posts: {
