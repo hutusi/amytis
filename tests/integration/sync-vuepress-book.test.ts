@@ -5,14 +5,21 @@ import { tmpdir } from "os";
 import path from "path";
 import matter from "gray-matter";
 
-const SCRIPT = path.resolve("scripts/sync-vuepress-book.ts");
 const FIXTURE_SOURCE = path.resolve("tests/fixtures/sync-vuepress-book/docs");
 
+// Invoke through the published `bun run sync-vuepress-book` entrypoint and the
+// `--source` / `--dest` flags so the test exercises everything a real user does:
+// the package.json script wiring + the CLI argv parser, not just the inner sync
+// pipeline.
 function runSync(source: string, dest: string) {
-  return spawnSync("bun", ["run", SCRIPT, source, dest], {
-    encoding: "utf8",
-    cwd: process.cwd(),
-  });
+  return spawnSync(
+    "bun",
+    ["run", "sync-vuepress-book", "--source", source, "--dest", dest],
+    {
+      encoding: "utf8",
+      cwd: process.cwd(),
+    },
+  );
 }
 
 describe("Integration: sync-vuepress-book script", () => {
@@ -80,6 +87,100 @@ describe("Integration: sync-vuepress-book script", () => {
     expect(refreshed.featured).toBe(true);
     expect(refreshed.excerpt).toBe("A tiny book for tests.");
     expect(Array.isArray(refreshed.chapters)).toBe(true);
+  });
+
+  test("prunes dest files removed upstream (mirror semantics)", () => {
+    // First sync — dest now has every fixture file.
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+    expect(existsSync(path.join(dest, "maths", "linear", "matrices.md"))).toBe(true);
+
+    // Simulate an upstream deletion by syncing from a smaller temp source tree
+    // (just the bits we need for the still-listed chapters) and a config that
+    // no longer references matrices.
+    const trimmed = mkdtempSync(path.join(tmpdir(), "sync-trimmed-"));
+    try {
+      const docs = path.join(trimmed, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `export default {
+          title: 'Fixture Book',
+          theme: { sidebar: [{ text: 'Vectors', link: '/maths/linear/vectors' }] },
+        }
+        `,
+      );
+      mkdirSync(path.join(docs, "maths", "linear"), { recursive: true });
+      writeFileSync(path.join(docs, "maths", "linear", "vectors.md"), "---\ntitle: Vectors\n---\n# Vectors\n");
+
+      expect(runSync(docs, dest).status).toBe(0);
+
+      // Vectors survives, matrices is gone, the now-empty assets/ dir is cleaned up.
+      expect(existsSync(path.join(dest, "maths", "linear", "vectors.md"))).toBe(true);
+      expect(existsSync(path.join(dest, "maths", "linear", "matrices.md"))).toBe(false);
+      expect(existsSync(path.join(dest, "intro"))).toBe(false);
+      expect(existsSync(path.join(dest, "maths", "linear", "assets"))).toBe(false);
+      // index.mdx is regenerated, not pruned.
+      expect(existsSync(path.join(dest, "index.mdx"))).toBe(true);
+    } finally {
+      rmSync(trimmed, { recursive: true, force: true });
+    }
+  });
+
+  test("preserves user-added dotfiles on re-run (out-of-band overlay state)", () => {
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+    const dotfile = path.join(dest, ".gitkeep");
+    writeFileSync(dotfile, "");
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+    expect(existsSync(dotfile)).toBe(true);
+  });
+
+  test("resolves folder-index sidebar links (e.g. /guide/ → guide/README.md)", () => {
+    const folder = mkdtempSync(path.join(tmpdir(), "sync-folder-"));
+    try {
+      const docs = path.join(folder, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `export default {
+          title: 'Folder-Index Book',
+          theme: { sidebar: [{ text: 'Guide', link: '/guide/' }] },
+        }
+        `,
+      );
+      mkdirSync(path.join(docs, "guide"), { recursive: true });
+      writeFileSync(path.join(docs, "guide", "README.md"), "---\ntitle: Guide\n---\n# Guide\n");
+
+      const res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+      // The chapter id strips the trailing slash, so the folder-index target
+      // exists at <dest>/guide/README.md and the TOC entry's id is `guide`.
+      const { data } = matter(readFileSync(path.join(dest, "index.mdx"), "utf8")) as unknown as { data: Record<string, unknown> };
+      expect((data.chapters as Array<{ id: string }>)[0].id).toBe("guide");
+      expect(existsSync(path.join(dest, "guide", "README.md"))).toBe(true);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects a config.ts with a clear message instead of acorn parse failure", () => {
+    const tsConfig = mkdtempSync(path.join(tmpdir(), "sync-ts-config-"));
+    try {
+      const docs = path.join(tsConfig, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.ts"),
+        "const x: number = 1; export default { theme: { sidebar: [] } }\n",
+      );
+      const res = runSync(docs, dest);
+      expect(res.status).not.toBe(0);
+      expect(res.stderr).toMatch(/config\.ts/);
+      expect(res.stderr).toMatch(/Compile to JavaScript|JS-only|acorn/);
+    } finally {
+      rmSync(tsConfig, { recursive: true, force: true });
+    }
   });
 
   test("exits with an error when a sidebar leaf points to a missing source file", () => {
