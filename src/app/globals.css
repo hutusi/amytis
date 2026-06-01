@@ -934,6 +934,14 @@ html.dark .rst-rendered aside.admonition-danger {
   vertical-align: middle;
 }
 
+.katex-display {
+  text-align: center;
+}
+
+.katex-display > .katex {
+  text-align: center;
+}
+
 .rst-rendered a[role="doc-noteref"] {
   font-size: 0.82em;
   vertical-align: super;
