@@ -1,3 +1,4 @@
+import React from 'react';
 import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import RssFeedWidget from '@/components/RssFeedWidget';
 import Mermaid from '@/components/Mermaid';
@@ -5,6 +6,7 @@ import CodeBlock from '@/components/CodeBlock';
 import CodeGroup from '@/components/CodeGroup';
 import GithubAlert from '@/components/GithubAlert';
 import KatexStyles from '@/components/KatexStyles';
+import ExternalLinkIcon from '@/components/ExternalLinkIcon';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
@@ -26,6 +28,7 @@ import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/markdown';
 import { shouldBypassImageOptimization } from '@/lib/image-utils';
 import { parseFenceMeta } from '@/lib/shiki';
+import { isExternalUrl } from '@/lib/urls';
 
 
 interface MarkdownRendererProps {
@@ -110,13 +113,34 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     pre: ({ children }) => <div className="not-prose w-full min-w-0 max-w-full">{children}</div>,
     // Style links individually to avoid hover-all issue
     a: (props) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { node: _node, className, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      const { node, className, children, href, target, rel, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
       // Preserve wikilink classes injected by remark-wikilinks — they have their own CSS styling
       if (className?.includes('wikilink')) {
-        return <a {...rest} className={className} />;
+        return <a {...rest} href={href} target={target} rel={rel} className={className}>{children}</a>;
       }
-      return <a {...rest} className="text-accent no-underline hover:underline transition-colors duration-200" />;
+      const linkClass = "text-accent no-underline hover:underline transition-colors duration-200";
+      if (isExternalUrl(href)) {
+        // Image-as-link (`[![alt](img)](href)`): an inline arrow after the
+        // image looks like a glyph, not a hint. The HAST `node` exposes the
+        // pre-override children so we can spot an `<img>` child reliably —
+        // by the time react-markdown passes `children` to us, our own `img`
+        // override has already replaced the raw <img> with a component.
+        const hastChildren = (node && 'children' in node) ? node.children : [];
+        const isImageLink = hastChildren.length === 1 && 'tagName' in hastChildren[0] && hastChildren[0].tagName === 'img';
+        return (
+          <a
+            {...rest}
+            href={href}
+            target={target ?? '_blank'}
+            rel={rel ?? 'noopener noreferrer'}
+            className={linkClass}
+          >
+            {children}
+            {!isImageLink && <ExternalLinkIcon />}
+          </a>
+        );
+      }
+      return <a {...rest} href={href} target={target} rel={rel} className={linkClass}>{children}</a>;
     },
     // Custom code renderer: handles 'mermaid' blocks and syntax highlighting
     code(props: React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & ExtraProps) {
