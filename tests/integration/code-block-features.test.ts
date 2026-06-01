@@ -68,33 +68,35 @@ describe('Integration: Code Block Features', () => {
       return m?.[1] ?? '';
     };
 
-    test('mermaid default fence renders with the framed wrapper', async () => {
+    test('mermaid renders with a frameless wrapper (no border/padding/shadow)', async () => {
+      // Mermaid SVG nodes carry their own borders, so the prose pipeline does
+      // not wrap diagrams in a framed container the way it wraps tables.
       const content = ['```mermaid', 'graph TD; A-->B;', '```'].join('\n');
       const html = await renderAsync(MarkdownRenderer({ content }));
       const wrapper = findMermaidWrapperClass(html);
 
-      expect(wrapper).toContain('my-8');
-      expect(wrapper).toContain('p-4');
-      expect(wrapper).toContain('md:p-8');
-      expect(wrapper).toContain('shadow-sm');
-      expect(wrapper).toContain('border');
-    });
-
-    test('mermaid `compact` fence meta drops the framed wrapper', async () => {
-      const content = ['```mermaid compact', 'graph TD; A-->B;', '```'].join('\n');
-      const html = await renderAsync(MarkdownRenderer({ content }));
-      const wrapper = findMermaidWrapperClass(html);
-
-      // `compact` swaps to a frameless wrapper (my-6 + overflow only, no
-      // padding / border / shadow) so the SVG can use the full column width.
       expect(wrapper).toContain('my-6');
       expect(wrapper).toContain('overflow-x-auto');
       expect(wrapper).not.toContain('shadow-sm');
       expect(wrapper).not.toContain('p-4');
       expect(wrapper).not.toContain('md:p-8');
       expect(wrapper).not.toContain('border');
-      // Still wrapped — assert the inner mermaid container is present.
       expect(html.toLowerCase()).toContain('mermaid');
+    });
+
+    test('legacy `compact` fence meta is a no-op (no regression for old content)', async () => {
+      // ` ```mermaid compact ` used to opt out of a framed wrapper that no
+      // longer exists. The flag stays unrecognised by the pipeline and must
+      // render identically to a bare ` ```mermaid ` fence — otherwise the 52
+      // historical `compact` blocks in `content/` would regress.
+      const bare = await renderAsync(
+        MarkdownRenderer({ content: ['```mermaid', 'graph TD; A-->B;', '```'].join('\n') }),
+      );
+      const withCompact = await renderAsync(
+        MarkdownRenderer({ content: ['```mermaid compact', 'graph TD; A-->B;', '```'].join('\n') }),
+      );
+
+      expect(findMermaidWrapperClass(withCompact)).toBe(findMermaidWrapperClass(bare));
     });
 
     test('unknown language renders as plaintext (warn-and-degrade)', async () => {
