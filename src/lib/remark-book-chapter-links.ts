@@ -60,7 +60,17 @@ export default function remarkBookChapterLinks(options: BookChapterLinksOptions)
       const pathPart = hashIdx >= 0 ? url.slice(0, hashIdx) : url;
 
       // Resolve to absolute, then back to a bookDir-relative POSIX path.
-      const resolvedAbs = path.resolve(chapterDir, decodeURIComponent(pathPart));
+      // decodeURIComponent throws URIError on malformed `%XX`; swallow that
+      // and fall back to the raw string so a single broken percent-encoded
+      // link doesn't 500 the build (matches the broader "warn don't throw"
+      // posture for stale cross-references below).
+      let decodedPath: string;
+      try {
+        decodedPath = decodeURIComponent(pathPart);
+      } catch {
+        decodedPath = pathPart;
+      }
+      const resolvedAbs = path.resolve(chapterDir, decodedPath);
       const inside =
         resolvedAbs === bookDirResolved ||
         resolvedAbs.startsWith(bookDirResolved + path.sep);

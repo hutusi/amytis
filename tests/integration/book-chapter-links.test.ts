@@ -82,6 +82,20 @@ describe("Integration: remark-book-chapter-links", () => {
     expect(html).toContain('href="nonexistent.md"');
   });
 
+  test("malformed percent-encoding in a link does not crash the render", async () => {
+    // `%E0%A4%A` is a truncated UTF-8 sequence — bare decodeURIComponent throws
+    // URIError on this. The plugin must swallow that and not blow up the build.
+    const html = await renderAsync(
+      MarkdownRenderer({
+        content: "Sketchy [link](%E0%A4%A.md).",
+        bookContext,
+      }),
+    );
+    // Either the link survives as-is or it's silently dropped — what matters
+    // is that we don't get an unhandled URIError tearing down the render.
+    expect(html).toContain("Sketchy");
+  });
+
   test("non-book content (no bookContext) is not rewritten", async () => {
     const html = await renderAsync(
       MarkdownRenderer({
