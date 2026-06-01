@@ -70,6 +70,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
   useSidebarAutoScroll(sidebarRef, currentItemRef, currentSlug);
 
   return (
+    // suppressHydrationWarning on locale-bound nodes is a band-aid for the
+    // known static-export + client-i18n drift: SSR renders defaultLocale,
+    // `useLanguage()` hook serves the user's saved locale on hydration. The
+    // real fix is per-locale URL routing, tracked as a separate refactor.
     <aside
       ref={sidebarRef}
       data-testid="post-sidebar"
@@ -87,7 +91,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
           {/* Header — always visible */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
+              <span
+                className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent"
+                suppressHydrationWarning
+              >
                 {isCollectionContext ? t('collection') : t('series')}
               </span>
               <span className="text-[10px] font-mono text-muted/60">
@@ -172,6 +179,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
               <Link
                 href={`/series/${effectiveSlug}`}
                 className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
+                suppressHydrationWarning
               >
                 {isCollectionContext ? t('view_full_collection') : t('view_full_series')}
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -185,7 +193,10 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
 
       {shareUrl && siteConfig.share?.enabled && (
         <div className="mt-6 pt-6 border-t border-muted/10">
-          <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3">
+          <p
+            className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3"
+            suppressHydrationWarning
+          >
             {t('share_post')}
           </p>
           <ShareBar url={shareUrl} title={shareTitle ?? ''} />
