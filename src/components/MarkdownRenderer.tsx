@@ -67,11 +67,15 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
 
   if (latex) {
     remarkPlugins.push(remarkMath);
-    // strict: 'ignore' silences KaTeX's `unicodeTextInMathMode` warnings.
-    // Chinese-language books routinely write math like `$输入$` or `$h_{隐藏状态}$`
-    // — KaTeX renders the CJK characters fine in math mode, the warning is
-    // pure noise (and *loud* noise: one log per character, per chapter view).
-    rehypePlugins.push([rehypeKatex, { strict: 'ignore' }]);
+    // Silence only KaTeX's `unicodeTextInMathMode` warnings — Chinese-language
+    // books routinely write math like `$输入$` or `$h_{隐藏状态}$` and KaTeX
+    // renders the CJK characters fine; the warning is pure noise (one log per
+    // character per chapter view). A bare `strict: 'ignore'` would silence
+    // *every* KaTeX strict check including genuinely broken math, so use a
+    // predicate that targets just this transgression.
+    rehypePlugins.push([rehypeKatex, {
+      strict: (code: string) => (code === 'unicodeTextInMathMode' ? 'ignore' : 'warn'),
+    }]);
   }
 
   const components: Components = {
