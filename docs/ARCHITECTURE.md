@@ -222,26 +222,51 @@ posts: ["post-1", "post-2"]  # Manual post ordering (optional)
 
 ### Books (`content/books/[slug]/index.mdx`)
 
+A book's `chapters:` array accepts three item shapes (mix freely):
+
 ```yaml
 ---
 title: "Book Title"
 excerpt: "Book description"
 date: "2026-01-01"
-coverImage: "text:DG"           # Image path or text placeholder
+coverImage: "text:DG"             # Image path or text placeholder
 featured: true
 draft: false
 authors: ["Author Name"]
 chapters:
-  - part: "Part I: Getting Started"    # Optional part grouping
+  # 1. Bare chapter ref — top-level chapter with no grouping
+  - title: "Standalone Chapter"
+    id: "standalone"
+
+  # 2. Legacy "part" — single-level grouping
+  - part: "Part I: Getting Started"
     chapters:
       - title: "Chapter Title"
-        id: "chapter-file"             # Maps to chapter-file.mdx or chapter-file/index.mdx
-  - part: "Part II: Advanced"
-    chapters:
-      - title: "Another Chapter"
-        id: "another-chapter"
+        id: "chapter-file"        # Maps to chapter-file.mdx or chapter-file/index.mdx
+
+  # 3. "section" — recursive grouping with arbitrary nesting depth (≥ 2 layers)
+  - section: "机器学习数学基础"
+    collapsible: true             # Optional UI hint for the sidebar
+    items:
+      - section: "线性代数"
+        items:
+          - title: "引言：机器学习的语言"
+            id: "maths/linear/introduction"   # Slash-separated id → nested folder on disk
+          - title: "向量基础"
+            id: "maths/linear/vectors"
+      - section: "微积分"
+        items:
+          - title: "引言：变化与累积"
+            id: "maths/calculus/introduction"
 ---
 ```
+
+Chapter `id` values may contain `/` to map to nested folders. For id `maths/linear/introduction`,
+the loader resolves to the first existing file under `<bookDir>/maths/linear/introduction.{md,mdx}`
+or `<bookDir>/maths/linear/introduction/index.{md,mdx}`. Path traversal (`..`) is rejected.
+
+Per the strict-build invariant, `getBookData` throws if any chapter id in the TOC has no
+matching file on disk — silent skips are not allowed.
 
 ## Configuration Reference (`site.config.ts`)
 

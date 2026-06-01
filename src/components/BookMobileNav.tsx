@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { BookTocItem, BookChapterEntry } from '@/lib/markdown';
+import { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import PrevNextNav from './PrevNextNav';
 import { getBookChapterUrl } from '@/lib/urls';
@@ -22,6 +22,42 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
   const currentIndex = chapters.findIndex(ch => ch.id === currentChapter);
   const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
   const nextChapter = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+
+  const renderChapterRow = (ch: BookChapterRef, key: string) => {
+    const isCurrent = ch.id === currentChapter;
+    const chIdx = chapters.findIndex(c => c.id === ch.id);
+    const isPast = chIdx >= 0 && chIdx < currentIndex;
+    return isCurrent ? (
+      <div key={key} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-accent/5">
+        <span className="text-sm font-semibold text-accent truncate">{ch.title}</span>
+      </div>
+    ) : (
+      <Link
+        key={key}
+        href={getBookChapterUrl(bookSlug, ch.id)}
+        className={`block py-1.5 px-2 rounded-lg text-sm no-underline hover:bg-muted/5 transition-colors ${
+          isPast ? 'text-foreground/70 hover:text-foreground' : 'text-muted hover:text-foreground'
+        }`}
+      >
+        {ch.title}
+      </Link>
+    );
+  };
+
+  const renderSection = (section: BookTocSection, key: string) => (
+    <div key={key}>
+      <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted px-2 py-1.5">
+        {section.section}
+      </div>
+      <div className="space-y-1 pl-2">
+        {section.items.map((child, idx) =>
+          'section' in child
+            ? renderSection(child, `${key}-${idx}`)
+            : renderChapterRow(child, `${key}-${child.id}`)
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="lg:hidden p-5 bg-muted/5 rounded-xl border border-muted/20">
@@ -85,58 +121,16 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
                   <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted px-2 py-1.5">
                     {item.part}
                   </div>
-                  <ol className="space-y-1">
-                    {item.chapters.map(ch => {
-                      const isCurrent = ch.id === currentChapter;
-                      const chIdx = chapters.findIndex(c => c.id === ch.id);
-                      const isPast = chIdx < currentIndex;
-
-                      return (
-                        <li key={ch.id}>
-                          {isCurrent ? (
-                            <div className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-accent/5">
-                              <span className="text-sm font-semibold text-accent truncate">{ch.title}</span>
-                            </div>
-                          ) : (
-                            <Link
-                              href={getBookChapterUrl(bookSlug, ch.id)}
-                              className={`block py-1.5 px-2 rounded-lg text-sm no-underline hover:bg-muted/5 transition-colors ${
-                                isPast ? 'text-foreground/70 hover:text-foreground' : 'text-muted hover:text-foreground'
-                              }`}
-                            >
-                              {ch.title}
-                            </Link>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </div>
-              );
-            } else {
-              const isCurrent = item.id === currentChapter;
-              const chIdx = chapters.findIndex(c => c.id === item.id);
-              const isPast = chIdx < currentIndex;
-
-              return (
-                <div key={item.id}>
-                  {isCurrent ? (
-                    <div className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-accent/5">
-                      <span className="text-sm font-semibold text-accent truncate">{item.title}</span>
-                    </div>
-                  ) : (
-                    <Link
-                      href={`/books/${bookSlug}/${item.id}`}
-                      className={`block py-1.5 px-2 rounded-lg text-sm no-underline hover:bg-muted/5 transition-colors ${
-                        isPast ? 'text-foreground/70 hover:text-foreground' : 'text-muted hover:text-foreground'
-                      }`}
-                    >
-                      {item.title}
-                    </Link>
-                  )}
+                  <div className="space-y-1">
+                    {item.chapters.map(ch => renderChapterRow(ch, `part-${tocIdx}-${ch.id}`))}
+                  </div>
                 </div>
               );
             }
+            if ('section' in item) {
+              return renderSection(item, `section-${tocIdx}`);
+            }
+            return renderChapterRow(item, `chapter-${item.id}`);
           })}
         </div>
       )}

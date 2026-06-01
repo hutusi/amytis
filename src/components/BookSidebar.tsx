@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
+import { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
 import InlineBookToc from './InlineBookToc';
@@ -39,15 +39,24 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
     setCollapsedParts(prev => ({ ...prev, [part]: !prev[part] }));
   };
 
+  const sectionContainsChapter = (section: BookTocSection, chapterId: string): boolean =>
+    section.items.some(child =>
+      'section' in child ? sectionContainsChapter(child, chapterId) : child.id === chapterId
+    );
+
   // Re-run auto-scroll when the chapter changes AND when its part becomes visible.
   // Without the visibility check, navigating into a collapsed part would trigger
   // the expansion effect but the chapter DOM element wouldn't exist yet, so scroll
   // would silently do nothing.
-  const isCurrentChapterVisible = toc.some(item =>
-    'part' in item
-      ? !collapsedParts[item.part] && item.chapters.some(ch => ch.id === currentChapter)
-      : item.id === currentChapter
-  );
+  const isCurrentChapterVisible = toc.some(item => {
+    if ('part' in item) {
+      return !collapsedParts[item.part] && item.chapters.some(ch => ch.id === currentChapter);
+    }
+    if ('section' in item) {
+      return sectionContainsChapter(item, currentChapter);
+    }
+    return item.id === currentChapter;
+  });
   useSidebarAutoScroll(sidebarRef, currentItemRef, `${currentChapter}:${isCurrentChapterVisible}`);
 
   // Expand part containing current chapter when it changes.
@@ -67,18 +76,44 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
   // Pre-calculate chapter global indices to avoid reassignment during render
   const chapterIndices = new Map<string, number>();
   let currentGlobalIdx = 0;
+  const indexSection = (section: BookTocSection) => {
+    for (const child of section.items) {
+      if ('section' in child) indexSection(child);
+      else chapterIndices.set(child.id, currentGlobalIdx++);
+    }
+  };
   toc.forEach((item) => {
     if ('part' in item) {
       item.chapters.forEach(ch => {
         chapterIndices.set(ch.id, currentGlobalIdx++);
       });
+    } else if ('section' in item) {
+      indexSection(item);
     } else {
       chapterIndices.set(item.id, currentGlobalIdx++);
     }
   });
 
+  // Recursive section renderer. Slice 3 will replace this with a collapsible
+  // group + auto-expand-ancestors. For now: simple nested headings + lists
+  // so the existing UI still renders without errors.
+  const renderSectionItem = (section: BookTocSection, keyPrefix: string): React.ReactNode => (
+    <div>
+      <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted py-2 px-2 -mx-2">
+        {section.section}
+      </div>
+      <ul className="space-y-0.5 pl-2 border-l border-muted/10 ml-1">
+        {section.items.map((child, idx) => (
+          'section' in child
+            ? <li key={`${keyPrefix}-${idx}`}>{renderSectionItem(child, `${keyPrefix}-${idx}`)}</li>
+            : renderChapterItem(child)
+        ))}
+      </ul>
+    </div>
+  );
+
   // Helper to render a chapter link + inline headings if current
-  const renderChapterItem = (ch: { title: string; id: string }) => {
+  const renderChapterItem = (ch: BookChapterRef) => {
     const isCurrent = ch.id === currentChapter;
     const idx = chapterIndices.get(ch.id) ?? 0;
     const isPast = idx < currentIndex;
@@ -129,6 +164,13 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
       <nav aria-label="Book navigation">
         <ul className="space-y-1">
           {toc.map((item, tocIdx) => {
+            if ('section' in item) {
+              return (
+                <li key={`section-${tocIdx}`}>
+                  {renderSectionItem(item, `section-${tocIdx}`)}
+                </li>
+              );
+            }
             if ('part' in item) {
               const isCollapsed = collapsedParts[item.part];
               const partChapters = item.chapters;

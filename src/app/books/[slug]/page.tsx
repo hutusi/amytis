@@ -1,4 +1,4 @@
-import { getBookData, getAllBooks, getAuthorSlug } from '@/lib/markdown';
+import { getBookData, getAllBooks, getAuthorSlug, type BookTocSection, type BookChapterRef } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
@@ -8,6 +8,37 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { buildBookJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getBookUrl } from '@/lib/urls';
+
+function renderTocSection(section: BookTocSection, slug: string, keyPrefix: string): React.ReactNode {
+  return (
+    <div key={keyPrefix}>
+      <h3 className="text-sm font-sans font-bold uppercase tracking-wider text-muted mb-3">
+        {section.section}
+      </h3>
+      <ol className="space-y-2 pl-4 border-l-2 border-muted/10">
+        {section.items.map((child, idx) => {
+          if ('section' in child) {
+            return <li key={`${keyPrefix}-${idx}`}>{renderTocSection(child, slug, `${keyPrefix}-${idx}`)}</li>;
+          }
+          const ref = child as BookChapterRef;
+          return (
+            <li key={`${keyPrefix}-${ref.id}`}>
+              <Link
+                href={`/books/${slug}/${ref.id}`}
+                className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
+              >
+                <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-base">{ref.title}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 export async function generateStaticParams() {
   const books = getAllBooks();
@@ -159,20 +190,22 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
                   </ol>
                 </div>
               );
-            } else {
-              return (
-                <Link
-                  key={item.id}
-                  href={`/books/${book.slug}/${item.id}`}
-                  className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
-                >
-                  <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                  <span className="text-base">{item.title}</span>
-                </Link>
-              );
             }
+            if ('section' in item) {
+              return renderTocSection(item, book.slug, `section-${idx}`);
+            }
+            return (
+              <Link
+                key={item.id}
+                href={`/books/${book.slug}/${item.id}`}
+                className="group flex items-center gap-3 py-2 text-foreground/80 hover:text-accent no-underline transition-colors"
+              >
+                <svg className="w-4 h-4 text-muted group-hover:text-accent flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-base">{item.title}</span>
+              </Link>
+            );
           })}
         </div>
       </section>
