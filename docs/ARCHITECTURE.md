@@ -268,6 +268,33 @@ or `<bookDir>/maths/linear/introduction/index.{md,mdx}`. Path traversal (`..`) i
 Per the strict-build invariant, `getBookData` throws if any chapter id in the TOC has no
 matching file on disk — silent skips are not allowed.
 
+#### Book-level `latex: true`
+
+Book frontmatter accepts an optional `latex: true` flag that enables KaTeX rendering for
+every chapter in the book without having to annotate each chapter file. Chapter-level
+`latex: true` still works and takes precedence. Math-heavy books (e.g. ML textbooks) should
+set the book-level flag rather than copy it onto every chapter.
+
+#### Book-specific markdown extensions
+
+When `MarkdownRenderer` renders a book chapter (i.e. `bookContext` prop is set, which
+happens automatically inside `BookLayout`), two extra plugins fire:
+
+- **`remark-vuepress-containers`** — converts VuePress fenced containers
+  (`:::note`, `:::tip`, `:::important`, `:::warning`, `:::danger`, `:::info`) into the
+  same `<github-alert>` hast element that `remark-github-alerts` produces. Custom titles
+  (`:::tip 智慧的疆界`) are preserved via `data-alert-title`. A small string-level
+  preprocessor (`normalizeVuepressContainerSyntax`) normalizes `::: name [label]` →
+  `:::name[label]` so `remark-directive` (which only parses the space-less form) sees the
+  containers.
+- **`remark-book-chapter-links`** — rewrites relative `.md` / `.mdx` links to other
+  chapters into canonical `/books/<slug>/<chapter-id>[#fragment]` URLs. Resolution uses
+  the chapter's `sourcePath` (exposed by `getBookChapter`). Broken links (target chapter
+  id not in the TOC, or target outside the book directory) throw at build time.
+
+Mermaid diagrams in book chapters already work via the existing `Mermaid` component (any
+\`\`\`mermaid fenced block, with or without a `compact` modifier after the language tag).
+
 ## Configuration Reference (`site.config.ts`)
 
 | Field | Notes |

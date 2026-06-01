@@ -14,6 +14,8 @@ const ALERT_LABELS: Record<AlertType, string> = {
 
 interface GithubAlertProps {
   'data-alert-type'?: string;
+  /** Custom title from the directive label (e.g. `:::tip 智慧的疆界`). Falls back to ALERT_LABELS when absent. */
+  'data-alert-title'?: string;
   children?: ReactNode;
 }
 
@@ -81,11 +83,13 @@ export default function GithubAlert(props: GithubAlertProps) {
     return <blockquote>{props.children}</blockquote>;
   }
   const type = raw as AlertType;
+  const customTitle = props['data-alert-title']?.trim();
+  const title = customTitle && customTitle.length > 0 ? customTitle : ALERT_LABELS[type];
   return (
-    <aside className={`alert alert-${type}`} role="note" aria-label={ALERT_LABELS[type]}>
+    <aside className={`alert alert-${type}`} role="note" aria-label={title}>
       <div className="alert-title">
         <AlertIcon type={type} />
-        <span>{ALERT_LABELS[type]}</span>
+        <span>{title}</span>
       </div>
       <div className="alert-body">{props.children}</div>
     </aside>

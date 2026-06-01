@@ -1,4 +1,4 @@
-import { BookData, BookChapterData } from '@/lib/markdown';
+import { BookData, BookChapterData, getBookDirPath } from '@/lib/markdown';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import BookSidebar from '@/components/BookSidebar';
 import BookMobileNav from '@/components/BookMobileNav';
@@ -16,6 +16,8 @@ interface BookLayoutProps {
 }
 
 export default function BookLayout({ book, chapter }: BookLayoutProps) {
+  const bookDir = getBookDirPath(book.slug);
+  const validChapterIds = new Set(book.chapters.map(c => c.id));
   return (
     <div className="layout-container lg:max-w-7xl">
       <ReadingProgressBar />
@@ -65,7 +67,17 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
           </header>
 
           {/* Content */}
-          <MarkdownRenderer content={chapter.content} latex={chapter.latex} slug={chapter.isFolder ? `books/${book.slug}/${chapter.slug}` : `books/${book.slug}`} />
+          <MarkdownRenderer
+            content={chapter.content}
+            latex={chapter.latex}
+            slug={chapter.isFolder ? `books/${book.slug}/${chapter.slug}` : `books/${book.slug}`}
+            bookContext={{
+              bookSlug: book.slug,
+              bookDir,
+              chapterSourcePath: chapter.sourcePath,
+              validChapterIds,
+            }}
+          />
 
           {/* Comments */}
           {resolveCommentable(chapter.commentable, 'bookChapters') && (

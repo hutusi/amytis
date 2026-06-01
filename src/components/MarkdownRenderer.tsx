@@ -10,6 +10,8 @@ import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
 import remarkGithubAlerts from '@/lib/remark-github-alerts';
+import remarkVuepressContainers, { normalizeVuepressContainerSyntax } from '@/lib/remark-vuepress-containers';
+import remarkBookChapterLinks, { type BookChapterLinksOptions } from '@/lib/remark-book-chapter-links';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -30,13 +32,28 @@ interface MarkdownRendererProps {
   latex?: boolean;
   slug?: string;
   slugRegistry?: Map<string, SlugRegistryEntry>;
+  /**
+   * Set when rendering a book chapter. Enables inter-chapter `.md` link
+   * rewriting and `:::container` → GitHub Alert conversion (the latter runs
+   * for everyone, but the link rewriter needs source-path context).
+   */
+  bookContext?: BookChapterLinksOptions;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
-  // remark-directive must precede remark-code-group so the latter sees parsed
-  // containerDirective nodes. Order vs remark-gfm doesn't matter — they touch
-  // disjoint node types.
-  const remarkPlugins: PluggableList = [remarkGfm, remarkGithubAlerts, remarkDirective, remarkCodeGroup];
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext }: MarkdownRendererProps) {
+  // remark-directive must precede remark-code-group AND remark-vuepress-containers
+  // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
+  // — they touch disjoint node types.
+  const remarkPlugins: PluggableList = [
+    remarkGfm,
+    remarkGithubAlerts,
+    remarkDirective,
+    remarkCodeGroup,
+    remarkVuepressContainers,
+  ];
+  if (bookContext) {
+    remarkPlugins.push([remarkBookChapterLinks, bookContext]);
+  }
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
   // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
   // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
@@ -213,7 +230,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
           rehypePlugins={rehypePlugins}
           components={allComponents}
         >
-          {content}
+          {normalizeVuepressContainerSyntax(content)}
         </ReactMarkdown>
       </div>
     </ArticleCopyCleaner>

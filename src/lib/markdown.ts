@@ -1492,6 +1492,10 @@ export interface BookData {
   featured: boolean;
   draft: boolean;
   authors: string[];
+  /** Book-level LaTeX flag — when true, all chapters render math even if their
+   *  own frontmatter omits `latex: true`. Cheaper for math-heavy books than
+   *  annotating every chapter file. */
+  latex: boolean;
   content: string;
   toc: BookTocItem[];
   chapters: BookChapterEntry[];
@@ -1508,6 +1512,8 @@ export interface BookChapterData {
   commentable?: boolean;
   readingTime: string;
   isFolder: boolean;
+  /** Absolute path of the markdown source file. Used to resolve relative `.md` links. */
+  sourcePath: string;
   prevChapter: { title: string; id: string } | null;
   nextChapter: { title: string; id: string } | null;
 }
@@ -1543,6 +1549,7 @@ export const BookSchema = z.object({
   featured: z.boolean().optional().default(false),
   draft: z.boolean().optional().default(false),
   authors: z.array(z.string()).optional().default([]),
+  latex: z.boolean().optional().default(false),
   chapters: z.array(BookTocItemSchema),
 });
 
@@ -1677,6 +1684,7 @@ export function getBookData(slug: string): BookData | null {
     featured: data.featured,
     draft: data.draft,
     authors,
+    latex: data.latex,
     content: content.trim(),
     toc: data.chapters,
     chapters,
@@ -1723,13 +1731,22 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
     content: contentWithoutH1,
     headings,
     excerpt,
-    latex: data.latex,
+    // Chapter-level `latex: true` takes precedence; otherwise inherit the
+    // book-level flag so math-heavy books don't need per-chapter annotation.
+    latex: data.latex || book.latex,
     commentable: data.commentable,
     readingTime,
     isFolder,
+    sourcePath: fullPath,
     prevChapter: prevChapter ? { title: prevChapter.title, id: prevChapter.id } : null,
     nextChapter: nextChapter ? { title: nextChapter.title, id: nextChapter.id } : null,
   };
+}
+
+/** Absolute path of a book's content directory. Useful for plugins that
+ *  need to resolve relative paths from chapter source files. */
+export function getBookDirPath(bookSlug: string): string {
+  return path.join(booksDirectory, bookSlug);
 }
 
 export function getAllBooks(): BookData[] {
