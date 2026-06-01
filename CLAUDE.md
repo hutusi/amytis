@@ -69,12 +69,17 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
 - **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
 - **Branches:** `<type>/<kebab-slug>` matching commit prefixes.
-- CI (`.github/workflows/ci.yml`) runs lint → test → build:dev; all three must pass. Not enforced by hooks.
 
 ## Verifying a change
 
-- Minimum: `bun run lint && bun test` (or `bun run validate` to chain lint + test + build:dev).
-- Touched routes or content? `bun run build:dev` and spot-check the affected page — also re-runs Pagefind so search reflects your change.
+- **Per-commit default: `bun run lint && bun run test` only — do NOT run `bun run build:dev` on every commit or after every small step.** `build:dev` takes ~1–2 minutes (Turbopack compile + 800+ static pages + Pagefind index) and that cost adds up across many small commits. Keep the loop fast.
+- Run `bun run build:dev` only when:
+  - You moved or added a route (`src/app/**/page.tsx` rename, new dynamic segment).
+  - You changed the markdown/MDX pipeline (`MarkdownRenderer.tsx`, a remark/rehype plugin, Shiki config).
+  - You changed a Zod schema, a strict-build invariant, or `site.config.ts` shape.
+  - You need to spot-check a specific page in the browser (also re-runs Pagefind so search reflects the change).
+  - You're about to push or open a PR.
+- `bun run validate` chains lint + test + build:dev — use it at PR-readiness time, not as the per-commit loop.
 - Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
 - Touched any dynamic route? Verify both ASCII and Unicode slugs render.
 
@@ -95,4 +100,5 @@ When compressing history, preserve in priority order:
 - `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
 - `docs/TROUBLESHOOTING.md` — known issues (AVIF, dev-mode browser-extension CSP/SharedStorage noise)
 - `docs/deployment.md` — production deploy steps
+- `docs/guides/` — task-oriented walkthroughs (e.g. `importing-vuepress-books.md`)
 - `site.config.ts` — live config (read it directly; don't infer from this file)

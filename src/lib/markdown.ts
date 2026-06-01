@@ -1456,14 +1456,32 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
 export interface BookChapterEntry {
   title: string;
   id: string;
+  /** Legacy single-level grouping; set when the chapter sits under a `{ part, chapters }` item. */
   part?: string;
+  /** Deepest section title above this chapter (last element of sectionPath). */
+  section?: string;
+  /** Full ancestry of section titles from outermost to innermost. */
+  sectionPath?: string[];
+}
+
+export interface BookChapterRef {
+  title: string;
+  id: string;
 }
 
 export interface BookTocPart {
   part: string;
-  chapters: { title: string; id: string }[];
+  chapters: BookChapterRef[];
 }
-export type BookTocItem = BookTocPart | { title: string; id: string };
+
+/** Nested grouping. `items` may recurse into further sections or hold leaf chapter refs. */
+export interface BookTocSection {
+  section: string;
+  collapsible?: boolean;
+  items: Array<BookTocSection | BookChapterRef>;
+}
+
+export type BookTocItem = BookTocPart | BookTocSection | BookChapterRef;
 
 export interface BookData {
   title: string;
@@ -1474,6 +1492,16 @@ export interface BookData {
   featured: boolean;
   draft: boolean;
   authors: string[];
+  /** Book-level LaTeX flag — when true, all chapters render math even if their
+   *  own frontmatter omits `latex: true`. Cheaper for math-heavy books than
+   *  annotating every chapter file. */
+  latex: boolean;
+  /** Whether the chapter-page header renders the chapter's `excerpt`. Defaults
+   *  to false: the typical case is that a chapter opens with its own lede
+   *  paragraph, and an excerpt line above it just duplicates that text in the
+   *  header. Set to true on books where the excerpt is a distinct subtitle
+   *  the author actually wants the reader to see at the top of every chapter. */
+  showChapterExcerpt: boolean;
   content: string;
   toc: BookTocItem[];
   chapters: BookChapterEntry[];
@@ -1490,6 +1518,8 @@ export interface BookChapterData {
   commentable?: boolean;
   readingTime: string;
   isFolder: boolean;
+  /** Absolute path of the markdown source file. Used to resolve relative `.md` links. */
+  sourcePath: string;
   prevChapter: { title: string; id: string } | null;
   nextChapter: { title: string; id: string } | null;
 }
@@ -1499,15 +1529,25 @@ const BookChapterRefSchema = z.object({
   id: z.string(),
 });
 
+// Recursive: a section can nest further sections or leaf chapter refs.
+const BookTocSectionSchema: z.ZodType<BookTocSection> = z.lazy(() =>
+  z.object({
+    section: z.string(),
+    collapsible: z.boolean().optional(),
+    items: z.array(z.union([BookTocSectionSchema, BookChapterRefSchema])),
+  })
+);
+
 const BookTocItemSchema: z.ZodType<BookTocItem> = z.union([
   z.object({
     part: z.string(),
     chapters: z.array(BookChapterRefSchema),
   }),
+  BookTocSectionSchema,
   BookChapterRefSchema,
 ]);
 
-const BookSchema = z.object({
+export const BookSchema = z.object({
   title: z.string(),
   excerpt: z.string().optional(),
   date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]),
@@ -1515,29 +1555,81 @@ const BookSchema = z.object({
   featured: z.boolean().optional().default(false),
   draft: z.boolean().optional().default(false),
   authors: z.array(z.string()).optional().default([]),
+  latex: z.boolean().optional().default(false),
+  showChapterExcerpt: z.boolean().optional().default(false),
   chapters: z.array(BookTocItemSchema),
 });
 
 const BookChapterSchema = z.object({
-  title: z.string(),
+  title: z.string().optional(),
   excerpt: z.string().optional(),
   draft: z.boolean().optional().default(false),
   latex: z.boolean().optional().default(false),
   commentable: z.boolean().optional(),
 });
 
-function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
+export function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
   const result: BookChapterEntry[] = [];
+
+  const walkSection = (
+    items: Array<BookTocSection | BookChapterRef>,
+    sectionPath: string[],
+  ): void => {
+    for (const item of items) {
+      if ('section' in item) {
+        walkSection(item.items, [...sectionPath, item.section]);
+      } else {
+        result.push({
+          title: item.title,
+          id: item.id,
+          section: sectionPath[sectionPath.length - 1],
+          sectionPath: sectionPath.length > 0 ? [...sectionPath] : undefined,
+        });
+      }
+    }
+  };
+
   for (const item of toc) {
     if ('part' in item) {
       for (const ch of item.chapters) {
         result.push({ title: ch.title, id: ch.id, part: item.part });
       }
+    } else if ('section' in item) {
+      walkSection([item], []);
     } else {
       result.push({ title: item.title, id: item.id });
     }
   }
   return result;
+}
+
+/**
+ * Resolves a chapter id (possibly nested with `/`) to a markdown file on disk.
+ * Returns `{ path, isFolder }` if a file exists in one of the four supported forms,
+ * or `null` if the id has no match. Guards against `..`-style path escapes — any
+ * id that resolves outside `bookDir` returns null.
+ */
+function resolveChapterFilePath(
+  bookDir: string,
+  chapterId: string,
+): { path: string; isFolder: boolean } | null {
+  const bookDirResolved = path.resolve(bookDir);
+  const candidate = path.resolve(bookDir, chapterId);
+  if (
+    candidate !== bookDirResolved &&
+    !candidate.startsWith(bookDirResolved + path.sep)
+  ) {
+    return null;
+  }
+  const chMdx = `${candidate}.mdx`;
+  const chMd = `${candidate}.md`;
+  const chFolderMdx = path.join(candidate, 'index.mdx');
+  const chFolderMd = path.join(candidate, 'index.md');
+  if (fs.existsSync(chMdx)) return { path: chMdx, isFolder: false };
+  if (fs.existsSync(chMd)) return { path: chMd, isFolder: false };
+  if (fs.existsSync(chFolderMdx)) return { path: chFolderMdx, isFolder: true };
+  if (fs.existsSync(chFolderMd)) return { path: chFolderMd, isFolder: true };
+  return null;
 }
 
 export function getBookData(slug: string): BookData | null {
@@ -1562,16 +1654,21 @@ export function getBookData(slug: string): BookData | null {
   }
   const data = parsed.data;
 
-  // Warn about missing chapter files
+  // Resolve chapter file paths and surface missing files as build-time errors
+  // (strict-build invariant: misconfiguration must fail loudly, not silently).
   const chapters = flattenBookChapters(data.chapters);
+  const missing: string[] = [];
   for (const ch of chapters) {
-    const chMdx = path.join(bookDir, `${ch.id}.mdx`);
-    const chMd = path.join(bookDir, `${ch.id}.md`);
-    const chFolderMdx = path.join(bookDir, ch.id, 'index.mdx');
-    const chFolderMd = path.join(bookDir, ch.id, 'index.md');
-    if (!fs.existsSync(chMdx) && !fs.existsSync(chMd) && !fs.existsSync(chFolderMdx) && !fs.existsSync(chFolderMd)) {
-      console.warn(`Book "${slug}": chapter "${ch.id}" not found`);
+    if (!resolveChapterFilePath(bookDir, ch.id)) {
+      missing.push(ch.id);
     }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `[amytis] Book "${slug}" references chapter${missing.length === 1 ? '' : 's'} ` +
+      `with no matching file on disk: ${missing.map(id => `"${id}"`).join(', ')}. ` +
+      `Expected one of <bookDir>/<id>.{md,mdx} or <bookDir>/<id>/index.{md,mdx}.`
+    );
   }
 
   let coverImage = data.coverImage;
@@ -1594,6 +1691,8 @@ export function getBookData(slug: string): BookData | null {
     featured: data.featured,
     draft: data.draft,
     authors,
+    latex: data.latex,
+    showChapterExcerpt: data.showChapterExcerpt,
     content: content.trim(),
     toc: data.chapters,
     chapters,
@@ -1605,17 +1704,9 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   if (!book) return null;
 
   const bookDir = path.join(booksDirectory, bookSlug);
-  const chMdx = path.join(bookDir, `${chapterSlug}.mdx`);
-  const chMd = path.join(bookDir, `${chapterSlug}.md`);
-  const chFolderMdx = path.join(bookDir, chapterSlug, 'index.mdx');
-  const chFolderMd = path.join(bookDir, chapterSlug, 'index.md');
-  let fullPath = '';
-  let isFolder = false;
-  if (fs.existsSync(chMdx)) fullPath = chMdx;
-  else if (fs.existsSync(chMd)) fullPath = chMd;
-  else if (fs.existsSync(chFolderMdx)) { fullPath = chFolderMdx; isFolder = true; }
-  else if (fs.existsSync(chFolderMd)) { fullPath = chFolderMd; isFolder = true; }
-  else return null;
+  const resolved = resolveChapterFilePath(bookDir, chapterSlug);
+  if (!resolved) return null;
+  const { path: fullPath, isFolder } = resolved;
 
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data: rawData, content } = matter(fileContents);
@@ -1641,20 +1732,37 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   const prevChapter = chapterIndex > 0 ? book.chapters[chapterIndex - 1] : null;
   const nextChapter = chapterIndex < book.chapters.length - 1 ? book.chapters[chapterIndex + 1] : null;
 
+  // Title resolution: frontmatter wins, then book TOC entry, then first H1
+  // in the body. VuePress chapters often omit frontmatter entirely and rely
+  // on the H1 as the title, so this fallback chain keeps the import flow lossless.
+  const fallbackFromToc = chapterIndex >= 0 ? book.chapters[chapterIndex].title : undefined;
+  const h1Match = content.match(/^\s*#\s+([^\n]+)/);
+  const fallbackFromH1 = h1Match?.[1].trim();
+  const title = data.title || fallbackFromToc || fallbackFromH1 || chapterSlug;
+
   return {
-    title: data.title,
+    title,
     slug: chapterSlug,
     bookSlug,
     content: contentWithoutH1,
     headings,
     excerpt,
-    latex: data.latex,
+    // Chapter-level `latex: true` takes precedence; otherwise inherit the
+    // book-level flag so math-heavy books don't need per-chapter annotation.
+    latex: data.latex || book.latex,
     commentable: data.commentable,
     readingTime,
     isFolder,
+    sourcePath: fullPath,
     prevChapter: prevChapter ? { title: prevChapter.title, id: prevChapter.id } : null,
     nextChapter: nextChapter ? { title: nextChapter.title, id: nextChapter.id } : null,
   };
+}
+
+/** Absolute path of a book's content directory. Useful for plugins that
+ *  need to resolve relative paths from chapter source files. */
+export function getBookDirPath(bookSlug: string): string {
+  return path.join(booksDirectory, bookSlug);
 }
 
 export function getAllBooks(): BookData[] {

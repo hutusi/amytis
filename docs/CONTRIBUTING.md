@@ -93,6 +93,10 @@ bun run new-from-images ./photos --title "Gallery"
 
 # Chat logs to flows
 bun run new-flow-from-chat
+
+# VuePress 2 book → Amytis book directory.
+# Full walkthrough at docs/guides/importing-vuepress-books.md.
+bun run sync-vuepress-book --source /path/to/dmla/docs --dest content/books/dmla
 ```
 
 ### Maintenance Tools

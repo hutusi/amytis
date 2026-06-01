@@ -222,26 +222,88 @@ posts: ["post-1", "post-2"]  # Manual post ordering (optional)
 
 ### Books (`content/books/[slug]/index.mdx`)
 
+A book's `chapters:` array accepts three item shapes (mix freely):
+
 ```yaml
 ---
 title: "Book Title"
 excerpt: "Book description"
 date: "2026-01-01"
-coverImage: "text:DG"           # Image path or text placeholder
+coverImage: "text:DG"             # Image path or text placeholder
 featured: true
 draft: false
 authors: ["Author Name"]
 chapters:
-  - part: "Part I: Getting Started"    # Optional part grouping
+  # 1. Bare chapter ref — top-level chapter with no grouping
+  - title: "Standalone Chapter"
+    id: "standalone"
+
+  # 2. Legacy "part" — single-level grouping
+  - part: "Part I: Getting Started"
     chapters:
       - title: "Chapter Title"
-        id: "chapter-file"             # Maps to chapter-file.mdx or chapter-file/index.mdx
-  - part: "Part II: Advanced"
-    chapters:
-      - title: "Another Chapter"
-        id: "another-chapter"
+        id: "chapter-file"        # Maps to chapter-file.mdx or chapter-file/index.mdx
+
+  # 3. "section" — recursive grouping with arbitrary nesting depth (≥ 2 layers)
+  - section: "机器学习数学基础"
+    collapsible: true             # Optional UI hint for the sidebar
+    items:
+      - section: "线性代数"
+        items:
+          - title: "引言：机器学习的语言"
+            id: "maths/linear/introduction"   # Slash-separated id → nested folder on disk
+          - title: "向量基础"
+            id: "maths/linear/vectors"
+      - section: "微积分"
+        items:
+          - title: "引言：变化与累积"
+            id: "maths/calculus/introduction"
 ---
 ```
+
+Chapter `id` values may contain `/` to map to nested folders. For id `maths/linear/introduction`,
+the loader resolves to the first existing file under `<bookDir>/maths/linear/introduction.{md,mdx}`
+or `<bookDir>/maths/linear/introduction/index.{md,mdx}`. Path traversal (`..`) is rejected.
+
+Per the strict-build invariant, `getBookData` throws if any chapter id in the TOC has no
+matching file on disk — silent skips are not allowed.
+
+#### Book-level `latex: true`
+
+Book frontmatter accepts an optional `latex: true` flag that enables KaTeX rendering for
+every chapter in the book without having to annotate each chapter file. Chapter-level
+`latex: true` still works and takes precedence. Math-heavy books (e.g. ML textbooks) should
+set the book-level flag rather than copy it onto every chapter.
+
+#### Book-level `showChapterExcerpt`
+
+Book frontmatter accepts an optional `showChapterExcerpt` flag (default `false`)
+controlling whether the chapter-page header renders the chapter's `excerpt` underneath
+the title. The default suppresses it because the common case is a chapter that opens
+with its own lede paragraph, and an excerpt line above it just duplicates that text.
+Set it to `true` on books where the excerpt is a distinct subtitle the author actually
+wants the reader to see. The excerpt is still used in metadata (OpenGraph, JSON-LD,
+search) regardless of this flag.
+
+#### Book-specific markdown extensions
+
+When `MarkdownRenderer` renders a book chapter (i.e. `bookContext` prop is set, which
+happens automatically inside `BookLayout`), two extra plugins fire:
+
+- **`remark-vuepress-containers`** — converts VuePress fenced containers
+  (`:::note`, `:::tip`, `:::important`, `:::warning`, `:::danger`, `:::info`) into the
+  same `<github-alert>` hast element that `remark-github-alerts` produces. Custom titles
+  (`:::tip 智慧的疆界`) are preserved via `data-alert-title`. A small string-level
+  preprocessor (`normalizeVuepressContainerSyntax`) normalizes `::: name [label]` →
+  `:::name[label]` so `remark-directive` (which only parses the space-less form) sees the
+  containers.
+- **`remark-book-chapter-links`** — rewrites relative `.md` / `.mdx` links to other
+  chapters into canonical `/books/<slug>/<chapter-id>[#fragment]` URLs. Resolution uses
+  the chapter's `sourcePath` (exposed by `getBookChapter`). Broken links (target chapter
+  id not in the TOC, or target outside the book directory) throw at build time.
+
+Mermaid diagrams in book chapters already work via the existing `Mermaid` component (any
+\`\`\`mermaid fenced block, with or without a `compact` modifier after the language tag).
 
 ## Configuration Reference (`site.config.ts`)
 

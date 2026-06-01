@@ -10,6 +10,9 @@ import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
 import remarkGithubAlerts from '@/lib/remark-github-alerts';
+import remarkVuepressContainers, { normalizeVuepressContainerSyntax } from '@/lib/remark-vuepress-containers';
+import { normalizeVuepressBlockMath } from '@/lib/normalize-vuepress-math';
+import remarkBookChapterLinks, { type BookChapterLinksOptions } from '@/lib/remark-book-chapter-links';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -30,13 +33,28 @@ interface MarkdownRendererProps {
   latex?: boolean;
   slug?: string;
   slugRegistry?: Map<string, SlugRegistryEntry>;
+  /**
+   * Set when rendering a book chapter. Enables inter-chapter `.md` link
+   * rewriting and `:::container` → GitHub Alert conversion (the latter runs
+   * for everyone, but the link rewriter needs source-path context).
+   */
+  bookContext?: BookChapterLinksOptions;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry }: MarkdownRendererProps) {
-  // remark-directive must precede remark-code-group so the latter sees parsed
-  // containerDirective nodes. Order vs remark-gfm doesn't matter — they touch
-  // disjoint node types.
-  const remarkPlugins: PluggableList = [remarkGfm, remarkGithubAlerts, remarkDirective, remarkCodeGroup];
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext }: MarkdownRendererProps) {
+  // remark-directive must precede remark-code-group AND remark-vuepress-containers
+  // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
+  // — they touch disjoint node types.
+  const remarkPlugins: PluggableList = [
+    remarkGfm,
+    remarkGithubAlerts,
+    remarkDirective,
+    remarkCodeGroup,
+    remarkVuepressContainers,
+  ];
+  if (bookContext) {
+    remarkPlugins.push([remarkBookChapterLinks, bookContext]);
+  }
   const cdnBaseUrl = siteConfig.images?.cdnBaseUrl ?? '';
   // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
   // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
@@ -49,7 +67,15 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
 
   if (latex) {
     remarkPlugins.push(remarkMath);
-    rehypePlugins.push(rehypeKatex);
+    // Silence only KaTeX's `unicodeTextInMathMode` warnings — Chinese-language
+    // books routinely write math like `$输入$` or `$h_{隐藏状态}$` and KaTeX
+    // renders the CJK characters fine; the warning is pure noise (one log per
+    // character per chapter view). A bare `strict: 'ignore'` would silence
+    // *every* KaTeX strict check including genuinely broken math, so use a
+    // predicate that targets just this transgression.
+    rehypePlugins.push([rehypeKatex, {
+      strict: (code: string) => (code === 'unicodeTextInMathMode' ? 'ignore' : 'warn'),
+    }]);
   }
 
   const components: Components = {
@@ -158,10 +184,35 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // In development mode, use unoptimized images since WebP versions don't exist yet
     img: (props: React.ClassAttributes<HTMLImageElement> & React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { src, alt, width, height, node: _node, ...rest } = props;
+      const { src, alt, width, height, node: _node, style, ...rest } = props;
       const isDev = process.env.NODE_ENV === 'development';
       const imageSrc = src as string;
       const isExternal = imageSrc?.startsWith('http') || imageSrc?.startsWith('//');
+
+      // Author-supplied inline `style` is a strong signal the <img> came from
+      // raw HTML inside the markdown (typically inline icons like social-media
+      // badges) rather than from a markdown `![alt](src)`. Markdown images
+      // never carry a style attribute. Preserve the author's styling and
+      // skip optimization for these — wrapping a 22px icon in <ExportedImage>
+      // strips the style and renders it at its natural 500px size.
+      if (style) {
+        // width / height were destructured out of `rest` above, so re-apply
+        // them here. Mixed author markup like `<img src="..." width="120"
+        // style="border-radius:4px">` should keep its explicit sizing rather
+        // than render at the SVG's natural dimensions.
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageSrc}
+            alt={alt || ''}
+            width={width}
+            height={height}
+            style={style}
+            {...rest}
+            fetchPriority="low"
+          />
+        );
+      }
 
       if (!isExternal) {
         const shouldBypassOptimization = shouldBypassImageOptimization(imageSrc);
@@ -187,11 +238,24 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
 
   // Merge custom HTML elements not in the Components type (e.g. web components used in MDX,
   // and the synthetic <code-group> / <github-alert> tagNames emitted by our remark plugins).
+  //
+  // VuePress component pass-throughs: imported VuePress books may use Vue
+  // components like <Swiper>/<Slide> (image carousel), <ClientOnly>, <HomeHero>,
+  // <ChatDemo>, <GlobalTOC>. hast/React lowercases these tags, and without a
+  // handler React logs "The tag <swiper> is unrecognized in this browser". Map
+  // each one to a passive renderer so the warnings go away and inner content
+  // (where it makes sense) still appears as a graceful degradation.
   const allComponents = {
     ...components,
     'rss-feed': () => <RssFeedWidget />,
     'code-group': CodeGroup,
     'github-alert': GithubAlert,
+    swiper: ({ children }: { children?: React.ReactNode }) => <div className="my-6 space-y-4">{children}</div>,
+    slide: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+    clientonly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    globaltoc: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    homehero: () => null,
+    chatdemo: () => null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 
@@ -213,7 +277,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
           rehypePlugins={rehypePlugins}
           components={allComponents}
         >
-          {content}
+          {latex
+            ? normalizeVuepressBlockMath(normalizeVuepressContainerSyntax(content))
+            : normalizeVuepressContainerSyntax(content)}
         </ReactMarkdown>
       </div>
     </ArticleCopyCleaner>

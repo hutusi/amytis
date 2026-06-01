@@ -244,10 +244,10 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params).toEqual([{ slug: '_' }]);
     });
 
-    test('books/[slug]/[chapter] returns [{ slug: "_", chapter: "_" }]', async () => {
-      const { generateStaticParams } = await import('../../src/app/books/[slug]/[chapter]/page');
+    test('books/[slug]/[...chapter] returns [{ slug: "_", chapter: ["_"] }]', async () => {
+      const { generateStaticParams } = await import('../../src/app/books/[slug]/[...chapter]/page');
       const params = await generateStaticParams();
-      expect(params).toEqual([{ slug: '_', chapter: '_' }]);
+      expect(params).toEqual([{ slug: '_', chapter: ['_'] }]);
     });
   });
 

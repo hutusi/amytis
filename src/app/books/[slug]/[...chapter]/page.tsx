@@ -6,11 +6,31 @@ import BookLayout from '@/layouts/BookLayout';
 import { resolveLocale } from '@/lib/i18n';
 import { buildBookChapterJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { safeDecodeParam } from '@/lib/series-redirects';
+
+/**
+ * The chapter route is a catch-all (`[...chapter]`) so that nested chapter ids
+ * like `maths/linear/introduction` can be served at `/books/<slug>/maths/linear/introduction`
+ * — mapping VuePress-style nested folder paths to URLs 1:1. Single-segment legacy
+ * ids continue to work since catch-all matches one-or-more segments.
+ */
+
+function chapterIdFromParams(rawChapter: string | string[] | undefined): string {
+  if (!rawChapter) return '';
+  if (Array.isArray(rawChapter)) {
+    return rawChapter.map(safeDecodeParam).join('/');
+  }
+  return safeDecodeParam(rawChapter);
+}
+
+function chapterIdToParamSegments(chapterId: string): string[] {
+  return chapterId.split('/').filter(Boolean);
+}
 
 export async function generateStaticParams() {
   const books = getAllBooks();
-  if (books.length === 0) return [{ slug: '_', chapter: '_' }];
-  const params: { slug: string; chapter: string }[] = [];
+  if (books.length === 0) return [{ slug: '_', chapter: ['_'] }];
+  const params: { slug: string; chapter: string[] }[] = [];
 
   for (const book of books) {
     for (const ch of book.chapters) {
@@ -19,21 +39,23 @@ export async function generateStaticParams() {
       // frontmatter) would cause notFound() at render time, which in
       // output:export dev mode surfaces as a confusing "missing param" 500.
       if (getBookChapter(book.slug, ch.id) !== null) {
-        params.push({ slug: book.slug, chapter: ch.id });
+        params.push({ slug: book.slug, chapter: chapterIdToParamSegments(ch.id) });
       }
     }
   }
 
   // Ensure we never return an empty array with output: export
-  return params.length > 0 ? params : [{ slug: '_', chapter: '_' }];
+  return params.length > 0 ? params : [{ slug: '_', chapter: ['_'] }];
 }
 
 export const dynamicParams = false;
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string; chapter: string }> }): Promise<Metadata> {
+type ChapterPageParams = Promise<{ slug: string; chapter: string[] }>;
+
+export async function generateMetadata({ params }: { params: ChapterPageParams }): Promise<Metadata> {
   const { slug: rawSlug, chapter: rawChapter } = await params;
-  const slug = decodeURIComponent(rawSlug);
-  const chapterSlug = decodeURIComponent(rawChapter);
+  const slug = safeDecodeParam(rawSlug);
+  const chapterSlug = chapterIdFromParams(rawChapter);
 
   const book = getBookData(slug);
   const chapter = getBookChapter(slug, chapterSlug);
@@ -66,10 +88,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function BookChapterPage({ params }: { params: Promise<{ slug: string; chapter: string }> }) {
+export default async function BookChapterPage({ params }: { params: ChapterPageParams }) {
   const { slug: rawSlug, chapter: rawChapter } = await params;
-  const slug = decodeURIComponent(rawSlug);
-  const chapterSlug = decodeURIComponent(rawChapter);
+  const slug = safeDecodeParam(rawSlug);
+  const chapterSlug = chapterIdFromParams(rawChapter);
 
   const book = getBookData(slug);
   const chapter = getBookChapter(slug, chapterSlug);
