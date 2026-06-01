@@ -1497,8 +1497,10 @@ export interface BookData {
    *  annotating every chapter file. */
   latex: boolean;
   /** Whether the chapter-page header renders the chapter's `excerpt`. Defaults
-   *  to true. Set to false on books whose chapters open with their own lede
-   *  paragraph so the same text doesn't appear twice. */
+   *  to false: the typical case is that a chapter opens with its own lede
+   *  paragraph, and an excerpt line above it just duplicates that text in the
+   *  header. Set to true on books where the excerpt is a distinct subtitle
+   *  the author actually wants the reader to see at the top of every chapter. */
   showChapterExcerpt: boolean;
   content: string;
   toc: BookTocItem[];
@@ -1554,7 +1556,7 @@ export const BookSchema = z.object({
   draft: z.boolean().optional().default(false),
   authors: z.array(z.string()).optional().default([]),
   latex: z.boolean().optional().default(false),
-  showChapterExcerpt: z.boolean().optional().default(true),
+  showChapterExcerpt: z.boolean().optional().default(false),
   chapters: z.array(BookTocItemSchema),
 });
 
