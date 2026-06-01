@@ -1,9 +1,9 @@
-import { getAllFlows, getFlowBySlug, getAdjacentFlows, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { getAllFlows, getFlowBySlug, getFlowTags, getAdjacentFlows, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
-import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
+import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
 import Tag from '@/components/Tag';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Backlinks from '@/components/Backlinks';
@@ -56,100 +56,123 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
   const allFlows = getAllFlows();
   const entryDates = allFlows.map(f => f.date);
+  const tags = getFlowTags();
   const { prev, next } = getAdjacentFlows(flow.slug);
   const slugRegistry = buildSlugRegistry();
   const backlinks = getBacklinks(flow.slug);
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
-  const breadcrumb = (
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
-      <Link href="/flows" className="hover:text-accent no-underline shrink-0">
-        {t('all_flows')}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <Link href={`/flows/${year}`} className="hover:text-accent no-underline shrink-0">
-        {year}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline shrink-0">
-        {month}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <span className="text-foreground shrink-0">{day}</span>
-    </nav>
-  );
+  const dateObj = new Date(`${flow.date}T00:00:00`);
+  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  const longDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="layout-main">
-      <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} breadcrumb={breadcrumb} />
-
-        <article className="flex-1 min-w-0">
-          {/* Header */}
-          <header className="mb-8">
-            <time className="text-base font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
-            {flow.title !== flow.date && (
-              <h1 className="mt-2 text-xl sm:text-2xl font-serif font-bold text-heading">{flow.title}</h1>
-            )}
-            {flow.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {flow.tags.map(tag => (
-                  <Tag key={tag} tag={tag} variant="default" />
-                ))}
-              </div>
-            )}
-          </header>
-
-          {/* Content */}
-          <div className="prose prose-lg dark:prose-invert max-w-none">
-            <MarkdownRenderer content={flow.content} slug={`flows/${year}/${month}/${day}`} slugRegistry={slugRegistry} />
-          </div>
-
-          <Backlinks backlinks={backlinks} />
-
-          <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
-
-          {resolveCommentable(flow.commentable, 'flows') && (
-            <Comments slug={`flows/${slug}`} postUrl={flowUrl} />
-          )}
-
-          {/* Prev/Next navigation */}
-          <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
-            {prev ? (
-              <Link
-                href={`/flows/${prev.slug}`}
-                className="group text-left no-underline"
-              >
-                <span className="text-xs text-muted">{t('older')}</span>
-                <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
-                  {prev.date}
-                </div>
-                {prev.title !== prev.date && (
-                  <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
-                    {prev.title}
-                  </div>
-                )}
-              </Link>
-            ) : <div />}
-            {next ? (
-              <Link
-                href={`/flows/${next.slug}`}
-                className="group text-right no-underline"
-              >
-                <span className="text-xs text-muted">{t('newer')}</span>
-                <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
-                  {next.date}
-                </div>
-                {next.title !== next.date && (
-                  <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
-                    {next.title}
-                  </div>
-                )}
-              </Link>
-            ) : <div />}
+      <article className="mx-auto max-w-2xl min-w-0">
+        {/* Breadcrumb + back-to-stream */}
+        <div className="mb-8 flex items-center justify-between gap-4 text-sm text-muted">
+          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5">
+            <Link href="/flows" className="hover:text-accent no-underline shrink-0">
+              {t('all_flows')}
+            </Link>
+            <span className="text-muted/40" aria-hidden="true">›</span>
+            <Link href={`/flows/${year}`} className="hover:text-accent no-underline shrink-0">
+              {year}
+            </Link>
+            <span className="text-muted/40" aria-hidden="true">›</span>
+            <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline shrink-0">
+              {month}
+            </Link>
+            <span className="text-muted/40" aria-hidden="true">›</span>
+            <span className="text-foreground shrink-0">{day}</span>
           </nav>
-        </article>
-      </div>
+          <Link
+            href={`/flows#${flow.date}`}
+            className="shrink-0 text-xs text-muted hover:text-accent no-underline transition-colors"
+          >
+            ← {t('back_to_stream')}
+          </Link>
+        </div>
+
+        {/* Header — editorial date marker matching the stream */}
+        <header className="mb-10">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted/60">
+            {weekday}
+          </div>
+          <time
+            dateTime={flow.date}
+            className="mt-1 inline-block font-serif text-3xl sm:text-4xl text-heading"
+            data-pagefind-meta="date[content]"
+          >
+            {longDate}
+          </time>
+          {flow.title !== flow.date && (
+            <h1 className="mt-3 font-serif text-xl sm:text-2xl font-semibold text-heading">{flow.title}</h1>
+          )}
+          {flow.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {flow.tags.map(tag => (
+                <Tag key={tag} tag={tag} variant="default" />
+              ))}
+            </div>
+          )}
+        </header>
+
+        {/* Content */}
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          <MarkdownRenderer content={flow.content} slug={`flows/${year}/${month}/${day}`} slugRegistry={slugRegistry} />
+        </div>
+
+        <Backlinks backlinks={backlinks} />
+
+        <ShareBar url={flowUrl} title={flow.title} className="mt-8 mb-2" />
+
+        {resolveCommentable(flow.commentable, 'flows') && (
+          <Comments slug={`flows/${slug}`} postUrl={flowUrl} />
+        )}
+
+        {/* Prev/Next navigation */}
+        <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-2 gap-4">
+          {prev ? (
+            <Link
+              href={`/flows/${prev.slug}`}
+              className="group text-left no-underline"
+            >
+              <span className="text-xs text-muted">{t('older')}</span>
+              <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
+                {prev.date}
+              </div>
+              {prev.title !== prev.date && (
+                <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
+                  {prev.title}
+                </div>
+              )}
+            </Link>
+          ) : <div />}
+          {next ? (
+            <Link
+              href={`/flows/${next.slug}`}
+              className="group text-right no-underline"
+            >
+              <span className="text-xs text-muted">{t('newer')}</span>
+              <div className="text-sm font-mono text-heading group-hover:text-accent transition-colors">
+                {next.date}
+              </div>
+              {next.title !== next.date && (
+                <div className="text-sm text-muted group-hover:text-accent/80 transition-colors truncate">
+                  {next.title}
+                </div>
+              )}
+            </Link>
+          ) : <div />}
+        </nav>
+      </article>
+
+      <FlowSidebarSlideOver
+        entryDates={entryDates}
+        currentDate={flow.date}
+        tags={tags}
+      />
     </div>
   );
 }
