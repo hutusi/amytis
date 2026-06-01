@@ -24,6 +24,11 @@ per-format fence/directive syntax, see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md)
 For GitHub-flavored alert callouts (`> [!NOTE]`, `.. note::`, etc.) and the
 five supported alert types, see [`docs/ALERTS.md`](./ALERTS.md).
 
+Markdown links to other hosts (anything whose host differs from
+`siteConfig.baseUrl`) automatically render with a trailing `↗` icon and
+open in a new tab — don't write `<a target="_blank">` manually. Internal
+links, wikilinks, `mailto:`, and `tel:` are unaffected.
+
 ### Creating Posts
 
 Use the CLI to scaffold new content:
