@@ -951,6 +951,20 @@ html.dark .rst-rendered aside.admonition-danger {
   padding-inline: 0.75rem;
 }
 
+/* Browser-default <summary> looks like an unstyled heading — readers miss
+ * that it's interactive. Color it like a link (accent + pointer + hover
+ * underline) so it carries the same affordance as other clickable text in
+ * prose. The native disclosure marker stays — it's the redundant visual
+ * cue that confirms "this expands." */
+.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.prose :where(summary):not(:where([class~="not-prose"], [class~="not-prose"] *)):hover {
+  text-decoration: underline;
+}
+
 .rst-rendered a[role="doc-noteref"] {
   font-size: 0.82em;
   vertical-align: super;
