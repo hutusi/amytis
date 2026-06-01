@@ -106,10 +106,20 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, compact = false }) => {
 
   return (
     <div className={wrapperClass}>
+      {/*
+        suppressHydrationWarning is intentional: Mermaid runs client-side
+        in `useEffect`, injects its SVG via `dangerouslySetInnerHTML`, and
+        then mutates the DOM further (adding `data-processed="true"` on
+        this wrapper). React's virtual DOM has no record of those
+        mutations, so any HMR-triggered re-render in dev flags the drift
+        as a hydration mismatch. Telling React this div is
+        intentionally-mutated terrain is the blessed escape hatch.
+      */}
       <div
         className="mermaid w-full flex justify-center"
         dangerouslySetInnerHTML={{ __html: svg }}
         ref={ref}
+        suppressHydrationWarning
       />
     </div>
   );
