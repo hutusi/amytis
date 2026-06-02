@@ -24,7 +24,17 @@ export default function ImmersiveReaderTopBar({
   const prefsButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <header className="h-12 flex items-center gap-3 px-3 border-b border-muted/15 bg-background/95 backdrop-blur-md shrink-0">
+    <header
+      // `relative z-30` is load-bearing: `backdrop-blur-md` creates a stacking
+      // context on the header, which would otherwise paint at "block-in-flow"
+      // (step 3) of the overlay's stacking context — BELOW positioned
+      // descendants of <main>, e.g. code blocks (cb-root is `position: relative`).
+      // Promoting the header to a positioned descendant with z-index pushes it
+      // above those, so the Aa popover (which renders inside the header and
+      // visually overflows down into the article area) stays on top and
+      // clickable when it overlaps a code block.
+      className="relative z-30 h-12 flex items-center gap-3 px-3 border-b border-muted/15 bg-background/95 backdrop-blur-md shrink-0"
+    >
       <button
         type="button"
         onClick={toggleSidebar}
