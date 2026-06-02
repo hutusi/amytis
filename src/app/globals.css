@@ -996,3 +996,39 @@ html.dark .rst-rendered aside.admonition-danger {
   font-weight: 600;
   color: var(--heading);
 }
+
+/* Immersive reading mode.
+ * Toggled by ImmersiveReadingProvider via html[data-immersive="true"].
+ * Hides root-layout chrome by targeting the stable data-* hooks on
+ * Navbar / Footer / ReadingProgressBar (do not strip those hooks). */
+html[data-immersive="true"] [data-site-nav],
+html[data-immersive="true"] [data-site-footer],
+html[data-immersive="true"] [data-reading-progress] {
+  display: none;
+}
+html[data-immersive="true"] #main-content {
+  padding-top: 0;
+}
+
+/* Font-size driven by CSS var, set inline by ImmersiveReadingFrame.
+ * A var (not stacked text-* classes) sidesteps fighting prose-lg specificity. */
+[data-reading-frame] .prose {
+  font-size: var(--reading-font-size, 1.125rem);
+}
+
+/* Sepia reading theme — scoped to the article frame so it composes with the
+ * site's light/dark theme on <html>. Code blocks keep their existing Shiki
+ * theme (intentional: better readability than warm-tinting code). */
+[data-reading-frame][data-reading-theme="sepia"] {
+  --background: #f4ecd8;
+  --foreground: #5b4636;
+  --heading: #3b2f24;
+  --muted: #8a7a66;
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+[data-reading-frame][data-reading-theme="sepia"] .prose :where(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading);
+}
