@@ -80,14 +80,19 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
     return () => window.removeEventListener('keydown', onKey);
   }, [enabled, prefsPanelOpen]);
 
-  // Auto-collapse the sidebar on narrow viewports when entering immersive mode.
-  // Without this, the sidebar overlaps the article on tablets / phones.
+  // Auto-collapse the sidebar on narrow viewports when entering immersive mode
+  // (or when resizing into the narrow range). Without this, the sidebar
+  // overlaps the article on tablets / phones. Deliberately one-directional:
+  // we never auto-open on a wide-resize, so a user who manually closed the
+  // sidebar on desktop keeps that preference instead of having it overridden.
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 1023px)');
-    const sync = (matches: boolean) => setSidebarOpen(!matches);
-    sync(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => sync(e.matches);
+    const collapseIfNarrow = (matches: boolean) => {
+      if (matches) setSidebarOpen(false);
+    };
+    collapseIfNarrow(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => collapseIfNarrow(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, [enabled]);
