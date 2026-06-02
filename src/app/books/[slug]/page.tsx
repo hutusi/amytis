@@ -159,9 +159,9 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
             </p>
           )}
 
-          {/* Start Reading CTA */}
+          {/* Start Reading CTAs */}
           {firstChapter && (
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={getBookChapterUrl(book.slug, firstChapter.id)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
@@ -170,6 +170,22 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
+              </Link>
+              {/* Secondary CTA — opens the first chapter in immersive mode.
+                  The `?immersive=1` query param is read by ImmersiveReadingProvider
+                  on mount, which calls enter() then strips the flag from the URL
+                  so back-navigation doesn't re-trigger it. */}
+              <Link
+                href={`${getBookChapterUrl(book.slug, firstChapter.id)}?immersive=1`}
+                className="inline-flex items-center gap-2 px-5 py-3 border border-muted/30 text-foreground/80 hover:text-accent hover:border-accent/50 rounded-xl font-sans font-medium text-sm no-underline transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                </svg>
+                {t('immersive_reading')}
               </Link>
             </div>
           )}

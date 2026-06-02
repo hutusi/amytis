@@ -996,3 +996,58 @@ html.dark .rst-rendered aside.admonition-danger {
   font-weight: 600;
   color: var(--heading);
 }
+
+/* Immersive reading mode.
+ * Toggled by ImmersiveReadingProvider via html[data-immersive="true"]. The
+ * fullscreen ImmersiveBookReader overlay also covers the site chrome, but
+ * these rules are kept as defense-in-depth (and reset the navbar offset so
+ * the scroll padding doesn't peek through the overlay). Do not strip the
+ * data-site-nav / data-site-footer / data-reading-progress hooks. */
+html[data-immersive="true"] [data-site-nav],
+html[data-immersive="true"] [data-site-footer],
+html[data-immersive="true"] [data-reading-progress] {
+  display: none;
+}
+html[data-immersive="true"] #main-content {
+  padding-top: 0;
+}
+
+/* Font-size in the reader overlay is driven by a CSS var set inline on the
+ * overlay container. A var (not stacked text-* classes) sidesteps fighting
+ * the prose-lg specificity. */
+[data-reader-overlay] .prose {
+  font-size: var(--reading-font-size, 1.125rem);
+}
+
+/* Reading-theme overrides — scoped to the overlay so they compose with the
+ * site's light/dark theme without leaking outside. 'auto' inherits the site
+ * theme (no override needed); 'light' / 'dark' / 'sepia' set their own
+ * variables. The overlay also adds Tailwind's `.dark` class on its container
+ * when readingTheme === 'dark' so `dark:prose-invert` activates regardless of
+ * the site theme. Shiki code blocks keep their own theme on purpose. */
+[data-reader-overlay][data-reading-theme="light"] {
+  --background: #fafaf9;
+  --foreground: #44403c;
+  --heading: #1c1917;
+  --muted: #78716c;
+}
+[data-reader-overlay][data-reading-theme="dark"] {
+  --background: #292524;
+  --foreground: #f5f5f4;
+  --heading: #fafaf9;
+  --muted: #a8a29e;
+}
+[data-reader-overlay][data-reading-theme="sepia"] {
+  --background: #f4ecd8;
+  --foreground: #5b4636;
+  --heading: #3b2f24;
+  --muted: #8a7a66;
+}
+[data-reader-overlay][data-reading-theme="sepia"] .prose h1,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h2,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h3,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h4,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h5,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h6 {
+  color: var(--heading);
+}

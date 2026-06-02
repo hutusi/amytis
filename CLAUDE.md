@@ -62,15 +62,17 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Code-group tabs add `<input type="radio">` + `<label>` to the rST sanitize-html allowlist.** Keep the `transformTags` guard in `RstRenderer.tsx` that strips any `<input>` whose `type !== "radio"` — that's the defense against an rST author injecting password/file/etc. inputs through raw HTML.
 - **GitHub alerts (`> [!NOTE]`, etc.) need the custom `remarkGithubAlerts` plugin.** `remark-gfm` v4 does NOT transform `[!TYPE]` blockquotes — they pass through as plain blockquotes with the literal marker visible. The custom plugin in `src/lib/remark-github-alerts.ts` is what detects them and routes to `<GithubAlert>`. If a future remark-gfm adds native alert support, that's a regression to watch for (covered by an integration test).
 - **Single-line block math `$$ x $$` is silently inline.** `micromark-extension-math` (under `remark-math` v6) requires the `$$` markers on their own lines — single-line collapses to *inline* math (no `katex-display` wrapper, no centering, no display margin) and looks like a subtly under-styled formula. `src/lib/normalize-vuepress-math.ts` expands single-line `$$ x $$` to opener / body / closer before parsing, so authored content stays portable. If a chapter formula stops centering, suspect the normalizer's regex first.
+- **Immersive reading hooks.** `Navbar`, `Footer`, and `ReadingProgressBar` carry stable `data-site-nav` / `data-site-footer` / `data-reading-progress` attributes that the CSS rules in `globals.css` use to hide chrome when `html[data-immersive="true"]` is set. Don't strip these attributes during refactors — the fullscreen `ImmersiveBookReader` overlay in book chapters depends on them as defense-in-depth even though the overlay also covers them. Sepia is scoped to `[data-reader-overlay]`, not `<html>`, so it composes with the site's light/dark theme without leaking outside the overlay.
 
 ## Development workflow
 
-- **Don't push or open PRs unless asked.** Local commits are fine; anything touching the remote needs explicit go-ahead.
-- **Commit in focused slices.** Keep `bun run validate` green at each commit so the branch stays bisectable.
+For a new feature or non-trivial change:
+
+- **Branch.** Work on a dedicated `<type>/<topic>` branch off `main`, not directly on `main`.
+- **Commit in focused slices.** One commit per logical slice (e.g. split a dead-code removal from the feature that replaces it). Keep `bun run lint` green at each commit so the branch stays bisectable. Use Conventional Commit messages; no `Co-Authored-By` trailers.
 - **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
 - **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
-- **Branches:** `<type>/<kebab-slug>` matching commit prefixes.
-- **No Claude attribution.** Do not add `Co-Authored-By: Claude ...` trailers to commit messages or the `🤖 Generated with [Claude Code]` footer to PR descriptions. The default templates in the harness include both — strip them.
+- **Open a PR** into `main` when the branch is green. Do not add the `🤖 Generated with [Claude Code]` footer to PR descriptions. Pushing, and opening PRs are actions the user authorizes — don't push or open a PR unless asked.
 
 ## Verifying a change
 
