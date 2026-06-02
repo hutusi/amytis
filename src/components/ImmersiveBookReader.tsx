@@ -58,7 +58,12 @@ export default function ImmersiveBookReader({ book, chapter, children }: Immersi
       data-reader-overlay
       data-reading-theme={readingTheme}
       style={overlayStyle}
-      className="fixed inset-0 z-40 flex flex-col bg-background text-foreground"
+      // `dark` is added when readingTheme === 'dark' so Tailwind's `dark:`
+      // variants (notably `dark:prose-invert` in MarkdownRenderer) activate
+      // inside the overlay even when the site itself is in light mode.
+      className={`fixed inset-0 z-40 flex flex-col bg-background text-foreground ${
+        readingTheme === 'dark' ? 'dark' : ''
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label={book.title}

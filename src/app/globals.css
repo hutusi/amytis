@@ -1019,9 +1019,24 @@ html[data-immersive="true"] #main-content {
   font-size: var(--reading-font-size, 1.125rem);
 }
 
-/* Sepia reading theme — scoped to the overlay so it composes with the site's
- * light/dark theme without leaking outside. Light/dark inherit the site's
- * existing variables. Shiki code blocks keep their own theme on purpose. */
+/* Reading-theme overrides — scoped to the overlay so they compose with the
+ * site's light/dark theme without leaking outside. 'auto' inherits the site
+ * theme (no override needed); 'light' / 'dark' / 'sepia' set their own
+ * variables. The overlay also adds Tailwind's `.dark` class on its container
+ * when readingTheme === 'dark' so `dark:prose-invert` activates regardless of
+ * the site theme. Shiki code blocks keep their own theme on purpose. */
+[data-reader-overlay][data-reading-theme="light"] {
+  --background: #fafaf9;
+  --foreground: #44403c;
+  --heading: #1c1917;
+  --muted: #78716c;
+}
+[data-reader-overlay][data-reading-theme="dark"] {
+  --background: #292524;
+  --foreground: #f5f5f4;
+  --heading: #fafaf9;
+  --muted: #a8a29e;
+}
 [data-reader-overlay][data-reading-theme="sepia"] {
   --background: #f4ecd8;
   --foreground: #5b4636;
