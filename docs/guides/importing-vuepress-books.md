@@ -36,6 +36,9 @@ bun run sync-vuepress-book \
 # Positional shorthand:
 bun run sync-vuepress-book /path/to/your-book/docs content/books/your-book
 
+# Skip extra files alongside the built-in defaults:
+bun run sync-vuepress-book /path/to/docs content/books/foo --skip '*.bak,dist'
+
 # Then rebuild + preview locally:
 bun run build:dev
 bun dev
@@ -48,8 +51,24 @@ The script prints a one-line summary on completion:
 ```
 
 It will also warn about anomalies it noticed in the sidebar — empty section
-placeholders, sections with their own page-link header, dropped meta-nav
-leaves (see [Conventions](#conventions) below), etc.
+placeholders, dropped meta-nav leaves (see [Conventions](#conventions)
+below), files filtered out by skip rules, etc.
+
+## Skip rules
+
+A VuePress repo's docs root often carries non-content files (lockfiles,
+package manifests, CI configs) that shouldn't land under
+`content/books/<slug>/`. Two flags control filtering:
+
+| Flag | Default | Effect |
+| --- | --- | --- |
+| `--skip-common` / `--no-skip-common` | on | Skip `package.json`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`. |
+| `--skip <pattern,pattern,…>` | empty | Skip files/dirs whose **basename** matches any of the supplied glob patterns. `*` and `?` are supported. Repeatable. Applied to both files and directories anywhere in the tree. |
+
+Files filtered out by either rule are listed in the run summary. They're
+also pruned from the dest on subsequent re-syncs (the mirror logic applies
+to the same skip rules, so toggling `--no-skip-common` mid-stream brings
+the lockfiles back).
 
 ## What the script does
 

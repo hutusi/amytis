@@ -11,10 +11,10 @@ const FIXTURE_SOURCE = path.resolve("tests/fixtures/sync-vuepress-book/docs");
 // `--source` / `--dest` flags so the test exercises everything a real user does:
 // the package.json script wiring + the CLI argv parser, not just the inner sync
 // pipeline.
-function runSync(source: string, dest: string) {
+function runSync(source: string, dest: string, extraArgs: string[] = []) {
   return spawnSync(
     "bun",
-    ["run", "sync-vuepress-book", "--source", source, "--dest", dest],
+    ["run", "sync-vuepress-book", "--source", source, "--dest", dest, ...extraArgs],
     {
       encoding: "utf8",
       cwd: process.cwd(),
@@ -333,6 +333,63 @@ describe("Integration: sync-vuepress-book script", () => {
       expect(res.stderr).not.toMatch(/Skipped unsupported sidebar entries/);
     } finally {
       rmSync(vp1, { recursive: true, force: true });
+    }
+  });
+
+  test("skips common build manifests by default, honors --skip and --no-skip-common", () => {
+    // Set up a minimal VuePress book where the source root has package.json
+    // (junk), package-lock.json (junk), a custom .bak (skipped via --skip),
+    // and a Real.md (always copied).
+    const junky = mkdtempSync(path.join(tmpdir(), "sync-junky-"));
+    try {
+      const docs = path.join(junky, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `export default {
+          title: 'Junky Book',
+          theme: { sidebar: [{ text: 'Real', link: '/real' }] },
+        }
+        `,
+      );
+      writeFileSync(path.join(docs, "real.md"), "---\ntitle: Real\n---\n# Real\n");
+      writeFileSync(path.join(docs, "package.json"), '{"name":"junky"}');
+      writeFileSync(path.join(docs, "package-lock.json"), '{"lockfileVersion":3}');
+      writeFileSync(path.join(docs, "bun.lockb"), "binary-ish");
+      writeFileSync(path.join(docs, "draft.bak"), "wip");
+
+      // 1. Defaults: --skip-common is on, --skip empty. Lockfiles dropped,
+      //    bak file kept (it matches no rule).
+      let res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "real.md"))).toBe(true);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "package-lock.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "bun.lockb"))).toBe(false);
+      expect(existsSync(path.join(dest, "draft.bak"))).toBe(true);
+      // Skip summary is printed so the user knows what got dropped.
+      expect(res.stdout).toMatch(/Skipped \d+ files? matching skip rules/);
+
+      // 2. --skip '*.bak' adds the bak pattern to the defaults.
+      rmSync(dest, { recursive: true, force: true });
+      mkdirSync(dest, { recursive: true });
+      res = runSync(docs, dest, ["--skip", "*.bak"]);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "real.md"))).toBe(true);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "draft.bak"))).toBe(false);
+
+      // 3. --no-skip-common disables the default list; lockfiles come back.
+      rmSync(dest, { recursive: true, force: true });
+      mkdirSync(dest, { recursive: true });
+      res = runSync(docs, dest, ["--no-skip-common"]);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(true);
+      expect(existsSync(path.join(dest, "package-lock.json"))).toBe(true);
+      expect(existsSync(path.join(dest, "bun.lockb"))).toBe(true);
+    } finally {
+      rmSync(junky, { recursive: true, force: true });
     }
   });
 
