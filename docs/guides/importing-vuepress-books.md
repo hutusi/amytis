@@ -134,25 +134,36 @@ the lockfiles back).
 
 ## User-controlled fields in `index.mdx`
 
-The script forces `chapters:` to whatever the current sidebar produces, but
-leaves the rest of the frontmatter alone if it's already populated:
+The script's footprint on `index.mdx` is deliberately narrow:
 
-| Field        | Behavior |
+- **First sync** (no `index.mdx` exists yet): a stub is created with
+  `title` (from the VuePress config), today's `date`, `draft: false`,
+  `featured: false`, and the parsed `chapters:`. Plus a one-line prose
+  body identifying the upstream source. These defaults exist solely so
+  the book is loadable by the runtime's Zod schema out of the box.
+- **Every re-sync after that**: only `chapters:` is touched. Every other
+  frontmatter key, including ones you've added (`coverImage`, `excerpt`,
+  `authors`, `latex`, `showChapterExcerpt`, anything else) and any value
+  you've cleared (including intentionally-blank `date: ""`), is preserved
+  exactly. The prose body below the frontmatter is preserved too.
+
+In other words: edit `index.mdx` once after the first sync, then never
+worry about the script rewriting your choices.
+
+The handful of fields that matter for book rendering:
+
+| Field        | Notes |
 | --- | --- |
-| `title`      | Preserved if set; else derived from the VuePress config's `title` |
-| `excerpt`    | Preserved |
-| `date`       | Preserved if set; else today |
-| `coverImage` | Preserved |
-| `featured`   | Preserved (defaults to `false` on first sync) |
-| `draft`      | Preserved (defaults to `false` on first sync) |
-| `authors`    | Preserved |
-| `latex`      | Preserved — set to `true` for math-heavy books to enable KaTeX globally for the book |
-| `showChapterExcerpt` | Preserved (defaults to `false`). Set to `true` if you want the chapter's `excerpt` rendered as a subtitle under the chapter title. The default suppresses it because most chapters open with their own lede paragraph that duplicates the excerpt. |
-| `chapters`   | **Always rewritten** from the sidebar |
-
-The prose body below the frontmatter is also preserved, so you can write a
-custom landing-page introduction and re-running the script won't blow it
-away.
+| `title`      | Required by the runtime — keep something here. |
+| `excerpt`    | Optional one-liner shown on book listings. |
+| `date`       | Optional. |
+| `coverImage` | Optional. |
+| `featured`   | Show on the home page's featured strip. |
+| `draft`      | Hides the book from listings when `true`. |
+| `authors`    | Optional list. |
+| `latex`      | Set to `true` for math-heavy books to enable KaTeX globally for the book. |
+| `showChapterExcerpt` | Defaults to `false`. Set to `true` if you want each chapter's `excerpt` rendered as a subtitle under the chapter title; most chapters open with their own lede paragraph so the default suppresses it. |
+| `chapters`   | **Always rewritten** from the sidebar. |
 
 ## What about VuePress-specific content?
 

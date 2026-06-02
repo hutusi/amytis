@@ -630,24 +630,31 @@ function loadVuepressTitle(configPath: string): string | undefined {
 
 function writeIndexMdx(destDir: string, configPath: string, toc: TocItem[]): void {
   const indexPath = path.join(destDir, 'index.mdx');
-  let existing: { data: BookFrontmatter; content: string } = { data: {}, content: '' };
+
   if (fs.existsSync(indexPath)) {
+    // Re-sync: the script owns `chapters:` and nothing else. Every other
+    // frontmatter key + the prose body is preserved as-is. Defaults that
+    // were sensible at first-sync time would now be unwanted overrides of
+    // what the author has chosen (including intentionally-blank values).
     const raw = fs.readFileSync(indexPath, 'utf8');
     const parsed = matter(raw);
-    existing = { data: parsed.data as BookFrontmatter, content: parsed.content };
+    const data: BookFrontmatter = { ...(parsed.data as BookFrontmatter), chapters: toc };
+    fs.writeFileSync(indexPath, matter.stringify(parsed.content, data));
+    return;
   }
 
-  const data: BookFrontmatter = { ...existing.data };
-  if (!data.title) data.title = loadVuepressTitle(configPath) ?? path.basename(destDir);
-  if (!data.date) data.date = new Date().toISOString().split('T')[0];
-  if (data.draft === undefined) data.draft = false;
-  if (data.featured === undefined) data.featured = false;
-  data.chapters = toc;
-
-  const body = existing.content.trim().length > 0
-    ? existing.content
-    : `\nImported from VuePress source at ${path.relative(process.cwd(), path.dirname(path.dirname(configPath)))}.\n`;
-
+  // First sync: bootstrap an index.mdx with the minimum the runtime's Zod
+  // book schema requires (`title:`) plus a couple of low-stakes defaults so
+  // the book is immediately loadable. The author edits to taste; subsequent
+  // re-syncs will preserve those edits.
+  const data: BookFrontmatter = {
+    title: loadVuepressTitle(configPath) ?? path.basename(destDir),
+    date: new Date().toISOString().split('T')[0],
+    draft: false,
+    featured: false,
+    chapters: toc,
+  };
+  const body = `\nImported from VuePress source at ${path.relative(process.cwd(), path.dirname(path.dirname(configPath)))}.\n`;
   fs.writeFileSync(indexPath, matter.stringify(body, data));
 }
 

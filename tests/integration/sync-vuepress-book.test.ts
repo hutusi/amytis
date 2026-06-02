@@ -89,6 +89,35 @@ describe("Integration: sync-vuepress-book script", () => {
     expect(Array.isArray(refreshed.chapters)).toBe(true);
   });
 
+  test("re-sync only touches the chapters field — never re-applies first-sync defaults", () => {
+    // First run creates index.mdx with bootstrap defaults (title, date,
+    // draft, featured).
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+
+    // Author strips the script's bootstrap defaults to validate that
+    // re-sync does not auto-fill them again. `featured` is explicitly
+    // removed; `date` is left as an empty string (which the old behavior
+    // would have stomped with today's date because `!data.date` is true
+    // for `""`).
+    const indexPath = path.join(dest, "index.mdx");
+    const parsed = matter(readFileSync(indexPath, "utf8")) as unknown as { data: Record<string, unknown>; content: string };
+    delete parsed.data.featured;
+    parsed.data.date = "";
+    parsed.data.draft = true;
+    writeFileSync(indexPath, matter.stringify(parsed.content, parsed.data));
+
+    // Re-run.
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+    const refreshed = matter(readFileSync(indexPath, "utf8")) as unknown as { data: Record<string, unknown> };
+
+    // `chapters:` refreshed; everything else byte-equivalent to what the
+    // author wrote.
+    expect(Array.isArray(refreshed.data.chapters)).toBe(true);
+    expect(refreshed.data.featured).toBeUndefined();
+    expect(refreshed.data.date).toBe("");
+    expect(refreshed.data.draft).toBe(true);
+  });
+
   test("prunes dest files removed upstream (mirror semantics)", () => {
     // First sync — dest now has every fixture file.
     expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
