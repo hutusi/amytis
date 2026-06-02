@@ -117,9 +117,11 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
   }, []);
 
   // Hydrate prefs from localStorage on mount, then persist on every change.
-  // `hydratedRef` gates the persist effect so the first run (the initial
-  // post-mount commit, before the read-effect has applied) doesn't clobber
-  // a real stored value with the React defaults.
+  // The persist effect itself flips `hydratedRef` on its first run and
+  // no-ops — without this, the initial commit's persist run would race
+  // ahead of the hydration setters (state hasn't re-rendered yet, so it'd
+  // read the React defaults from the closure and clobber the stored blob
+  // with them before the next render restores the correct values).
   const hydratedRef = useRef(false);
   useEffect(() => {
     const stored = readStoredPrefs();
@@ -128,12 +130,14 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
       setReadingTheme(stored.readingTheme);
       setColumnWidth(stored.columnWidth);
       setSidebarOpen(stored.sidebarOpen);
-      hydratedRef.current = true;
     };
     applyStored();
   }, []);
   useEffect(() => {
-    if (!hydratedRef.current) return;
+    if (!hydratedRef.current) {
+      hydratedRef.current = true;
+      return;
+    }
     writeStoredPrefs({ fontSize, readingTheme, columnWidth, sidebarOpen });
   }, [fontSize, readingTheme, columnWidth, sidebarOpen]);
 
