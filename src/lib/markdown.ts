@@ -1665,10 +1665,14 @@ function resolveChapterFilePath(
   const chMd = `${candidate}.md`;
   const chFolderMdx = path.join(candidate, 'index.mdx');
   const chFolderMd = path.join(candidate, 'index.md');
+  const chFolderReadmeMdx = path.join(candidate, 'README.mdx');
+  const chFolderReadmeMd = path.join(candidate, 'README.md');
   if (fs.existsSync(chMdx)) return { path: chMdx, isFolder: false };
   if (fs.existsSync(chMd)) return { path: chMd, isFolder: false };
   if (fs.existsSync(chFolderMdx)) return { path: chFolderMdx, isFolder: true };
   if (fs.existsSync(chFolderMd)) return { path: chFolderMd, isFolder: true };
+  if (fs.existsSync(chFolderReadmeMdx)) return { path: chFolderReadmeMdx, isFolder: true };
+  if (fs.existsSync(chFolderReadmeMd)) return { path: chFolderReadmeMd, isFolder: true };
   return null;
 }
 
