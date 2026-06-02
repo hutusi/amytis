@@ -219,6 +219,123 @@ describe("Integration: sync-vuepress-book script", () => {
     }
   });
 
+  test("imports a VuePress 1.x sidebar (title/path/collapsable, bare-string children, README promotion, SUMMARY drop)", () => {
+    // VP1 uses a different vocabulary than VP2: `title` instead of `text`,
+    // `collapsable` instead of `collapsible`, plain string paths as children,
+    // and sections that carry both `path` (the section's README) and
+    // `children` (sub-chapters). This fixture exercises all four variants
+    // plus the GitBook-style SUMMARY.md drop.
+    const vp1 = mkdtempSync(path.join(tmpdir(), "sync-vp1-"));
+    try {
+      const docs = path.join(vp1, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `module.exports = {
+          title: 'VP1 Fixture',
+          themeConfig: {
+            sidebar: [
+              { title: '目录', collapsable: false, path: '/SUMMARY.md' },
+              {
+                title: 'Preface',
+                collapsable: false,
+                children: [
+                  '/intro/about-me',
+                  '/intro/about-book',
+                ],
+              },
+              {
+                title: 'Architecture',
+                collapsable: false,
+                children: [
+                  {
+                    title: 'History',
+                    path: '/arch/history/',
+                    collapsable: false,
+                    children: [
+                      '/arch/history/monolithic',
+                      '/arch/history/microservices',
+                    ],
+                  },
+                  '/arch/standalone-note',
+                ],
+              },
+              {
+                title: 'Misc',
+                collapsable: false,
+                children: [
+                  '/CHANGELOG.md',
+                ],
+              },
+            ],
+          },
+        };
+        `,
+      );
+      // Source files matching every sidebar reference. Titles come from
+      // frontmatter or H1 — the importer should pick them up for bare-string
+      // children that have no inline title.
+      writeFileSync(path.join(docs, "SUMMARY.md"), "# Summary\n- placeholder\n");
+      mkdirSync(path.join(docs, "intro"), { recursive: true });
+      writeFileSync(path.join(docs, "intro", "about-me.md"), "---\ntitle: About the Author\n---\n# About\n");
+      writeFileSync(path.join(docs, "intro", "about-book.md"), "# About this Book\n\nBody.\n");
+      mkdirSync(path.join(docs, "arch", "history"), { recursive: true });
+      writeFileSync(path.join(docs, "arch", "history", "README.md"), "# History of Architecture\n");
+      writeFileSync(path.join(docs, "arch", "history", "monolithic.md"), "# Monolithic\n");
+      writeFileSync(path.join(docs, "arch", "history", "microservices.md"), "# Microservices\n");
+      writeFileSync(path.join(docs, "arch", "standalone-note.md"), "# Standalone Note\n");
+      writeFileSync(path.join(docs, "CHANGELOG.md"), "# Changelog\n");
+
+      const res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+
+      const { data } = matter(readFileSync(path.join(dest, "index.mdx"), "utf8")) as unknown as { data: Record<string, unknown> };
+      const chapters = data.chapters as Array<Record<string, unknown>>;
+
+      // SUMMARY.md dropped — TOC starts with the Preface section.
+      expect(chapters[0]).toMatchObject({ section: "Preface", collapsible: false });
+
+      // Bare-string children get their titles from the source files
+      // (frontmatter wins over first H1).
+      const prefaceItems = chapters[0].items as Array<Record<string, unknown>>;
+      expect(prefaceItems).toEqual([
+        { title: "About the Author", id: "intro/about-me" },
+        { title: "About this Book", id: "intro/about-book" },
+      ]);
+
+      // Architecture > History promotes the section's README as the first
+      // chapter (id `arch/history`, title from the README's H1), then
+      // appends the bare-string children.
+      const arch = chapters[1] as Record<string, unknown>;
+      expect(arch.section).toBe("Architecture");
+      const archItems = arch.items as Array<Record<string, unknown>>;
+      const history = archItems[0] as Record<string, unknown>;
+      expect(history.section).toBe("History");
+      expect(history.items).toEqual([
+        { title: "History of Architecture", id: "arch/history" },
+        { title: "Monolithic", id: "arch/history/monolithic" },
+        { title: "Microservices", id: "arch/history/microservices" },
+      ]);
+      // Standalone bare-string sibling of the History section.
+      expect(archItems[1]).toMatchObject({ title: "Standalone Note", id: "arch/standalone-note" });
+
+      // `/CHANGELOG.md` keeps its `.md` extension stripped — id is `CHANGELOG`.
+      const misc = chapters[2] as Record<string, unknown>;
+      expect((misc.items as Array<{ id: string }>)[0].id).toBe("CHANGELOG");
+
+      // SUMMARY drop is reported in stdout (same channel as the existing
+      // `contents` drop).
+      expect(res.stdout).toMatch(/SUMMARY/i);
+
+      // No "unsupported sidebar entries" warning — every VP1 shape was
+      // recognized.
+      expect(res.stderr).not.toMatch(/Skipped unsupported sidebar entries/);
+    } finally {
+      rmSync(vp1, { recursive: true, force: true });
+    }
+  });
+
   test("exits with an error when a sidebar leaf points to a missing source file", () => {
     // Create a corrupt config with a broken link.
     const broken = mkdtempSync(path.join(tmpdir(), "sync-broken-"));

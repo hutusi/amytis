@@ -1,9 +1,13 @@
-# Importing a VuePress 2 book
+# Importing a VuePress book
 
-Amytis can host a VuePress 2 book natively. `bun run sync-vuepress-book`
+Amytis can host a VuePress book natively. `bun run sync-vuepress-book`
 copies the upstream `docs/` tree into a slug under `content/books/`, derives
 Amytis's nested-section book TOC from the VuePress sidebar config, and
 preserves any user-controlled fields you've added to the book's `index.mdx`.
+
+Both VuePress 2 and VuePress 1 sidebars are supported — the importer
+auto-detects the shape per entry, so a single config can mix `{ text, link }`
+(VP2) and `{ title, path }` (VP1) without configuration.
 
 The importer is idempotent — re-running mirrors the current state of the
 source (including upstream deletions). You should *not* edit chapter
@@ -14,8 +18,8 @@ the book's metadata in `index.mdx` (preserved) or extend the source repo.
 
 ## Prerequisites
 
-- The source must be a VuePress 2 project where the docs root contains a
-  `.vuepress/` directory with a `config.js` or `config.mjs`.
+- The source must be a VuePress project (1.x or 2.x) where the docs root
+  contains a `.vuepress/` directory with a `config.js` or `config.mjs`.
 - `config.ts` is **not supported** — acorn (used to AST-extract the sidebar)
   parses JS only. Compile to JS first (`tsc`, `bun build --no-bundle`, …) or
   rename to `.mjs` if the config is pure ESM.
@@ -55,9 +59,22 @@ leaves (see [Conventions](#conventions) below), etc.
    literals to a plain JS structure. Unsupported AST shapes throw — silent
    drops would produce a half-correct TOC.
 3. Maps every VuePress sidebar item to one of:
-   - `{ title, id }` for a leaf (`{ text, link }` in VuePress).
-   - `{ section, items, collapsible? }` for a group (`{ text, children }`),
-     recursive — VuePress's two layers of nesting map 1:1.
+   - `{ title, id }` for a leaf. Accepted shapes:
+     - VP2: `{ text, link }`
+     - VP1: `{ title, path }` (no `children`)
+     - VP1: a bare string path (e.g. `'/intro/about-me'`) — the title is
+       read from the source file's frontmatter `title`, falling back to the
+       first H1, then a slug-derived fallback.
+   - `{ section, items, collapsible? }` for a group. Accepted shapes:
+     - VP2: `{ text, children, collapsible? }`
+     - VP1: `{ title, children, collapsable? }` (VP1's `collapsable` is
+       aliased to `collapsible`)
+   - A group entry that carries **both** `path` (VP1) or `link` (VP2) AND
+     `children` (a "section + index page" — common in VP1 books where
+     `/foo/` is the section's README) has its index page **promoted as the
+     first chapter** of the section. The promoted chapter's title is read
+     from the README's frontmatter or first H1, not from the section title,
+     so the sidebar doesn't show the section name twice.
    - Mixed/unknown shapes are warned and skipped.
 4. Validates that every leaf's resolved chapter id has a real source file at
    one of `<id>.md`, `<id>.mdx`, `<id>/README.md(x)`, or `<id>/index.md(x)`.
@@ -75,15 +92,26 @@ leaves (see [Conventions](#conventions) below), etc.
 
 ## Conventions
 
-- The sidebar leaf with id `contents` is dropped from the generated TOC —
-  it's a VuePress convention for a hand-written table-of-contents page, and
-  Amytis's book landing page already renders one. The `contents.md` file
-  itself is still copied so the dest layout matches upstream; it just
-  isn't reachable from the TOC.
-- Sections with `collapsible: false` on the VuePress side keep that hint —
-  the Amytis sidebar honors it (forces the section open).
-- A group whose VuePress entry has both `link` and `children` is treated as
-  a pure group; the group's own page link is dropped (warned).
+- Sidebar leaves whose id (case-insensitive, basename only) matches
+  `contents` or `SUMMARY` are dropped from the generated TOC. They're
+  VuePress/GitBook conventions for a hand-written table-of-contents page,
+  and Amytis's book landing page already renders one. The source files are
+  still copied so the dest layout matches upstream; they just aren't
+  reachable from the TOC.
+- Sections with `collapsible: false` (or VP1's `collapsable: false`) on the
+  VuePress side keep that hint — the Amytis sidebar honors it (forces the
+  section open).
+- A group whose VuePress entry has both `link`/`path` and `children` has
+  the index page promoted as the section's first chapter (see "Maps every
+  VuePress sidebar item …" above). Earlier versions dropped the link with
+  a warning; the current behavior is strictly more useful and matches the
+  upstream VuePress click-the-section-title UX.
+- Path normalization is identical for VP1 and VP2: leading `/` stripped,
+  trailing `/` stripped (so `/guide/` resolves to id `guide` and the file
+  is found via the `guide/README.md` or `guide/index.md` candidate), and
+  any `.md`/`.mdx` suffix stripped. Both build-time validation and the
+  runtime chapter resolver accept `<id>.md`, `<id>.mdx`, `<id>/index.md`,
+  `<id>/index.mdx`, `<id>/README.md`, `<id>/README.mdx`.
 
 ## User-controlled fields in `index.mdx`
 
@@ -175,4 +203,5 @@ output under `public/books/<slug>/` and the Pagefind search index.
   pipeline plugins listed above.
 - `tests/integration/sync-vuepress-book.test.ts` — covers AST extraction,
   mirror semantics, folder-index links, TS-config rejection, dotfile
-  preservation, and the `contents` skip.
+  preservation, the `contents` skip, and the VP1 sidebar shape (bare-string
+  children, `title`/`collapsable`, README promotion, `SUMMARY` drop).

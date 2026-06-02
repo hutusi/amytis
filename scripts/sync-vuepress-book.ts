@@ -8,11 +8,15 @@ import type * as acorn from 'acorn';
 //   bun run sync-vuepress-book --source <vuepress-docs-dir> --dest <amytis-book-dir>
 //   bun run sync-vuepress-book <source> <dest>     (positional shorthand)
 //
-// Walks a VuePress 2 project's `.vuepress/config.{js,mjs,ts}`, extracts the
-// sidebar literal via AST parsing, converts it to the nested {section, items}
-// TOC format Amytis books support natively, copies the source markdown +
-// asset tree into the destination, and rewrites the dest's index.mdx with
-// the new TOC (preserving user-controlled frontmatter fields).
+// Walks a VuePress project's `.vuepress/config.{js,mjs}`, extracts the sidebar
+// literal via AST parsing, converts it to the nested {section, items} TOC
+// format Amytis books support natively, copies the source markdown + asset
+// tree into the destination, and rewrites the dest's index.mdx with the new
+// TOC (preserving user-controlled frontmatter fields).
+//
+// Supports both VuePress 2 (`{ text, link }` / `{ text, children }`) and
+// VuePress 1 (`{ title, path }` / `{ title, children }`, plus bare string
+// child paths and `path + children` group-with-index pages) sidebar shapes.
 //
 // Re-runnable: any subsequent run mirrors the current state of the source.
 
@@ -208,7 +212,9 @@ type TocItem = Section | ChapterRef;
 function normalizeLink(link: string): string {
   // VuePress sidebar links may use any of: leading slash, no slash, trailing
   // slash (folder-index style like `/guide/`), or an explicit `.md`/`.mdx`
-  // suffix. The canonical Amytis chapter id has none of those.
+  // suffix. The canonical Amytis chapter id has none of those — trailing
+  // slashes are stripped and `resolveSourceFile` finds the `<id>/README.md`
+  // companion via its candidate list.
   let s: string;
   try {
     s = decodeURIComponent(link.trim());
@@ -222,66 +228,190 @@ function normalizeLink(link: string): string {
   return s;
 }
 
-function isChapterLeaf(item: Record<string, unknown>): item is { text: string; link: string } {
-  return typeof item.link === 'string' && !item.children;
-}
+// Sidebar leaves whose normalized id matches one of these (case-insensitive)
+// are dropped from the generated TOC. They're VuePress / GitBook conventions
+// for a hand-written table-of-contents page that duplicates what Amytis's
+// book landing page already renders. `SUMMARY` covers GitBook-style
+// `SUMMARY.md` entries common in VP1 imports.
+const SKIPPED_LEAF_IDS = new Set(['contents', 'summary']);
 
-function isSectionGroup(item: Record<string, unknown>): item is { text: string; children: SidebarItem[]; collapsible?: boolean } {
-  return Array.isArray(item.children);
+function isSkippedMetaLeaf(id: string): boolean {
+  const tail = id.split('/').pop() ?? id;
+  return SKIPPED_LEAF_IDS.has(tail.toLowerCase());
 }
-
-// Sidebar leaves whose normalized id matches one of these are dropped from the
-// generated TOC. They're VuePress conventions for a hand-written table-of-
-// contents page that duplicates what Amytis's book landing page already renders.
-const SKIPPED_LEAF_IDS = new Set(['contents']);
 
 interface ConvertWarnings {
   emptySections: string[];           // sections with no items
-  sectionWithOwnLink: string[];      // ignored own-page link on a group header
   unsupported: string[];             // strings or other forms we skip
   skippedMetaLeaves: string[];       // leaves dropped because their id is a known meta-nav slug
 }
 
-function convertSidebar(sidebar: SidebarItem[], warnings: ConvertWarnings): TocItem[] {
+/**
+ * Common shape for both VP1 and VP2 sidebar entries. Produced by
+ * `normalizeRawEntry` so the downstream walker only deals with one schema.
+ */
+interface NormalizedEntry {
+  title?: string;          // missing for bare-string entries
+  path?: string;           // normalized via normalizeLink()
+  children?: SidebarItem[];
+  collapsible?: boolean;
+}
+
+/**
+ * Collapses a VuePress 1.x or 2.x sidebar entry into the common
+ * `NormalizedEntry` shape, returning `null` for anything we can't recognize.
+ *
+ * - VP2 leaf:     `{ text, link }`               → `{ title, path }`
+ * - VP2 section:  `{ text, children, collapsible? }`
+ * - VP1 leaf:     `{ title, path }`              (no children)
+ * - VP1 section:  `{ title, children, collapsable? }`
+ * - VP1 indexed:  `{ title, path, children }`    (README promoted later)
+ * - Bare string:  `'/foo/bar'`                   → `{ path }` (title resolved
+ *                                                    from the source file)
+ */
+function normalizeRawEntry(raw: SidebarItem): NormalizedEntry | null {
+  if (typeof raw === 'string') {
+    return { path: raw };
+  }
+  if (!raw || typeof raw !== 'object') return null;
+  const item = raw as Record<string, unknown>;
+
+  const title = typeof item.text === 'string'
+    ? item.text
+    : typeof item.title === 'string'
+      ? item.title
+      : undefined;
+  const path = typeof item.link === 'string'
+    ? item.link
+    : typeof item.path === 'string'
+      ? item.path
+      : undefined;
+  const children = Array.isArray(item.children) ? (item.children as SidebarItem[]) : undefined;
+
+  // VP2 uses `collapsible` (boolean); VP1 uses `collapsable` (boolean meaning
+  // "user may collapse"). Both map to the same Amytis hint.
+  let collapsible: boolean | undefined;
+  if (typeof item.collapsible === 'boolean') collapsible = item.collapsible;
+  else if (typeof item.collapsable === 'boolean') collapsible = item.collapsable;
+
+  // Must carry at least a title, a path, or children — otherwise there's
+  // nothing to convert. (Bare strings are already handled above.)
+  if (!title && !path && !children) return null;
+
+  return { title, path, children, collapsible };
+}
+
+/**
+ * Reads a chapter title from a source markdown file. Tries frontmatter
+ * `title` first, then the first H1 in the body, then falls back to a
+ * titleized slug. Used when the sidebar entry was a bare string (VP1 style)
+ * or when we're promoting a section's README as a chapter.
+ *
+ * Returns `null` if the file can't be read — caller decides the fallback.
+ */
+function readTitleFromSource(absPath: string | null): string | null {
+  if (!absPath || !fs.existsSync(absPath)) return null;
+  try {
+    const raw = fs.readFileSync(absPath, 'utf8');
+    const parsed = matter(raw);
+    const fmTitle = (parsed.data as { title?: unknown }).title;
+    if (typeof fmTitle === 'string' && fmTitle.trim()) return fmTitle.trim();
+    const h1 = parsed.content.match(/^\s*#\s+(.+?)\s*$/m);
+    if (h1) return h1[1].trim();
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function titleizeSlug(id: string): string {
+  const tail = id.split('/').pop() ?? id;
+  return tail
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(' ') || id;
+}
+
+function resolveTitle(
+  norm: NormalizedEntry,
+  id: string | null,
+  sourceDir: string,
+): string {
+  if (norm.title) return norm.title;
+  if (id) {
+    const src = resolveSourceFile(sourceDir, id);
+    const fromFile = readTitleFromSource(src);
+    if (fromFile) return fromFile;
+    return titleizeSlug(id);
+  }
+  return '(untitled)';
+}
+
+function convertSidebar(
+  sidebar: SidebarItem[],
+  sourceDir: string,
+  warnings: ConvertWarnings,
+): TocItem[] {
   const result: TocItem[] = [];
   for (const raw of sidebar) {
-    if (typeof raw === 'string') {
-      warnings.unsupported.push(raw);
-      continue;
-    }
-    const item = raw as Record<string, unknown>;
-    const text = typeof item.text === 'string' ? item.text : undefined;
-    if (!text) {
-      warnings.unsupported.push(JSON.stringify(item));
+    const norm = normalizeRawEntry(raw);
+    if (!norm) {
+      warnings.unsupported.push(typeof raw === 'string' ? raw : JSON.stringify(raw));
       continue;
     }
 
-    if (isSectionGroup(item)) {
-      if (typeof (item as { link?: unknown }).link === 'string') warnings.sectionWithOwnLink.push(text);
-      const subItems = convertSidebar(item.children as SidebarItem[], warnings);
-      const section: Section = {
-        section: text,
-        items: subItems,
-      };
-      if (typeof item.collapsible === 'boolean') section.collapsible = item.collapsible;
-      if (subItems.length === 0) warnings.emptySections.push(text);
+    const hasChildren = !!norm.children && norm.children.length > 0;
+    const hasPath = typeof norm.path === 'string';
+    const pathId = hasPath ? normalizeLink(norm.path!) : null;
+
+    if (hasChildren) {
+      const items: Array<Section | ChapterRef> = [];
+      // VP1 sections often carry both a `path` (the section's README index
+      // page) and `children` (sub-chapters). Promote the README as the first
+      // chapter so its content stays reachable from the sidebar — matches
+      // VuePress UX where clicking the section title navigates to its README.
+      //
+      // Skip `norm.title` for the promoted chapter — it belongs to the
+      // section header. Read the chapter's own title from the README's
+      // frontmatter / H1 instead so the sidebar doesn't show the section
+      // name twice (once as the section, once as its first child).
+      if (pathId) {
+        if (isSkippedMetaLeaf(pathId)) {
+          warnings.skippedMetaLeaves.push(`${norm.title ?? pathId} (${pathId})`);
+        } else {
+          items.push({
+            title: resolveTitle({ ...norm, title: undefined }, pathId, sourceDir),
+            id: pathId,
+          });
+        }
+      }
+      items.push(...convertSidebar(norm.children!, sourceDir, warnings));
+
+      const sectionTitle = norm.title ?? '(untitled)';
+      const section: Section = { section: sectionTitle, items };
+      if (typeof norm.collapsible === 'boolean') section.collapsible = norm.collapsible;
+      if (items.length === 0) warnings.emptySections.push(sectionTitle);
       result.push(section);
       continue;
     }
 
-    if (isChapterLeaf(item)) {
-      const id = normalizeLink(item.link);
-      if (SKIPPED_LEAF_IDS.has(id)) {
-        warnings.skippedMetaLeaves.push(`${text} (${id})`);
+    if (hasPath && pathId) {
+      if (isSkippedMetaLeaf(pathId)) {
+        warnings.skippedMetaLeaves.push(`${norm.title ?? pathId} (${pathId})`);
         continue;
       }
-      result.push({ title: text, id });
+      result.push({
+        title: resolveTitle(norm, pathId, sourceDir),
+        id: pathId,
+      });
       continue;
     }
 
-    // {text, no link, no children} — a section header that's a placeholder.
-    warnings.emptySections.push(text);
-    result.push({ section: text, items: [] });
+    // {title, no path, no children} — a section header that's a placeholder.
+    const placeholderTitle = norm.title ?? '(untitled)';
+    warnings.emptySections.push(placeholderTitle);
+    result.push({ section: placeholderTitle, items: [] });
   }
   return result;
 }
@@ -460,8 +590,8 @@ function main() {
   console.log(`[sync-vuepress-book] Reading sidebar from ${path.relative(process.cwd(), configPath)}`);
 
   const sidebar = extractSidebar(configPath);
-  const warnings: ConvertWarnings = { emptySections: [], sectionWithOwnLink: [], unsupported: [], skippedMetaLeaves: [] };
-  const toc = convertSidebar(sidebar, warnings);
+  const warnings: ConvertWarnings = { emptySections: [], unsupported: [], skippedMetaLeaves: [] };
+  const toc = convertSidebar(sidebar, source, warnings);
 
   const chapters = collectChapterIds(toc);
   const missing: string[] = [];
@@ -484,9 +614,6 @@ function main() {
   console.log(`[sync-vuepress-book] Done. ${files} markdown files, ${assets} asset files copied, ${chapters.length} chapters mapped.`);
   if (warnings.emptySections.length > 0) {
     console.warn(`[sync-vuepress-book] Empty sections (no items): ${warnings.emptySections.join(', ')}`);
-  }
-  if (warnings.sectionWithOwnLink.length > 0) {
-    console.warn(`[sync-vuepress-book] Sections with an own-page link were treated as pure groups; the link was dropped: ${warnings.sectionWithOwnLink.join(', ')}`);
   }
   if (warnings.unsupported.length > 0) {
     console.warn(`[sync-vuepress-book] Skipped unsupported sidebar entries: ${warnings.unsupported.join(', ')}`);
