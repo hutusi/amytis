@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export type ReadingFontSize = 's' | 'm' | 'l' | 'xl';
 export type ReadingTheme = 'auto' | 'light' | 'sepia' | 'dark';
@@ -91,6 +92,28 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, [enabled]);
+
+  // Auto-enter immersive mode when the URL carries `?immersive=1` (used by the
+  // "Immersive reading" CTA on the book index page). Strips the flag from the
+  // URL after triggering so back-navigation doesn't loop the reader open.
+  // The ref guard prevents re-entry if the user manually exits while the param
+  // is still in the URL — replaceState below clears it, but the ref also
+  // defends against React effect re-runs.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const autoEnteredRef = useRef(false);
+  useEffect(() => {
+    if (autoEnteredRef.current) return;
+    if (searchParams?.get('immersive') !== '1') return;
+    autoEnteredRef.current = true;
+    const activate = () => setEnabled(true);
+    activate();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('immersive');
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   return (
     <ImmersiveReadingContext.Provider
