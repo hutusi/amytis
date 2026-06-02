@@ -307,28 +307,37 @@ Mermaid diagrams in book chapters already work via the existing `Mermaid` compon
 
 #### Immersive reading mode
 
-Chapter pages support a per-tab "immersive reading" mode toggled from the chapter header.
-When enabled it hides the navbar, footer, left TOC sidebar, mobile nav, and comments,
-collapses the layout grid to a single centred column, and exposes a floating `Aa` panel
-for font size, reading theme (light / sepia / dark / auto), and column width.
+Chapter pages support a per-tab "immersive reading" mode toggled from the chapter
+header. When enabled it replaces the page layout with a fullscreen book-reader
+overlay: a top bar (sidebar toggle, book / chapter breadcrumb, font-size + theme
+controls, exit), the existing `BookSidebar` on the left in `mode="fill"` showing
+the full TOC, and the chapter article centred in `max-w-3xl` in a scrollable main
+column. State persists across client-side chapter navigation inside a book and
+resets on hard refresh.
 
 The seam is split intentionally:
 
 - `src/components/ImmersiveReadingProvider.tsx` holds the state (React only, no
-  storage). Mounted in `src/app/books/[slug]/layout.tsx` so state survives client-side
-  navigation between chapters of the same book; resets on hard refresh or when the
-  reader switches books.
+  storage) — `enabled`, `fontSize`, `readingTheme`, `sidebarOpen` — and toggles
+  `html[data-immersive]` + body-scroll lock via an effect. Mounted in
+  `src/app/books/[slug]/layout.tsx` so it survives chapter-to-chapter navigation.
+  ESC exits.
 - `src/layouts/BookLayout.tsx` stays a server component for data resolution and
-  delegates rendering to `src/components/BookReadingShell.tsx`, the client component
-  that reads context and swaps the grid / hides chrome / wraps the article in
-  `ImmersiveReadingFrame`.
-- Root-layout chrome (navbar, footer, reading-progress bar) is hidden via CSS rules
-  in `src/app/globals.css` keyed on `html[data-immersive="true"]` plus the stable
-  `data-site-nav` / `data-site-footer` / `data-reading-progress` hooks. The provider
-  toggles the `data-immersive` attribute from an effect.
-- Sepia overrides CSS variables under `[data-reading-frame][data-reading-theme="sepia"]`
+  delegates to `src/components/BookReadingShell.tsx`. The shell branches on
+  `enabled`: when on, it renders `ImmersiveBookReader` (fullscreen overlay) with
+  the chapter article as `children`; when off, it renders the pre-immersive page
+  layout unchanged.
+- `src/components/ImmersiveBookReader.tsx` is the overlay shell —
+  `position: fixed inset-0 z-40`, hosts `ImmersiveReaderTopBar`, the
+  `BookSidebar` aside (when `sidebarOpen`), and the scrollable centred article
+  column.
+- Root-layout chrome (navbar / footer / reading-progress) is hidden via CSS in
+  `globals.css` keyed on `html[data-immersive="true"]` plus the stable
+  `data-site-nav` / `data-site-footer` / `data-reading-progress` hooks. The
+  overlay covers it anyway; the rules are defense-in-depth.
+- Sepia overrides CSS variables under `[data-reader-overlay][data-reading-theme="sepia"]`
   so it composes with the existing site light/dark theme without leaking past the
-  article. Shiki code blocks deliberately keep their normal theme.
+  overlay. Shiki code blocks deliberately keep their normal theme.
 
 ## Configuration Reference (`site.config.ts`)
 
