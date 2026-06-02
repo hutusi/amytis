@@ -1645,9 +1645,11 @@ export function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
 
 /**
  * Resolves a chapter id (possibly nested with `/`) to a markdown file on disk.
- * Returns `{ path, isFolder }` if a file exists in one of the four supported forms,
- * or `null` if the id has no match. Guards against `..`-style path escapes — any
- * id that resolves outside `bookDir` returns null.
+ * Returns `{ path, isFolder }` if a file exists in one of the six supported
+ * forms (`<id>.mdx`, `<id>.md`, `<id>/index.mdx`, `<id>/index.md`,
+ * `<id>/README.mdx`, `<id>/README.md`), or `null` if the id has no match.
+ * Guards against `..`-style path escapes — any id that resolves outside
+ * `bookDir` returns null.
  */
 function resolveChapterFilePath(
   bookDir: string,
@@ -1665,10 +1667,14 @@ function resolveChapterFilePath(
   const chMd = `${candidate}.md`;
   const chFolderMdx = path.join(candidate, 'index.mdx');
   const chFolderMd = path.join(candidate, 'index.md');
+  const chFolderReadmeMdx = path.join(candidate, 'README.mdx');
+  const chFolderReadmeMd = path.join(candidate, 'README.md');
   if (fs.existsSync(chMdx)) return { path: chMdx, isFolder: false };
   if (fs.existsSync(chMd)) return { path: chMd, isFolder: false };
   if (fs.existsSync(chFolderMdx)) return { path: chFolderMdx, isFolder: true };
   if (fs.existsSync(chFolderMd)) return { path: chFolderMd, isFolder: true };
+  if (fs.existsSync(chFolderReadmeMdx)) return { path: chFolderReadmeMdx, isFolder: true };
+  if (fs.existsSync(chFolderReadmeMd)) return { path: chFolderReadmeMd, isFolder: true };
   return null;
 }
 
@@ -1707,7 +1713,7 @@ export function getBookData(slug: string): BookData | null {
     throw new Error(
       `[amytis] Book "${slug}" references chapter${missing.length === 1 ? '' : 's'} ` +
       `with no matching file on disk: ${missing.map(id => `"${id}"`).join(', ')}. ` +
-      `Expected one of <bookDir>/<id>.{md,mdx} or <bookDir>/<id>/index.{md,mdx}.`
+      `Expected one of <bookDir>/<id>.{md,mdx}, <bookDir>/<id>/index.{md,mdx}, or <bookDir>/<id>/README.{md,mdx}.`
     );
   }
 

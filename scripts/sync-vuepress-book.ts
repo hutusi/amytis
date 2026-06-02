@@ -8,11 +8,15 @@ import type * as acorn from 'acorn';
 //   bun run sync-vuepress-book --source <vuepress-docs-dir> --dest <amytis-book-dir>
 //   bun run sync-vuepress-book <source> <dest>     (positional shorthand)
 //
-// Walks a VuePress 2 project's `.vuepress/config.{js,mjs,ts}`, extracts the
-// sidebar literal via AST parsing, converts it to the nested {section, items}
-// TOC format Amytis books support natively, copies the source markdown +
-// asset tree into the destination, and rewrites the dest's index.mdx with
-// the new TOC (preserving user-controlled frontmatter fields).
+// Walks a VuePress project's `.vuepress/config.{js,mjs}`, extracts the sidebar
+// literal via AST parsing, converts it to the nested {section, items} TOC
+// format Amytis books support natively, copies the source markdown + asset
+// tree into the destination, and rewrites the dest's index.mdx with the new
+// TOC (preserving user-controlled frontmatter fields).
+//
+// Supports both VuePress 2 (`{ text, link }` / `{ text, children }`) and
+// VuePress 1 (`{ title, path }` / `{ title, children }`, plus bare string
+// child paths and `path + children` group-with-index pages) sidebar shapes.
 //
 // Re-runnable: any subsequent run mirrors the current state of the source.
 
@@ -21,18 +25,43 @@ import type * as acorn from 'acorn';
 interface CliArgs {
   source: string;
   dest: string;
+  skipCommon: boolean;
+  skipPatterns: string[];
 }
+
+// Common build manifests / lockfiles that VuePress books carry at their
+// repo root but which are never book content. Authors who genuinely want
+// these synced into `content/books/<slug>/` can pass `--no-skip-common`.
+const COMMON_SKIP_FILENAMES = [
+  'package.json',
+  'package-lock.json',
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  'bun.lock',
+  'bun.lockb',
+];
 
 function parseArgs(argv: string[]): CliArgs {
   const positional: string[] = [];
   let source: string | undefined;
   let dest: string | undefined;
+  let skipCommon = true;
+  const skipPatterns: string[] = [];
+  const pushSkip = (raw: string) => {
+    for (const p of raw.split(',').map(s => s.trim()).filter(Boolean)) {
+      skipPatterns.push(p);
+    }
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--source') { source = argv[++i]; continue; }
     if (a === '--dest') { dest = argv[++i]; continue; }
     if (a.startsWith('--source=')) { source = a.slice('--source='.length); continue; }
     if (a.startsWith('--dest=')) { dest = a.slice('--dest='.length); continue; }
+    if (a === '--skip-common') { skipCommon = true; continue; }
+    if (a === '--no-skip-common') { skipCommon = false; continue; }
+    if (a === '--skip') { pushSkip(argv[++i] ?? ''); continue; }
+    if (a.startsWith('--skip=')) { pushSkip(a.slice('--skip='.length)); continue; }
     if (a === '--help' || a === '-h') {
       printUsageAndExit(0);
     }
@@ -44,16 +73,30 @@ function parseArgs(argv: string[]): CliArgs {
   return {
     source: path.resolve(source!),
     dest: path.resolve(dest!),
+    skipCommon,
+    skipPatterns,
   };
 }
 
 function printUsageAndExit(code: number): never {
   console.error(
     'Usage: bun run sync-vuepress-book --source <vuepress-docs-dir> --dest <amytis-book-dir>\n' +
+    '       [--no-skip-common] [--skip <pattern,pattern,…>]\n' +
+    '\n' +
+    'Options:\n' +
+    '  --source <dir>         VuePress docs root (the parent of `.vuepress/`).\n' +
+    '  --dest <dir>           Amytis book dir to write to (typically `content/books/<slug>`).\n' +
+    '  --skip-common          Skip lockfiles + package manifests (default: on).\n' +
+    '                         Filenames: ' + COMMON_SKIP_FILENAMES.join(', ') + '.\n' +
+    '  --no-skip-common       Disable the common skip list (copy everything).\n' +
+    '  --skip <pat,pat,…>     Skip files whose basename matches any of the\n' +
+    '                         given glob patterns. Repeatable. Applied to\n' +
+    '                         both files and directories. Examples:\n' +
+    '                         --skip "*.bak,Dockerfile,build"\n' +
     '\n' +
     'Examples:\n' +
     '  bun run sync-vuepress-book --source /path/to/dmla/docs --dest content/books/dmla\n' +
-    '  bun run sync-vuepress-book /path/to/dmla/docs content/books/dmla'
+    '  bun run sync-vuepress-book /path/to/dmla/docs content/books/dmla --skip "*.bak,dist"'
   );
   process.exit(code);
 }
@@ -208,7 +251,9 @@ type TocItem = Section | ChapterRef;
 function normalizeLink(link: string): string {
   // VuePress sidebar links may use any of: leading slash, no slash, trailing
   // slash (folder-index style like `/guide/`), or an explicit `.md`/`.mdx`
-  // suffix. The canonical Amytis chapter id has none of those.
+  // suffix. The canonical Amytis chapter id has none of those — trailing
+  // slashes are stripped and `resolveSourceFile` finds the `<id>/README.md`
+  // companion via its candidate list.
   let s: string;
   try {
     s = decodeURIComponent(link.trim());
@@ -222,66 +267,190 @@ function normalizeLink(link: string): string {
   return s;
 }
 
-function isChapterLeaf(item: Record<string, unknown>): item is { text: string; link: string } {
-  return typeof item.link === 'string' && !item.children;
-}
+// Sidebar leaves whose normalized id matches one of these (case-insensitive)
+// are dropped from the generated TOC. They're VuePress / GitBook conventions
+// for a hand-written table-of-contents page that duplicates what Amytis's
+// book landing page already renders. `SUMMARY` covers GitBook-style
+// `SUMMARY.md` entries common in VP1 imports.
+const SKIPPED_LEAF_IDS = new Set(['contents', 'summary']);
 
-function isSectionGroup(item: Record<string, unknown>): item is { text: string; children: SidebarItem[]; collapsible?: boolean } {
-  return Array.isArray(item.children);
+function isSkippedMetaLeaf(id: string): boolean {
+  const tail = id.split('/').pop() ?? id;
+  return SKIPPED_LEAF_IDS.has(tail.toLowerCase());
 }
-
-// Sidebar leaves whose normalized id matches one of these are dropped from the
-// generated TOC. They're VuePress conventions for a hand-written table-of-
-// contents page that duplicates what Amytis's book landing page already renders.
-const SKIPPED_LEAF_IDS = new Set(['contents']);
 
 interface ConvertWarnings {
   emptySections: string[];           // sections with no items
-  sectionWithOwnLink: string[];      // ignored own-page link on a group header
   unsupported: string[];             // strings or other forms we skip
   skippedMetaLeaves: string[];       // leaves dropped because their id is a known meta-nav slug
 }
 
-function convertSidebar(sidebar: SidebarItem[], warnings: ConvertWarnings): TocItem[] {
+/**
+ * Common shape for both VP1 and VP2 sidebar entries. Produced by
+ * `normalizeRawEntry` so the downstream walker only deals with one schema.
+ */
+interface NormalizedEntry {
+  title?: string;          // missing for bare-string entries
+  path?: string;           // normalized via normalizeLink()
+  children?: SidebarItem[];
+  collapsible?: boolean;
+}
+
+/**
+ * Collapses a VuePress 1.x or 2.x sidebar entry into the common
+ * `NormalizedEntry` shape, returning `null` for anything we can't recognize.
+ *
+ * - VP2 leaf:     `{ text, link }`               → `{ title, path }`
+ * - VP2 section:  `{ text, children, collapsible? }`
+ * - VP1 leaf:     `{ title, path }`              (no children)
+ * - VP1 section:  `{ title, children, collapsable? }`
+ * - VP1 indexed:  `{ title, path, children }`    (README promoted later)
+ * - Bare string:  `'/foo/bar'`                   → `{ path }` (title resolved
+ *                                                    from the source file)
+ */
+function normalizeRawEntry(raw: SidebarItem): NormalizedEntry | null {
+  if (typeof raw === 'string') {
+    return { path: raw };
+  }
+  if (!raw || typeof raw !== 'object') return null;
+  const item = raw as Record<string, unknown>;
+
+  const title = typeof item.text === 'string'
+    ? item.text
+    : typeof item.title === 'string'
+      ? item.title
+      : undefined;
+  const path = typeof item.link === 'string'
+    ? item.link
+    : typeof item.path === 'string'
+      ? item.path
+      : undefined;
+  const children = Array.isArray(item.children) ? (item.children as SidebarItem[]) : undefined;
+
+  // VP2 uses `collapsible` (boolean); VP1 uses `collapsable` (boolean meaning
+  // "user may collapse"). Both map to the same Amytis hint.
+  let collapsible: boolean | undefined;
+  if (typeof item.collapsible === 'boolean') collapsible = item.collapsible;
+  else if (typeof item.collapsable === 'boolean') collapsible = item.collapsable;
+
+  // Must carry at least a title, a path, or children — otherwise there's
+  // nothing to convert. (Bare strings are already handled above.)
+  if (!title && !path && !children) return null;
+
+  return { title, path, children, collapsible };
+}
+
+/**
+ * Reads a chapter title from a source markdown file. Tries frontmatter
+ * `title` first, then the first H1 in the body, then falls back to a
+ * titleized slug. Used when the sidebar entry was a bare string (VP1 style)
+ * or when we're promoting a section's README as a chapter.
+ *
+ * Returns `null` if the file can't be read — caller decides the fallback.
+ */
+function readTitleFromSource(absPath: string | null): string | null {
+  if (!absPath || !fs.existsSync(absPath)) return null;
+  try {
+    const raw = fs.readFileSync(absPath, 'utf8');
+    const parsed = matter(raw);
+    const fmTitle = (parsed.data as { title?: unknown }).title;
+    if (typeof fmTitle === 'string' && fmTitle.trim()) return fmTitle.trim();
+    const h1 = parsed.content.match(/^\s*#\s+(.+?)\s*$/m);
+    if (h1) return h1[1].trim();
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function titleizeSlug(id: string): string {
+  const tail = id.split('/').pop() ?? id;
+  return tail
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(' ') || id;
+}
+
+function resolveTitle(
+  norm: NormalizedEntry,
+  id: string | null,
+  sourceDir: string,
+): string {
+  if (norm.title) return norm.title;
+  if (id) {
+    const src = resolveSourceFile(sourceDir, id);
+    const fromFile = readTitleFromSource(src);
+    if (fromFile) return fromFile;
+    return titleizeSlug(id);
+  }
+  return '(untitled)';
+}
+
+function convertSidebar(
+  sidebar: SidebarItem[],
+  sourceDir: string,
+  warnings: ConvertWarnings,
+): TocItem[] {
   const result: TocItem[] = [];
   for (const raw of sidebar) {
-    if (typeof raw === 'string') {
-      warnings.unsupported.push(raw);
-      continue;
-    }
-    const item = raw as Record<string, unknown>;
-    const text = typeof item.text === 'string' ? item.text : undefined;
-    if (!text) {
-      warnings.unsupported.push(JSON.stringify(item));
+    const norm = normalizeRawEntry(raw);
+    if (!norm) {
+      warnings.unsupported.push(typeof raw === 'string' ? raw : JSON.stringify(raw));
       continue;
     }
 
-    if (isSectionGroup(item)) {
-      if (typeof (item as { link?: unknown }).link === 'string') warnings.sectionWithOwnLink.push(text);
-      const subItems = convertSidebar(item.children as SidebarItem[], warnings);
-      const section: Section = {
-        section: text,
-        items: subItems,
-      };
-      if (typeof item.collapsible === 'boolean') section.collapsible = item.collapsible;
-      if (subItems.length === 0) warnings.emptySections.push(text);
+    const hasChildren = !!norm.children && norm.children.length > 0;
+    const hasPath = typeof norm.path === 'string';
+    const pathId = hasPath ? normalizeLink(norm.path!) : null;
+
+    if (hasChildren) {
+      const items: Array<Section | ChapterRef> = [];
+      // VP1 sections often carry both a `path` (the section's README index
+      // page) and `children` (sub-chapters). Promote the README as the first
+      // chapter so its content stays reachable from the sidebar — matches
+      // VuePress UX where clicking the section title navigates to its README.
+      //
+      // Skip `norm.title` for the promoted chapter — it belongs to the
+      // section header. Read the chapter's own title from the README's
+      // frontmatter / H1 instead so the sidebar doesn't show the section
+      // name twice (once as the section, once as its first child).
+      if (pathId) {
+        if (isSkippedMetaLeaf(pathId)) {
+          warnings.skippedMetaLeaves.push(`${norm.title ?? pathId} (${pathId})`);
+        } else {
+          items.push({
+            title: resolveTitle({ ...norm, title: undefined }, pathId, sourceDir),
+            id: pathId,
+          });
+        }
+      }
+      items.push(...convertSidebar(norm.children!, sourceDir, warnings));
+
+      const sectionTitle = norm.title ?? '(untitled)';
+      const section: Section = { section: sectionTitle, items };
+      if (typeof norm.collapsible === 'boolean') section.collapsible = norm.collapsible;
+      if (items.length === 0) warnings.emptySections.push(sectionTitle);
       result.push(section);
       continue;
     }
 
-    if (isChapterLeaf(item)) {
-      const id = normalizeLink(item.link);
-      if (SKIPPED_LEAF_IDS.has(id)) {
-        warnings.skippedMetaLeaves.push(`${text} (${id})`);
+    if (hasPath && pathId) {
+      if (isSkippedMetaLeaf(pathId)) {
+        warnings.skippedMetaLeaves.push(`${norm.title ?? pathId} (${pathId})`);
         continue;
       }
-      result.push({ title: text, id });
+      result.push({
+        title: resolveTitle(norm, pathId, sourceDir),
+        id: pathId,
+      });
       continue;
     }
 
-    // {text, no link, no children} — a section header that's a placeholder.
-    warnings.emptySections.push(text);
-    result.push({ section: text, items: [] });
+    // {title, no path, no children} — a section header that's a placeholder.
+    const placeholderTitle = norm.title ?? '(untitled)';
+    warnings.emptySections.push(placeholderTitle);
+    result.push({ section: placeholderTitle, items: [] });
   }
   return result;
 }
@@ -321,6 +490,22 @@ function resolveSourceFile(sourceDir: string, chapterId: string): string | null 
 const COPY_SKIP = new Set(['.vuepress', 'node_modules', '.git', '.DS_Store']);
 
 /**
+ * Compiles a basename glob pattern (`*`, `?`, literal segments) into a
+ * RegExp. Patterns match the basename of a file or directory, never the
+ * full relative path — keeps the mental model close to `.gitignore`'s
+ * unanchored entries.
+ */
+function compileBasenameGlob(pattern: string): RegExp {
+  let re = '';
+  for (const ch of pattern) {
+    if (ch === '*') re += '.*';
+    else if (ch === '?') re += '.';
+    else re += ch.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${re}$`);
+}
+
+/**
  * Files in the dest that are NOT in the source must NOT be pruned by the
  * mirror: index.mdx is generated by writeIndexMdx (its frontmatter is the
  * sync output), and dotfiles are by convention out-of-band overlay state
@@ -333,6 +518,11 @@ function isDestManagedByImporter(relPath: string): boolean {
   return true;
 }
 
+interface SyncOptions {
+  skipCommon: boolean;
+  skipPatterns: string[];
+}
+
 /**
  * Mirror the source tree into the dest: copy every non-excluded file from
  * source, then prune any importer-managed file under dest that doesn't
@@ -340,10 +530,20 @@ function isDestManagedByImporter(relPath: string): boolean {
  * upstream rename or deletion — without the prune, stale content lingers
  * in the dest and stays reachable.
  */
-function syncTree(srcDir: string, destDir: string): { files: number; assets: number } {
+function syncTree(srcDir: string, destDir: string, opts: SyncOptions): { files: number; assets: number; skipped: string[] } {
   let files = 0;
   let assets = 0;
+  const skipped: string[] = [];
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const commonSkip = opts.skipCommon ? new Set(COMMON_SKIP_FILENAMES) : new Set<string>();
+  const customRegexes = opts.skipPatterns.map(compileBasenameGlob);
+
+  const shouldSkip = (name: string): boolean => {
+    if (commonSkip.has(name)) return true;
+    for (const re of customRegexes) if (re.test(name)) return true;
+    return false;
+  };
 
   const sourceRelPaths = new Set<string>();
 
@@ -351,6 +551,10 @@ function syncTree(srcDir: string, destDir: string): { files: number; assets: num
     for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
       if (COPY_SKIP.has(entry.name)) continue;
       if (entry.name.startsWith('.')) continue;
+      if (shouldSkip(entry.name)) {
+        skipped.push(relBase ? path.join(relBase, entry.name) : entry.name);
+        continue;
+      }
       const sPath = path.join(src, entry.name);
       const dPath = path.join(dest, entry.name);
       const relPath = relBase ? path.join(relBase, entry.name) : entry.name;
@@ -398,7 +602,7 @@ function syncTree(srcDir: string, destDir: string): { files: number; assets: num
   };
   prune(destDir, '');
 
-  return { files, assets };
+  return { files, assets, skipped };
 }
 
 // ─── index.mdx writing ───────────────────────────────────────────────────────
@@ -426,31 +630,38 @@ function loadVuepressTitle(configPath: string): string | undefined {
 
 function writeIndexMdx(destDir: string, configPath: string, toc: TocItem[]): void {
   const indexPath = path.join(destDir, 'index.mdx');
-  let existing: { data: BookFrontmatter; content: string } = { data: {}, content: '' };
+
   if (fs.existsSync(indexPath)) {
+    // Re-sync: the script owns `chapters:` and nothing else. Every other
+    // frontmatter key + the prose body is preserved as-is. Defaults that
+    // were sensible at first-sync time would now be unwanted overrides of
+    // what the author has chosen (including intentionally-blank values).
     const raw = fs.readFileSync(indexPath, 'utf8');
     const parsed = matter(raw);
-    existing = { data: parsed.data as BookFrontmatter, content: parsed.content };
+    const data: BookFrontmatter = { ...(parsed.data as BookFrontmatter), chapters: toc };
+    fs.writeFileSync(indexPath, matter.stringify(parsed.content, data));
+    return;
   }
 
-  const data: BookFrontmatter = { ...existing.data };
-  if (!data.title) data.title = loadVuepressTitle(configPath) ?? path.basename(destDir);
-  if (!data.date) data.date = new Date().toISOString().split('T')[0];
-  if (data.draft === undefined) data.draft = false;
-  if (data.featured === undefined) data.featured = false;
-  data.chapters = toc;
-
-  const body = existing.content.trim().length > 0
-    ? existing.content
-    : `\nImported from VuePress source at ${path.relative(process.cwd(), path.dirname(path.dirname(configPath)))}.\n`;
-
+  // First sync: bootstrap an index.mdx with the minimum the runtime's Zod
+  // book schema requires (`title:`) plus a couple of low-stakes defaults so
+  // the book is immediately loadable. The author edits to taste; subsequent
+  // re-syncs will preserve those edits.
+  const data: BookFrontmatter = {
+    title: loadVuepressTitle(configPath) ?? path.basename(destDir),
+    date: new Date().toISOString().split('T')[0],
+    draft: false,
+    featured: false,
+    chapters: toc,
+  };
+  const body = `\nImported from VuePress source at ${path.relative(process.cwd(), path.dirname(path.dirname(configPath)))}.\n`;
   fs.writeFileSync(indexPath, matter.stringify(body, data));
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 function main() {
-  const { source, dest } = parseArgs(process.argv.slice(2));
+  const { source, dest, skipCommon, skipPatterns } = parseArgs(process.argv.slice(2));
 
   if (!fs.existsSync(source)) {
     throw new Error(`[amytis] Source directory does not exist: ${source}`);
@@ -460,8 +671,8 @@ function main() {
   console.log(`[sync-vuepress-book] Reading sidebar from ${path.relative(process.cwd(), configPath)}`);
 
   const sidebar = extractSidebar(configPath);
-  const warnings: ConvertWarnings = { emptySections: [], sectionWithOwnLink: [], unsupported: [], skippedMetaLeaves: [] };
-  const toc = convertSidebar(sidebar, warnings);
+  const warnings: ConvertWarnings = { emptySections: [], unsupported: [], skippedMetaLeaves: [] };
+  const toc = convertSidebar(sidebar, source, warnings);
 
   const chapters = collectChapterIds(toc);
   const missing: string[] = [];
@@ -477,16 +688,16 @@ function main() {
   }
 
   console.log(`[sync-vuepress-book] Copying ${path.relative(process.cwd(), source)} → ${path.relative(process.cwd(), dest)}`);
-  const { files, assets } = syncTree(source, dest);
+  const { files, assets, skipped } = syncTree(source, dest, { skipCommon, skipPatterns });
 
   writeIndexMdx(dest, configPath, toc);
 
   console.log(`[sync-vuepress-book] Done. ${files} markdown files, ${assets} asset files copied, ${chapters.length} chapters mapped.`);
+  if (skipped.length > 0) {
+    console.log(`[sync-vuepress-book] Skipped ${skipped.length} file${skipped.length === 1 ? '' : 's'} matching skip rules: ${skipped.join(', ')}`);
+  }
   if (warnings.emptySections.length > 0) {
     console.warn(`[sync-vuepress-book] Empty sections (no items): ${warnings.emptySections.join(', ')}`);
-  }
-  if (warnings.sectionWithOwnLink.length > 0) {
-    console.warn(`[sync-vuepress-book] Sections with an own-page link were treated as pure groups; the link was dropped: ${warnings.sectionWithOwnLink.join(', ')}`);
   }
   if (warnings.unsupported.length > 0) {
     console.warn(`[sync-vuepress-book] Skipped unsupported sidebar entries: ${warnings.unsupported.join(', ')}`);

@@ -11,10 +11,10 @@ const FIXTURE_SOURCE = path.resolve("tests/fixtures/sync-vuepress-book/docs");
 // `--source` / `--dest` flags so the test exercises everything a real user does:
 // the package.json script wiring + the CLI argv parser, not just the inner sync
 // pipeline.
-function runSync(source: string, dest: string) {
+function runSync(source: string, dest: string, extraArgs: string[] = []) {
   return spawnSync(
     "bun",
-    ["run", "sync-vuepress-book", "--source", source, "--dest", dest],
+    ["run", "sync-vuepress-book", "--source", source, "--dest", dest, ...extraArgs],
     {
       encoding: "utf8",
       cwd: process.cwd(),
@@ -87,6 +87,35 @@ describe("Integration: sync-vuepress-book script", () => {
     expect(refreshed.featured).toBe(true);
     expect(refreshed.excerpt).toBe("A tiny book for tests.");
     expect(Array.isArray(refreshed.chapters)).toBe(true);
+  });
+
+  test("re-sync only touches the chapters field — never re-applies first-sync defaults", () => {
+    // First run creates index.mdx with bootstrap defaults (title, date,
+    // draft, featured).
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+
+    // Author strips the script's bootstrap defaults to validate that
+    // re-sync does not auto-fill them again. `featured` is explicitly
+    // removed; `date` is left as an empty string (which the old behavior
+    // would have stomped with today's date because `!data.date` is true
+    // for `""`).
+    const indexPath = path.join(dest, "index.mdx");
+    const parsed = matter(readFileSync(indexPath, "utf8")) as unknown as { data: Record<string, unknown>; content: string };
+    delete parsed.data.featured;
+    parsed.data.date = "";
+    parsed.data.draft = true;
+    writeFileSync(indexPath, matter.stringify(parsed.content, parsed.data));
+
+    // Re-run.
+    expect(runSync(FIXTURE_SOURCE, dest).status).toBe(0);
+    const refreshed = matter(readFileSync(indexPath, "utf8")) as unknown as { data: Record<string, unknown> };
+
+    // `chapters:` refreshed; everything else byte-equivalent to what the
+    // author wrote.
+    expect(Array.isArray(refreshed.data.chapters)).toBe(true);
+    expect(refreshed.data.featured).toBeUndefined();
+    expect(refreshed.data.date).toBe("");
+    expect(refreshed.data.draft).toBe(true);
   });
 
   test("prunes dest files removed upstream (mirror semantics)", () => {
@@ -216,6 +245,180 @@ describe("Integration: sync-vuepress-book script", () => {
       expect(res.stdout).toMatch(/contents/);
     } finally {
       rmSync(withContents, { recursive: true, force: true });
+    }
+  });
+
+  test("imports a VuePress 1.x sidebar (title/path/collapsable, bare-string children, README promotion, SUMMARY drop)", () => {
+    // VP1 uses a different vocabulary than VP2: `title` instead of `text`,
+    // `collapsable` instead of `collapsible`, plain string paths as children,
+    // and sections that carry both `path` (the section's README) and
+    // `children` (sub-chapters). This fixture exercises all four variants
+    // plus the GitBook-style SUMMARY.md drop.
+    const vp1 = mkdtempSync(path.join(tmpdir(), "sync-vp1-"));
+    try {
+      const docs = path.join(vp1, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `module.exports = {
+          title: 'VP1 Fixture',
+          themeConfig: {
+            sidebar: [
+              { title: '目录', collapsable: false, path: '/SUMMARY.md' },
+              {
+                title: 'Preface',
+                collapsable: false,
+                children: [
+                  '/intro/about-me',
+                  '/intro/about-book',
+                ],
+              },
+              {
+                title: 'Architecture',
+                collapsable: false,
+                children: [
+                  {
+                    title: 'History',
+                    path: '/arch/history/',
+                    collapsable: false,
+                    children: [
+                      '/arch/history/monolithic',
+                      '/arch/history/microservices',
+                    ],
+                  },
+                  '/arch/standalone-note',
+                ],
+              },
+              {
+                title: 'Misc',
+                collapsable: false,
+                children: [
+                  '/CHANGELOG.md',
+                ],
+              },
+            ],
+          },
+        };
+        `,
+      );
+      // Source files matching every sidebar reference. Titles come from
+      // frontmatter or H1 — the importer should pick them up for bare-string
+      // children that have no inline title.
+      writeFileSync(path.join(docs, "SUMMARY.md"), "# Summary\n- placeholder\n");
+      mkdirSync(path.join(docs, "intro"), { recursive: true });
+      writeFileSync(path.join(docs, "intro", "about-me.md"), "---\ntitle: About the Author\n---\n# About\n");
+      writeFileSync(path.join(docs, "intro", "about-book.md"), "# About this Book\n\nBody.\n");
+      mkdirSync(path.join(docs, "arch", "history"), { recursive: true });
+      writeFileSync(path.join(docs, "arch", "history", "README.md"), "# History of Architecture\n");
+      writeFileSync(path.join(docs, "arch", "history", "monolithic.md"), "# Monolithic\n");
+      writeFileSync(path.join(docs, "arch", "history", "microservices.md"), "# Microservices\n");
+      writeFileSync(path.join(docs, "arch", "standalone-note.md"), "# Standalone Note\n");
+      writeFileSync(path.join(docs, "CHANGELOG.md"), "# Changelog\n");
+
+      const res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+
+      const { data } = matter(readFileSync(path.join(dest, "index.mdx"), "utf8")) as unknown as { data: Record<string, unknown> };
+      const chapters = data.chapters as Array<Record<string, unknown>>;
+
+      // SUMMARY.md dropped — TOC starts with the Preface section.
+      expect(chapters[0]).toMatchObject({ section: "Preface", collapsible: false });
+
+      // Bare-string children get their titles from the source files
+      // (frontmatter wins over first H1).
+      const prefaceItems = chapters[0].items as Array<Record<string, unknown>>;
+      expect(prefaceItems).toEqual([
+        { title: "About the Author", id: "intro/about-me" },
+        { title: "About this Book", id: "intro/about-book" },
+      ]);
+
+      // Architecture > History promotes the section's README as the first
+      // chapter (id `arch/history`, title from the README's H1), then
+      // appends the bare-string children.
+      const arch = chapters[1] as Record<string, unknown>;
+      expect(arch.section).toBe("Architecture");
+      const archItems = arch.items as Array<Record<string, unknown>>;
+      const history = archItems[0] as Record<string, unknown>;
+      expect(history.section).toBe("History");
+      expect(history.items).toEqual([
+        { title: "History of Architecture", id: "arch/history" },
+        { title: "Monolithic", id: "arch/history/monolithic" },
+        { title: "Microservices", id: "arch/history/microservices" },
+      ]);
+      // Standalone bare-string sibling of the History section.
+      expect(archItems[1]).toMatchObject({ title: "Standalone Note", id: "arch/standalone-note" });
+
+      // `/CHANGELOG.md` keeps its `.md` extension stripped — id is `CHANGELOG`.
+      const misc = chapters[2] as Record<string, unknown>;
+      expect((misc.items as Array<{ id: string }>)[0].id).toBe("CHANGELOG");
+
+      // SUMMARY drop is reported in stdout (same channel as the existing
+      // `contents` drop).
+      expect(res.stdout).toMatch(/SUMMARY/i);
+
+      // No "unsupported sidebar entries" warning — every VP1 shape was
+      // recognized.
+      expect(res.stderr).not.toMatch(/Skipped unsupported sidebar entries/);
+    } finally {
+      rmSync(vp1, { recursive: true, force: true });
+    }
+  });
+
+  test("skips common build manifests by default, honors --skip and --no-skip-common", () => {
+    // Set up a minimal VuePress book where the source root has package.json
+    // (junk), package-lock.json (junk), a custom .bak (skipped via --skip),
+    // and a Real.md (always copied).
+    const junky = mkdtempSync(path.join(tmpdir(), "sync-junky-"));
+    try {
+      const docs = path.join(junky, "docs");
+      const vp = path.join(docs, ".vuepress");
+      mkdirSync(vp, { recursive: true });
+      writeFileSync(
+        path.join(vp, "config.js"),
+        `export default {
+          title: 'Junky Book',
+          theme: { sidebar: [{ text: 'Real', link: '/real' }] },
+        }
+        `,
+      );
+      writeFileSync(path.join(docs, "real.md"), "---\ntitle: Real\n---\n# Real\n");
+      writeFileSync(path.join(docs, "package.json"), '{"name":"junky"}');
+      writeFileSync(path.join(docs, "package-lock.json"), '{"lockfileVersion":3}');
+      writeFileSync(path.join(docs, "bun.lockb"), "binary-ish");
+      writeFileSync(path.join(docs, "draft.bak"), "wip");
+
+      // 1. Defaults: --skip-common is on, --skip empty. Lockfiles dropped,
+      //    bak file kept (it matches no rule).
+      let res = runSync(docs, dest);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "real.md"))).toBe(true);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "package-lock.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "bun.lockb"))).toBe(false);
+      expect(existsSync(path.join(dest, "draft.bak"))).toBe(true);
+      // Skip summary is printed so the user knows what got dropped.
+      expect(res.stdout).toMatch(/Skipped \d+ files? matching skip rules/);
+
+      // 2. --skip '*.bak' adds the bak pattern to the defaults.
+      rmSync(dest, { recursive: true, force: true });
+      mkdirSync(dest, { recursive: true });
+      res = runSync(docs, dest, ["--skip", "*.bak"]);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "real.md"))).toBe(true);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(false);
+      expect(existsSync(path.join(dest, "draft.bak"))).toBe(false);
+
+      // 3. --no-skip-common disables the default list; lockfiles come back.
+      rmSync(dest, { recursive: true, force: true });
+      mkdirSync(dest, { recursive: true });
+      res = runSync(docs, dest, ["--no-skip-common"]);
+      expect(res.status).toBe(0);
+      expect(existsSync(path.join(dest, "package.json"))).toBe(true);
+      expect(existsSync(path.join(dest, "package-lock.json"))).toBe(true);
+      expect(existsSync(path.join(dest, "bun.lockb"))).toBe(true);
+    } finally {
+      rmSync(junky, { recursive: true, force: true });
     }
   });
 
