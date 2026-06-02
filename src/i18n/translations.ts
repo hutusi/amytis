@@ -165,6 +165,7 @@ export const translations = {
     width_full: "Full",
     collapse_sidebar: "Collapse sidebar",
     expand_sidebar: "Expand sidebar",
+    reset_to_defaults: "Reset to defaults",
   },
   zh: {
     home: "首页",
@@ -332,6 +333,7 @@ export const translations = {
     width_full: "全宽",
     collapse_sidebar: "收起目录",
     expand_sidebar: "展开目录",
+    reset_to_defaults: "恢复默认",
   },
 };
 

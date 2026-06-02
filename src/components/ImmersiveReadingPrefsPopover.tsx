@@ -105,6 +105,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
     setReadingTheme,
     setColumnWidth,
     closePrefsPanel,
+    resetPrefs,
   } = useImmersiveReading();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -227,6 +228,21 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
             );
           })}
         </div>
+      </div>
+
+      {/* Reset to defaults — non-destructive (re-pickable), no confirmation. */}
+      <div className="mt-4 pt-3 border-t border-muted/15 flex justify-end">
+        <button
+          type="button"
+          onClick={resetPrefs}
+          className="text-xs font-sans text-muted hover:text-accent transition-colors inline-flex items-center gap-1.5"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 3-6.7" />
+            <polyline points="3 4 3 10 9 10" />
+          </svg>
+          {t('reset_to_defaults')}
+        </button>
       </div>
     </div>
   );
