@@ -161,7 +161,7 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
 
           {/* Start Reading CTAs */}
           {firstChapter && (
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={getBookChapterUrl(book.slug, firstChapter.id)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
