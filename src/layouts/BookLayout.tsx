@@ -34,7 +34,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
   }
 
   return (
-    <div className="layout-container lg:max-w-7xl">
+    <div className="layout-container">
       <ReadingProgressBar />
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
         {/* Left: Sidebar */}
