@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
+import FlowDateHeader from '@/components/FlowDateHeader';
 import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
 import Tag from '@/components/Tag';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -63,10 +64,6 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const backlinks = getBacklinks(flow.slug);
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
-  const dateObj = new Date(`${flow.date}T00:00:00`);
-  const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-  const longDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
   return (
     <div className="layout-main lg:flex lg:gap-10">
       <FlowCalendarSidebar
@@ -104,16 +101,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
         {/* Header — editorial date marker matching the stream */}
         <header className="mb-10">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-muted/60">
-            {weekday}
-          </div>
-          <time
-            dateTime={flow.date}
-            className="mt-1 inline-block font-serif text-3xl sm:text-4xl text-heading"
-            data-pagefind-meta="date[content]"
-          >
-            {longDate}
-          </time>
+          <FlowDateHeader date={flow.date} size="lg" pagefindIndex />
           {flow.title !== flow.date && (
             <h1 className="mt-3 font-serif text-xl sm:text-2xl font-semibold text-heading">{flow.title}</h1>
           )}

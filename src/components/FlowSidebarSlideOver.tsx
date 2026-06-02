@@ -46,14 +46,14 @@ export default function FlowSidebarSlideOver(props: FlowSidebarSlideOverProps) {
           <button
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px]"
-            aria-label={t('clear')}
+            aria-label={t('close')}
             tabIndex={-1}
           />
           <div className="relative ml-auto h-full w-full max-w-[320px] bg-background border-l border-muted/20 overflow-y-auto p-6 shadow-xl">
             <button
               onClick={() => setOpen(false)}
               className="absolute top-3 right-3 p-1 text-muted hover:text-accent transition-colors"
-              aria-label={t('clear')}
+              aria-label={t('close')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />

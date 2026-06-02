@@ -73,7 +73,9 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
       setExtraChunks(prev => [...prev, section.innerHTML]);
       setNextPage(prev => prev + 1);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Failed to load');
+      // Log technical detail for debugging; show a localized generic message to the user.
+      console.error('[flow] load-more failed:', e);
+      setLoadError(t('load_more_failed'));
     } finally {
       setLoadingMore(false);
     }
@@ -210,7 +212,7 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
         )}
 
         {/* Appended chunks fetched via "Load more". Static HTML — no React rehydration. */}
-        {extraChunks.map((html, i) => (
+        {!selectedTag && extraChunks.map((html, i) => (
           <div key={i} dangerouslySetInnerHTML={{ __html: html }} />
         ))}
 

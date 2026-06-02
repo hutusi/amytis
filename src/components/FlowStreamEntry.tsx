@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { useLanguage } from './LanguageProvider';
+import FlowDateHeader from './FlowDateHeader';
 import Tag from './Tag';
 
 interface FlowStreamEntryProps {
@@ -14,10 +14,7 @@ interface FlowStreamEntryProps {
 }
 
 export default function FlowStreamEntry({ date, slug, title, body, tags }: FlowStreamEntryProps) {
-  const { language } = useLanguage();
-  const locale = language === 'zh' ? 'zh-CN' : 'en-US';
   const hasExplicitTitle = title && title !== date;
-  const d = new Date(`${date}T00:00:00`);
 
   return (
     <article
@@ -25,16 +22,8 @@ export default function FlowStreamEntry({ date, slug, title, body, tags }: FlowS
       className="scroll-mt-24 py-14 border-t border-muted/10 first:border-t-0 first:pt-2"
     >
       <header className="mb-7">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-muted/60">
-          {d.toLocaleDateString(locale, { weekday: 'long' })}
-        </div>
-        <Link href={`/flows/${slug}`} className="no-underline group inline-block mt-1">
-          <time
-            dateTime={date}
-            className="font-serif text-2xl text-heading group-hover:text-accent transition-colors"
-          >
-            {d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
-          </time>
+        <Link href={`/flows/${slug}`} className="no-underline group block">
+          <FlowDateHeader date={date} hoverable />
         </Link>
         {hasExplicitTitle && (
           <h2 className="mt-3 font-serif text-xl font-semibold text-heading">{title}</h2>
