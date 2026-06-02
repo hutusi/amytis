@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
+import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
 import FlowStreamEntry from '@/components/FlowStreamEntry';
 import FlowTimelineEntry from '@/components/FlowTimelineEntry';
@@ -66,8 +67,18 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
   const compactTotal = (allFlows ?? flows).length;
 
   return (
-    <div className="relative">
-      <div className="mx-auto max-w-2xl min-w-0">
+    <div className="lg:flex lg:gap-10">
+      <FlowCalendarSidebar
+        entryDates={entryDates}
+        currentDate={currentDate}
+        tags={tags}
+        selectedTag={selectedTag}
+        onTagSelect={handleTagSelect}
+        variant="sidebar"
+      />
+
+      <div className="flex-1 min-w-0">
+        <div className="mx-auto max-w-2xl min-w-0">
         {breadcrumb && <div className="mb-6">{breadcrumb}</div>}
 
         {/* Mobile tag strip */}
@@ -165,6 +176,7 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
             />
           </div>
         )}
+        </div>
       </div>
 
       <FlowSidebarSlideOver

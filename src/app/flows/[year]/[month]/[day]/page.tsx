@@ -3,6 +3,7 @@ import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
+import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
 import Tag from '@/components/Tag';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -67,8 +68,15 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const longDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <div className="layout-main">
-      <article className="mx-auto max-w-2xl min-w-0">
+    <div className="layout-main lg:flex lg:gap-10">
+      <FlowCalendarSidebar
+        entryDates={entryDates}
+        currentDate={flow.date}
+        tags={tags}
+        variant="sidebar"
+      />
+
+      <article className="flex-1 min-w-0 mx-auto max-w-2xl">
         {/* Breadcrumb + back-to-stream */}
         <div className="mb-8 flex items-center justify-between gap-4 text-sm text-muted">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5">

@@ -29,7 +29,7 @@ export default function FlowSidebarSlideOver(props: FlowSidebarSlideOverProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden lg:inline-flex fixed top-24 right-6 z-20 items-center gap-2 px-3 py-2 text-xs text-muted bg-background border border-muted/20 rounded-full shadow-sm hover:border-accent hover:text-accent transition-colors"
+        className="lg:hidden fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 px-3 py-2 text-xs text-muted bg-background border border-muted/20 rounded-full shadow-sm hover:border-accent hover:text-accent transition-colors"
         aria-label={t('browse')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

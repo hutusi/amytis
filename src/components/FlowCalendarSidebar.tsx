@@ -86,7 +86,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   const wrapperClass =
     variant === 'panel'
       ? 'block select-none'
-      : 'hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] select-none';
+      : 'hidden lg:block sticky top-20 self-start w-[240px] shrink-0 max-h-[calc(100vh-6rem)] select-none';
 
   return (
     <aside className={wrapperClass}>
