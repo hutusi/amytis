@@ -1043,6 +1043,11 @@ html[data-immersive="true"] #main-content {
   --heading: #3b2f24;
   --muted: #8a7a66;
 }
-[data-reader-overlay][data-reading-theme="sepia"] .prose :where(h1, h2, h3, h4, h5, h6) {
+[data-reader-overlay][data-reading-theme="sepia"] .prose h1,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h2,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h3,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h4,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h5,
+[data-reader-overlay][data-reading-theme="sepia"] .prose h6 {
   color: var(--heading);
 }

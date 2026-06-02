@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
 import {
   useImmersiveReading,
   type ReadingColumnWidth,
@@ -53,7 +53,7 @@ const THEME_SWATCH_STYLE: Record<ReadingTheme, string> = {
   dark: 'bg-stone-800 text-stone-100',
 };
 
-function GroupHeading({ children }: { children: React.ReactNode }) {
+function GroupHeading({ children }: { children: ReactNode }) {
   return (
     <div className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted/80 mb-2">
       {children}
@@ -73,7 +73,7 @@ function OptionButton({
   onClick: () => void;
   ariaLabel: string;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -111,14 +111,17 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
 
   useEffect(() => {
     if (!prefsPanelOpen) return;
-    const onPointerDown = (event: MouseEvent) => {
+    // pointerdown unifies mouse, touch, and pen — needed so taps outside the
+    // popover dismiss it on mobile too (mousedown alone doesn't fire there
+    // reliably).
+    const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (rootRef.current?.contains(target)) return;
       if (toggleButtonRef.current?.contains(target)) return;
       closePrefsPanel();
     };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [prefsPanelOpen, closePrefsPanel, toggleButtonRef]);
 
   if (!prefsPanelOpen) return null;

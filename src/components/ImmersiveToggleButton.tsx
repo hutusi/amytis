@@ -15,7 +15,7 @@ export default function ImmersiveToggleButton() {
       aria-pressed={enabled}
       title={label}
       aria-label={label}
-      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-sans text-muted hover:text-accent hover:bg-muted/10 transition-colors border border-transparent hover:border-muted/20"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-sans text-muted hover:text-accent hover:bg-muted/10 transition-colors border border-transparent hover:border-muted/20 select-none"
     >
       <svg
         width="14"
