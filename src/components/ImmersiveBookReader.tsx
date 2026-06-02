@@ -3,7 +3,11 @@
 import type { CSSProperties, ReactNode } from 'react';
 import BookSidebar from '@/components/BookSidebar';
 import ImmersiveReaderTopBar from '@/components/ImmersiveReaderTopBar';
-import { useImmersiveReading, type ReadingFontSize } from '@/components/ImmersiveReadingProvider';
+import {
+  useImmersiveReading,
+  type ReadingColumnWidth,
+  type ReadingFontSize,
+} from '@/components/ImmersiveReadingProvider';
 import type { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
 
 const FONT_SIZE_REM: Record<ReadingFontSize, string> = {
@@ -11,6 +15,20 @@ const FONT_SIZE_REM: Record<ReadingFontSize, string> = {
   m: '1.125rem',
   l: '1.25rem',
   xl: '1.5rem',
+};
+
+const COLUMN_WIDTH_CLASS: Record<ReadingColumnWidth, string> = {
+  narrow: 'max-w-2xl',
+  medium: 'max-w-3xl',
+  wide: 'max-w-4xl',
+  full: 'max-w-none',
+};
+
+const COLUMN_PADDING_CLASS: Record<ReadingColumnWidth, string> = {
+  narrow: 'px-6 sm:px-8',
+  medium: 'px-6 sm:px-8',
+  wide: 'px-6 sm:px-8',
+  full: 'px-6 sm:px-10',
 };
 
 interface ImmersiveBookReaderProps {
@@ -29,7 +47,7 @@ interface ImmersiveBookReaderProps {
 }
 
 export default function ImmersiveBookReader({ book, chapter, children }: ImmersiveBookReaderProps) {
-  const { fontSize, readingTheme, sidebarOpen } = useImmersiveReading();
+  const { fontSize, readingTheme, columnWidth, sidebarOpen } = useImmersiveReading();
 
   const overlayStyle: CSSProperties = {
     ['--reading-font-size' as keyof CSSProperties]: FONT_SIZE_REM[fontSize],
@@ -67,7 +85,7 @@ export default function ImmersiveBookReader({ book, chapter, children }: Immersi
         )}
 
         <main className="flex-1 min-w-0 overflow-y-auto">
-          <article className="max-w-3xl mx-auto px-6 sm:px-8 py-10">
+          <article className={`${COLUMN_WIDTH_CLASS[columnWidth]} mx-auto ${COLUMN_PADDING_CLASS[columnWidth]} py-10`}>
             {children}
           </article>
         </main>

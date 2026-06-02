@@ -4,19 +4,25 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 export type ReadingFontSize = 's' | 'm' | 'l' | 'xl';
 export type ReadingTheme = 'auto' | 'light' | 'sepia' | 'dark';
+export type ReadingColumnWidth = 'narrow' | 'medium' | 'wide' | 'full';
 
 interface ImmersiveReadingContextValue {
   enabled: boolean;
   fontSize: ReadingFontSize;
   readingTheme: ReadingTheme;
+  columnWidth: ReadingColumnWidth;
   sidebarOpen: boolean;
+  prefsPanelOpen: boolean;
   toggle: () => void;
   enter: () => void;
   exit: () => void;
   setFontSize: (size: ReadingFontSize) => void;
   setReadingTheme: (theme: ReadingTheme) => void;
+  setColumnWidth: (width: ReadingColumnWidth) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  togglePrefsPanel: () => void;
+  closePrefsPanel: () => void;
 }
 
 const ImmersiveReadingContext = createContext<ImmersiveReadingContextValue | undefined>(undefined);
@@ -25,12 +31,24 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
   const [enabled, setEnabled] = useState(false);
   const [fontSize, setFontSize] = useState<ReadingFontSize>('m');
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>('auto');
+  const [columnWidth, setColumnWidth] = useState<ReadingColumnWidth>('wide');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [prefsPanelOpen, setPrefsPanelOpen] = useState(false);
 
   const enter = useCallback(() => setEnabled(true), []);
-  const exit = useCallback(() => setEnabled(false), []);
-  const toggle = useCallback(() => setEnabled(prev => !prev), []);
+  const exit = useCallback(() => {
+    setEnabled(false);
+    setPrefsPanelOpen(false);
+  }, []);
+  const toggle = useCallback(() => {
+    setEnabled(prev => {
+      if (prev) setPrefsPanelOpen(false);
+      return !prev;
+    });
+  }, []);
   const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const togglePrefsPanel = useCallback(() => setPrefsPanelOpen(prev => !prev), []);
+  const closePrefsPanel = useCallback(() => setPrefsPanelOpen(false), []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -52,11 +70,15 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
-      setEnabled(false);
+      if (prefsPanelOpen) {
+        setPrefsPanelOpen(false);
+      } else {
+        setEnabled(false);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [enabled]);
+  }, [enabled, prefsPanelOpen]);
 
   // Auto-collapse the sidebar on narrow viewports when entering immersive mode.
   // Without this, the sidebar overlaps the article on tablets / phones.
@@ -76,14 +98,19 @@ export function ImmersiveReadingProvider({ children }: { children: ReactNode }) 
         enabled,
         fontSize,
         readingTheme,
+        columnWidth,
         sidebarOpen,
+        prefsPanelOpen,
         toggle,
         enter,
         exit,
         setFontSize,
         setReadingTheme,
+        setColumnWidth,
         toggleSidebar,
         setSidebarOpen,
+        togglePrefsPanel,
+        closePrefsPanel,
       }}
     >
       {children}
