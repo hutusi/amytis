@@ -34,7 +34,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
   }
 
   return (
-    <div className="layout-container lg:max-w-7xl">
+    <div className="layout-container">
       <ReadingProgressBar />
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
         {/* Left: Sidebar */}
@@ -48,7 +48,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
         />
 
         {/* Main content */}
-        <article className="min-w-0 w-full max-w-3xl overflow-x-hidden">
+        <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
           {/* Mobile nav */}
           <div className="lg:hidden mb-8">
             <BookMobileNav
