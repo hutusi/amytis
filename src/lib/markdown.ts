@@ -1645,9 +1645,11 @@ export function flattenBookChapters(toc: BookTocItem[]): BookChapterEntry[] {
 
 /**
  * Resolves a chapter id (possibly nested with `/`) to a markdown file on disk.
- * Returns `{ path, isFolder }` if a file exists in one of the four supported forms,
- * or `null` if the id has no match. Guards against `..`-style path escapes — any
- * id that resolves outside `bookDir` returns null.
+ * Returns `{ path, isFolder }` if a file exists in one of the six supported
+ * forms (`<id>.mdx`, `<id>.md`, `<id>/index.mdx`, `<id>/index.md`,
+ * `<id>/README.mdx`, `<id>/README.md`), or `null` if the id has no match.
+ * Guards against `..`-style path escapes — any id that resolves outside
+ * `bookDir` returns null.
  */
 function resolveChapterFilePath(
   bookDir: string,
@@ -1711,7 +1713,7 @@ export function getBookData(slug: string): BookData | null {
     throw new Error(
       `[amytis] Book "${slug}" references chapter${missing.length === 1 ? '' : 's'} ` +
       `with no matching file on disk: ${missing.map(id => `"${id}"`).join(', ')}. ` +
-      `Expected one of <bookDir>/<id>.{md,mdx} or <bookDir>/<id>/index.{md,mdx}.`
+      `Expected one of <bookDir>/<id>.{md,mdx}, <bookDir>/<id>/index.{md,mdx}, or <bookDir>/<id>/README.{md,mdx}.`
     );
   }
 
