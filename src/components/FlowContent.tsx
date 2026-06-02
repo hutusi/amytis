@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import FlowSidebarSlideOver from '@/components/FlowSidebarSlideOver';
@@ -41,6 +41,43 @@ interface FlowContentProps {
 export default function FlowContent({ flows, allFlows, entryDates, tags, currentDate, pagination, breadcrumb }: FlowContentProps) {
   const { t, language } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const initialPage = pagination?.currentPage ?? 1;
+  const totalPages = pagination?.totalPages ?? 1;
+  const basePath = pagination?.basePath ?? '/flows';
+  const [extraChunks, setExtraChunks] = useState<string[]>([]);
+  const [nextPage, setNextPage] = useState(initialPage + 1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const seenMonthsRef = useRef<Set<string>>(new Set(flows.map(f => f.date.slice(0, 7))));
+
+  async function loadMore() {
+    if (loadingMore || nextPage > totalPages) return;
+    setLoadingMore(true);
+    setLoadError(null);
+    try {
+      const res = await fetch(`${basePath}/page/${nextPage}/`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      const section = doc.querySelector('#flow-stream-entries');
+      if (!section) throw new Error('Stream section not found');
+      // Drop month dividers we've already shown to avoid duplicates between chunks
+      section.querySelectorAll('[data-month]').forEach(node => {
+        const month = node.getAttribute('data-month');
+        if (month && seenMonthsRef.current.has(month)) {
+          node.remove();
+        } else if (month) {
+          seenMonthsRef.current.add(month);
+        }
+      });
+      setExtraChunks(prev => [...prev, section.innerHTML]);
+      setNextPage(prev => prev + 1);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Failed to load');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const filteredCompactFlows = useMemo(() => {
     if (!selectedTag) return [];
@@ -139,41 +176,71 @@ export default function FlowContent({ flows, allFlows, entryDates, tags, current
           <p className="text-muted">{t('no_flows')}</p>
         ) : (
           // Stream mode: full content, grouped by month
-          groupedStream.map(([monthKey, monthFlows]) => {
-            const [y, m] = monthKey.split('-').map(Number);
-            const monthLabel = new Date(y, m - 1).toLocaleDateString(locale, {
-              year: 'numeric',
-              month: 'long',
-            });
-            return (
-              <section key={monthKey}>
-                <div className="flex items-center gap-4 mt-12 mb-2 text-[11px] uppercase tracking-[0.25em] text-muted/60 first:mt-0">
-                  <span className="flex-1 h-px bg-muted/15" />
-                  <span>{monthLabel}</span>
-                  <span className="flex-1 h-px bg-muted/15" />
-                </div>
-                {monthFlows.map(flow => (
-                  <FlowStreamEntry
-                    key={flow.slug}
-                    date={flow.date}
-                    slug={flow.slug}
-                    title={flow.title}
-                    body={flow.body}
-                    tags={flow.tags}
-                  />
-                ))}
-              </section>
-            );
-          })
+          <div id="flow-stream-entries">
+            {groupedStream.map(([monthKey, monthFlows]) => {
+              const [y, m] = monthKey.split('-').map(Number);
+              const monthLabel = new Date(y, m - 1).toLocaleDateString(locale, {
+                year: 'numeric',
+                month: 'long',
+              });
+              return (
+                <section key={monthKey}>
+                  <div
+                    data-month={monthKey}
+                    className="flex items-center gap-4 mt-12 mb-2 text-[11px] uppercase tracking-[0.25em] text-muted/60 first:mt-0"
+                  >
+                    <span className="flex-1 h-px bg-muted/15" />
+                    <span>{monthLabel}</span>
+                    <span className="flex-1 h-px bg-muted/15" />
+                  </div>
+                  {monthFlows.map(flow => (
+                    <FlowStreamEntry
+                      key={flow.slug}
+                      date={flow.date}
+                      slug={flow.slug}
+                      title={flow.title}
+                      body={flow.body}
+                      tags={flow.tags}
+                    />
+                  ))}
+                </section>
+              );
+            })}
+          </div>
         )}
 
-        {!selectedTag && pagination && pagination.totalPages > 1 && (
-          <div className="mt-12">
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              basePath={pagination.basePath}
-            />
+        {/* Appended chunks fetched via "Load more". Static HTML — no React rehydration. */}
+        {extraChunks.map((html, i) => (
+          <div key={i} dangerouslySetInnerHTML={{ __html: html }} />
+        ))}
+
+        {!selectedTag && totalPages > 1 && (
+          <div className="mt-16 flex flex-col items-center gap-3">
+            {nextPage <= totalPages ? (
+              <>
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2 px-5 py-2 text-sm text-muted border border-muted/20 rounded-full hover:border-accent hover:text-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? t('loading_more') : t('load_more')}
+                </button>
+                {loadError && (
+                  <p className="text-xs text-red-500">{loadError}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-[11px] uppercase tracking-[0.25em] text-muted/60">
+                {t('end_of_stream')}
+              </p>
+            )}
+            <noscript>
+              <Pagination
+                currentPage={initialPage}
+                totalPages={totalPages}
+                basePath={basePath}
+              />
+            </noscript>
           </div>
         )}
         </div>
