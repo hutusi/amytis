@@ -50,7 +50,7 @@ export default function ImmersiveSeriesSidebar({
   const isCollectionContext = !!activeCollection;
 
   const postHref = (post: PostData) =>
-    isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
+    activeCollection ? getPostUrlInCollection(post, activeCollection.slug) : getPostUrl(post);
 
   const currentIndex = effectivePosts.findIndex(p => p.slug === currentSlug);
   const currentItemRef = useRef<HTMLLIElement>(null);
