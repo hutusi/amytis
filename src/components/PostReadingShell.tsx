@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
-import SeriesList from '@/components/SeriesList';
+import ImmersiveSeriesSidebar from '@/components/ImmersiveSeriesSidebar';
 import { getSeriesUrl } from '@/lib/urls';
 import type { CollectionContext, PostData } from '@/lib/markdown';
 
@@ -52,10 +52,9 @@ export default function PostReadingShell({
       rootTitle={seriesTitle ?? seriesSlug}
       currentTitle={post.title}
       sidebar={
-        <SeriesList
-          mode="fill"
+        <ImmersiveSeriesSidebar
           seriesSlug={seriesSlug}
-          seriesTitle={seriesTitle}
+          seriesTitle={seriesTitle ?? seriesSlug}
           posts={seriesPosts}
           collectionContexts={collectionContexts}
           currentSlug={post.slug}

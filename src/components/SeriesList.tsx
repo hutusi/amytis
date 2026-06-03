@@ -15,17 +15,9 @@ interface SeriesListProps {
   posts?: PostData[];
   collectionContexts?: CollectionContext[];
   currentSlug: string;
-  /**
-   * 'page' (default): the historical card layout — bordered, rounded, with a
-   * collapsible posts list (collapsed by default).
-   * 'fill': for use inside a fullscreen flex container (e.g. the immersive
-   * reader overlay). No card chrome, posts list always expanded. The parent
-   * aside owns positioning + scroll.
-   */
-  mode?: 'page' | 'fill';
 }
 
-export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug, mode = 'page' }: SeriesListProps) {
+export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug }: SeriesListProps) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const collectionParam = searchParams.get('collection');
@@ -41,11 +33,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
   const postHref = (post: PostData) =>
     isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
 
-  // In `fill` mode the posts list is always expanded — the reader has the
-  // vertical space, and hiding the list behind a click would defeat the
-  // sidebar's purpose. The collapse toggle is also skipped below.
-  const isFill = mode === 'fill';
-  const [isExpanded, setIsExpanded] = useState(isFill);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (!effectivePosts || effectivePosts.length === 0) return null;
 
@@ -54,10 +42,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
   const nextPost = currentIndex < effectivePosts.length - 1 ? effectivePosts[currentIndex + 1] : null;
 
   return (
-    <div
-      data-testid="series-list"
-      className={isFill ? 'px-4 py-5' : 'p-5 bg-muted/5 rounded-xl border border-muted/20'}
-    >
+    <div data-testid="series-list" className="p-5 bg-muted/5 rounded-xl border border-muted/20">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Link
@@ -93,26 +78,23 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
         />
       </div>
 
-      {/* Toggle to expand full list — only in page mode; fill mode shows the
-          list unconditionally because the reader has the vertical room. */}
-      {!isFill && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
-        >
-          <span className="h-px flex-1 bg-muted/10" />
-          <span className="flex items-center gap-1">
-            {isExpanded ? t('hide') : t('all_posts')}
-            <svg
-              className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-          <span className="h-px flex-1 bg-muted/10" />
-        </button>
-      )}
+      {/* Toggle to expand full list */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
+      >
+        <span className="h-px flex-1 bg-muted/10" />
+        <span className="flex items-center gap-1">
+          {isExpanded ? t('hide') : t('all_posts')}
+          <svg
+            className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+        <span className="h-px flex-1 bg-muted/10" />
+      </button>
 
       {/* Collapsible posts list */}
       {isExpanded && (
