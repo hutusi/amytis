@@ -5,18 +5,20 @@ import { useRef } from 'react';
 import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import { useLanguage } from '@/components/LanguageProvider';
 import ImmersiveReadingPrefsPopover from '@/components/ImmersiveReadingPrefsPopover';
-import { getBookUrl } from '@/lib/urls';
 
 interface ImmersiveReaderTopBarProps {
-  bookSlug: string;
-  bookTitle: string;
-  chapterTitle: string;
+  /** Breadcrumb root link — caller computes the URL (book URL or series URL). */
+  rootHref: string;
+  /** Left side of the breadcrumb. */
+  rootTitle: string;
+  /** Right side of the breadcrumb. */
+  currentTitle: string;
 }
 
 export default function ImmersiveReaderTopBar({
-  bookSlug,
-  bookTitle,
-  chapterTitle,
+  rootHref,
+  rootTitle,
+  currentTitle,
 }: ImmersiveReaderTopBarProps) {
   const { t } = useLanguage();
   const { sidebarOpen, prefsPanelOpen, toggleSidebar, togglePrefsPanel, exit } = useImmersiveReading();
@@ -52,15 +54,15 @@ export default function ImmersiveReaderTopBar({
 
       <div className="min-w-0 flex-1 flex items-center gap-2 text-sm">
         <Link
-          href={getBookUrl(bookSlug)}
+          href={rootHref}
           className="font-serif font-semibold text-heading hover:text-accent truncate no-underline"
-          title={bookTitle}
+          title={rootTitle}
         >
-          {bookTitle}
+          {rootTitle}
         </Link>
         <span className="text-muted/50 hidden sm:inline" aria-hidden="true">/</span>
-        <span className="text-muted truncate hidden sm:inline" title={chapterTitle}>
-          {chapterTitle}
+        <span className="text-muted truncate hidden sm:inline" title={currentTitle}>
+          {currentTitle}
         </span>
       </div>
 

@@ -998,24 +998,36 @@ html.dark .rst-rendered aside.admonition-danger {
 }
 
 /* Immersive reading mode.
- * Toggled by ImmersiveReadingProvider via html[data-immersive="true"]. The
- * fullscreen ImmersiveBookReader overlay also covers the site chrome, but
- * these rules are kept as defense-in-depth (and reset the navbar offset so
- * the scroll padding doesn't peek through the overlay). Do not strip the
- * data-site-nav / data-site-footer / data-reading-progress hooks. */
-html[data-immersive="true"] [data-site-nav],
-html[data-immersive="true"] [data-site-footer],
-html[data-immersive="true"] [data-reading-progress] {
+ * Toggled by ImmersiveReadingProvider via the html element's data-immersive
+ * attribute. The fullscreen ImmersiveReader overlay also covers the site
+ * chrome, but these rules are kept as defense-in-depth (and reset the
+ * navbar offset so the scroll padding doesn't peek through the overlay).
+ * Do not strip the data-site-nav / data-site-footer / data-reading-progress
+ * hooks.
+ *
+ * IMPORTANT: every attribute selector below uses an explicit ="true" value,
+ * and no rule starts with `html[...]`. Tailwind v4 / Lightning CSS silently
+ * dead-code-eliminates rules that start with `html[...]` and bare attribute
+ * selectors like `[data-site-nav]` — they end up missing from the compiled
+ * CSS bundle even though they're written here in source. The surviving
+ * patterns are bare-attribute-with-value (e.g. `[data-palette="blue"]`,
+ * `[data-line-numbers="true"]`) and class-prefixed compounds (e.g.
+ * `.dark[data-palette="blue"]`). React serialises a bare JSX
+ * `data-site-nav` prop to the HTML `data-site-nav="true"`, so writing
+ * `="true"` here costs nothing on the component side. */
+[data-immersive="true"] [data-site-nav="true"],
+[data-immersive="true"] [data-site-footer="true"],
+[data-immersive="true"] [data-reading-progress="true"] {
   display: none;
 }
-html[data-immersive="true"] #main-content {
+[data-immersive="true"] #main-content {
   padding-top: 0;
 }
 
 /* Font-size in the reader overlay is driven by a CSS var set inline on the
  * overlay container. A var (not stacked text-* classes) sidesteps fighting
  * the prose-lg specificity. */
-[data-reader-overlay] .prose {
+[data-reader-overlay="true"] .prose {
   font-size: var(--reading-font-size, 1.125rem);
 }
 
@@ -1025,29 +1037,29 @@ html[data-immersive="true"] #main-content {
  * variables. The overlay also adds Tailwind's `.dark` class on its container
  * when readingTheme === 'dark' so `dark:prose-invert` activates regardless of
  * the site theme. Shiki code blocks keep their own theme on purpose. */
-[data-reader-overlay][data-reading-theme="light"] {
+[data-reader-overlay="true"][data-reading-theme="light"] {
   --background: #fafaf9;
   --foreground: #44403c;
   --heading: #1c1917;
   --muted: #78716c;
 }
-[data-reader-overlay][data-reading-theme="dark"] {
+[data-reader-overlay="true"][data-reading-theme="dark"] {
   --background: #292524;
   --foreground: #f5f5f4;
   --heading: #fafaf9;
   --muted: #a8a29e;
 }
-[data-reader-overlay][data-reading-theme="sepia"] {
+[data-reader-overlay="true"][data-reading-theme="sepia"] {
   --background: #f4ecd8;
   --foreground: #5b4636;
   --heading: #3b2f24;
   --muted: #8a7a66;
 }
-[data-reader-overlay][data-reading-theme="sepia"] .prose h1,
-[data-reader-overlay][data-reading-theme="sepia"] .prose h2,
-[data-reader-overlay][data-reading-theme="sepia"] .prose h3,
-[data-reader-overlay][data-reading-theme="sepia"] .prose h4,
-[data-reader-overlay][data-reading-theme="sepia"] .prose h5,
-[data-reader-overlay][data-reading-theme="sepia"] .prose h6 {
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h1,
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h2,
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h3,
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h4,
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h5,
+[data-reader-overlay="true"][data-reading-theme="sepia"] .prose h6 {
   color: var(--heading);
 }

@@ -6,13 +6,18 @@ import { useLanguage } from '@/components/LanguageProvider';
 export default function ImmersiveToggleButton() {
   const { enabled, toggle } = useImmersiveReading();
   const { t } = useLanguage();
-  const label = enabled ? t('exit_reading_mode') : t('immersive_reading');
+  // The button is the "enter" affordance; in immersive mode the top bar's
+  // exit (✕) is the only way out, so the inline button hides to avoid
+  // duplicating the exit and reading "Exit reading mode" next to it. Owning
+  // the visibility here means callers (PostLayout's article header, etc.)
+  // don't need to gate it with `{!enabled && ...}` separately.
+  if (enabled) return null;
+  const label = t('immersive_reading');
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-pressed={enabled}
       title={label}
       aria-label={label}
       className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-sans text-muted hover:text-accent hover:bg-muted/10 transition-colors border border-transparent hover:border-muted/20 select-none"
