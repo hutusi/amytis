@@ -8,9 +8,10 @@ import ReadingProgressBar from '@/components/ReadingProgressBar';
 import Comments from '@/components/Comments';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
-import ImmersiveBookReader from '@/components/ImmersiveBookReader';
+import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveToggleButton from '@/components/ImmersiveToggleButton';
 import type { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
+import { getBookUrl } from '@/lib/urls';
 
 interface BookReadingShellProps {
   book: {
@@ -86,23 +87,26 @@ export default function BookReadingShell({
 
   if (enabled) {
     return (
-      <ImmersiveBookReader
-        book={{
-          slug: book.slug,
-          title: book.title,
-          toc: book.toc,
-          chapters: book.chapters,
-        }}
-        chapter={{
-          slug: chapter.slug,
-          title: chapter.title,
-          headings: chapter.headings,
-        }}
+      <ImmersiveReader
+        rootHref={getBookUrl(book.slug)}
+        rootTitle={book.title}
+        currentTitle={chapter.title}
+        sidebar={
+          <BookSidebar
+            mode="fill"
+            bookSlug={book.slug}
+            bookTitle={book.title}
+            toc={book.toc}
+            chapters={book.chapters}
+            currentChapter={chapter.slug}
+            headings={chapter.headings}
+          />
+        }
       >
         {chapterHeader}
         {children}
         {prevNext}
-      </ImmersiveBookReader>
+      </ImmersiveReader>
     );
   }
 

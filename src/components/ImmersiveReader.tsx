@@ -1,14 +1,12 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
-import BookSidebar from '@/components/BookSidebar';
 import ImmersiveReaderTopBar from '@/components/ImmersiveReaderTopBar';
 import {
   useImmersiveReading,
   type ReadingColumnWidth,
   type ReadingFontSize,
 } from '@/components/ImmersiveReadingProvider';
-import type { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
 
 const FONT_SIZE_REM: Record<ReadingFontSize, string> = {
   s: '1rem',
@@ -31,22 +29,26 @@ const COLUMN_PADDING_CLASS: Record<ReadingColumnWidth, string> = {
   full: 'px-6 sm:px-10',
 };
 
-interface ImmersiveBookReaderProps {
-  book: {
-    slug: string;
-    title: string;
-    toc: BookTocItem[];
-    chapters: BookChapterEntry[];
-  };
-  chapter: {
-    slug: string;
-    title: string;
-    headings: Heading[];
-  };
+interface ImmersiveReaderProps {
+  /** Breadcrumb root link — book detail page for books, series index for series. */
+  rootHref: string;
+  /** Left side of the top-bar breadcrumb (book title or series title). */
+  rootTitle: string;
+  /** Right side of the breadcrumb (chapter or post title). */
+  currentTitle: string;
+  /** Pre-rendered sidebar element. Caller passes `<BookSidebar mode="fill" ...>`
+   *  or `<SeriesList mode="fill" ...>` so the overlay stays content-type-agnostic. */
+  sidebar: ReactNode;
   children: ReactNode;
 }
 
-export default function ImmersiveBookReader({ book, chapter, children }: ImmersiveBookReaderProps) {
+export default function ImmersiveReader({
+  rootHref,
+  rootTitle,
+  currentTitle,
+  sidebar,
+  children,
+}: ImmersiveReaderProps) {
   const { fontSize, readingTheme, columnWidth, sidebarOpen } = useImmersiveReading();
 
   const overlayStyle: CSSProperties = {
@@ -66,26 +68,18 @@ export default function ImmersiveBookReader({ book, chapter, children }: Immersi
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={book.title}
+      aria-label={rootTitle}
     >
       <ImmersiveReaderTopBar
-        bookSlug={book.slug}
-        bookTitle={book.title}
-        chapterTitle={chapter.title}
+        rootHref={rootHref}
+        rootTitle={rootTitle}
+        currentTitle={currentTitle}
       />
 
       <div className="flex-1 min-h-0 flex">
         {sidebarOpen && (
           <aside className="w-[280px] shrink-0 border-r border-muted/15 bg-background/60">
-            <BookSidebar
-              mode="fill"
-              bookSlug={book.slug}
-              bookTitle={book.title}
-              toc={book.toc}
-              chapters={book.chapters}
-              currentChapter={chapter.slug}
-              headings={chapter.headings}
-            />
+            {sidebar}
           </aside>
         )}
 
