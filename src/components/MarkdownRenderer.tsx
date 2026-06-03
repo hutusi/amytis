@@ -31,6 +31,22 @@ import { parseFenceMeta } from '@/lib/shiki';
 import { isExternalUrl } from '@/lib/urls';
 
 
+// Flatten an arbitrary React children tree to its text content. Used by the
+// raw-HTML <mermaid> handler below — react-markdown hands us the mermaid
+// source as a tree of text nodes (possibly nested through whitespace-only
+// wrappers) and the Mermaid component expects a single string.
+function flattenChildrenToText(node: React.ReactNode): string {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(flattenChildrenToText).join('');
+  if (React.isValidElement(node)) {
+    const children = (node.props as { children?: React.ReactNode }).children;
+    return flattenChildrenToText(children);
+  }
+  return '';
+}
+
 interface MarkdownRendererProps {
   content: string;
   latex?: boolean;
@@ -280,6 +296,21 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     globaltoc: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
     homehero: () => null,
     chatdemo: () => null,
+    // <mermaid>...graph syntax...</mermaid> is the VuePress inline form. We
+    // already handle ```mermaid fenced blocks via the `code` renderer above;
+    // route the raw-HTML form to the same Mermaid component by flattening
+    // the children to a string.
+    mermaid: ({ children }: { children?: React.ReactNode }) => (
+      <Mermaid chart={flattenChildrenToText(children).trim()} />
+    ),
+    // <GitHubWrapper>...</GitHubWrapper> wraps GitHub project links / cards
+    // in the fenix VuePress book. Pass children through unchanged — they're
+    // usually a paragraph or an <a>/<img> the author wants to display.
+    githubwrapper: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    // <words type='span' chapter='/' /> is a VuePress word-count widget that
+    // we can't reproduce without the upstream counter. Render nothing — the
+    // surrounding prose ("全文合计 X 字") degrades to "全文合计  字".
+    words: () => null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 
