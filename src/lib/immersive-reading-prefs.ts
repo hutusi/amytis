@@ -34,17 +34,30 @@ export const DEFAULT_PREFS: StoredPrefs = {
 };
 
 /** Resolve the default storage lazily — `globalThis.localStorage` is undefined
- * during SSR and accessing it at module top-level would crash imports. */
+ * during SSR and accessing it at module top-level would crash imports. The
+ * try/catch is also load-bearing: in some privacy-restricted browser modes
+ * (Safari "block all cookies", Firefox with site data disabled) the
+ * `localStorage` getter itself throws a SecurityError instead of returning
+ * the object — without the catch, that would escape into readStoredPrefs /
+ * writeStoredPrefs and crash the reader. */
 function defaultReadStorage(): Pick<Storage, 'getItem'> | null {
   if (typeof globalThis === 'undefined') return null;
-  const ls = (globalThis as { localStorage?: Storage }).localStorage;
-  return ls ?? null;
+  try {
+    const ls = (globalThis as { localStorage?: Storage }).localStorage;
+    return ls ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function defaultWriteStorage(): Pick<Storage, 'setItem'> | null {
   if (typeof globalThis === 'undefined') return null;
-  const ls = (globalThis as { localStorage?: Storage }).localStorage;
-  return ls ?? null;
+  try {
+    const ls = (globalThis as { localStorage?: Storage }).localStorage;
+    return ls ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Read + validate prefs from storage. Per-key defensive: if any key is
