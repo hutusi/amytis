@@ -60,11 +60,11 @@ export default function BookReadingShell({
         <span className="font-mono text-muted/70">
           {chapter.readingMinutes} {t('reading_time')}
         </span>
-        {!enabled && (
-          <span className="ml-auto">
-            <ImmersiveToggleButton />
-          </span>
-        )}
+        {/* ImmersiveToggleButton hides itself when enabled — no outer wrap
+            needed beyond the layout positioning. */}
+        <span className="ml-auto">
+          <ImmersiveToggleButton />
+        </span>
       </div>
 
       <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading leading-tight mb-4">
