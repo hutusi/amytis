@@ -307,56 +307,74 @@ Mermaid diagrams in book chapters already work via the existing `Mermaid` compon
 
 #### Immersive reading mode
 
-Chapter pages support an "immersive reading" mode: a fullscreen book-reader
-overlay with a top bar, the existing `BookSidebar` on the left, and the chapter
-article in a centred scrollable column. It's entered two ways — the toggle
-button in the chapter header, or the secondary "Immersive reading" CTA on the
-book index page (`/books/<slug>`), which links to the first chapter with
-`?immersive=1` appended.
+Book chapters AND series posts support an "immersive reading" mode: a
+fullscreen overlay with a top bar, a content-type-specific sidebar on the
+left, and the article in a centred scrollable column. Entered two ways —
+the toggle button in the article header (chapter header for books, post
+header for series), or the secondary "Immersive reading" CTA on the book
+index (`/books/<slug>`) or series index (`/series/<slug>`), which links to
+the first chapter/post with `?immersive=1` appended.
 
-**Layout boundary.** `src/layouts/BookLayout.tsx` stays a server component for
-data resolution and delegates to `src/components/BookReadingShell.tsx`. The
-shell branches on `enabled` from context: when on, it renders the fullscreen
-overlay (`ImmersiveBookReader`) with the chapter article as `children`; when
-off, it renders the pre-immersive page layout unchanged.
+**Generic reader, content-type-specific shells.** The overlay
+(`src/components/ImmersiveReader.tsx`) and top bar
+(`src/components/ImmersiveReaderTopBar.tsx`) are content-type-agnostic —
+both take `rootHref` / `rootTitle` / `currentTitle` props plus a pre-rendered
+`sidebar` ReactNode. Two shells consume the reader:
 
-**State + persistence.** `src/components/ImmersiveReadingProvider.tsx` is the
-context. Mounted in `src/app/books/[slug]/layout.tsx` so it survives
-chapter-to-chapter navigation within a book. The reader's preferences
-(`fontSize`, `readingTheme`, `columnWidth`, `sidebarOpen`) persist to
-`localStorage` under the key `amytis-reader-prefs` via the helpers in
-`src/lib/immersive-reading-prefs.ts`; the read path is per-key defensive so
-schema drift or hand-edited values fall back to their default without
-discarding the whole blob. `enabled` and `prefsPanelOpen` are deliberately
-**not** persisted — entering the reader is a per-visit intent, not a
-preference.
+- `src/components/BookReadingShell.tsx` for chapters — passes
+  `<BookSidebar mode="fill" ...>` as the sidebar.
+- `src/components/PostReadingShell.tsx` for series posts — passes
+  `<SeriesList mode="fill" ...>`. The toggle is gated on `post.series`;
+  non-series posts don't see a useless button.
+
+**Layout boundaries.** The provider needs to survive client-side navigation
+between sibling items within a content unit. Three layout files mount it:
+
+- `src/app/books/[slug]/layout.tsx` — books reader (chapter-to-chapter).
+- `src/app/[slug]/layout.tsx` — series posts on autoPaths URLs
+  (`/<series-slug>/<post>`), which is the default.
+- `src/app/posts/layout.tsx` — series posts on default-path URLs
+  (`/posts/<slug>`), for sites with `series.autoPaths: false`.
+
+Each layout file is identical: wraps `{children}` in
+`<ImmersiveReadingProvider>` plus a `<Suspense>`-isolated
+`<ImmersiveReadingFlagHandler />`. The three layouts each mount independent
+provider instances — `enabled` state doesn't bleed between content types —
+but localStorage prefs are shared (same `amytis-reader-prefs` key), so a
+reader's font/theme/width choices carry across books and series.
+
+**State + persistence.** `src/components/ImmersiveReadingProvider.tsx` holds
+the context. Preferences (`fontSize`, `readingTheme`, `columnWidth`,
+`sidebarOpen`) persist to `localStorage` under `amytis-reader-prefs` via the
+helpers in `src/lib/immersive-reading-prefs.ts`; the read path is per-key
+defensive so schema drift or hand-edited values fall back to their default
+without discarding the whole blob. `enabled` and `prefsPanelOpen` are
+deliberately **not** persisted — entering the reader is a per-visit intent,
+not a preference.
 
 **`?immersive=1` URL flag.** `src/components/ImmersiveReadingFlagHandler.tsx`
-sits as a sibling of `{children}` inside the layout (wrapped in its own
+sits as a sibling of `{children}` inside each layout (wrapped in its own
 `<Suspense>`), reads the query param via `useSearchParams`, calls
 `provider.enter()`, then strips the flag via `router.replace`. The Suspense
 boundary is load-bearing — `useSearchParams` triggers a static-export bailout,
-so wrapping the provider instead would drag the chapter page out of static
-prerender.
+so wrapping the provider instead would drag the chapter/post page out of
+static prerender.
 
-**Overlay anatomy** (`src/components/ImmersiveBookReader.tsx`,
-`position: fixed inset-0 z-40`):
+**Overlay anatomy** (`ImmersiveReader.tsx`, `position: fixed inset-0 z-40`):
 
-- `ImmersiveReaderTopBar` — sidebar toggle, `book / chapter` breadcrumb, `Aa`
-  button, exit (✕). The header is `relative z-30` so its `backdrop-blur-md`
-  stacking context paints above article-area code blocks.
-- `ImmersiveReadingPrefsPopover` — anchored under the `Aa` button. Four control
-  groups with visual previews: font size (4 sizes, `A` letters rendered at the
+- `ImmersiveReaderTopBar` — sidebar toggle, breadcrumb (book/chapter or
+  series/post), `Aa` button, exit (✕). The header is `relative z-30` so its
+  `backdrop-blur-md` stacking context paints above article-area code blocks.
+- `ImmersiveReadingPrefsPopover` — anchored under the `Aa` button. Four
+  control groups with visual previews: font size (4 sizes, `A` letters at the
   actual size), reading theme (Auto / Light / Sepia / Dark colour swatches —
   Auto reads as a split light/dark gradient), column width (Narrow / Medium /
   Wide / Full as stacked line-icons), and a "Reset to defaults" link at the
   bottom (one-click, no confirmation). Dismisses on outside `pointerdown` or
   ESC; ESC with the popover closed exits the reader.
-- `BookSidebar` in `mode="fill"` — the existing TOC sidebar without its
-  page-mode `sticky top-20`/`hidden lg:block` classes, so it fills the parent
-  flex column and scrolls inside its own overflow container. Auto-collapsed
-  below `lg` (one-directional: never auto-opens on resize to wide so the user's
-  manual close sticks).
+- Sidebar in `mode="fill"` — either `BookSidebar` or `SeriesList`, without
+  their page-mode positioning classes. Auto-collapsed below `lg`
+  (one-directional: never auto-opens on resize to wide).
 - Main scroll area — article centred at the column width the user picked
   (`max-w-2xl` to `max-w-none`).
 
