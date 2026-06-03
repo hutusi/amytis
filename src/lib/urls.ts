@@ -81,6 +81,11 @@ export function getBooksListUrl(): string {
   return '/books';
 }
 
+/** Returns the canonical URL path for a series landing page. */
+export function getSeriesUrl(slug: string): string {
+  return `/series/${slug}`;
+}
+
 /** Returns the canonical URL path for a book landing page. */
 export function getBookUrl(slug: string): string {
   return `/books/${slug}`;
