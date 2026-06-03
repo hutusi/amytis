@@ -3,15 +3,17 @@
 import { useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext } from '@/lib/markdown';
+import type { PostData, CollectionContext, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
-import { getPostUrl, getPostUrlInCollection, getSeriesUrl } from '@/lib/urls';
+import InlineBookToc from './InlineBookToc';
+import { getPostUrl, getPostUrlInCollection, getSeriesListUrl, getSeriesUrl } from '@/lib/urls';
 
 // Dedicated TOC sidebar for the immersive reader on a series post. Visually
 // mirrors BookSidebar's `mode="fill"` shape (clean numbered list, left-
-// border accent on the current item, footer "view full series" link) rather
-// than the page-mode SeriesList card — see PR #95 review feedback.
+// border accent on the current item, inlined headings under the current
+// post, footer pointing at the listing page) rather than the page-mode
+// SeriesList card — see PR #95 review feedback.
 
 interface ImmersiveSeriesSidebarProps {
   seriesSlug: string;
@@ -22,6 +24,9 @@ interface ImmersiveSeriesSidebarProps {
    *  resolution logic as SeriesList. */
   collectionContexts?: CollectionContext[];
   currentSlug: string;
+  /** h2/h3 headings for the current post — rendered as an inline TOC under
+   *  the current post's row via the shared InlineBookToc component. */
+  headings?: Heading[];
 }
 
 export default function ImmersiveSeriesSidebar({
@@ -30,6 +35,7 @@ export default function ImmersiveSeriesSidebar({
   posts,
   collectionContexts,
   currentSlug,
+  headings = [],
 }: ImmersiveSeriesSidebarProps) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
@@ -98,19 +104,22 @@ export default function ImmersiveSeriesSidebar({
                 >
                   {post.title}
                 </Link>
+                {isCurrent && <InlineBookToc headings={headings} />}
               </li>
             );
           })}
         </ul>
       </nav>
 
-      {/* Footer — series-detail link */}
+      {/* Footer — points at the series listing (not back to the current
+          series detail, which the header already links to). Matches
+          BookSidebar's "All Books" footer pattern. */}
       <div className="mt-6 pt-4 border-t border-muted/10">
         <Link
-          href={getSeriesUrl(effectiveSlug)}
+          href={getSeriesListUrl()}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
         >
-          {isCollectionContext ? t('view_full_collection') : t('view_full_series')}
+          {t('all_series')}
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>

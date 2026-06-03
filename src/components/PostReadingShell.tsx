@@ -5,10 +5,10 @@ import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveSeriesSidebar from '@/components/ImmersiveSeriesSidebar';
 import { getSeriesUrl } from '@/lib/urls';
-import type { CollectionContext, PostData } from '@/lib/markdown';
+import type { CollectionContext, Heading, PostData } from '@/lib/markdown';
 
 interface PostReadingShellProps {
-  post: { slug: string; title: string; series?: string };
+  post: { slug: string; title: string; series?: string; headings?: Heading[] };
   seriesSlug?: string;
   seriesTitle?: string;
   seriesPosts?: PostData[];
@@ -58,6 +58,7 @@ export default function PostReadingShell({
           posts={seriesPosts}
           collectionContexts={collectionContexts}
           currentSlug={post.slug}
+          headings={post.headings}
         />
       }
     >
