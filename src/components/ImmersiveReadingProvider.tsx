@@ -1,67 +1,11 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { DEFAULT_PREFS, readStoredPrefs, writeStoredPrefs } from '@/lib/immersive-reading-prefs';
 
 export type ReadingFontSize = 's' | 'm' | 'l' | 'xl';
 export type ReadingTheme = 'auto' | 'light' | 'sepia' | 'dark';
 export type ReadingColumnWidth = 'narrow' | 'medium' | 'wide' | 'full';
-
-const FONT_SIZE_VALUES: readonly ReadingFontSize[] = ['s', 'm', 'l', 'xl'];
-const THEME_VALUES: readonly ReadingTheme[] = ['auto', 'light', 'sepia', 'dark'];
-const COLUMN_WIDTH_VALUES: readonly ReadingColumnWidth[] = ['narrow', 'medium', 'wide', 'full'];
-
-const DEFAULT_PREFS = {
-  fontSize: 'm' as ReadingFontSize,
-  readingTheme: 'auto' as ReadingTheme,
-  columnWidth: 'wide' as ReadingColumnWidth,
-  sidebarOpen: true,
-};
-
-const STORAGE_KEY = 'amytis-reader-prefs';
-
-interface StoredPrefs {
-  fontSize: ReadingFontSize;
-  readingTheme: ReadingTheme;
-  columnWidth: ReadingColumnWidth;
-  sidebarOpen: boolean;
-}
-
-// Read + validate prefs from localStorage. Per-key defensive: if any key is
-// stale / unknown / wrong-typed (schema drift, manual edits), fall back to its
-// default rather than discarding the whole blob.
-function readStoredPrefs(): StoredPrefs {
-  if (typeof window === 'undefined') return DEFAULT_PREFS;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_PREFS;
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return DEFAULT_PREFS;
-    const obj = parsed as Record<string, unknown>;
-    return {
-      fontSize: (FONT_SIZE_VALUES as readonly string[]).includes(obj.fontSize as string)
-        ? (obj.fontSize as ReadingFontSize)
-        : DEFAULT_PREFS.fontSize,
-      readingTheme: (THEME_VALUES as readonly string[]).includes(obj.readingTheme as string)
-        ? (obj.readingTheme as ReadingTheme)
-        : DEFAULT_PREFS.readingTheme,
-      columnWidth: (COLUMN_WIDTH_VALUES as readonly string[]).includes(obj.columnWidth as string)
-        ? (obj.columnWidth as ReadingColumnWidth)
-        : DEFAULT_PREFS.columnWidth,
-      sidebarOpen: typeof obj.sidebarOpen === 'boolean' ? obj.sidebarOpen : DEFAULT_PREFS.sidebarOpen,
-    };
-  } catch {
-    return DEFAULT_PREFS;
-  }
-}
-
-function writeStoredPrefs(prefs: StoredPrefs): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    /* private browsing / quota exceeded — ignore */
-  }
-}
 
 interface ImmersiveReadingContextValue {
   enabled: boolean;

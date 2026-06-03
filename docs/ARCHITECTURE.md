@@ -307,37 +307,66 @@ Mermaid diagrams in book chapters already work via the existing `Mermaid` compon
 
 #### Immersive reading mode
 
-Chapter pages support a per-tab "immersive reading" mode toggled from the chapter
-header. When enabled it replaces the page layout with a fullscreen book-reader
-overlay: a top bar (sidebar toggle, book / chapter breadcrumb, font-size + theme
-controls, exit), the existing `BookSidebar` on the left in `mode="fill"` showing
-the full TOC, and the chapter article centred in `max-w-3xl` in a scrollable main
-column. State persists across client-side chapter navigation inside a book and
-resets on hard refresh.
+Chapter pages support an "immersive reading" mode: a fullscreen book-reader
+overlay with a top bar, the existing `BookSidebar` on the left, and the chapter
+article in a centred scrollable column. It's entered two ways — the toggle
+button in the chapter header, or the secondary "Immersive reading" CTA on the
+book index page (`/books/<slug>`), which links to the first chapter with
+`?immersive=1` appended.
 
-The seam is split intentionally:
+**Layout boundary.** `src/layouts/BookLayout.tsx` stays a server component for
+data resolution and delegates to `src/components/BookReadingShell.tsx`. The
+shell branches on `enabled` from context: when on, it renders the fullscreen
+overlay (`ImmersiveBookReader`) with the chapter article as `children`; when
+off, it renders the pre-immersive page layout unchanged.
 
-- `src/components/ImmersiveReadingProvider.tsx` holds the state (React only, no
-  storage) — `enabled`, `fontSize`, `readingTheme`, `sidebarOpen` — and toggles
-  `html[data-immersive]` + body-scroll lock via an effect. Mounted in
-  `src/app/books/[slug]/layout.tsx` so it survives chapter-to-chapter navigation.
-  ESC exits.
-- `src/layouts/BookLayout.tsx` stays a server component for data resolution and
-  delegates to `src/components/BookReadingShell.tsx`. The shell branches on
-  `enabled`: when on, it renders `ImmersiveBookReader` (fullscreen overlay) with
-  the chapter article as `children`; when off, it renders the pre-immersive page
-  layout unchanged.
-- `src/components/ImmersiveBookReader.tsx` is the overlay shell —
-  `position: fixed inset-0 z-40`, hosts `ImmersiveReaderTopBar`, the
-  `BookSidebar` aside (when `sidebarOpen`), and the scrollable centred article
-  column.
-- Root-layout chrome (navbar / footer / reading-progress) is hidden via CSS in
-  `globals.css` keyed on `html[data-immersive="true"]` plus the stable
-  `data-site-nav` / `data-site-footer` / `data-reading-progress` hooks. The
-  overlay covers it anyway; the rules are defense-in-depth.
-- Sepia overrides CSS variables under `[data-reader-overlay][data-reading-theme="sepia"]`
-  so it composes with the existing site light/dark theme without leaking past the
-  overlay. Shiki code blocks deliberately keep their normal theme.
+**State + persistence.** `src/components/ImmersiveReadingProvider.tsx` is the
+context. Mounted in `src/app/books/[slug]/layout.tsx` so it survives
+chapter-to-chapter navigation within a book. The reader's preferences
+(`fontSize`, `readingTheme`, `columnWidth`, `sidebarOpen`) persist to
+`localStorage` under the key `amytis-reader-prefs` via the helpers in
+`src/lib/immersive-reading-prefs.ts`; the read path is per-key defensive so
+schema drift or hand-edited values fall back to their default without
+discarding the whole blob. `enabled` and `prefsPanelOpen` are deliberately
+**not** persisted — entering the reader is a per-visit intent, not a
+preference.
+
+**`?immersive=1` URL flag.** `src/components/ImmersiveReadingFlagHandler.tsx`
+sits as a sibling of `{children}` inside the layout (wrapped in its own
+`<Suspense>`), reads the query param via `useSearchParams`, calls
+`provider.enter()`, then strips the flag via `router.replace`. The Suspense
+boundary is load-bearing — `useSearchParams` triggers a static-export bailout,
+so wrapping the provider instead would drag the chapter page out of static
+prerender.
+
+**Overlay anatomy** (`src/components/ImmersiveBookReader.tsx`,
+`position: fixed inset-0 z-40`):
+
+- `ImmersiveReaderTopBar` — sidebar toggle, `book / chapter` breadcrumb, `Aa`
+  button, exit (✕). The header is `relative z-30` so its `backdrop-blur-md`
+  stacking context paints above article-area code blocks.
+- `ImmersiveReadingPrefsPopover` — anchored under the `Aa` button. Four control
+  groups with visual previews: font size (4 sizes, `A` letters rendered at the
+  actual size), reading theme (Auto / Light / Sepia / Dark colour swatches —
+  Auto reads as a split light/dark gradient), column width (Narrow / Medium /
+  Wide / Full as stacked line-icons), and a "Reset to defaults" link at the
+  bottom (one-click, no confirmation). Dismisses on outside `pointerdown` or
+  ESC; ESC with the popover closed exits the reader.
+- `BookSidebar` in `mode="fill"` — the existing TOC sidebar without its
+  page-mode `sticky top-20`/`hidden lg:block` classes, so it fills the parent
+  flex column and scrolls inside its own overflow container. Auto-collapsed
+  below `lg` (one-directional: never auto-opens on resize to wide so the user's
+  manual close sticks).
+- Main scroll area — article centred at the column width the user picked
+  (`max-w-2xl` to `max-w-none`).
+
+**CSS scoping.** `html[data-immersive]` hides site chrome via the three stable
+hooks `data-site-nav` / `data-site-footer` / `data-reading-progress` —
+defense-in-depth (the fixed overlay covers them anyway). Reading-theme
+overrides are scoped to `[data-reader-overlay]` so they don't leak outside the
+reader; when `readingTheme === 'dark'` the overlay also gets Tailwind's `.dark`
+class so `dark:prose-invert` fires regardless of the underlying site theme.
+Shiki code blocks deliberately keep their normal theme.
 
 ## Configuration Reference (`site.config.ts`)
 
