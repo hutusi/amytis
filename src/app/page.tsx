@@ -34,6 +34,7 @@ type HomepageSection = {
   enabled?: boolean;
   weight: number;
   maxItems?: number;
+  order?: 'shuffle' | 'date-desc' | 'date-asc';
 };
 
 export default function Home() {
@@ -76,6 +77,7 @@ export default function Home() {
           url: `/series/${slug}`,
           postCount: seriesPosts.length,
           topPosts: seriesPosts.slice(0, 3).map(p => ({ slug: p.slug, title: p.title })),
+          date: seriesData?.date ?? seriesPosts[0]?.date ?? '',
         };
       })
     : [];
@@ -89,6 +91,7 @@ export default function Home() {
         authors: b.authors,
         chapterCount: b.chapters.length,
         firstChapter: b.chapters[0]?.id,
+        date: b.date,
       }))
     : [];
 
@@ -133,6 +136,7 @@ export default function Home() {
             key="featured-series"
             allSeries={seriesItems}
             maxItems={section.maxItems ?? 6}
+            order={section.order ?? 'shuffle'}
           />
         );
       case 'featured-books':
@@ -142,6 +146,7 @@ export default function Home() {
             key="featured-books"
             books={bookItems}
             maxItems={section.maxItems ?? 4}
+            order={section.order ?? 'shuffle'}
           />
         );
       case 'featured-posts':
@@ -151,6 +156,7 @@ export default function Home() {
             key="featured-posts"
             allFeatured={featuredItems}
             maxItems={section.maxItems ?? 4}
+            order={section.order ?? 'shuffle'}
           />
         );
       case 'latest-posts':

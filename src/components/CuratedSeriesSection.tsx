@@ -16,20 +16,30 @@ export interface SeriesItem {
   url: string;
   postCount: number;
   topPosts: { slug: string; title: string }[];
+  date: string;
 }
+
+type SeriesOrder = 'shuffle' | 'date-desc' | 'date-asc';
 
 interface CuratedSeriesSectionProps {
   allSeries: SeriesItem[];
   maxItems: number;
+  order?: SeriesOrder;
 }
 
-export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSeriesSectionProps) {
+function applyOrder(series: SeriesItem[], order: SeriesOrder, seed: number): SeriesItem[] {
+  if (order === 'date-desc') return [...series].sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (order === 'date-asc')  return [...series].sort((a, b) => (a.date > b.date ? 1 : -1));
+  return shuffleSeeded(series, seed);
+}
+
+export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shuffle' }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
   // Use a daily seed so SSR and client hydration agree on the initial order,
   // preventing a visible reshuffle flash on page load.
   const [displayed, setDisplayed] = useState(() => {
     const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(allSeries, dailySeed).slice(0, maxItems);
+    return applyOrder(allSeries, order, dailySeed).slice(0, maxItems);
   });
 
   const handleShuffle = useCallback(() => {
@@ -43,7 +53,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSer
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
         <div className="flex items-center gap-4">
-          {allSeries.length > maxItems && (
+          {order === 'shuffle' && allSeries.length > maxItems && (
             <button
               onClick={handleShuffle}
               className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"

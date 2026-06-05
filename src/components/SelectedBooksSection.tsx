@@ -16,18 +16,28 @@ export interface BookItem {
   authors: string[];
   chapterCount: number;
   firstChapter?: string;
+  date: string;
 }
+
+type BookOrder = 'shuffle' | 'date-desc' | 'date-asc';
 
 interface SelectedBooksSectionProps {
   books: BookItem[];
   maxItems?: number;
+  order?: BookOrder;
 }
 
-export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBooksSectionProps) {
+function applyOrder(books: BookItem[], order: BookOrder, seed: number): BookItem[] {
+  if (order === 'date-desc') return [...books].sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (order === 'date-asc')  return [...books].sort((a, b) => (a.date > b.date ? 1 : -1));
+  return shuffleSeeded(books, seed);
+}
+
+export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle' }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
   const [displayed, setDisplayed] = useState(() => {
     const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(books, dailySeed).slice(0, maxItems);
+    return applyOrder(books, order, dailySeed).slice(0, maxItems);
   });
 
   const handleShuffle = useCallback(() => {
@@ -41,7 +51,7 @@ export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBo
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('selected_books')}</h2>
         <div className="flex items-center gap-4">
-          {books.length > maxItems && (
+          {order === 'shuffle' && books.length > maxItems && (
             <button
               onClick={handleShuffle}
               className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"

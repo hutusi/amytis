@@ -20,56 +20,64 @@ export interface FeaturedPost {
   pinned?: boolean;
 }
 
+type PostOrder = 'shuffle' | 'date-desc' | 'date-asc';
+
 interface FeaturedStoriesSectionProps {
   allFeatured: FeaturedPost[];
   maxItems: number;
+  order?: PostOrder;
 }
 
-function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, shuffledNonPinned: FeaturedPost[]): FeaturedPost[] {
-  const pinned = allFeatured.filter(p => p.pinned);
-  const nonPinned = allFeatured.filter(p => !p.pinned);
+function applyOrder(posts: FeaturedPost[], order: PostOrder, seed: number): FeaturedPost[] {
+  if (order === 'date-desc') return [...posts].sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (order === 'date-asc')  return [...posts].sort((a, b) => (a.date > b.date ? 1 : -1));
+  return shuffleSeeded(posts, seed);
+}
 
-  const hero = pinned[0] ?? nonPinned[0];
+function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, orderedNonPinned: FeaturedPost[]): FeaturedPost[] {
+  const pinned = allFeatured.filter(p => p.pinned);
+
+  const hero = pinned[0] ?? orderedNonPinned[0];
   if (!hero) return [];
 
   const maxSecondaries = maxItems - 1;
   const fixedSecondaries = pinned.slice(1, maxSecondaries + 1); // cap to available secondary slots
-  const shuffleSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
+  const fillSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
 
   // Non-pinned pool excludes the hero if the hero is non-pinned
   const heroIsNonPinned = !hero.pinned;
-  const shufflePool = heroIsNonPinned ? nonPinned.filter(p => p.slug !== hero.slug) : nonPinned;
-  const shuffledSlice = shuffledNonPinned.filter(p => shufflePool.some(q => q.slug === p.slug)).slice(0, shuffleSlots);
+  const fillPool = heroIsNonPinned ? orderedNonPinned.filter(p => p.slug !== hero.slug) : orderedNonPinned;
+  const fillSlice = fillPool.slice(0, fillSlots);
 
-  return [hero, ...fixedSecondaries, ...shuffledSlice];
+  return [hero, ...fixedSecondaries, ...fillSlice];
 }
 
-export default function FeaturedStoriesSection({ allFeatured, maxItems }: FeaturedStoriesSectionProps) {
+export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 'shuffle' }: FeaturedStoriesSectionProps) {
   const { t } = useLanguage();
 
   const nonPinned = allFeatured.filter(p => !p.pinned);
 
   // Use a daily seed so SSR and client hydration agree on the initial order,
   // preventing a visible reshuffle flash on page load.
-  const [shuffledNonPinned, setShuffledNonPinned] = useState<FeaturedPost[]>(() => {
+  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => {
     const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(nonPinned, dailySeed);
+    return applyOrder(nonPinned, order, dailySeed);
   });
 
   const handleShuffle = useCallback(() => {
-    setShuffledNonPinned(shuffle(nonPinned));
+    setOrderedNonPinned(shuffle(nonPinned));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allFeatured]);
 
-  const displayed = buildDisplayed(allFeatured, maxItems, shuffledNonPinned);
+  const displayed = buildDisplayed(allFeatured, maxItems, orderedNonPinned);
 
   if (displayed.length === 0) return null;
 
-  // Show shuffle button only when there are more non-pinned posts than available shuffle slots
+  // Show shuffle button only when shuffling AND there are more non-pinned posts than available slots
   const pinned = allFeatured.filter(p => p.pinned);
   const fixedCount = 1 + Math.min(pinned.slice(1).length, maxItems - 1);
   const shuffleSlots = Math.max(0, maxItems - fixedCount);
-  const canShuffle = nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
+  const canShuffle = order === 'shuffle' && nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
 
   const [hero, ...secondary] = displayed;
 
