@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import HorizontalScroll from './HorizontalScroll';
 import { useLanguage } from './LanguageProvider';
-import { shuffle, shuffleSeeded } from '@/lib/shuffle';
+import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
 
 export interface BookItem {
@@ -16,19 +17,37 @@ export interface BookItem {
   authors: string[];
   chapterCount: number;
   firstChapter?: string;
+  date: string;
 }
+
+type BookOrder = 'shuffle' | 'date-desc' | 'date-asc';
 
 interface SelectedBooksSectionProps {
   books: BookItem[];
   maxItems?: number;
+  order?: BookOrder;
 }
 
-export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBooksSectionProps) {
+function canonicalOrder(books: BookItem[], order: BookOrder): BookItem[] {
+  if (order === 'date-desc') return [...books].sort(byDateDesc);
+  if (order === 'date-asc')  return [...books].sort(byDateAsc);
+  // For 'shuffle': SSR-stable canonical order (input is already date-desc from getAllBooks).
+  // The post-mount useEffect swaps to a random permutation on the client.
+  return books;
+}
+
+export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle' }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
-  const [displayed, setDisplayed] = useState(() => {
-    const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(books, dailySeed).slice(0, maxItems);
-  });
+  const [displayed, setDisplayed] = useState(() => canonicalOrder(books, order).slice(0, maxItems));
+
+  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
+  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
+  useEffect(() => {
+    if (order === 'shuffle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplayed(shuffle(books).slice(0, maxItems));
+    }
+  }, [books, maxItems, order]);
 
   const handleShuffle = useCallback(() => {
     setDisplayed(shuffle(books).slice(0, maxItems));
@@ -41,7 +60,7 @@ export default function SelectedBooksSection({ books, maxItems = 4 }: SelectedBo
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('selected_books')}</h2>
         <div className="flex items-center gap-4">
-          {books.length > maxItems && (
+          {order === 'shuffle' && books.length > maxItems && (
             <button
               onClick={handleShuffle}
               className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"

@@ -5,6 +5,7 @@ import { siteConfig } from '../../site.config';
 import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
+import { byDateAsc, byDateDesc } from './sort';
 import { parseRstDocument, RstParseError } from './rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from './rst-renderer';
 
@@ -970,7 +971,7 @@ export function getAllPosts(): PostData[] {
       }
       return true;
     })
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+    .sort(byDateDesc);
   postsCache.set(cacheKey, result);
   return result;
 }
@@ -1249,9 +1250,9 @@ export function getSeriesPosts(seriesName: string): PostData[] {
       // Default Sort: date-desc (Newest first)
       const sortOrder = seriesData?.sort || 'date-desc';
       if (sortOrder === 'date-asc') {
-          posts.sort((a, b) => (a.date > b.date ? 1 : -1));
+          posts.sort(byDateAsc);
       } else {
-          posts.sort((a, b) => (a.date < b.date ? 1 : -1));
+          posts.sort(byDateDesc);
       }
   }
   
@@ -1292,7 +1293,7 @@ export function getAllSeries(): Record<string, PostData[]> {
       return; // Skip draft series in production
     }
     series[slug] = seriesData?.type === 'collection'
-      ? getCollectionPosts(slug).slice().sort((a, b) => (a.date < b.date ? 1 : -1))
+      ? getCollectionPosts(slug).slice().sort(byDateDesc)
       : getSeriesPosts(slug);
   });
 
@@ -1827,7 +1828,7 @@ export function getAllBooks(): BookData[] {
     books.push(book);
   }
 
-  return books.sort((a, b) => (a.date < b.date ? 1 : -1));
+  return books.sort(byDateDesc);
 }
 
 export function getFeaturedBooks(): BookData[] {
@@ -1946,7 +1947,7 @@ export function getAllFlows(): FlowData[] {
       }
       return true;
     })
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+    .sort(byDateDesc);
 }
 
 export function getFlowBySlug(slug: string): FlowData | null {
@@ -2097,7 +2098,7 @@ export function getAllNotes(): NoteData[] {
 
   _allNotes = notes
     .filter(note => process.env.NODE_ENV !== 'production' || !note.draft)
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+    .sort(byDateDesc);
 
   return _allNotes;
 }

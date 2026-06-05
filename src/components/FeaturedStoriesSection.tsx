@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
-import { shuffle, shuffleSeeded } from '@/lib/shuffle';
+import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
 
 export interface FeaturedPost {
@@ -20,56 +21,76 @@ export interface FeaturedPost {
   pinned?: boolean;
 }
 
+type PostOrder = 'shuffle' | 'date-desc' | 'date-asc';
+
 interface FeaturedStoriesSectionProps {
   allFeatured: FeaturedPost[];
   maxItems: number;
+  order?: PostOrder;
 }
 
-function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, shuffledNonPinned: FeaturedPost[]): FeaturedPost[] {
-  const pinned = allFeatured.filter(p => p.pinned);
-  const nonPinned = allFeatured.filter(p => !p.pinned);
+function canonicalOrder(posts: FeaturedPost[], order: PostOrder): FeaturedPost[] {
+  if (order === 'date-desc') return [...posts].sort(byDateDesc);
+  if (order === 'date-asc')  return [...posts].sort(byDateAsc);
+  return posts;
+}
 
-  const hero = pinned[0] ?? nonPinned[0];
+function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, orderedNonPinned: FeaturedPost[]): FeaturedPost[] {
+  const pinned = allFeatured.filter(p => p.pinned);
+
+  const hero = pinned[0] ?? orderedNonPinned[0];
   if (!hero) return [];
 
   const maxSecondaries = maxItems - 1;
   const fixedSecondaries = pinned.slice(1, maxSecondaries + 1); // cap to available secondary slots
-  const shuffleSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
+  const fillSlots = Math.max(0, maxSecondaries - fixedSecondaries.length);
 
   // Non-pinned pool excludes the hero if the hero is non-pinned
   const heroIsNonPinned = !hero.pinned;
-  const shufflePool = heroIsNonPinned ? nonPinned.filter(p => p.slug !== hero.slug) : nonPinned;
-  const shuffledSlice = shuffledNonPinned.filter(p => shufflePool.some(q => q.slug === p.slug)).slice(0, shuffleSlots);
+  const fillPool = heroIsNonPinned ? orderedNonPinned.filter(p => p.slug !== hero.slug) : orderedNonPinned;
+  const fillSlice = fillPool.slice(0, fillSlots);
 
-  return [hero, ...fixedSecondaries, ...shuffledSlice];
+  return [hero, ...fixedSecondaries, ...fillSlice];
 }
 
-export default function FeaturedStoriesSection({ allFeatured, maxItems }: FeaturedStoriesSectionProps) {
+export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 'shuffle' }: FeaturedStoriesSectionProps) {
   const { t } = useLanguage();
 
   const nonPinned = allFeatured.filter(p => !p.pinned);
 
-  // Use a daily seed so SSR and client hydration agree on the initial order,
-  // preventing a visible reshuffle flash on page load.
-  const [shuffledNonPinned, setShuffledNonPinned] = useState<FeaturedPost[]>(() => {
-    const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(nonPinned, dailySeed);
-  });
+  // SSR renders the canonical input order so server and client agree on first paint.
+  // For 'shuffle', the post-mount useEffect swaps to a fresh random permutation,
+  // so every reload re-rolls without any hydration mismatch.
+  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => canonicalOrder(nonPinned, order));
+
+  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
+  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
+  useEffect(() => {
+    if (order === 'shuffle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOrderedNonPinned(shuffle(nonPinned));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFeatured, order]);
 
   const handleShuffle = useCallback(() => {
-    setShuffledNonPinned(shuffle(nonPinned));
+    setOrderedNonPinned(shuffle(nonPinned));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allFeatured]);
 
-  const displayed = buildDisplayed(allFeatured, maxItems, shuffledNonPinned);
+  const displayed = buildDisplayed(allFeatured, maxItems, orderedNonPinned);
 
   if (displayed.length === 0) return null;
 
-  // Show shuffle button only when there are more non-pinned posts than available shuffle slots
+  // Show shuffle button only when shuffling AND there's at least one non-pinned slot
+  // AND there are more non-pinned posts than available slots
   const pinned = allFeatured.filter(p => p.pinned);
   const fixedCount = 1 + Math.min(pinned.slice(1).length, maxItems - 1);
   const shuffleSlots = Math.max(0, maxItems - fixedCount);
-  const canShuffle = nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
+  const canShuffle =
+    order === 'shuffle'
+    && shuffleSlots > 0
+    && nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
 
   const [hero, ...secondary] = displayed;
 

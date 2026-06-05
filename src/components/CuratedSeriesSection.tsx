@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
-import { shuffle, shuffleSeeded } from '@/lib/shuffle';
+import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
 
 export interface SeriesItem {
@@ -16,21 +17,38 @@ export interface SeriesItem {
   url: string;
   postCount: number;
   topPosts: { slug: string; title: string }[];
+  date: string;
 }
+
+type SeriesOrder = 'shuffle' | 'date-desc' | 'date-asc';
 
 interface CuratedSeriesSectionProps {
   allSeries: SeriesItem[];
   maxItems: number;
+  order?: SeriesOrder;
 }
 
-export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSeriesSectionProps) {
+function canonicalOrder(series: SeriesItem[], order: SeriesOrder): SeriesItem[] {
+  if (order === 'date-desc') return [...series].sort(byDateDesc);
+  if (order === 'date-asc')  return [...series].sort(byDateAsc);
+  return series;
+}
+
+export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shuffle' }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
-  // Use a daily seed so SSR and client hydration agree on the initial order,
-  // preventing a visible reshuffle flash on page load.
-  const [displayed, setDisplayed] = useState(() => {
-    const dailySeed = Math.floor(Date.now() / 86400000);
-    return shuffleSeeded(allSeries, dailySeed).slice(0, maxItems);
-  });
+  // SSR renders the canonical input order so server and client agree on first paint.
+  // For 'shuffle', the post-mount useEffect swaps to a fresh random permutation,
+  // so every reload re-rolls without any hydration mismatch.
+  const [displayed, setDisplayed] = useState(() => canonicalOrder(allSeries, order).slice(0, maxItems));
+
+  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
+  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
+  useEffect(() => {
+    if (order === 'shuffle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplayed(shuffle(allSeries).slice(0, maxItems));
+    }
+  }, [allSeries, maxItems, order]);
 
   const handleShuffle = useCallback(() => {
     setDisplayed(shuffle(allSeries).slice(0, maxItems));
@@ -43,7 +61,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems }: CuratedSer
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
         <div className="flex items-center gap-4">
-          {allSeries.length > maxItems && (
+          {order === 'shuffle' && allSeries.length > maxItems && (
             <button
               onClick={handleShuffle}
               className="rounded-sm text-sm text-muted transition-colors hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
