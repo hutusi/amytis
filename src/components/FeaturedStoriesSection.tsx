@@ -82,11 +82,15 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
 
   if (displayed.length === 0) return null;
 
-  // Show shuffle button only when shuffling AND there are more non-pinned posts than available slots
+  // Show shuffle button only when shuffling AND there's at least one non-pinned slot
+  // AND there are more non-pinned posts than available slots
   const pinned = allFeatured.filter(p => p.pinned);
   const fixedCount = 1 + Math.min(pinned.slice(1).length, maxItems - 1);
   const shuffleSlots = Math.max(0, maxItems - fixedCount);
-  const canShuffle = order === 'shuffle' && nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
+  const canShuffle =
+    order === 'shuffle'
+    && shuffleSlots > 0
+    && nonPinned.length > shuffleSlots + (pinned.length === 0 ? 1 : 0);
 
   const [hero, ...secondary] = displayed;
 
