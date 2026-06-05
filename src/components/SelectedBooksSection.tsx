@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import HorizontalScroll from './HorizontalScroll';
 import { useLanguage } from './LanguageProvider';
-import { shuffle, shuffleSeeded } from '@/lib/shuffle';
+import { shuffle } from '@/lib/shuffle';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
 
 export interface BookItem {
@@ -27,18 +27,26 @@ interface SelectedBooksSectionProps {
   order?: BookOrder;
 }
 
-function applyOrder(books: BookItem[], order: BookOrder, seed: number): BookItem[] {
+function canonicalOrder(books: BookItem[], order: BookOrder): BookItem[] {
   if (order === 'date-desc') return [...books].sort((a, b) => (a.date < b.date ? 1 : -1));
   if (order === 'date-asc')  return [...books].sort((a, b) => (a.date > b.date ? 1 : -1));
-  return shuffleSeeded(books, seed);
+  // For 'shuffle': SSR-stable canonical order (input is already date-desc from getAllBooks).
+  // The post-mount useEffect swaps to a random permutation on the client.
+  return books;
 }
 
 export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle' }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
-  const [displayed, setDisplayed] = useState(() => {
-    const dailySeed = Math.floor(Date.now() / 86400000);
-    return applyOrder(books, order, dailySeed).slice(0, maxItems);
-  });
+  const [displayed, setDisplayed] = useState(() => canonicalOrder(books, order).slice(0, maxItems));
+
+  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
+  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
+  useEffect(() => {
+    if (order === 'shuffle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplayed(shuffle(books).slice(0, maxItems));
+    }
+  }, [books, maxItems, order]);
 
   const handleShuffle = useCallback(() => {
     setDisplayed(shuffle(books).slice(0, maxItems));

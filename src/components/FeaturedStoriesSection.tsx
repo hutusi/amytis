@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
-import { shuffle, shuffleSeeded } from '@/lib/shuffle';
+import { shuffle } from '@/lib/shuffle';
 import { getPostUrl } from '@/lib/urls';
 
 export interface FeaturedPost {
@@ -28,10 +28,10 @@ interface FeaturedStoriesSectionProps {
   order?: PostOrder;
 }
 
-function applyOrder(posts: FeaturedPost[], order: PostOrder, seed: number): FeaturedPost[] {
+function canonicalOrder(posts: FeaturedPost[], order: PostOrder): FeaturedPost[] {
   if (order === 'date-desc') return [...posts].sort((a, b) => (a.date < b.date ? 1 : -1));
   if (order === 'date-asc')  return [...posts].sort((a, b) => (a.date > b.date ? 1 : -1));
-  return shuffleSeeded(posts, seed);
+  return posts;
 }
 
 function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, orderedNonPinned: FeaturedPost[]): FeaturedPost[] {
@@ -57,12 +57,20 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
 
   const nonPinned = allFeatured.filter(p => !p.pinned);
 
-  // Use a daily seed so SSR and client hydration agree on the initial order,
-  // preventing a visible reshuffle flash on page load.
-  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => {
-    const dailySeed = Math.floor(Date.now() / 86400000);
-    return applyOrder(nonPinned, order, dailySeed);
-  });
+  // SSR renders the canonical input order so server and client agree on first paint.
+  // For 'shuffle', the post-mount useEffect swaps to a fresh random permutation,
+  // so every reload re-rolls without any hydration mismatch.
+  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => canonicalOrder(nonPinned, order));
+
+  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
+  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
+  useEffect(() => {
+    if (order === 'shuffle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOrderedNonPinned(shuffle(nonPinned));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFeatured, order]);
 
   const handleShuffle = useCallback(() => {
     setOrderedNonPinned(shuffle(nonPinned));
