@@ -29,7 +29,9 @@ function mixSeed(z: number): number {
  */
 export function shuffleSeeded<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
-  let s = mixSeed(seed || 1);
+  // splitmix32 is a bijection on 32-bit ints, so exactly one input maps to 0.
+  // Guard against that one input since xorshift32 locks at the all-zero state.
+  let s = mixSeed(seed || 1) || 1;
   const rand = () => {
     s ^= s << 13;
     s ^= s >> 17;
