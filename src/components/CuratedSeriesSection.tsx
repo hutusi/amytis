@@ -6,6 +6,7 @@ import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
 
 export interface SeriesItem {
@@ -28,8 +29,8 @@ interface CuratedSeriesSectionProps {
 }
 
 function canonicalOrder(series: SeriesItem[], order: SeriesOrder): SeriesItem[] {
-  if (order === 'date-desc') return [...series].sort((a, b) => (a.date < b.date ? 1 : -1));
-  if (order === 'date-asc')  return [...series].sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (order === 'date-desc') return [...series].sort(byDateDesc);
+  if (order === 'date-asc')  return [...series].sort(byDateAsc);
   return series;
 }
 

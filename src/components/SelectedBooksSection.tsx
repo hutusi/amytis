@@ -6,6 +6,7 @@ import CoverImage from './CoverImage';
 import HorizontalScroll from './HorizontalScroll';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
 
 export interface BookItem {
@@ -28,8 +29,8 @@ interface SelectedBooksSectionProps {
 }
 
 function canonicalOrder(books: BookItem[], order: BookOrder): BookItem[] {
-  if (order === 'date-desc') return [...books].sort((a, b) => (a.date < b.date ? 1 : -1));
-  if (order === 'date-asc')  return [...books].sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (order === 'date-desc') return [...books].sort(byDateDesc);
+  if (order === 'date-asc')  return [...books].sort(byDateAsc);
   // For 'shuffle': SSR-stable canonical order (input is already date-desc from getAllBooks).
   // The post-mount useEffect swaps to a random permutation on the client.
   return books;

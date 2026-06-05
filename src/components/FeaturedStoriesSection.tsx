@@ -5,6 +5,7 @@ import Link from 'next/link';
 import CoverImage from './CoverImage';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
+import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
 
 export interface FeaturedPost {
@@ -29,8 +30,8 @@ interface FeaturedStoriesSectionProps {
 }
 
 function canonicalOrder(posts: FeaturedPost[], order: PostOrder): FeaturedPost[] {
-  if (order === 'date-desc') return [...posts].sort((a, b) => (a.date < b.date ? 1 : -1));
-  if (order === 'date-asc')  return [...posts].sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (order === 'date-desc') return [...posts].sort(byDateDesc);
+  if (order === 'date-asc')  return [...posts].sort(byDateAsc);
   return posts;
 }
 
