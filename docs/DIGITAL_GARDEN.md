@@ -92,4 +92,4 @@ Related settings that shape the digital-garden experience live alongside that fl
 
 - `flows.recentCount`: controls how many flow entries appear on the homepage.
 - `pagination.flows` and `pagination.notes`: control listing page sizes.
-- `homepage.sections`: lets you enable, disable, or reorder homepage sections such as recent flows.
+- `homepage.sections`: lets you enable, disable, or reorder homepage sections such as recent flows. The three curated sections (`featured-posts`, `featured-series`, `featured-books`) also accept an `order` field — `'shuffle'` (default, daily-seeded permutation), `'date-desc'`, or `'date-asc'` — to choose how items inside the section are arranged.
