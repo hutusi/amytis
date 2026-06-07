@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { PostData, CollectionContext, Heading } from '@/lib/markdown';
 import { useLanguage } from './LanguageProvider';
+import { useImmersiveReading } from './ImmersiveReadingProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
 import InlineBookToc from './InlineBookToc';
 import { getPostUrl, getPostUrlInCollection, getSeriesListUrl, getSeriesUrl } from '@/lib/urls';
@@ -38,6 +39,7 @@ export default function ImmersiveSeriesSidebar({
   headings = [],
 }: ImmersiveSeriesSidebarProps) {
   const { t } = useLanguage();
+  const { enabled: immersiveEnabled } = useImmersiveReading();
   const searchParams = useSearchParams();
   const collectionParam = searchParams.get('collection');
   const activeCollection = collectionParam
@@ -49,8 +51,19 @@ export default function ImmersiveSeriesSidebar({
   const effectivePosts = activeCollection?.posts ?? posts;
   const isCollectionContext = !!activeCollection;
 
-  const postHref = (post: PostData) =>
-    activeCollection ? getPostUrlInCollection(post, activeCollection.slug) : getPostUrl(post);
+  // Collections mix posts from different layout segments (`/posts/[slug]` vs
+  // `/[series]/[slug]`). When clicking across that boundary, the
+  // ImmersiveReadingProvider remounts with `enabled=false` and the overlay
+  // closes. Appending `?immersive=1` lets the destination layout's
+  // ImmersiveReadingFlagHandler re-enter the reader and strip the flag.
+  const postHref = (post: PostData) => {
+    const base = activeCollection
+      ? getPostUrlInCollection(post, activeCollection.slug)
+      : getPostUrl(post);
+    if (!immersiveEnabled) return base;
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}immersive=1`;
+  };
 
   const currentIndex = effectivePosts.findIndex(p => p.slug === currentSlug);
   const currentItemRef = useRef<HTMLLIElement>(null);
