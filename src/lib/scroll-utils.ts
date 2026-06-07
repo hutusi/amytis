@@ -10,7 +10,7 @@ const HEADING_OFFSET_PX = 80;
  * guard skips `overflow:auto` boxes that aren't currently overflowing (e.g.
  * the overlay's sidebar `<aside>` or the article wrapper).
  */
-function getScrollableAncestor(el: HTMLElement): HTMLElement | null {
+export function getScrollableAncestor(el: HTMLElement): HTMLElement | null {
   let cur: HTMLElement | null = el.parentElement;
   while (cur && cur !== document.documentElement) {
     const { overflowY } = window.getComputedStyle(cur);
