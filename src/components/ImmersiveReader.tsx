@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import ImmersiveReaderTopBar from '@/components/ImmersiveReaderTopBar';
 import {
   useImmersiveReading,
@@ -51,6 +51,33 @@ export default function ImmersiveReader({
 }: ImmersiveReaderProps) {
   const { fontSize, readingTheme, columnWidth, sidebarOpen } = useImmersiveReading();
 
+  const mainRef = useRef<HTMLElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+    let rafId = 0;
+    const compute = () => {
+      const scrollable = main.scrollHeight - main.clientHeight;
+      const pct =
+        scrollable > 0
+          ? Math.min(100, Math.max(0, (main.scrollTop / scrollable) * 100))
+          : 0;
+      setProgress(pct);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(compute);
+    };
+    compute();
+    main.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(rafId);
+      main.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
   const overlayStyle: CSSProperties = {
     ['--reading-font-size' as keyof CSSProperties]: FONT_SIZE_REM[fontSize],
   } as CSSProperties;
@@ -76,6 +103,15 @@ export default function ImmersiveReader({
         currentTitle={currentTitle}
       />
 
+      {progress > 0 && (
+        <div className="h-0.5 w-full bg-muted/10 shrink-0">
+          <div
+            className="h-full bg-accent/70 transition-[width] duration-150 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
       <div className="flex-1 min-h-0 flex">
         {sidebarOpen && (
           <aside className="w-[280px] shrink-0 border-r border-muted/15 bg-background/60">
@@ -83,7 +119,7 @@ export default function ImmersiveReader({
           </aside>
         )}
 
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto">
           <article className={`${COLUMN_WIDTH_CLASS[columnWidth]} mx-auto ${COLUMN_PADDING_CLASS[columnWidth]} py-10`}>
             {children}
           </article>
