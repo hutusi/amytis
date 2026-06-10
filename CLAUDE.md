@@ -23,7 +23,7 @@ Content-creation scripts, test layout, validate pipeline → `docs/CONTRIBUTING.
 
 Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
-- Standard routes follow folder names under `src/app/`: `/posts`, `/series`, `/tags`, `/notes`, `/books`, `/authors`, `/archive`, `/graph`, `/flows/[year]/[month]/[day]`.
+- Standard routes follow folder names under `src/app/`: `/posts`, `/series`, `/tags`, `/notes`, `/books`, `/authors`, `/archive`, `/graph`, `/flows/[year]/[month]/[day]`. Book chapters are a catch-all: `books/[slug]/[...chapter]` (supports nested chapter IDs like `maths/linear/intro`).
 - **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
 - Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; search index at `search.json`.
 - Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), redirects (`series-redirects.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
@@ -32,7 +32,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 - **Strict build over silent runtime failure.** Static export means misconfiguration must fail at build time. Use `throw` in `generateStaticParams` and similar — never silent skips or `console.warn`. Precedent: `validateSeriesAutoPaths` throws on slug collisions; `redirectFrom` alias conflicts (reserved slug or duplicate) should also throw, not produce broken redirects.
   - **Exception**: fence-language resolution in `src/lib/shiki.ts` deliberately degrades to `plaintext` + a deduped `console.warn` instead of throwing. Authors can't reliably predict Shiki's alias coverage, and "typo" vs "legitimate community alias" are indistinguishable from our side, so production deploys shouldn't fail on a single unhighlighted code block. Real typos still surface via the warn output in local/CI build logs.
-- **Validate author input at build time; keep content portable.** Frontmatter via Zod; slug / redirect conflicts throw. Files on disk stay valid `.md` / `.mdx` / `.rst` — no Amytis-specific syntax that breaks other tools.
+- **Validate author input at build time; keep content portable.** Frontmatter via Zod. Files on disk stay valid `.md` / `.mdx` / `.rst` — no Amytis-specific syntax that breaks other tools.
 
 ## Integration-point rules (always go through X)
 
@@ -47,34 +47,27 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 ## Gotchas (things Claude will get wrong on first try)
 
+Feature-local gotchas live in path-scoped rules under `.claude/rules/` and auto-load when you touch matching files: `rst.md` (docutils setup, sanitize-html allowlist, disk-cache version) and `immersive-reading.md` (chrome-hiding hooks, provider boundaries, prefs persistence).
+
 - **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/markdown.ts`, `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling.
 - **No AVIF for `coverImage`.** Upstream bug in `next-image-export-optimizer` emits `.webp` files but a `srcset` pointing at `.avif` → 404 in prod. Use `.jpg` / `.png` / `.webp`. See `docs/TROUBLESHOOTING.md`.
 - **Unicode slugs.** Dynamic route pages call `safeDecodeParam()` and try decoded / raw / NFC / NFD variants — don't shortcut with bare `decodeURIComponent()` (it throws on malformed input). When touching dynamic routes, verify both ASCII and Unicode slugs.
 - **`generateStaticParams` returns raw values.** Don't `encodeURIComponent` route params; Next.js handles encoding. Don't link to placeholder routes like `/posts/[slug]` — always link to concrete URLs.
 - **Series format is locked.** A series index can be `index.md` / `.mdx` / `README.md` / `README.mdx` / `index.rst` / `README.rst` (first match wins). All child posts must match. Mixing formats is a build error.
-- **rST needs Python `docutils`.** Set `AMYTIS_RST_PYTHON=/path/to/python` if not on `$PATH`. Without it, falls back to a lower-fidelity built-in parser.
 - **Pagefind index.** `bun run build:dev` regenerates `public/pagefind/`; search returns stale results until you rerun it after content changes.
 - **`trailingSlash: true` is load-bearing.** Lets co-located post assets (`posts/slug/images/`) coexist with `posts/slug/index.html`. Don't flip it in `next.config.ts`.
 - **Shiki highlighter is a `globalThis` singleton.** Never instantiate it per render — `createHighlighter` loads Oniguruma WASM + grammars (~1–2 s). See `src/lib/shiki.ts`.
-- **rST sanitize-html allowlist must keep `style` + `data-*` on `pre`/`code`/`span`/`div`.** Stripping any of these silently kills Shiki output (monochrome text in prod, looks fine locally because dev rST isn't sanitized). See `src/components/RstRenderer.tsx`.
-- **Bump `RST_RENDERER_DISK_CACHE_VERSION` (`src/lib/rst-renderer.ts`) on highlighter-output changes.** Stale on-disk caches in `.cache/rst-renderer/` will serve old markup otherwise. Run `rm -rf .cache/rst-renderer` after pulling such a change.
 - **Fence meta needs `rehype-fence-meta` BEFORE `rehype-raw`.** `mdast-util-to-hast` stores fence meta on `node.data.meta`, which `rehype-raw` drops during HTML round-trip. The plugin copies it to a real `data-meta` attribute first. Order matters in `MarkdownRenderer.tsx`.
-- **Code-group tabs add `<input type="radio">` + `<label>` to the rST sanitize-html allowlist.** Keep the `transformTags` guard in `RstRenderer.tsx` that strips any `<input>` whose `type !== "radio"` — that's the defense against an rST author injecting password/file/etc. inputs through raw HTML.
 - **GitHub alerts (`> [!NOTE]`, etc.) need the custom `remarkGithubAlerts` plugin.** `remark-gfm` v4 does NOT transform `[!TYPE]` blockquotes — they pass through as plain blockquotes with the literal marker visible. The custom plugin in `src/lib/remark-github-alerts.ts` is what detects them and routes to `<GithubAlert>`. If a future remark-gfm adds native alert support, that's a regression to watch for (covered by an integration test).
 - **Single-line block math `$$ x $$` is silently inline.** `micromark-extension-math` (under `remark-math` v6) requires the `$$` markers on their own lines — single-line collapses to *inline* math (no `katex-display` wrapper, no centering, no display margin) and looks like a subtly under-styled formula. `src/lib/normalize-vuepress-math.ts` expands single-line `$$ x $$` to opener / body / closer before parsing, so authored content stays portable. If a chapter formula stops centering, suspect the normalizer's regex first.
-- **Immersive reading hooks.** `Navbar`, `Footer`, and `ReadingProgressBar` carry stable `data-site-nav` / `data-site-footer` / `data-reading-progress` attributes that the CSS rules in `globals.css` use to hide chrome when `html[data-immersive="true"]` is set. Don't strip these attributes during refactors — the fullscreen `ImmersiveReader` overlay in books and series posts depends on them as defense-in-depth even though the overlay also covers them. Reading-theme overrides (Light / Sepia / Dark) are scoped to `[data-reader-overlay]`, not `<html>`, so they compose with the site's light/dark theme without leaking outside the overlay; the overlay also adds Tailwind's `.dark` class when `readingTheme === 'dark'` so `dark:prose-invert` fires inside it even when the site is in light mode.
-- **Immersive provider is mounted at three layout boundaries**, one per content surface that supports the reader: `src/app/books/[slug]/layout.tsx` (chapter routes), `src/app/[slug]/layout.tsx` (series posts on autoPaths URLs, the default), and `src/app/posts/layout.tsx` (series posts on default-path URLs). Each layout mounts an independent provider instance — `enabled` state doesn't bleed between content types — but they all share the same localStorage key (`amytis-reader-prefs`), so a reader's font/theme/width prefs carry across books and series. Don't merge the three or move the provider to root layout: doing so would leak `enabled=true` to pages without a shell (PostReadingShell / BookReadingShell) to render the overlay, breaking the page.
-- **`ImmersiveReadingFlagHandler` must stay in its own `<Suspense>` boundary in each of those three layouts**, as a sibling of `{children}` (not inside the provider), because its `useSearchParams` triggers a static-export bailout — wrapping the provider would drag the chapter/post page out of static prerender. The handler must **not** use a one-shot ref guard either: caught in PR-#93 review, the ref survives client-side navigation under the persistent layout, so a second `?immersive=1` click in the same tab silently no-ops. Rely on `router.replace` stripping the flag (which re-fires the effect with the flag gone) instead.
-- **Immersive reader prefs persistence quirks** (`src/components/ImmersiveReadingProvider.tsx` + `src/lib/immersive-reading-prefs.ts`): persist effect flips `hydratedRef` on its *first run* and returns — moving the flip into the hydration effect causes a default-clobbering race (the persist effect runs before React commits the stored values from the closure). Per-key defensive parsing on read is also load-bearing: a corrupt single value (schema drift, hand-edits) must fall back to default without discarding the whole blob. Both behaviours have unit/integration test coverage; don't regress them when refactoring the storage layer or the hydrate/persist effects.
 
 ## Development workflow
 
 For a new feature or non-trivial change:
 
 - **Branch.** Work on a dedicated `<type>/<topic>` branch off `main`, not directly on `main`.
-- **Commit in focused slices.** One commit per logical slice (e.g. split a dead-code removal from the feature that replaces it). Keep `bun run lint` green at each commit so the branch stays bisectable. Use Conventional Commit messages; no `Co-Authored-By` trailers.
+- **Commit in focused slices.** One commit per logical slice (e.g. split a dead-code removal from the feature that replaces it). Keep `bun run lint` green at each commit so the branch stays bisectable. Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`; subject under ~70 chars; body explains *why*; no `Co-Authored-By` trailers.
 - **Tests + docs in the same change.** Update `docs/ARCHITECTURE.md` / `docs/CONTRIBUTING.md` / `docs/TROUBLESHOOTING.md` alongside seam/workflow/invariant changes — not as a follow-up.
-- **Commits** follow Conventional Commits: `feat | fix | refactor | perf | chore | docs | test | release`. Subject under ~70 chars; body explains *why*.
 - **Open a PR** into `main` when the branch is green. Do not add the `🤖 Generated with [Claude Code]` footer to PR descriptions. Pushing, and opening PRs are actions the user authorizes — don't push or open a PR unless asked.
 
 ## Verifying a change
@@ -102,6 +95,7 @@ When compressing history, preserve in priority order:
 - `docs/ARCHITECTURE.md` — route map, content model, components, data layer, frontmatter schemas, full configuration reference
 - `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
 - `docs/TROUBLESHOOTING.md` — known issues (AVIF, dev-mode browser-extension CSP/SharedStorage noise)
+- `docs/ALERTS.md` / `docs/CODE-BLOCKS.md` / `docs/DIGITAL_GARDEN.md` — content-feature references (alert callouts, code-block features, garden philosophy)
 - `docs/deployment.md` — production deploy steps
 - `docs/guides/` — task-oriented walkthroughs (e.g. `importing-vuepress-books.md`)
 - `site.config.ts` — live config (read it directly; don't infer from this file)

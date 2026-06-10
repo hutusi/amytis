@@ -63,8 +63,9 @@ next-env.d.ts
 /public/**/nextImageExportOptimizer/
 !/public/next-image-export-optimizer-hashes.json
 
-# claude
-/.claude/
+# claude (keep path-scoped rules versioned; ignore local settings etc.)
+/.claude/*
+!/.claude/rules/
 
 # raw import files (chat exports, PDFs, etc.) — not published content
 /imports/*
