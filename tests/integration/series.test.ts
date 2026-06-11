@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import { getSeriesContentEntries } from "../../src/lib/content/series-metadata";
 import { parseRstDocument, RstParseError } from "../../src/lib/rst";
-import { getAdjacentPosts } from '../../src/lib/markdown';
+import { getAdjacentPosts } from '../../src/lib/content/related';
 import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries } from '../../src/lib/content/series';
 import { getFeaturedPosts } from '../../src/lib/content/posts';
 

@@ -1,4 +1,4 @@
-import { buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
 import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/content/flows';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';

@@ -1,4 +1,5 @@
-import { getRelatedPosts, getAdjacentPosts, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
+import { getRelatedPosts, getAdjacentPosts } from '@/lib/content/related';
 import { getAllSeries, getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
 import { getPostBySlug, getAllPosts, getAllPages } from '@/lib/content/posts';
 import type { PostData } from '@/lib/content/types';

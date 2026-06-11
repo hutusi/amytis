@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BacklinkSource } from '@/lib/markdown';
+import type { BacklinkSource } from '@/lib/content/discovery';
 import { t } from '@/lib/i18n';
 
 interface BacklinksProps {

@@ -7,7 +7,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 - Framework: Next.js 16.2.1 + React 19
 - Runtime/tooling: Bun
 - Styling: Tailwind CSS v4 + CSS variables + `next-themes`
-- Content parsing: `gray-matter` + Zod validation in `src/lib/markdown.ts`
+- Content parsing: `gray-matter` + Zod validation in the `src/lib/content/` data layer
 - rST rendering: Python `docutils` bridge in `scripts/render-rst.py` plus normalization in `src/lib/rst-renderer.ts`
 - Search: Pagefind (`/pagefind/pagefind.js` loaded at runtime)
 - Tests: Bun test suites in `src/` and `tests/`
@@ -23,7 +23,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 
 ## Runtime Data Flow
 
-1. Source files are read from disk by `src/lib/markdown.ts`.
+1. Source files are read from disk by the `src/lib/content/` data layer (all reads funnel through `content/io.ts`).
 2. Frontmatter is parsed and validated (invalid frontmatter throws at build time).
 3. Draft/future filtering and sorting are applied (based on `site.config.ts`).
 4. Route files consume typed helpers (`getAllPosts`, `getBookData`, `getAllFlows`, `getAllNotes`, etc.).
@@ -134,13 +134,26 @@ Integrations:
 - `Comments` — Giscus or Disqus (theme-aware)
 - `Analytics` — Umami, Plausible, or Google Analytics
 
-## Data Layer Highlights (`src/lib/markdown.ts`)
+## Data Layer (`src/lib/content/`)
 
-- Posts/series: `getAllPosts`, `getListingPosts`, `getPostBySlug`, `getSeriesPosts`, `getSeriesData`
-- Books: `getAllBooks`, `getBookData`, `getBookChapter`
-- Flows: `getAllFlows`, `getFlowBySlug`, `getFlowsByYear`, `getFlowsByMonth`
-- Notes: `getAllNotes`, `getNoteBySlug`, `getNotesByTag`
-- Discovery: `buildSlugRegistry`, `getBacklinks`, `getAllTags`, `getAllAuthors`
+One module per concern; the dependency direction is acyclic and enforced by `src/lib/content/dependency-graph.test.ts`:
+
+```
+types → io/cache → series-metadata → parse → posts → series → {related, discovery}
+                                          ↘ books / flows / notes (leaf domains)
+```
+
+- `types.ts` — `PostData`, `Heading`, `CollectionContext`, … Zero runtime imports, so client components can type-import without dragging `fs` into the bundle.
+- `io.ts` — content directory constants, filename conventions, and `readUtf8File` (the ONLY `fs.readFileSync` in the layer; carries the `turbopackIgnore` annotation, enforced by a guard test in `io.test.ts`).
+- `cache.ts` — `createMemo` / `createKeyedMemo` (env-keyed, cache in dev too) and `createProdMemo` (prod-only; dev recomputes for HMR freshness). The two flavors are deliberate — do not merge them.
+- `series-metadata.ts` — series index discovery (`resolveSeriesIndexInfo`, `getSeriesContentEntries` with the mixed-format/duplicate-slug throws) plus `getSeriesTitle` / `getSeriesAuthors`, read directly from index files. This is what keeps parse↔series acyclic: nothing here imports `parse.ts`.
+- `parse.ts` — `PostSchema` and the Markdown/rST file parsers, including the Python-renderer availability singleton and its test hooks (they must stay co-located).
+- `posts.ts` — `getAllPosts`, `getListingPosts`, `getPostBySlug`, pages (`getAllPages`, `getPageBySlug` with locale variants), `getFeaturedPosts`, `getPostsByTag`.
+- `authors.ts` — `getAuthorSlug`, `getAllAuthors`, `getPostsByAuthor`, `resolveAuthorParam`.
+- `series.ts` — `getSeriesData`, `getSeriesPosts`, `getAllSeries`, `getFeaturedSeries`, `getSeriesLatestPostDate`, `resolveSeriesAuthors`, and the collection queries (`getCollectionPosts`, `getCollectionsForPost`). Collections live here, not in their own module: a collection IS a series folder (`type: collection`), and splitting them would create an import cycle.
+- `books.ts` / `flows.ts` / `notes.ts` — self-contained leaf domains (schema + discovery + queries each).
+- `related.ts` — `getRelatedPosts`, `getAdjacentPosts` (series-aware adjacency).
+- `discovery.ts` — cross-content aggregates: `getAllTags`, `buildSlugRegistry` (wikilink targets), `getBacklinks`.
 - Text metrics: `src/lib/text-metrics.ts` owns reading-time, word-count, excerpt, and heading extraction for **all** formats. The Markdown pipeline, the JS rST fallback (`rst.ts`), and the Python rST renderer (`rst-renderer.ts`, via the `…FromText` plain-text variants) share its tokenizer and pacing constants, so the metrics can never disagree across pipelines.
 
 ## Code Block Highlighting
@@ -175,7 +188,7 @@ Integrations:
 
 ## Content Frontmatter
 
-Validated by Zod in `src/lib/markdown.ts` — invalid frontmatter throws at build time.
+Validated by Zod in `src/lib/content/` (PostSchema in `parse.ts`; book/flow/note schemas in their domain modules) — invalid frontmatter throws at build time.
 
 ### Posts
 

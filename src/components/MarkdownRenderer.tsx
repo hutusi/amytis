@@ -25,7 +25,7 @@ import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
-import type { SlugRegistryEntry } from '@/lib/markdown';
+import type { SlugRegistryEntry } from '@/lib/content/discovery';
 import { shouldBypassImageOptimization } from '@/lib/image-utils';
 import { parseFenceMeta } from '@/lib/shiki';
 import { isExternalUrl } from '@/lib/urls';

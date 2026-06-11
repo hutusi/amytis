@@ -7,14 +7,14 @@
  * Isolation strategy
  * ──────────────────
  * bun:test loads all test files before running any tests. A module-level
- * mock.module() call runs at load time and would replace @/lib/markdown in the
+ * mock.module() call runs at load time and would replace the @/lib/content data layer in the
  * shared module registry before integration test files resolve their static
  * imports — causing those tests to see empty stubs instead of real content.
  *
  * To avoid this:
  *   • Next.js / component mocks stay at module level — integration tests never
  *     import those, so they are harmless.
- *   • @/lib/markdown is mocked inside beforeAll, which runs AFTER all files
+ *   • the @/lib/content modules are mocked inside beforeAll, which runs AFTER all files
  *     have finished loading and resolving their static imports.
  *   • Page files are loaded via await import() inside each test, which runs
  *     after beforeAll, so they pick up the mock correctly.
@@ -26,7 +26,8 @@ import { setEnvVar, restoreEnvVar } from '../helpers/env';
 // ─── Capture real modules ─────────────────────────────────────────────────────
 // Static imports are hoisted and resolved before any executable code (including
 // beforeAll / mock.module calls), so this always captures the real module.
-import * as realMarkdown from '../../src/lib/markdown';
+import * as realRelated from '../../src/lib/content/related';
+import * as realDiscovery from '../../src/lib/content/discovery';
 import * as realBooks from '../../src/lib/content/books';
 import * as realFlows from '../../src/lib/content/flows';
 import * as realNotes from '../../src/lib/content/notes';
@@ -49,6 +50,8 @@ const snapshotNotes = { ...realNotes };
 const snapshotPosts = { ...realPosts };
 const snapshotAuthors = { ...realAuthors };
 const snapshotSeries = { ...realSeries };
+const snapshotRelated = { ...realRelated };
+const snapshotDiscovery = { ...realDiscovery };
 const snapshotSeriesMetadata = { ...realSeriesMetadata };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
@@ -118,52 +121,18 @@ mock.module('@/layouts/SimpleLayout', () => Noop);
 mock.module('@/layouts/BookLayout', () => Noop);
 
 // ─── Data layer stub: deferred to beforeAll ───────────────────────────────────
-// Must NOT be called at module level — would replace @/lib/markdown in the
+// Must NOT be called at module level — would replace the content data layer in the
 // shared registry before integration test files resolve their static imports.
 beforeAll(() => {
-  mock.module('@/lib/markdown', () => ({
-    getAllFlows: () => [],
-    getAllNotes: () => mockedNotes,
-    getAllPosts: () => mockedPosts.filter(p => !(process.env.NODE_ENV === 'production' && p.draft)),
-    getAllBooks: () => [],
-    getAllSeries: () => mockedSeries,
-    getAllTags: () => ({}),
-    getAllAuthors: () => ({}),
-    getAllPages: () => [],
-    getListingPosts: () => [],
-
-    getFlowsByYear: () => [],
-    getFlowsByMonth: () => [],
-    getFlowBySlug: () => null,
-    getFlowTags: () => ({}),
-    getFlowsByTag: () => [],
-
-    getNoteBySlug: () => null,
-    getNoteTags: () => ({}),
-    getNotesByTag: () => [],
-    getAdjacentNotes: () => ({ prev: null, next: null }),
-    getRecentNotes: () => [],
-
-    getPostBySlug: () => null,
+  mock.module('@/lib/content/related', () => ({
+    ...snapshotRelated,
     getRelatedPosts: () => [],
     getAdjacentPosts: () => ({ prev: null, next: null }),
-    getPostsByTag: () => [],
-    getPostsByAuthor: () => [],
+  }));
 
-    getBookData: () => null,
-    getBookChapter: () => null,
-    getBooksByAuthor: () => [],
-
-    getSeriesData: (slug: string) => mockedSeriesData[slug] ?? null,
-    getSeriesPosts: () => [],
-    getSeriesAuthors: () => [],
-    getCollectionsForPost: () => [],
-
-    getAuthorSlug: (name: string) =>
-      name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-    resolveAuthorParam: () => null,
-
-    getAdjacentFlows: () => ({ prev: null, next: null }),
+  mock.module('@/lib/content/discovery', () => ({
+    ...snapshotDiscovery,
+    getAllTags: () => ({}),
     buildSlugRegistry: () => new Map(),
     getBacklinks: () => [],
   }));
@@ -257,7 +226,8 @@ afterEach(() => {
 
 // ─── Restore real modules ─────────────────────────────────────────────────────
 afterAll(() => {
-  mock.module('@/lib/markdown', () => realMarkdown);
+  mock.module('@/lib/content/related', () => snapshotRelated);
+  mock.module('@/lib/content/discovery', () => snapshotDiscovery);
   mock.module('@/lib/content/books', () => snapshotBooks);
   mock.module('@/lib/content/flows', () => snapshotFlows);
   mock.module('@/lib/content/notes', () => snapshotNotes);

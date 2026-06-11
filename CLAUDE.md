@@ -37,7 +37,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 ## Integration-point rules (always go through X)
 
 - **URLs:** always `getPostUrl()` / `getPostsBasePath()` / `getSeriesCustomPaths()` from `src/lib/urls.ts`. Never hardcode `/posts/[slug]` — posts may live at `/articles/[slug]`, custom prefixes (`series.customPaths`), or under `posts.basePath`.
-- **Content reads:** always via `src/lib/markdown.ts` (`getAllPosts`, `getPostBySlug`, `getSeriesData`, etc.). Frontmatter validation belongs in its Zod schemas, not in route files.
+- **Content reads:** always via the `src/lib/content/` data layer — one module per domain (`posts.ts`, `series.ts`, `books.ts`, `flows.ts`, `notes.ts`, `authors.ts`, `related.ts`, `discovery.ts`). Frontmatter validation belongs in its Zod schemas (`content/parse.ts` and the domain modules), not in route files. Dependency direction is acyclic — `types → io/cache → series-metadata → parse → posts → series → {related, discovery}` — and enforced by `src/lib/content/dependency-graph.test.ts`.
 - **Search utilities:** pure helpers (URL type detection, date extraction, title cleaning, markdown stripping) live in `src/lib/search-utils.ts` and are shared by the `Search` component and the search-index route. Don't duplicate them.
 - **i18n strings:** add to `src/i18n/translations.ts`. Locale-aware config fields are `string | Record<string, string>`; resolve via `resolveLocale()` / `resolveLocaleValue()` from `src/lib/i18n.ts`.
 
@@ -49,7 +49,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 Feature-local gotchas live in path-scoped rules under `.claude/rules/` and auto-load when you touch matching files: `rst.md` (docutils setup, sanitize-html allowlist, disk-cache version) and `immersive-reading.md` (chrome-hiding hooks, provider boundaries, prefs persistence).
 
-- **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/markdown.ts`, `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling.
+- **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling. Inside `src/lib/content/` every read goes through `readUtf8File` in `content/io.ts` (the single annotated site, enforced by a guard test) — don't add bare `fs.readFileSync` calls there.
 - **No AVIF for `coverImage`.** Upstream bug in `next-image-export-optimizer` emits `.webp` files but a `srcset` pointing at `.avif` → 404 in prod. Use `.jpg` / `.png` / `.webp`. See `docs/TROUBLESHOOTING.md`.
 - **Unicode slugs.** Dynamic route pages call `safeDecodeParam()` and try decoded / raw / NFC / NFD variants — don't shortcut with bare `decodeURIComponent()` (it throws on malformed input). When touching dynamic routes, verify both ASCII and Unicode slugs.
 - **`generateStaticParams` returns raw values.** Don't `encodeURIComponent` route params; Next.js handles encoding. Don't link to placeholder routes like `/posts/[slug]` — always link to concrete URLs.
@@ -76,14 +76,14 @@ For a new feature or non-trivial change:
 - **Do NOT run `bun run build:dev` (or `bun run build` / `bun run validate`) unless the user asks OR it is genuinely needed.** It takes ~1–2 minutes (Turbopack compile + 800+ static pages + Pagefind index) and the cost adds up fast across many small steps. None of these are "needed" on their own: markdown pipeline edits, schema changes, route moves, branch tip, pre-PR readiness, "just to be safe."
 - "Genuinely needed" means lint+test **cannot** catch the failure mode you're worried about — e.g. a strict-build invariant that only fires during static export (a `throw` in `generateStaticParams`, a `redirectFrom` collision, a Zod-schema failure that only triggers on real content). If unsure, prefer asking over running.
 - `bun run validate` chains lint + test + build:dev; same rule — same bar.
-- Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
+- Touched `src/lib/content/**`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
 - Touched any dynamic route? Verify both ASCII and Unicode slugs render.
 
 ## Context compression hints
 
 When compressing history, preserve in priority order:
 
-1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/markdown.ts`.
+1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/content/**`.
 2. **Modified files and why** — file list with one-line reasons, not the diff.
 3. **Verification status** — `bun run lint && bun test` (and `build:dev` if run) pass/fail.
 4. **Cache version bumps** — `RST_RENDERER_DISK_CACHE_VERSION` etc.; easy to lose after compression.

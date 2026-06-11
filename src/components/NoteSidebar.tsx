@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import type { BacklinkSource } from '@/lib/markdown';
+import type { BacklinkSource } from '@/lib/content/discovery';
 import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import TocPanel from './TocPanel';

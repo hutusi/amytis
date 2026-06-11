@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
-import { getRelatedPosts } from '../../src/lib/markdown';
+import { getRelatedPosts } from '../../src/lib/content/related';
 import { getSeriesPosts } from '../../src/lib/content/series';
 import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
 

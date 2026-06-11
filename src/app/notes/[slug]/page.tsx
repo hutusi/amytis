@@ -1,4 +1,4 @@
-import { buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
 import { getAllNotes, getNoteBySlug, getAdjacentNotes } from '@/lib/content/notes';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';

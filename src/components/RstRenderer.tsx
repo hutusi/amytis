@@ -1,6 +1,6 @@
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import KatexStyles from '@/components/KatexStyles';
-import type { SlugRegistryEntry } from '@/lib/markdown';
+import type { SlugRegistryEntry } from '@/lib/content/discovery';
 import { rstToMarkdown } from '@/lib/rst';
 import { applyShikiToRstHtml } from '@/lib/shiki-rst';
 import sanitizeHtml from 'sanitize-html';

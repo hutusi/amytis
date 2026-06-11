@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
 import remarkWikilinks from './remark-wikilinks';
 import type { Root, Paragraph } from 'mdast';
-import type { SlugRegistryEntry } from './markdown';
+import type { SlugRegistryEntry } from './content/discovery';
 
 function makeTree(text: string): Root {
   return {

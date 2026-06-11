@@ -48,7 +48,7 @@ bun test
   - `subscribe/`: Subscription options (RSS, Newsletter, Social).
   - `search.json/`: Static search index generator (supplementary).
 - `src/lib/`: Core logic and utilities.
-  - `markdown.ts`: Advanced parsing for posts/series/flows, sorting, and metadata.
+  - `content/`: Data layer — parsing, posts/series/books/flows/notes queries, discovery.
   - `search-utils.ts`: Content cleaning and search result processing.
   - `shuffle.ts`: Deterministic and random array shuffling.
   - `urls.ts`: Centralized URL routing and link generation logic.
