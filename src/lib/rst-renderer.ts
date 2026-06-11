@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { RstMetadata, RstParseError } from './rst';
+import { normalizeRstMetadata, RstParseError, type RstMetadata } from './rst-metadata';
 import { calculateReadingMinutesFromText, calculateWordCountFromText } from './text-metrics';
 
 export interface PythonRstHeading {
@@ -72,7 +72,7 @@ const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
 // Bumped when the docutils renderer's HTML output shape changes:
 // v2 emitted <pre data-amytis-code> markers; v3 additionally emits
 // <div data-amytis-code-group> wrappers around .. code-group:: nests.
-const RST_RENDERER_DISK_CACHE_VERSION = '3';
+const RST_RENDERER_DISK_CACHE_VERSION = '4';
 const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
 let pythonRendererInvocationCount = 0;
@@ -212,142 +212,13 @@ export function getPythonCommandSpecForRstRenderer(): PythonCommandSpec {
   return resolvedPythonCommandSpec;
 }
 
-function parseBoolean(field: string, value: unknown): boolean {
-  if (value === true || value === false) return value;
-  if (typeof value === 'string') {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-  }
-  throw new RstParseError(`Invalid boolean for "${field}": ${String(value)}`);
-}
-
-function parseString(field: string, value: unknown): string {
-  if (typeof value !== 'string') {
-    throw new RstParseError(`Invalid value for "${field}": ${String(value)}`);
-  }
-  return value.trim();
-}
-
-function parseStringArray(field: string, value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.map((item) => parseString(field, item)).filter(Boolean);
-  }
-  if (typeof value === 'string') {
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-  throw new RstParseError(`Invalid list for "${field}": ${String(value)}`);
-}
-
-function parseDate(value: unknown): string {
-  const date = parseString('date', value);
-  const match = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if (!match) {
-    throw new RstParseError(`Invalid date: ${date}`);
-  }
-
-  const [, year, month, day] = match;
-  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-  const parsed = new Date(`${normalized}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== normalized) {
-    throw new RstParseError(`Invalid date: ${date}`);
-  }
-
-  return normalized;
-}
-
-function parseSort(value: unknown): 'date-desc' | 'date-asc' | 'manual' {
-  const sort = parseString('sort', value);
-  if (sort === 'date-desc' || sort === 'date-asc' || sort === 'manual') {
-    return sort;
-  }
-  throw new RstParseError(`Invalid sort value: ${sort}`);
-}
-
-function parseType(value: unknown): 'collection' {
-  const type = parseString('type', value);
-  if (type === 'collection') return type;
-  throw new RstParseError(`Invalid type value: ${type}`);
-}
-
+/**
+ * Normalize the Python renderer's JSON metadata using the shared rST
+ * docinfo rules (rst-metadata.ts) — identical validation to the JS
+ * fallback parser in rst.ts.
+ */
 export function normalizePythonRstMetadata(metadata: Record<string, unknown>): RstMetadata {
-  const normalized: RstMetadata = {};
-
-  for (const [rawKey, rawValue] of Object.entries(metadata)) {
-    const key = rawKey.toLowerCase();
-
-    switch (key) {
-      case 'date':
-        normalized.date = parseDate(rawValue);
-        break;
-      case 'subtitle':
-        normalized.subtitle = parseString('subtitle', rawValue);
-        break;
-      case 'excerpt':
-        normalized.excerpt = parseString('excerpt', rawValue);
-        break;
-      case 'category':
-        normalized.category = parseString('category', rawValue);
-        break;
-      case 'tags':
-        normalized.tags = parseStringArray('tags', rawValue);
-        break;
-      case 'authors':
-        normalized.authors = parseStringArray('authors', rawValue);
-        break;
-      case 'author':
-        normalized.author = parseString('author', rawValue);
-        break;
-      case 'layout':
-        normalized.layout = parseString('layout', rawValue);
-        break;
-      case 'series':
-        normalized.series = parseString('series', rawValue);
-        break;
-      case 'coverimage':
-      case 'coverImage':
-        normalized.coverImage = parseString('coverImage', rawValue);
-        break;
-      case 'sort':
-        normalized.sort = parseSort(rawValue);
-        break;
-      case 'posts':
-        normalized.posts = parseStringArray('posts', rawValue);
-        break;
-      case 'featured':
-        normalized.featured = parseBoolean('featured', rawValue);
-        break;
-      case 'pinned':
-        normalized.pinned = parseBoolean('pinned', rawValue);
-        break;
-      case 'draft':
-        normalized.draft = parseBoolean('draft', rawValue);
-        break;
-      case 'latex':
-        normalized.latex = parseBoolean('latex', rawValue);
-        break;
-      case 'toc':
-        normalized.toc = parseBoolean('toc', rawValue);
-        break;
-      case 'commentable':
-        normalized.commentable = parseBoolean('commentable', rawValue);
-        break;
-      case 'redirectfrom':
-      case 'redirectFrom':
-        normalized.redirectFrom = parseStringArray('redirectFrom', rawValue);
-        break;
-      case 'type':
-        normalized.type = parseType(rawValue);
-        break;
-      default:
-        break;
-    }
-  }
-
-  return normalized;
+  return normalizeRstMetadata(metadata);
 }
 
 export function validatePythonRstResult(result: PythonRstRenderResult, filePath: string): void {

@@ -6,30 +6,14 @@ import {
   type Heading,
 } from './text-metrics';
 
+import { normalizeRstMetadataField, RstParseError, type RstMetadata } from './rst-metadata';
+
 export type RstHeading = Heading;
 
-export interface RstMetadata {
-  date?: string;
-  subtitle?: string;
-  excerpt?: string;
-  category?: string;
-  tags?: string[];
-  authors?: string[];
-  author?: string;
-  layout?: string;
-  series?: string;
-  coverImage?: string;
-  sort?: 'date-desc' | 'date-asc' | 'manual';
-  posts?: string[];
-  featured?: boolean;
-  pinned?: boolean;
-  draft?: boolean;
-  latex?: boolean;
-  toc?: boolean;
-  commentable?: boolean;
-  redirectFrom?: string[];
-  type?: 'collection';
-}
+// The metadata shape, per-field validators, and error type are shared with
+// the Python renderer path via rst-metadata.ts; re-exported here so rst.ts
+// stays the public seam for rST consumers.
+export { RstParseError, type RstMetadata };
 
 export interface ParsedRstDocument {
   title: string;
@@ -41,36 +25,6 @@ export interface ParsedRstDocument {
   readingMinutes: number;
   wordCount: number;
 }
-
-export class RstParseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RstParseError';
-  }
-}
-
-const SUPPORTED_FIELDS = new Set([
-  'date',
-  'subtitle',
-  'excerpt',
-  'category',
-  'tags',
-  'authors',
-  'author',
-  'layout',
-  'series',
-  'coverimage',
-  'sort',
-  'posts',
-  'featured',
-  'pinned',
-  'draft',
-  'latex',
-  'toc',
-  'commentable',
-  'redirectfrom',
-  'type',
-]);
 
 function normalizeLines(source: string): string[] {
   return source.replace(/\r\n?/g, '\n').split('\n');
@@ -94,119 +48,6 @@ function extractTitle(lines: string[]): { title: string; titleIndex: number; nex
   }
 
   throw new RstParseError('Missing top-level rST title.');
-}
-
-function parseBoolean(field: string, value: string): boolean {
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  throw new RstParseError(`Invalid boolean for "${field}": ${value}`);
-}
-
-function parseCsv(value: string): string[] {
-  if (!value.trim()) return [];
-  return value
-    .split(',')
-    .map(part => part.trim())
-    .filter(Boolean);
-}
-
-function parseDate(value: string): string {
-  const match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if (!match) {
-    throw new RstParseError(`Invalid date: ${value}`);
-  }
-
-  const [, year, month, day] = match;
-  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-  const parsed = new Date(`${normalized}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== normalized) {
-    throw new RstParseError(`Invalid date: ${value}`);
-  }
-
-  return normalized;
-}
-
-function parseSort(value: string): 'date-desc' | 'date-asc' | 'manual' {
-  if (value === 'date-desc' || value === 'date-asc' || value === 'manual') {
-    return value;
-  }
-  throw new RstParseError(`Invalid sort value: ${value}`);
-}
-
-function parseType(value: string): 'collection' {
-  if (value === 'collection') {
-    return value;
-  }
-  throw new RstParseError(`Invalid type value: ${value}`);
-}
-
-function setMetadataField(metadata: RstMetadata, field: string, value: string): void {
-  const key = field.toLowerCase();
-  if (!SUPPORTED_FIELDS.has(key)) return;
-
-  switch (key) {
-    case 'date':
-      metadata.date = parseDate(value);
-      break;
-    case 'subtitle':
-      metadata.subtitle = value;
-      break;
-    case 'excerpt':
-      metadata.excerpt = value;
-      break;
-    case 'category':
-      metadata.category = value;
-      break;
-    case 'tags':
-      metadata.tags = parseCsv(value);
-      break;
-    case 'authors':
-      metadata.authors = parseCsv(value);
-      break;
-    case 'author':
-      metadata.author = value;
-      break;
-    case 'layout':
-      metadata.layout = value;
-      break;
-    case 'series':
-      metadata.series = value;
-      break;
-    case 'coverimage':
-      metadata.coverImage = value;
-      break;
-    case 'sort':
-      metadata.sort = parseSort(value);
-      break;
-    case 'posts':
-      metadata.posts = parseCsv(value);
-      break;
-    case 'featured':
-      metadata.featured = parseBoolean(field, value);
-      break;
-    case 'pinned':
-      metadata.pinned = parseBoolean(field, value);
-      break;
-    case 'draft':
-      metadata.draft = parseBoolean(field, value);
-      break;
-    case 'latex':
-      metadata.latex = parseBoolean(field, value);
-      break;
-    case 'toc':
-      metadata.toc = parseBoolean(field, value);
-      break;
-    case 'commentable':
-      metadata.commentable = parseBoolean(field, value);
-      break;
-    case 'redirectfrom':
-      metadata.redirectFrom = parseCsv(value);
-      break;
-    case 'type':
-      metadata.type = parseType(value);
-      break;
-  }
 }
 
 function extractMetadata(lines: string[], startIndex: number): { metadata: RstMetadata; nextIndex: number } {
@@ -234,7 +75,7 @@ function extractMetadata(lines: string[], startIndex: number): { metadata: RstMe
       break;
     }
 
-    setMetadataField(metadata, field, continuation.join(' ').trim());
+    normalizeRstMetadataField(metadata, field, continuation.join(' ').trim());
 
     if (i < lines.length && !lines[i].trim()) {
       i++;
@@ -273,7 +114,7 @@ function extractPreambleMetadata(lines: string[]): RstMetadata {
       break;
     }
 
-    setMetadataField(metadata, field, continuation.join(' ').trim());
+    normalizeRstMetadataField(metadata, field, continuation.join(' ').trim());
   }
 
   return metadata;

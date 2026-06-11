@@ -156,6 +156,7 @@ Integrations:
 
 - Full-fidelity rST rendering depends on a Python environment with `docutils` (and ideally `pygments`) available.
 - `src/lib/rst-renderer.ts` uses `AMYTIS_RST_PYTHON` when set; otherwise it falls back to `python3`.
+- Docinfo metadata normalization is shared: both the Python renderer and the JS fallback parser route every `:Field:` through `src/lib/rst-metadata.ts` (one field switch, one set of validators, one `RstParseError`), so the two paths cannot drift on metadata. Heading extraction still differs (docutils AST vs regex over the Markdown conversion) — pinned by `tests/integration/rst-parity.test.ts`.
 - Top-of-document docinfo is parsed into Amytis metadata, but it is stripped from rendered article HTML so blog-style posts do not show duplicate author/version blocks above the content.
 - Supported legacy roles are normalized or degraded intentionally:
   - `:doc:` resolves to local site URLs when the target exists in the imported content tree
