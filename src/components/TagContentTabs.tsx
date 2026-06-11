@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLanguage } from './LanguageProvider';
 import PostList from './PostList';
 import FlowTimelineEntry from './FlowTimelineEntry';
-import type { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 
 type Tab = 'all' | 'posts' | 'flows';
 

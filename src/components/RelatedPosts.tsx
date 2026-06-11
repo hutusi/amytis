@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import { t } from '@/lib/i18n';
 import { getPostUrl } from '@/lib/urls';
 

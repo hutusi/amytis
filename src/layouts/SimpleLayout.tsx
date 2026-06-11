@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';

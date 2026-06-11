@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';

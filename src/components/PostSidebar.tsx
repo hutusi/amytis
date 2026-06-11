@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { PostData, Heading, CollectionContext } from '@/lib/markdown';
+import type { PostData, Heading, CollectionContext } from '@/lib/content/types';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { useLanguage } from './LanguageProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';

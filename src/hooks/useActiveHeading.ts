@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Heading } from '@/lib/markdown';
+import type { Heading } from '@/lib/content/types';
 import { getScrollableAncestor } from '@/lib/scroll-utils';
 
 const ACTIVATION_LINE_PX = 100;

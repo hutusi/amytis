@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Heading } from '@/lib/markdown';
+import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useActiveHeading } from '@/hooks/useActiveHeading';
 import { scrollToHeading } from '@/lib/scroll-utils';

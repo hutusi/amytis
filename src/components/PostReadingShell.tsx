@@ -5,7 +5,7 @@ import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveSeriesSidebar from '@/components/ImmersiveSeriesSidebar';
 import { getSeriesUrl } from '@/lib/urls';
-import type { CollectionContext, Heading, PostData } from '@/lib/markdown';
+import type { CollectionContext, Heading, PostData } from '@/lib/content/types';
 
 interface PostReadingShellProps {
   post: { slug: string; title: string; series?: string; headings?: Heading[] };

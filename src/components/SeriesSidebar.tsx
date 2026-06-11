@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';

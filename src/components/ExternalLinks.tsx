@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink } from '@/lib/markdown';
+import type { ExternalLink } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 
 interface ExternalLinksProps {

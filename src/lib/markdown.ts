@@ -11,21 +11,24 @@ import {
   calculateWordCount,
   generateExcerpt,
   getHeadings,
-  type Heading,
 } from './text-metrics';
+import type { PostData, CollectionItem, CollectionContext, Heading } from './content/types';
+import {
+  contentDirectory,
+  pagesDirectory,
+  seriesDirectory,
+  booksDirectory,
+  flowsDirectory,
+  notesDirectory,
+  readUtf8File,
+  isMarkdownFilename,
+  isRstFilename,
+  parseSlugAndDate,
+  assertSafeSeriesSlug,
+} from './content/io';
+import { getCacheEnvKey } from './content/cache';
 import { parseRstDocument, RstParseError } from './rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from './rst-renderer';
-
-const contentDirectory = path.join(process.cwd(), 'content', 'posts');
-const pagesDirectory = path.join(process.cwd(), 'content');
-const seriesDirectory = path.join(process.cwd(), 'content', 'series');
-const booksDirectory = path.join(process.cwd(), 'content', 'books');
-const flowsDirectory = path.join(process.cwd(), 'content', 'flows');
-const notesDirectory = path.join(process.cwd(), 'content', 'notes');
-
-function readUtf8File(filePath: string): string {
-  return fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf8');
-}
 
 const ExternalLinkSchema = z.object({
   name: z.string(),
@@ -43,16 +46,6 @@ const CollectionItemSchema = z.union([
     label: z.string().optional(),
   }).strict(),
 ]);
-
-export type CollectionItem =
-  | { series: string; exclude?: string[]; label?: string }
-  | { post: string; label?: string };
-
-export interface CollectionContext {
-  slug: string;
-  title: string;
-  posts: PostData[];
-}
 
 const PostSchema = z.object({
   title: z.string(),
@@ -95,52 +88,6 @@ const PostSchema = z.object({
   }
 });
 
-// Heading now lives in text-metrics.ts (where it is produced); re-exported
-// here until the content/ module split moves PostData consumers over.
-export type { Heading };
-
-export interface ExternalLink {
-  name: string;
-  url: string;
-}
-
-export interface PostData {
-  slug: string;
-  title: string;
-  subtitle?: string;
-  date: string;
-  excerpt: string;
-  category: string;
-  tags: string[];
-  authors: string[];
-  layout?: string;
-  series?: string;
-  seriesTitle?: string;
-  coverImage?: string;
-  sort?: 'date-desc' | 'date-asc' | 'manual';
-  posts?: string[];
-  type?: 'collection';
-  items?: CollectionItem[];
-  featured?: boolean;
-  pinned?: boolean;
-  draft?: boolean;
-  latex?: boolean;
-  toc?: boolean;
-  commentable?: boolean;
-  externalLinks?: ExternalLink[];
-  redirectFrom?: string[];
-  readingMinutes: number;
-  wordCount: number;
-  content: string;
-  renderedHtml?: string;
-  plainText?: string;
-  headings: Heading[];
-  contentLocales?: Record<string, { content: string; title?: string; excerpt?: string; headings?: Heading[] }>;
-  /** Public-relative base path used for resolving co-located images (e.g. "posts/my-post" or "posts" for root flat files). */
-  imageBaseSlug: string;
-  sourceFormat?: 'markdown' | 'rst';
-}
-
 type SeriesFormat = 'markdown' | 'rst';
 
 interface SeriesIndexInfo {
@@ -159,10 +106,6 @@ interface PendingRstPostEntry {
   slug: string;
   dateFromFileName?: string;
   seriesSlug?: string;
-}
-
-function getCacheEnvKey(): string {
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
 
 const postsCache = new Map<string, PostData[]>();
@@ -338,39 +281,6 @@ export function resolveSeriesAuthors(slug: string, posts: PostData[]): string[] 
     .map(([name]) => name);
 }
 
-function parseSlugAndDate(rawName: string): { slug: string; dateFromFileName?: string } {
-  const dateRegex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
-  const match = rawName.match(dateRegex);
-
-  if (match) {
-    return {
-      dateFromFileName: match[1],
-      slug: siteConfig.posts?.includeDateInUrl ? rawName : match[2],
-    };
-  }
-
-  return { slug: rawName };
-}
-
-function isMarkdownFilename(name: string): boolean {
-  return name.endsWith('.md') || name.endsWith('.mdx');
-}
-
-function isRstFilename(name: string): boolean {
-  return name.endsWith('.rst');
-}
-
-function assertSafeSeriesSlug(seriesSlug: string): void {
-  if (!seriesSlug || path.isAbsolute(seriesSlug)) {
-    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
-  }
-
-  const segments = seriesSlug.split(/[\\/]/);
-  if (segments.length !== 1 || segments[0] === '.' || segments[0] === '..') {
-    throw new Error(`[amytis] Invalid series slug "${seriesSlug}".`);
-  }
-}
-
 function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesFormat): string | null {
   assertSafeSeriesSlug(seriesSlug);
   const seriesPath = path.join(seriesDirectory, seriesSlug);
@@ -521,7 +431,7 @@ function getSeriesTitle(slug: string): string | undefined {
 }
 
 function parseMarkdownFile(fullPath: string, slug: string, dateFromFileName?: string, seriesName?: string): PostData {
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
   // Flat files directly in content/posts/ share the posts root public directory for images.
   // Folder-based posts and series posts each have their own public subdirectory.
@@ -629,7 +539,7 @@ function parseRstFile(
 ): PostData {
   try {
     const imageBaseSlug = getRstImageBaseSlug(fullPath, slug);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
+    const fileContents = readUtf8File(fullPath);
 
     let parsedTitle: string;
     let parsedBody: string;
@@ -921,7 +831,7 @@ function loadLocaleContent(slug: string, locale: string): { content: string; tit
     const filePath = path.join(pagesDirectory, `${slug}.${locale}${ext}`);
     if (fs.existsSync(filePath)) {
       try {
-        const { data, content } = matter(fs.readFileSync(filePath, 'utf8'));
+        const { data, content } = matter(readUtf8File(filePath));
         const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();
         return {
           content: body,
@@ -1612,7 +1522,7 @@ export function getBookData(slug: string): BookData | null {
   else if (fs.existsSync(indexPathMd)) fullPath = indexPathMd;
   else return null;
 
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
 
   const parsed = BookSchema.safeParse(rawData);
@@ -1676,7 +1586,7 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   if (!resolved) return null;
   const { path: fullPath, isFolder } = resolved;
 
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
 
   const parsed = BookChapterSchema.safeParse(rawData);
@@ -1785,7 +1695,7 @@ export interface FlowData {
 }
 
 function parseFlowFile(fullPath: string, slug: string): FlowData {
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
 
   const parsed = FlowSchema.safeParse(rawData);
@@ -1957,7 +1867,7 @@ export interface NoteData {
 }
 
 function parseNoteFile(fullPath: string, slug: string): NoteData {
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
 
   const parsed = NoteSchema.safeParse(rawData);

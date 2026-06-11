@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { getAllPosts, getSeriesData, PostData } from '@/lib/markdown';
+import { getAllPosts, getSeriesData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale, t } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';

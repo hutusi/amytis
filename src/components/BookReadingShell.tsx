@@ -10,7 +10,8 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveToggleButton from '@/components/ImmersiveToggleButton';
-import type { BookTocItem, BookChapterEntry, Heading } from '@/lib/markdown';
+import type { BookTocItem, BookChapterEntry } from '@/lib/markdown';
+import type { Heading } from '@/lib/content/types';
 import { getBookUrl } from '@/lib/urls';
 
 interface BookReadingShellProps {
