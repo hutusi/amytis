@@ -27,6 +27,8 @@ import { setEnvVar, restoreEnvVar } from '../helpers/env';
 // Static imports are hoisted and resolved before any executable code (including
 // beforeAll / mock.module calls), so this always captures the real module.
 import * as realMarkdown from '../../src/lib/markdown';
+import * as realBooks from '../../src/lib/content/books';
+import * as realSeriesMetadata from '../../src/lib/content/series-metadata';
 import * as realUrls from '../../src/lib/urls';
 
 // `import * as ns` creates a live namespace — its properties update when
@@ -36,6 +38,8 @@ import * as realUrls from '../../src/lib/urls';
 // Note: nested objects (e.g. RESERVED_ROUTE_SEGMENTS Set) share the same
 // reference, but they are never mutated during tests so this is safe.
 const snapshotUrls = { ...realUrls };
+const snapshotBooks = { ...realBooks };
+const snapshotSeriesMetadata = { ...realSeriesMetadata };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
 // production code paths read. Extra fields (full Post shape) are allowed via
@@ -153,6 +157,22 @@ beforeAll(() => {
     buildSlugRegistry: () => new Map(),
     getBacklinks: () => [],
   }));
+
+  // Book reads moved to @/lib/content/books; series index metadata to
+  // @/lib/content/series-metadata. Routes import them directly, so the
+  // empty-content stubs must cover those modules too.
+  mock.module('@/lib/content/books', () => ({
+    ...snapshotBooks,
+    getAllBooks: () => [],
+    getBookData: () => null,
+    getBookChapter: () => null,
+    getBooksByAuthor: () => [],
+  }));
+
+  mock.module('@/lib/content/series-metadata', () => ({
+    ...snapshotSeriesMetadata,
+    getSeriesAuthors: () => [],
+  }));
 });
 
 beforeEach(() => {
@@ -174,6 +194,8 @@ afterEach(() => {
 // ─── Restore real modules ─────────────────────────────────────────────────────
 afterAll(() => {
   mock.module('@/lib/markdown', () => realMarkdown);
+  mock.module('@/lib/content/books', () => snapshotBooks);
+  mock.module('@/lib/content/series-metadata', () => snapshotSeriesMetadata);
   mock.module('@/lib/urls', () => snapshotUrls);
 });
 

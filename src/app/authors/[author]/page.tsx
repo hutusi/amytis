@@ -1,4 +1,5 @@
-import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam, getSeriesData, getSeriesPosts, getBooksByAuthor } from '@/lib/markdown';
+import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam, getSeriesData, getSeriesPosts } from '@/lib/markdown';
+import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
 import CoverImage from '@/components/CoverImage';

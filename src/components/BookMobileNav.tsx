@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry } from '@/lib/markdown';
+import type { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry } from '@/lib/content/books';
 import { useLanguage } from './LanguageProvider';
 import PrevNextNav from './PrevNextNav';
 import { getBookChapterUrl } from '@/lib/urls';

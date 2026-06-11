@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import BookLandingPage from "@/app/books/[slug]/page";
 import { renderAsync } from "@/test-utils/render";
-import { getBookData } from "@/lib/markdown";
+import { getBookData } from '@/lib/content/books';
 import { t } from "@/lib/i18n";
 import { getBookChapterUrl } from "@/lib/urls";
 

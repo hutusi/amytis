@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { getAllPosts, getAllFlows, getAllSeries, getFeaturedSeries, getSeriesData, getFeaturedPosts, getAllBooks, getFeaturedBooks, getRecentFlows } from '@/lib/markdown';
+import { getAllPosts, getAllFlows, getAllSeries, getFeaturedSeries, getSeriesData, getFeaturedPosts, getRecentFlows } from '@/lib/markdown';
+import { getAllBooks, getFeaturedBooks } from '@/lib/content/books';
 import { siteConfig } from '../../site.config';
 import Hero from '@/components/Hero';
 import CuratedSeriesSection, { SeriesItem } from '@/components/CuratedSeriesSection';

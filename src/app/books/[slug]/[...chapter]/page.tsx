@@ -1,4 +1,4 @@
-import { getBookData, getBookChapter, getAllBooks } from '@/lib/markdown';
+import { getBookData, getBookChapter, getAllBooks } from '@/lib/content/books';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../../site.config';

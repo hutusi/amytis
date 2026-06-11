@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  flattenBookChapters,
-  BookSchema,
-  type BookTocItem,
-} from "../../src/lib/markdown";
+import { flattenBookChapters, BookSchema, type BookTocItem } from '../../src/lib/content/books';
 
 describe("Integration: Books nested TOC", () => {
   test("schema accepts the legacy { part, chapters } shape", () => {
