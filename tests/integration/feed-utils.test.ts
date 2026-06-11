@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { getFeedItems } from "../../src/lib/feed-utils";
-import { getAllPosts, getAllFlows } from "../../src/lib/markdown";
+import { getAllPosts } from '../../src/lib/markdown';
+import { getAllFlows } from '../../src/lib/content/flows';
 import { getPostUrl, getFlowUrl } from "../../src/lib/urls";
 import { siteConfig } from "../../site.config";
 

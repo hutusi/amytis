@@ -1,4 +1,4 @@
-import { getAllFlows, getFlowsByYear, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowsByYear, getFlowTags } from '@/lib/content/flows';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';

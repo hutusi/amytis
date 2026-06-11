@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getFlowBySlug, getAllFlows } from "../../src/lib/markdown";
+import { getFlowBySlug, getAllFlows } from '../../src/lib/content/flows';
 
 describe("Integration: Flow Title Resolution", () => {
   test("frontmatter title takes priority over H1 and date", () => {

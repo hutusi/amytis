@@ -28,6 +28,7 @@ import { setEnvVar, restoreEnvVar } from '../helpers/env';
 // beforeAll / mock.module calls), so this always captures the real module.
 import * as realMarkdown from '../../src/lib/markdown';
 import * as realBooks from '../../src/lib/content/books';
+import * as realFlows from '../../src/lib/content/flows';
 import * as realSeriesMetadata from '../../src/lib/content/series-metadata';
 import * as realUrls from '../../src/lib/urls';
 
@@ -39,6 +40,7 @@ import * as realUrls from '../../src/lib/urls';
 // reference, but they are never mutated during tests so this is safe.
 const snapshotUrls = { ...realUrls };
 const snapshotBooks = { ...realBooks };
+const snapshotFlows = { ...realFlows };
 const snapshotSeriesMetadata = { ...realSeriesMetadata };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
@@ -169,6 +171,18 @@ beforeAll(() => {
     getBooksByAuthor: () => [],
   }));
 
+  mock.module('@/lib/content/flows', () => ({
+    ...snapshotFlows,
+    getAllFlows: () => [],
+    getFlowsByYear: () => [],
+    getFlowsByMonth: () => [],
+    getFlowBySlug: () => null,
+    getFlowTags: () => ({}),
+    getFlowsByTag: () => [],
+    getAdjacentFlows: () => ({ prev: null, next: null }),
+    getRecentFlows: () => [],
+  }));
+
   mock.module('@/lib/content/series-metadata', () => ({
     ...snapshotSeriesMetadata,
     getSeriesAuthors: () => [],
@@ -195,6 +209,7 @@ afterEach(() => {
 afterAll(() => {
   mock.module('@/lib/markdown', () => realMarkdown);
   mock.module('@/lib/content/books', () => snapshotBooks);
+  mock.module('@/lib/content/flows', () => snapshotFlows);
   mock.module('@/lib/content/series-metadata', () => snapshotSeriesMetadata);
   mock.module('@/lib/urls', () => snapshotUrls);
 });

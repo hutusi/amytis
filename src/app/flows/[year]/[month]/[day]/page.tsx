@@ -1,4 +1,5 @@
-import { getAllFlows, getFlowBySlug, getAdjacentFlows, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/content/flows';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';

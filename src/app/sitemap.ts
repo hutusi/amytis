@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts, getAllPages, getAllFlows } from '@/lib/markdown';
+import { getAllPosts, getAllPages } from '@/lib/markdown';
+import { getAllFlows } from '@/lib/content/flows';
 import { getAllBooks } from '@/lib/content/books';
 import { siteConfig } from '../../site.config';
 import { getPostUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
