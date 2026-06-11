@@ -1,4 +1,4 @@
-import { getAllNotes, getNoteTags } from '@/lib/markdown';
+import { getAllNotes, getNoteTags } from '@/lib/content/notes';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';

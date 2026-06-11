@@ -1,4 +1,5 @@
-import { getAllPosts, getAllNotes } from '@/lib/markdown';
+import { getAllPosts } from '@/lib/markdown';
+import { getAllNotes } from '@/lib/content/notes';
 import { getAllFlows } from '@/lib/content/flows';
 import { getAllBooks, getBookChapter } from '@/lib/content/books';
 import { stripMarkdown } from '@/lib/search-utils';

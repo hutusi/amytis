@@ -1,4 +1,5 @@
-import { getAllNotes, getNoteBySlug, buildSlugRegistry, getBacklinks, getAdjacentNotes } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { getAllNotes, getNoteBySlug, getAdjacentNotes } from '@/lib/content/notes';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';

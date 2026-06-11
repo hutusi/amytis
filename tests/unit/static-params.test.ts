@@ -29,6 +29,7 @@ import { setEnvVar, restoreEnvVar } from '../helpers/env';
 import * as realMarkdown from '../../src/lib/markdown';
 import * as realBooks from '../../src/lib/content/books';
 import * as realFlows from '../../src/lib/content/flows';
+import * as realNotes from '../../src/lib/content/notes';
 import * as realSeriesMetadata from '../../src/lib/content/series-metadata';
 import * as realUrls from '../../src/lib/urls';
 
@@ -41,6 +42,7 @@ import * as realUrls from '../../src/lib/urls';
 const snapshotUrls = { ...realUrls };
 const snapshotBooks = { ...realBooks };
 const snapshotFlows = { ...realFlows };
+const snapshotNotes = { ...realNotes };
 const snapshotSeriesMetadata = { ...realSeriesMetadata };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
@@ -183,6 +185,16 @@ beforeAll(() => {
     getRecentFlows: () => [],
   }));
 
+  mock.module('@/lib/content/notes', () => ({
+    ...snapshotNotes,
+    getAllNotes: () => mockedNotes,
+    getNoteBySlug: () => null,
+    getNoteTags: () => ({}),
+    getNotesByTag: () => [],
+    getAdjacentNotes: () => ({ prev: null, next: null }),
+    getRecentNotes: () => [],
+  }));
+
   mock.module('@/lib/content/series-metadata', () => ({
     ...snapshotSeriesMetadata,
     getSeriesAuthors: () => [],
@@ -210,6 +222,7 @@ afterAll(() => {
   mock.module('@/lib/markdown', () => realMarkdown);
   mock.module('@/lib/content/books', () => snapshotBooks);
   mock.module('@/lib/content/flows', () => snapshotFlows);
+  mock.module('@/lib/content/notes', () => snapshotNotes);
   mock.module('@/lib/content/series-metadata', () => snapshotSeriesMetadata);
   mock.module('@/lib/urls', () => snapshotUrls);
 });

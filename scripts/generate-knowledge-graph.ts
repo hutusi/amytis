@@ -9,7 +9,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getAllPosts, getAllNotes, getSeriesData } from '../src/lib/markdown';
+import { getAllPosts, getSeriesData } from '../src/lib/markdown';
+import { getAllNotes } from '../src/lib/content/notes';
 import { getAllFlows } from '../src/lib/content/flows';
 
 interface GraphNode {
