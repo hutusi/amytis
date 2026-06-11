@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-06-11
+
+### Added
+- **Immersive Reading Mode**: A fullscreen, distraction-free reader for book chapters and series posts, launched from new "Immersive reading" CTAs on book and series index pages (deep-linkable via `?immersive=1`). Includes an `Aa` preferences popover (font size, Light / Sepia / Dark reading theme, column width) persisted in `localStorage` with a reset button, a reading progress bar under the top bar, and dedicated sidebars — the book sidebar with collapsible sections, plus a new series sidebar that inlines the active post's table of contents.
+- **Homepage Section Ordering**: The curated homepage sections (`featured-posts`, `featured-series`, `featured-books`) accept an optional per-section `order` field — `shuffle`, `date-desc`, or `date-asc`.
+- **VuePress Importer Upgrades**: `bun run sync-vuepress-book` understands VuePress 1.x sidebar shapes, gains `--skip-common` / `--skip` flags, supports narrow `chapters:`-only re-syncs, and falls back to `README.md` / `README.mdx` when resolving chapter ids.
+
+### Changed
+- **Homepage shuffle** now reshuffles on every visit instead of rotating daily.
+- **Vercel builds** are pinned via `vercel.json` and install with `--frozen-lockfile`.
+
+### Fixed
+- **Immersive Reader Robustness**: Active-heading tracking and anchor scrolling now target the overlay's scroll container; the overlay is preserved when navigating across a collection; sidebar scroll position survives chapter/post clicks; the reading-theme override reliably flips the theme; the `Aa` popover stacks above code blocks; the chrome-hiding CSS is no longer stripped by Lightning CSS; and the first persist run no longer clobbers stored preferences.
+- **Shuffle PRNG**: Small seeds are decorrelated with a splitmix32 finalizer and guarded against a zero state locking xorshift32; the featured-posts shuffle button is hidden when every slot is pinned.
+- **Book Chapter Layout**: Chapter column width aligned with the site navbar and the article centered in its column; React warnings from VuePress-imported tags are silenced.
+
 ## [1.16.0] - 2026-06-01
 
 ### Added
