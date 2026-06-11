@@ -11,7 +11,7 @@ Amytis: static digital-garden blog (Next.js 16 App Router, React 19, Tailwind v4
 ```bash
 bun dev                 # dev server (Turbopack, http://localhost:3000)
 bun run lint            # ESLint
-bun test                # all tests
+bun run test            # all tests (NOT bare `bun test` — that sweeps in Playwright e2e specs and fails)
 bun run build           # production build (image optimization + Pagefind)
 bun run build:dev       # faster build; regenerates public/pagefind/ for search-in-dev
 bun run clean           # nuke .next, out, public/posts when caches misbehave
@@ -26,7 +26,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - Standard routes follow folder names under `src/app/`: `/posts`, `/series`, `/tags`, `/notes`, `/books`, `/authors`, `/archive`, `/graph`, `/flows/[year]/[month]/[day]`. Book chapters are a catch-all: `books/[slug]/[...chapter]` (supports nested chapter IDs like `maths/linear/intro`).
 - **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
 - Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; search index at `search.json`.
-- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), redirects (`series-redirects.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
+- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
 
 ## Design principles
 
@@ -85,7 +85,7 @@ When compressing history, preserve in priority order:
 
 1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/content/**`.
 2. **Modified files and why** — file list with one-line reasons, not the diff.
-3. **Verification status** — `bun run lint && bun test` (and `build:dev` if run) pass/fail.
+3. **Verification status** — `bun run lint && bun run test` (and `build:dev` if run) pass/fail.
 4. **Cache version bumps** — `RST_RENDERER_DISK_CACHE_VERSION` etc.; easy to lose after compression.
 5. **Open TODOs and rollback notes.**
 6. **Tool output**: drop; keep pass/fail summary only.
