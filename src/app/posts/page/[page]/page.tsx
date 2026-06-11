@@ -1,4 +1,4 @@
-import { getListingPosts } from '@/lib/markdown';
+import { getListingPosts } from '@/lib/content/posts';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../../../site.config';

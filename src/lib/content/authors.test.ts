@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { getAuthorSlug } from "./markdown";
+import { getAuthorSlug } from "./authors";
 
-describe("markdown utils", () => {
+describe("content/authors", () => {
   describe("getAuthorSlug", () => {
     test("creates stable, URL-safe slugs for author names", () => {
       expect(getAuthorSlug("Amytis Team")).toBe("amytis-team");

@@ -30,6 +30,9 @@ import * as realMarkdown from '../../src/lib/markdown';
 import * as realBooks from '../../src/lib/content/books';
 import * as realFlows from '../../src/lib/content/flows';
 import * as realNotes from '../../src/lib/content/notes';
+import * as realPosts from '../../src/lib/content/posts';
+import * as realAuthors from '../../src/lib/content/authors';
+import * as realSeries from '../../src/lib/content/series';
 import * as realSeriesMetadata from '../../src/lib/content/series-metadata';
 import * as realUrls from '../../src/lib/urls';
 
@@ -43,6 +46,9 @@ const snapshotUrls = { ...realUrls };
 const snapshotBooks = { ...realBooks };
 const snapshotFlows = { ...realFlows };
 const snapshotNotes = { ...realNotes };
+const snapshotPosts = { ...realPosts };
+const snapshotAuthors = { ...realAuthors };
+const snapshotSeries = { ...realSeries };
 const snapshotSeriesMetadata = { ...realSeriesMetadata };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
@@ -195,6 +201,38 @@ beforeAll(() => {
     getRecentNotes: () => [],
   }));
 
+  mock.module('@/lib/content/posts', () => ({
+    ...snapshotPosts,
+    getAllPosts: () => mockedPosts.filter(p => !(process.env.NODE_ENV === 'production' && p.draft)),
+    getListingPosts: () => [],
+    getPostBySlug: () => null,
+    getPostsByTag: () => [],
+    getFeaturedPosts: () => [],
+    getAllPages: () => [],
+    getPageBySlug: () => null,
+  }));
+
+  mock.module('@/lib/content/authors', () => ({
+    ...snapshotAuthors,
+    getAllAuthors: () => ({}),
+    getPostsByAuthor: () => [],
+    resolveAuthorParam: () => null,
+    getAuthorSlug: (name: string) =>
+      name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+  }));
+
+  mock.module('@/lib/content/series', () => ({
+    ...snapshotSeries,
+    getAllSeries: () => mockedSeries,
+    getSeriesData: (slug: string) => mockedSeriesData[slug] ?? null,
+    getSeriesPosts: () => [],
+    getFeaturedSeries: () => ({}),
+    getSeriesLatestPostDate: () => '',
+    resolveSeriesAuthors: () => [],
+    getCollectionPosts: () => [],
+    getCollectionsForPost: () => [],
+  }));
+
   mock.module('@/lib/content/series-metadata', () => ({
     ...snapshotSeriesMetadata,
     getSeriesAuthors: () => [],
@@ -223,6 +261,9 @@ afterAll(() => {
   mock.module('@/lib/content/books', () => snapshotBooks);
   mock.module('@/lib/content/flows', () => snapshotFlows);
   mock.module('@/lib/content/notes', () => snapshotNotes);
+  mock.module('@/lib/content/posts', () => snapshotPosts);
+  mock.module('@/lib/content/authors', () => snapshotAuthors);
+  mock.module('@/lib/content/series', () => snapshotSeries);
   mock.module('@/lib/content/series-metadata', () => snapshotSeriesMetadata);
   mock.module('@/lib/urls', () => snapshotUrls);
 });

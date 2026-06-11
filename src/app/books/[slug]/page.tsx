@@ -1,4 +1,4 @@
-import { getAuthorSlug } from '@/lib/markdown';
+import { getAuthorSlug } from '@/lib/content/authors';
 import { getBookData, getAllBooks, type BookTocSection, type BookChapterRef } from '@/lib/content/books';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';

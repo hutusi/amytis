@@ -1,4 +1,4 @@
-import { getAllPosts } from '@/lib/markdown';
+import { getAllPosts } from '@/lib/content/posts';
 import { siteConfig } from '../../../../site.config';
 import PostCard from '@/components/PostCard';
 import Pagination from '@/components/Pagination';

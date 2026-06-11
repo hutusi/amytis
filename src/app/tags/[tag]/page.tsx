@@ -1,4 +1,5 @@
-import { getAllTags, getPostsByTag } from '@/lib/markdown';
+import { getAllTags } from '@/lib/markdown';
+import { getPostsByTag } from '@/lib/content/posts';
 import { getFlowsByTag } from '@/lib/content/flows';
 import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';

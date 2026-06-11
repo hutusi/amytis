@@ -7,7 +7,7 @@ import BrowserDetectionBanner from "@/components/BrowserDetectionBanner";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { getAllSeries, getSeriesData } from '@/lib/markdown';
+import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import { getAllBooks } from '@/lib/content/books';
 import { resolveLocale } from "@/lib/i18n";
 import "./globals.css";

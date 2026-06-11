@@ -1,4 +1,4 @@
-import { getAllPosts } from '@/lib/markdown';
+import { getAllPosts } from '@/lib/content/posts';
 import { getAllNotes } from '@/lib/content/notes';
 import { getAllFlows } from '@/lib/content/flows';
 import { getAllBooks, getBookChapter } from '@/lib/content/books';

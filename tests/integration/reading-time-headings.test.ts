@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getAllPosts, getPostBySlug } from "../../src/lib/markdown";
+import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Reading Time & Headings", () => {
   test("posts have a positive whole-minute readingMinutes", () => {

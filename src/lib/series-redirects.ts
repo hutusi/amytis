@@ -1,4 +1,4 @@
-import { getAllSeries, getSeriesData } from '@/lib/markdown';
+import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import type { PostData } from '@/lib/content/types';
 
 export function safeDecodeParam(param: string): string {

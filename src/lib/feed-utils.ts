@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeStringify from 'rehype-stringify';
-import { getAllPosts } from './markdown';
+import { getAllPosts } from './content/posts';
 import { getAllFlows } from './content/flows';
 import { siteConfig } from '../../site.config';
 import { getPostUrl, getFlowUrl } from './urls';

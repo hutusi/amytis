@@ -1,4 +1,5 @@
-import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors } from '@/lib/content/series';
+import { getAuthorSlug } from '@/lib/content/authors';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';

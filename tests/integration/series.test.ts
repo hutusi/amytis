@@ -1,14 +1,11 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
+import { getSeriesContentEntries } from "../../src/lib/content/series-metadata";
 import { parseRstDocument, RstParseError } from "../../src/lib/rst";
-import {
-  getAllSeries,
-  getAdjacentPosts,
-  getSeriesData,
-  getSeriesLatestPostDate,
-  getSeriesPosts,
-  getFeaturedPosts,
-  getFeaturedSeries,
-} from "../../src/lib/markdown";
+import { getAdjacentPosts } from '../../src/lib/markdown';
+import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries } from '../../src/lib/content/series';
+import { getFeaturedPosts } from '../../src/lib/content/posts';
 
 describe("Integration: Series", () => {
   test("getAllSeries returns non-empty record with known slugs", () => {
@@ -177,5 +174,30 @@ describe("Integration: Series", () => {
     Object.keys(featured).forEach((slug) => {
       expect(all).toHaveProperty(slug);
     });
+  });
+});
+
+describe("Integration: series format invariants", () => {
+  test("a series mixing rST and Markdown posts throws at build time", () => {
+    // Strict-build invariant: mixed-format series must fail the export.
+    const slug = "__test-mixed-format__";
+    const seriesDir = path.join(process.cwd(), "content", "series", slug);
+    fs.mkdirSync(seriesDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(seriesDir, "index.mdx"),
+      ["---", 'title: "Mixed Series"', "---", "", "Index", ""].join("\n"),
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(seriesDir, "stray.rst"),
+      ["Stray rST Post", "**************", "", "Body", ""].join("\n"),
+      "utf8",
+    );
+
+    try {
+      expect(() => getSeriesContentEntries(slug)).toThrow(/mixes markdown and rst files/);
+    } finally {
+      fs.rmSync(seriesDir, { recursive: true, force: true });
+    }
   });
 });

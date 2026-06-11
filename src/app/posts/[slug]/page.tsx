@@ -1,4 +1,6 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, getCollectionsForPost } from '@/lib/markdown';
+import { getRelatedPosts, getAdjacentPosts, buildSlugRegistry, getBacklinks } from '@/lib/markdown';
+import { getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
+import { getPostBySlug, getAllPosts } from '@/lib/content/posts';
 import type { PostData } from '@/lib/content/types';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';

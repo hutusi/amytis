@@ -1,4 +1,4 @@
-import { getAllSeries, getSeriesData, getSeriesLatestPostDate, resolveSeriesAuthors } from '@/lib/markdown';
+import { getAllSeries, getSeriesData, getSeriesLatestPostDate, resolveSeriesAuthors } from '@/lib/content/series';
 import Link from 'next/link';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';

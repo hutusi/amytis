@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import SeriesPage from "@/app/series/[slug]/page";
 import { renderAsync } from "@/test-utils/render";
-import { getSeriesData, getSeriesPosts } from "@/lib/markdown";
+import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
 import { t } from "@/lib/i18n";
 import { getPostUrl } from "@/lib/urls";
 

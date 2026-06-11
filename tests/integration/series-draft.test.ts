@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getSeriesData, getAllSeries } from "../../src/lib/markdown";
+import { getSeriesData, getAllSeries } from '../../src/lib/content/series';
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Series Draft Support", () => {

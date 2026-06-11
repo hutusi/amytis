@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getPostBySlug } from "../../src/lib/markdown";
+import { getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Markdown Features", () => {
   test("should correctly load multilingual post", () => {
