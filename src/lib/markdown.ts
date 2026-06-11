@@ -6,6 +6,13 @@ import GithubSlugger from 'github-slugger';
 import { z } from 'zod';
 import { getPostUrl } from './urls';
 import { byDateAsc, byDateDesc } from './sort';
+import {
+  calculateReadingMinutes,
+  calculateWordCount,
+  generateExcerpt,
+  getHeadings,
+  type Heading,
+} from './text-metrics';
 import { parseRstDocument, RstParseError } from './rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from './rst-renderer';
 
@@ -88,11 +95,9 @@ const PostSchema = z.object({
   }
 });
 
-export interface Heading {
-  id: string;
-  text: string;
-  level: number;
-}
+// Heading now lives in text-metrics.ts (where it is produced); re-exported
+// here until the content/ module split moves PostData consumers over.
+export type { Heading };
 
 export interface ExternalLink {
   name: string;
@@ -263,90 +268,6 @@ function shouldUsePythonRstRenderer(): boolean {
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '1') return true;
   if (process.env.AMYTIS_ENABLE_PYTHON_RST === '0') return false;
   return process.env.NODE_ENV !== 'test';
-}
-
-// Shared text-stripping + tokenization used by both `calculateReadingMinutes`
-// and `calculateWordCount`. Both metrics need the same view of "what counts
-// as a word," so funnel them through a single source of truth.
-function countContentTokens(content: string): { latinWords: number; hanChars: number } {
-  const text = content
-    .replace(/<\/?[^>]+(>|$)/g, "")
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/`[^`]*`/g, "")
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[#*_~>\-[\]()]/g, " ");
-  return countTokenizedText(text);
-}
-
-function countTokenizedText(text: string): { latinWords: number; hanChars: number } {
-  const hanChars = (text.match(HAN_CHAR_RE) || []).length;
-  const latinWords = (text.match(LATIN_WORD_RE) || []).length;
-  return { latinWords, hanChars };
-}
-
-// Han character ranges: CJK Unified Ideographs Extension A, CJK Unified
-// Ideographs, CJK Compatibility Ideographs.
-const HAN_CHAR_RE = /[㐀-䶿一-鿿豈-﫿]/g;
-// Latin word: alphanumeric runs allowing apostrophes/hyphens between runs.
-const LATIN_WORD_RE = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
-
-/**
- * Estimated minutes-to-read, ceiled to a whole minute and floored at 1.
- * Returns a raw number so layouts can localize via `t('reading_time')`
- * — store-as-number rather than pre-baked "N min read" string lets
- * the locale switch take effect at render time.
- */
-export function calculateReadingMinutes(content: string): number {
-  const wordsPerMinute = 200;
-  const hanCharsPerMinute = 300;
-  const { latinWords, hanChars } = countContentTokens(content);
-  const estimatedMinutes = (latinWords / wordsPerMinute) + (hanChars / hanCharsPerMinute);
-  return Math.max(1, Math.ceil(estimatedMinutes));
-}
-
-/**
- * Aggregate word count: Latin word matches plus Han characters.
- * Han is counted per-character (the convention in Chinese typography
- * — "字数" literally means "character count") while Latin counts per
- * whitespace-bounded token. Returns 0 for empty input.
- */
-export function calculateWordCount(content: string): number {
-  const { latinWords, hanChars } = countContentTokens(content);
-  return latinWords + hanChars;
-}
-
-
-export function generateExcerpt(content: string): string {
-  let plain = content.replace(/^#+\s+/gm, '');
-  plain = plain.replace(/```[\s\S]*?```/g, '');
-  plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
-  plain = plain.replace(/`([^`]+)`/g, '$1');
-  plain = plain.replace(/^>\s+/gm, '');
-  plain = plain.replace(/\s+/g, ' ').trim();
-  
-  if (plain.length <= 160) {
-    return plain;
-  }
-  return plain.slice(0, 160).trim() + '...';
-}
-
-export function getHeadings(content: string): Heading[] {
-  const regex = /^(#{2,3})\s+(.*)$/gm;
-  const headings: Heading[] = [];
-  const slugger = new GithubSlugger();
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    const level = match[1].length;
-    const text = match[2].trim();
-    const id = slugger.slug(text);
-    
-    headings.push({ id, text, level });
-  }
-  return headings;
 }
 
 /**

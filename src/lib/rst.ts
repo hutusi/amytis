@@ -1,10 +1,12 @@
 import GithubSlugger from 'github-slugger';
+import {
+  calculateReadingMinutes,
+  calculateWordCount,
+  getHeadings,
+  type Heading,
+} from './text-metrics';
 
-export interface RstHeading {
-  id: string;
-  text: string;
-  level: number;
-}
+export type RstHeading = Heading;
 
 export interface RstMetadata {
   date?: string;
@@ -608,48 +610,6 @@ export function rstToMarkdown(body: string): string {
   }
 
   return out.join('\n').trim();
-}
-
-function calculateReadingMinutes(content: string): number {
-  const wordsPerMinute = 200;
-  const hanCharsPerMinute = 300;
-  const { latinWords, hanChars } = countRstTokens(content);
-  const estimatedMinutes = (latinWords / wordsPerMinute) + (hanChars / hanCharsPerMinute);
-  return Math.max(1, Math.ceil(estimatedMinutes));
-}
-
-// Shared token counter — both reading-minutes and word-count need the same
-// view of what counts as a word so they never disagree on the same input.
-function countRstTokens(content: string): { latinWords: number; hanChars: number } {
-  const text = content
-    .replace(/<\/?[^>]+(>|$)/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]*`/g, '')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[#*_~>\-[\]()]/g, ' ');
-  const hanChars = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWords = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
-  return { latinWords, hanChars };
-}
-
-function calculateWordCount(content: string): number {
-  const { latinWords, hanChars } = countRstTokens(content);
-  return latinWords + hanChars;
-}
-
-function getHeadings(content: string): RstHeading[] {
-  const regex = /^(#{2,3})\s+(.*)$/gm;
-  const headings: RstHeading[] = [];
-  const slugger = new GithubSlugger();
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(content)) !== null) {
-    const level = match[1].length;
-    const text = match[2].trim();
-    headings.push({ id: slugger.slug(text), text, level });
-  }
-  return headings;
 }
 
 export function parseRstDocument(source: string): ParsedRstDocument {

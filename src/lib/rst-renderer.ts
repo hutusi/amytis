@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { RstMetadata, RstParseError } from './rst';
+import { calculateReadingMinutesFromText, calculateWordCountFromText } from './text-metrics';
 
 export interface PythonRstHeading {
   id: string;
@@ -347,23 +348,6 @@ export function normalizePythonRstMetadata(metadata: Record<string, unknown>): R
   }
 
   return normalized;
-}
-
-function calculateReadingMinutesFromText(text: string): number {
-  const wordsPerMinute = 200;
-  const hanCharsPerMinute = 300;
-
-  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
-
-  const estimatedMinutes = (latinWordCount / wordsPerMinute) + (hanCharCount / hanCharsPerMinute);
-  return Math.max(1, Math.ceil(estimatedMinutes));
-}
-
-function calculateWordCountFromText(text: string): number {
-  const hanCharCount = (text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g) || []).length;
-  const latinWordCount = (text.match(/[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*/g) || []).length;
-  return latinWordCount + hanCharCount;
 }
 
 export function validatePythonRstResult(result: PythonRstRenderResult, filePath: string): void {

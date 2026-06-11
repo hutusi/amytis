@@ -141,6 +141,7 @@ Integrations:
 - Flows: `getAllFlows`, `getFlowBySlug`, `getFlowsByYear`, `getFlowsByMonth`
 - Notes: `getAllNotes`, `getNoteBySlug`, `getNotesByTag`
 - Discovery: `buildSlugRegistry`, `getBacklinks`, `getAllTags`, `getAllAuthors`
+- Text metrics: `src/lib/text-metrics.ts` owns reading-time, word-count, excerpt, and heading extraction for **all** formats. The Markdown pipeline, the JS rST fallback (`rst.ts`), and the Python rST renderer (`rst-renderer.ts`, via the `…FromText` plain-text variants) share its tokenizer and pacing constants, so the metrics can never disagree across pipelines.
 
 ## Code Block Highlighting
 
