@@ -13,6 +13,7 @@ import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { getPostsBasePath } from '@/lib/urls';
 import { prefixedPageParams, resolveSeriesListingPrefix } from '@/lib/route-aliases';
+import { paginate } from '@/lib/pagination';
 
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
@@ -64,13 +65,9 @@ export default async function PrefixPageRoute({
 
   // Custom posts basePath listing
   if (prefix === basePath && basePath !== 'posts') {
-    const allPosts = getListingPosts();
-    const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
-
-    if (page > totalPages) notFound();
-
-    const start = (page - 1) * POST_PAGE_SIZE;
-    const posts = allPosts.slice(start, start + POST_PAGE_SIZE);
+    const slice = paginate(getListingPosts(), page, POST_PAGE_SIZE);
+    if (!slice) notFound();
+    const { items: posts, totalPages } = slice;
 
     return (
       <div className="layout-main">
@@ -97,11 +94,9 @@ export default async function PrefixPageRoute({
       notFound();
     }
 
-    const totalPages = Math.ceil(allPosts.length / SERIES_PAGE_SIZE);
-    if (page > totalPages) notFound();
-
-    const start = (page - 1) * SERIES_PAGE_SIZE;
-    const posts = allPosts.slice(start, start + SERIES_PAGE_SIZE);
+    const slice = paginate(allPosts, page, SERIES_PAGE_SIZE);
+    if (!slice) notFound();
+    const { items: posts, totalPages, start } = slice;
 
     const title = seriesData?.title || matchedSeriesSlug.charAt(0).toUpperCase() + matchedSeriesSlug.slice(1);
     const description = seriesData?.excerpt;

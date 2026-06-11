@@ -11,6 +11,7 @@ import { t, resolveLocale, tWith } from '@/lib/i18n';
 import { getSeriesListUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesPageParams, resolveSeriesParam } from '@/lib/route-aliases';
+import { paginate } from '@/lib/pagination';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -58,11 +59,9 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
     notFound();
   }
 
-  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
-  
-  const start = (page - 1) * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const posts = allPosts.slice(start, end);
+  const slice = paginate(allPosts, page, PAGE_SIZE);
+  if (!slice || page < 2) notFound();
+  const { items: posts, totalPages, start } = slice;
 
   // Fallback title
   const title = seriesData?.title || slug.charAt(0).toUpperCase() + slug.slice(1);
@@ -71,8 +70,6 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
   const authors = resolveSeriesAuthors(slug, allPosts);
 
-  // Calculate the starting index for this page
-  const startIndex = (page - 1) * PAGE_SIZE;
 
   return (
     <div className="layout-main">
@@ -121,7 +118,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
       </header>
 
       {/* Series Catalog */}
-      <SeriesCatalog posts={posts} startIndex={startIndex} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
+      <SeriesCatalog posts={posts} startIndex={start} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
 
       <div className="mt-12">
         <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
