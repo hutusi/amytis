@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isFeatureEnabled } from '@/lib/features';
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -100,13 +101,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const features = siteConfig.features;
-
   // Build series list for navbar (only when series feature is enabled)
   const seriesNavItem = siteConfig.nav.find(item => item.url === '/series');
   const featuredSeries = seriesNavItem?.dropdown;
   let seriesList: { name: string; slug: string }[] = [];
-  if (features?.series?.enabled !== false) {
+  if (isFeatureEnabled('series')) {
     const allSeries = getAllSeries();
     const seriesKeys = Object.keys(allSeries).sort();
     const filteredKeys = featuredSeries && featuredSeries.length > 0
@@ -122,7 +121,7 @@ export default function RootLayout({
   const booksNavItem = siteConfig.nav.find(item => item.url === '/books');
   const featuredBookSlugs = booksNavItem?.dropdown;
   let booksList: { name: string; slug: string }[] = [];
-  if (features?.books?.enabled !== false) {
+  if (isFeatureEnabled('books')) {
     const allBooks = getAllBooks();
     booksList = featuredBookSlugs && featuredBookSlugs.length > 0
       ? allBooks

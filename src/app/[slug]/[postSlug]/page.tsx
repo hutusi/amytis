@@ -1,4 +1,5 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
+import { safeDecodeParam, resolveFromParam } from '@/lib/route-params';
 import { getRelatedPosts, getAdjacentPosts } from '@/lib/content/related';
 import { getAllSeries, getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
 import { getPostBySlug, getAllPosts, getAllPages } from '@/lib/content/posts';
@@ -13,22 +14,8 @@ import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths, validateSer
 import RedirectPage from '@/components/RedirectPage';
 import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
 
-function safeDecodeParam(param: string): string {
-  try {
-    return decodeURIComponent(param);
-  } catch {
-    return param;
-  }
-}
-
 function resolvePostFromParam(rawSlug: string) {
-  const decoded = safeDecodeParam(rawSlug);
-  return (
-    getPostBySlug(decoded) ||
-    getPostBySlug(rawSlug) ||
-    getPostBySlug(decoded.normalize('NFC')) ||
-    getPostBySlug(decoded.normalize('NFD'))
-  );
+  return resolveFromParam(rawSlug, getPostBySlug);
 }
 
 export async function generateStaticParams() {

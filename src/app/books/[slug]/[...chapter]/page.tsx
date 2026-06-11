@@ -6,7 +6,7 @@ import BookLayout from '@/layouts/BookLayout';
 import { resolveLocale } from '@/lib/i18n';
 import { buildBookChapterJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
-import { safeDecodeParam } from '@/lib/series-redirects';
+import { safeDecodeParam } from '@/lib/route-params';
 
 /**
  * The chapter route is a catch-all (`[...chapter]`) so that nested chapter ids

@@ -1,4 +1,5 @@
 import { getAllFlows, getFlowTags } from '@/lib/content/flows';
+import { isFeatureEnabled } from '@/lib/features';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default function FlowsPage() {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const allFlows = getAllFlows();
   const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
   const flows = allFlows.slice(0, PAGE_SIZE);

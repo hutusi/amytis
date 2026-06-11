@@ -1,4 +1,5 @@
 import { getAllFlows, getFlowsByMonth, getFlowTags } from '@/lib/content/flows';
+import { isFeatureEnabled } from '@/lib/features';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -8,7 +9,7 @@ import PageHeader from '@/components/PageHeader';
 import FlowContent from '@/components/FlowContent';
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ year: '_', month: '_' }];
+  if (!isFeatureEnabled('flow')) return [{ year: '_', month: '_' }];
   const allFlows = getAllFlows();
   if (allFlows.length === 0) return [{ year: '_', month: '_' }];
   const monthSet = new Set(allFlows.map(f => {
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
 }
 
 export default async function FlowsMonthPage({ params }: { params: Promise<{ year: string; month: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { year, month } = await params;
   const flows = getFlowsByMonth(year, month);
   if (flows.length === 0) notFound();

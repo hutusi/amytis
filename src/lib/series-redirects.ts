@@ -1,14 +1,6 @@
 import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import type { PostData } from '@/lib/content/types';
 
-export function safeDecodeParam(param: string): string {
-  try {
-    return decodeURIComponent(param);
-  } catch {
-    return param;
-  }
-}
-
 function normalizeRedirectPath(path: string): string | null {
   const trimmed = path.trim();
   if (!trimmed) return null;

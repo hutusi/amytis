@@ -1,4 +1,5 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
+import { isFeatureEnabled } from '@/lib/features';
 import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/content/flows';
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
@@ -14,7 +15,7 @@ import { resolveCommentable } from '@/lib/comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ year: '_', month: '_', day: '_' }];
+  if (!isFeatureEnabled('flow')) return [{ year: '_', month: '_', day: '_' }];
   const allFlows = getAllFlows();
   if (allFlows.length === 0) return [{ year: '_', month: '_', day: '_' }];
   return allFlows.map(flow => {
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
 }
 
 export default async function FlowPage({ params }: { params: Promise<{ year: string; month: string; day: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { year, month, day } = await params;
   const slug = `${year}/${month}/${day}`;
   const flow = getFlowBySlug(slug);

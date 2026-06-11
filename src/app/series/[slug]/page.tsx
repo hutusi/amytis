@@ -10,7 +10,8 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
-import { findSeriesByRedirectFrom, safeDecodeParam } from '@/lib/series-redirects';
+import { findSeriesByRedirectFrom } from '@/lib/series-redirects';
+import { safeDecodeParam } from '@/lib/route-params';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 

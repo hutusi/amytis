@@ -1,4 +1,6 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
+import { safeDecodeParam } from '@/lib/route-params';
+import { isFeatureEnabled } from '@/lib/features';
 import { getAllNotes, getNoteBySlug, getAdjacentNotes } from '@/lib/content/notes';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -13,7 +15,7 @@ import { resolveCommentable } from '@/lib/comments';
 import Link from 'next/link';
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ slug: '_' }];
+  if (!isFeatureEnabled('flow')) return [{ slug: '_' }];
   const notes = getAllNotes();
   if (notes.length === 0) return [{ slug: '_' }];
   // Work around Next dev static-param checks for percent-encoded Unicode paths
@@ -29,10 +31,6 @@ export function generateStaticParams() {
 }
 
 export const dynamicParams = false;
-
-function safeDecodeParam(param: string): string {
-  try { return decodeURIComponent(param); } catch { return param; }
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
@@ -52,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { slug: rawSlug } = await params;
   const slug = safeDecodeParam(rawSlug);
   const note = getNoteBySlug(slug) ?? getNoteBySlug(rawSlug);

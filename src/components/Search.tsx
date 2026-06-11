@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { isFeatureEnabled } from '@/lib/features';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -22,10 +23,10 @@ interface DisplayResult {
 
 const CONTENT_TYPES: ContentType[] = [
   'All',
-  ...(siteConfig.features?.posts?.enabled !== false ? ['Post' as ContentType] : []),
-  ...(siteConfig.features?.flow?.enabled !== false ? ['Flow' as ContentType] : []),
-  ...(siteConfig.features?.books?.enabled !== false ? ['Book' as ContentType] : []),
-  ...(siteConfig.features?.flow?.enabled !== false ? ['Note' as ContentType] : []),
+  ...(isFeatureEnabled('posts') ? ['Post' as ContentType] : []),
+  ...(isFeatureEnabled('flow') ? ['Flow' as ContentType] : []),
+  ...(isFeatureEnabled('books') ? ['Book' as ContentType] : []),
+  ...(isFeatureEnabled('flow') ? ['Note' as ContentType] : []),
 ];
 
 const CONTENT_TYPE_FEATURE: Record<Exclude<ContentType, 'All'>, keyof typeof siteConfig.features> = {

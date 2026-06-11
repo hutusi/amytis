@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import { siteConfig } from '../../../site.config';
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function GraphPage() {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   return (
     <div className="layout-main">
       <FlowHubTabs subtitle={t('graph_subtitle')} />

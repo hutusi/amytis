@@ -1,4 +1,5 @@
 import { getAllNotes, getNoteTags } from '@/lib/content/notes';
+import { isFeatureEnabled } from '@/lib/features';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -10,7 +11,7 @@ import FlowHubTabs from '@/components/FlowHubTabs';
 const PAGE_SIZE = siteConfig.pagination.notes ?? 20;
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ page: '2' }];
+  if (!isFeatureEnabled('flow')) return [{ page: '2' }];
   const allNotes = getAllNotes();
   const totalPages = Math.ceil(allNotes.length / PAGE_SIZE);
   const pageCount = Math.max(1, totalPages - 1);
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 }
 
 export default async function NotesPaginatedPage({ params }: { params: Promise<{ page: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { page: pageStr } = await params;
   const page = parseInt(pageStr, 10);
   const allNotes = getAllNotes();

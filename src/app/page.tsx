@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isFeatureEnabled } from '@/lib/features';
 import { getAllSeries, getFeaturedSeries, getSeriesData } from '@/lib/content/series';
 import { getAllPosts, getFeaturedPosts } from '@/lib/content/posts';
 import { getAllFlows, getRecentFlows } from '@/lib/content/flows';
@@ -55,19 +56,19 @@ export default function Home() {
   const latestPostsMax = sections.find(s => s.id === 'latest-posts')?.maxItems ?? siteConfig.pagination.posts;
 
   // Load data only for sections that are both enabled on homepage and globally
-  const allSeries = has('featured-series') && features?.series?.enabled !== false ? getFeaturedSeries() : {};
-  const featuredBooks = has('featured-books') && features?.books?.enabled !== false ? getFeaturedBooks() : [];
-  const recentFlows = has('recent-flows') && features?.flow?.enabled !== false
+  const allSeries = has('featured-series') && isFeatureEnabled('series') ? getFeaturedSeries() : {};
+  const featuredBooks = has('featured-books') && isFeatureEnabled('books') ? getFeaturedBooks() : [];
+  const recentFlows = has('recent-flows') && isFeatureEnabled('flow')
     ? getRecentFlows(recentFlowsMax)
     : [];
   const needsPosts = has('featured-posts') || has('latest-posts');
-  const allPosts = needsPosts && features?.posts?.enabled !== false ? getAllPosts() : [];
-  const featuredPosts = has('featured-posts') && features?.posts?.enabled !== false ? getFeaturedPosts() : [];
+  const allPosts = needsPosts && isFeatureEnabled('posts') ? getAllPosts() : [];
+  const featuredPosts = has('featured-posts') && isFeatureEnabled('posts') ? getFeaturedPosts() : [];
 
   const posts = allPosts.slice(0, latestPostsMax);
 
   // Prepare serializable data for client components
-  const seriesItems: SeriesItem[] = has('featured-series') && features?.series?.enabled !== false
+  const seriesItems: SeriesItem[] = has('featured-series') && isFeatureEnabled('series')
     ? Object.keys(allSeries).map(name => {
         const seriesPosts = allSeries[name];
         const slug = name; // name is already the series directory slug
@@ -85,7 +86,7 @@ export default function Home() {
       })
     : [];
 
-  const bookItems: BookItem[] = has('featured-books') && features?.books?.enabled !== false
+  const bookItems: BookItem[] = has('featured-books') && isFeatureEnabled('books')
     ? featuredBooks.map(b => ({
         slug: b.slug,
         title: b.title,
@@ -98,7 +99,7 @@ export default function Home() {
       }))
     : [];
 
-  const recentNoteItems: RecentNoteItem[] = has('recent-flows') && features?.flow?.enabled !== false
+  const recentNoteItems: RecentNoteItem[] = has('recent-flows') && isFeatureEnabled('flow')
     ? recentFlows.map(f => ({
         slug: f.slug,
         date: f.date,
@@ -107,7 +108,7 @@ export default function Home() {
       }))
     : [];
 
-  const featuredItems: FeaturedPost[] = has('featured-posts') && features?.posts?.enabled !== false
+  const featuredItems: FeaturedPost[] = has('featured-posts') && isFeatureEnabled('posts')
     ? featuredPosts.map(p => ({
         slug: p.slug,
         title: p.title,
@@ -123,17 +124,17 @@ export default function Home() {
     : [];
 
   // Stats for hero navigation chips
-  const heroPostCount = has('hero') && features?.posts?.enabled !== false
+  const heroPostCount = has('hero') && isFeatureEnabled('posts')
     ? (needsPosts ? allPosts : getAllPosts()).length
     : undefined;
-  const heroSeriesCount = has('hero') && features?.series?.enabled !== false ? Object.keys(getAllSeries()).length : undefined;
-  const heroBookCount = has('hero') && features?.books?.enabled !== false ? getAllBooks().length : undefined;
-  const heroFlowCount = has('hero') && features?.flow?.enabled !== false ? getAllFlows().length : undefined;
+  const heroSeriesCount = has('hero') && isFeatureEnabled('series') ? Object.keys(getAllSeries()).length : undefined;
+  const heroBookCount = has('hero') && isFeatureEnabled('books') ? getAllBooks().length : undefined;
+  const heroFlowCount = has('hero') && isFeatureEnabled('flow') ? getAllFlows().length : undefined;
 
   const renderSection = (section: HomepageSection) => {
     switch (section.id) {
       case 'featured-series':
-        if (features?.series?.enabled === false) return null;
+        if (!isFeatureEnabled('series')) return null;
         return (
           <CuratedSeriesSection
             key="featured-series"
@@ -143,7 +144,7 @@ export default function Home() {
           />
         );
       case 'featured-books':
-        if (features?.books?.enabled === false) return null;
+        if (!isFeatureEnabled('books')) return null;
         return (
           <SelectedBooksSection
             key="featured-books"
@@ -153,7 +154,7 @@ export default function Home() {
           />
         );
       case 'featured-posts':
-        if (features?.posts?.enabled === false) return null;
+        if (!isFeatureEnabled('posts')) return null;
         return (
           <FeaturedStoriesSection
             key="featured-posts"
@@ -163,10 +164,10 @@ export default function Home() {
           />
         );
       case 'latest-posts':
-        if (features?.posts?.enabled === false) return null;
+        if (!isFeatureEnabled('posts')) return null;
         return <div key="latest-posts" className="mb-12 sm:mb-24"><LatestWritingSection posts={posts} /></div>;
       case 'recent-flows':
-        if (features?.flow?.enabled === false) return null;
+        if (!isFeatureEnabled('flow')) return null;
         return <div key="recent-flows" className="mb-12 sm:mb-24"><RecentNotesSection notes={recentNoteItems} /></div>;
       default:
         return null;
@@ -182,7 +183,7 @@ export default function Home() {
   // Show a divider after the two-column section when series follows it
   const divideBeforeSeries = pairLatestFlows
     && has('featured-series')
-    && features?.series?.enabled !== false
+    && isFeatureEnabled('series')
     && seriesItems.length > 0;
 
   const renderList: ReactNode[] = [];
@@ -193,8 +194,8 @@ export default function Home() {
 
     if (pairLatestFlows && (section.id === 'latest-posts' || section.id === 'recent-flows')) {
       skippedIds.add(section.id === 'latest-posts' ? 'recent-flows' : 'latest-posts');
-      const showLatest = features?.posts?.enabled !== false;
-      const showFlows = features?.flow?.enabled !== false && recentNoteItems.length > 0;
+      const showLatest = isFeatureEnabled('posts');
+      const showFlows = isFeatureEnabled('flow') && recentNoteItems.length > 0;
       if (showLatest || showFlows) {
         renderList.push(
           <div key="latest-flows-combined" className={`grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 ${divideBeforeSeries ? 'mb-8 sm:mb-16' : 'mb-12 sm:mb-24'}`}>

@@ -1,4 +1,5 @@
 import { getAllFlows, getFlowTags } from '@/lib/content/flows';
+import { isFeatureEnabled } from '@/lib/features';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -9,7 +10,7 @@ import FlowHubTabs from '@/components/FlowHubTabs';
 const PAGE_SIZE = siteConfig.pagination.flows;
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ page: '2' }];
+  if (!isFeatureEnabled('flow')) return [{ page: '2' }];
   const allFlows = getAllFlows();
   const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
 
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 }
 
 export default async function FlowsPaginatedPage({ params }: { params: Promise<{ page: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { page: pageStr } = await params;
   const page = parseInt(pageStr, 10);
   const allFlows = getAllFlows();
