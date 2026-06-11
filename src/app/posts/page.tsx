@@ -7,7 +7,7 @@ import { t, resolveLocale, tWith } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath } from '@/lib/urls';
 import { notFound } from 'next/navigation';
-import { paginate } from '@/lib/pagination';
+import { firstPage } from '@/lib/pagination';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function AllPostsPage() {
   if (getPostsBasePath() !== 'posts') notFound();
   const allPosts = getListingPosts();
-  const { items: posts, page, totalPages } = paginate(allPosts, 1, PAGE_SIZE)!;
+  const { items: posts, page, totalPages } = firstPage(allPosts, PAGE_SIZE);
 
   return (
     <div className="layout-main">

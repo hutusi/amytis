@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getPostUrl } from '../urls';
+import { getPostUrl, getFlowUrl, getNoteUrl, getSeriesUrl } from '../urls';
 import { seriesDirectory } from './io';
 import { createMemo, createProdMemo } from './cache';
 import { getAllPosts } from './posts';
@@ -77,19 +77,19 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
     );
 
     getAllFlows().forEach(f =>
-      map.set(f.slug, { url: `/flows/${f.slug}`, type: 'flow', title: f.title })
+      map.set(f.slug, { url: getFlowUrl(f.slug), type: 'flow', title: f.title })
     );
 
     getAllNotes().forEach(n => {
       if (map.has(n.slug)) {
         console.warn(`[slugRegistry] Note slug "${n.slug}" conflicts with an existing entry.`);
       }
-      map.set(n.slug, { url: `/notes/${n.slug}`, type: 'note', title: n.title });
+      map.set(n.slug, { url: getNoteUrl(n.slug), type: 'note', title: n.title });
       n.aliases.forEach(a => {
         if (map.has(a)) {
           console.warn(`[slugRegistry] Note alias "${a}" (→ ${n.slug}) conflicts with existing slug; skipping.`);
         } else {
-          map.set(a, { url: `/notes/${n.slug}`, type: 'note', title: n.title });
+          map.set(a, { url: getNoteUrl(n.slug), type: 'note', title: n.title });
         }
       });
     });
@@ -100,7 +100,7 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
         const slug = entry.name;
         const seriesData = getSeriesData(slug);
         map.set(slug, {
-          url: `/series/${slug}`,
+          url: getSeriesUrl(slug),
           type: 'series',
           title: seriesData?.title || slug,
         });
@@ -165,8 +165,8 @@ function buildBacklinkIndex(): Map<string, BacklinkSource[]> {
   };
 
   getAllPosts().forEach(p => addBacklinks(p.content, p.slug, p.title, 'post', getPostUrl(p)));
-  getAllNotes().forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', `/notes/${n.slug}`));
-  getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', `/flows/${f.slug}`));
+  getAllNotes().forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', getNoteUrl(n.slug)));
+  getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', getFlowUrl(f.slug)));
 
   return index;
 }

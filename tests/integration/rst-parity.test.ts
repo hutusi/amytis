@@ -41,7 +41,7 @@ afterAll(() => {
 
 describe('Integration: rST renderer parity (Python vs JS fallback)', () => {
   parityTest('both paths produce identical metadata for the same document', () => {
-    const jsDoc = parseRstDocument(readFileSync(fixturePath, 'utf8'));
+    const jsDoc = parseRstDocument(readFileSync(/* turbopackIgnore: true */ fixturePath, 'utf8'));
     const pyDoc = renderRstFile(fixturePath, 'posts/getting-started');
 
     expect(pyDoc.metadata).toEqual(jsDoc.metadata);
@@ -56,7 +56,7 @@ describe('Integration: rST renderer parity (Python vs JS fallback)', () => {
   });
 
   parityTest('both paths agree on the title', () => {
-    const jsDoc = parseRstDocument(readFileSync(fixturePath, 'utf8'));
+    const jsDoc = parseRstDocument(readFileSync(/* turbopackIgnore: true */ fixturePath, 'utf8'));
     const pyDoc = renderRstFile(fixturePath, 'posts/getting-started');
 
     expect(pyDoc.title).toBe(jsDoc.title);
@@ -71,7 +71,7 @@ describe('Integration: rST renderer parity (Python vs JS fallback)', () => {
     // must exist in the docutils list, and docutils must always see the
     // document's sections. If the lists ever become identical, tighten this
     // to a full deep-equal.
-    const jsDoc = parseRstDocument(readFileSync(fixturePath, 'utf8'));
+    const jsDoc = parseRstDocument(readFileSync(/* turbopackIgnore: true */ fixturePath, 'utf8'));
     const pyDoc = renderRstFile(fixturePath, 'posts/getting-started');
 
     expect(pyDoc.headings.length).toBeGreaterThan(0);

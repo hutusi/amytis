@@ -1,5 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import { getFlowBySlug, getAllFlows } from '../../src/lib/content/flows';
+import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Flow Title Resolution", () => {
   test("frontmatter title takes priority over H1 and date", () => {
@@ -49,5 +52,40 @@ describe("Integration: Flow Title Resolution", () => {
     expect(flow!.title).toBe("JSDoc type comments");
     // Content should not start with an H1
     expect(flow!.content).not.toMatch(/^\s*#\s+/);
+  });
+});
+
+describe("Integration: Flow visibility parity", () => {
+  test("getFlowBySlug hides draft flows in production (same policy as getAllFlows)", () => {
+    // Create a draft flow on disk; direct slug access must not bypass the
+    // listing filter in production.
+    const dir = path.join(process.cwd(), "content", "flows", "2099", "01");
+    const file = path.join(dir, "31.md");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, ["---", "title: Draft Flow", "date: 2026-01-31", "draft: true", "---", "", "Secret", ""].join("\n"), "utf8");
+
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      expect(getFlowBySlug("2099/01/31")).not.toBeNull(); // visible in dev
+      setEnvVar("NODE_ENV", "production");
+      expect(getFlowBySlug("2099/01/31")).toBeNull(); // hidden in prod
+    } finally {
+      restoreEnvVar("NODE_ENV", originalEnv);
+      fs.rmSync(path.join(process.cwd(), "content", "flows", "2099"), { recursive: true, force: true });
+    }
+  });
+
+  test("getFlowBySlug hides future-dated flows while showFuturePosts is false", () => {
+    const dir = path.join(process.cwd(), "content", "flows", "2098", "01");
+    const file = path.join(dir, "01.md");
+    fs.mkdirSync(dir, { recursive: true });
+    // No frontmatter date — the slug-derived date 2098-01-01 is in the future.
+    fs.writeFileSync(file, ["---", "title: Future Flow", "---", "", "Tomorrow", ""].join("\n"), "utf8");
+
+    try {
+      expect(getFlowBySlug("2098/01/01")).toBeNull();
+    } finally {
+      fs.rmSync(path.join(process.cwd(), "content", "flows", "2098"), { recursive: true, force: true });
+    }
   });
 });

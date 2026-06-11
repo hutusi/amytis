@@ -14,7 +14,7 @@ import { describe, expect, test } from 'bun:test';
 const contentDir = path.join(process.cwd(), 'src', 'lib', 'content');
 
 function localImports(file: string): string[] {
-  const source = fs.readFileSync(path.join(contentDir, file), 'utf8');
+  const source = fs.readFileSync(/* turbopackIgnore: true */ path.join(contentDir, file), 'utf8');
   const imports: string[] = [];
   for (const match of source.matchAll(/from\s+['"]\.\/([\w-]+)['"]/g)) {
     imports.push(`${match[1]}.ts`);

@@ -12,7 +12,7 @@ describe('content/io', () => {
     const offenders: string[] = [];
     for (const name of fs.readdirSync(contentDir)) {
       if (!name.endsWith('.ts') || name.endsWith('.test.ts') || name === 'io.ts') continue;
-      const source = fs.readFileSync(path.join(contentDir, name), 'utf8');
+      const source = fs.readFileSync(/* turbopackIgnore: true */ path.join(contentDir, name), 'utf8');
       if (/fs\.readFileSync/.test(source)) {
         offenders.push(name);
       }

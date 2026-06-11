@@ -121,7 +121,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
       <SeriesCatalog posts={posts} startIndex={start} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
 
       <div className="mt-12">
-        <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
+        <Pagination currentPage={page} totalPages={totalPages} basePath={getSeriesListUrl() + `/${slug}`} />
       </div>
     </div>
   );

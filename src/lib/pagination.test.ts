@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { paginate, paginationStaticParams } from './pagination';
+import { firstPage, paginate, paginationStaticParams } from './pagination';
 
 const items = Array.from({ length: 25 }, (_, i) => i + 1);
 
@@ -47,6 +47,18 @@ describe('pagination', () => {
     test('disabled listings emit the sentinel, honoring a custom one', () => {
       expect(paginationStaticParams(100, 10, { enabled: false })).toEqual([{ page: '2' }]);
       expect(paginationStaticParams(100, 10, { enabled: false, disabledSentinel: '_' })).toEqual([{ page: '_' }]);
+    });
+
+    test('invalid pageSize throws (strict build)', () => {
+      expect(() => paginationStaticParams(10, 0)).toThrow(/Invalid pagination page size/);
+      expect(() => paginationStaticParams(10, -5)).toThrow(/Invalid pagination page size/);
+      expect(() => paginationStaticParams(10, 2.5)).toThrow(/Invalid pagination page size/);
+      expect(() => paginate(items, 1, 0)).toThrow(/Invalid pagination page size/);
+    });
+
+    test('firstPage is always non-null, even for empty listings', () => {
+      expect(firstPage([], 10).items).toEqual([]);
+      expect(firstPage(items, 10).items.length).toBe(10);
     });
 
     test('exact page boundary', () => {

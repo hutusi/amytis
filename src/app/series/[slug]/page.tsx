@@ -8,7 +8,7 @@ import { siteConfig } from '../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
-import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
+import { getPostUrl, getPostUrlInCollection, getSeriesUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesSlugParams, resolveSeriesParam } from '@/lib/route-aliases';
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
       title: resolution.data.title,
-      alternates: { canonical: `${siteUrl}/series/${resolution.canonicalSlug}` },
+      alternates: { canonical: `${siteUrl}${getSeriesUrl(resolution.canonicalSlug)}` },
     };
   }
   const slug = resolution.slug;
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: seriesData.title,
       description: seriesData.excerpt,
       type: 'website',
-      url: `${siteConfig.baseUrl}/series/${slug}`,
+      url: `${siteConfig.baseUrl}${getSeriesUrl(slug)}`,
       siteName: resolveLocale(siteConfig.title),
       images: [{ url: ogImage, width: 1200, height: 630, alt: seriesData.title }],
     },
@@ -74,7 +74,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
   const { slug: rawSlug } = await params;
   const resolution = resolveSeriesParam(rawSlug);
   if (resolution.kind === 'alias') {
-    return <RedirectPage to={`/series/${resolution.canonicalSlug}`} />;
+    return <RedirectPage to={getSeriesUrl(resolution.canonicalSlug)} />;
   }
   const slug = resolution.slug;
 
@@ -190,7 +190,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
       {totalPages > 1 && (
         <div className="mt-12">
-          <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
+          <Pagination currentPage={page} totalPages={totalPages} basePath={getSeriesUrl(slug)} />
         </div>
       )}
     </div>

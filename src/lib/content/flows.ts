@@ -33,6 +33,17 @@ export interface FlowData {
   headings: Heading[];
 }
 
+/** Visibility policy shared by getAllFlows and getFlowBySlug: hide drafts in
+ *  production and future-dated entries while showFuturePosts is off — direct
+ *  slug access must not bypass what listings hide. */
+function isFlowVisible(flow: FlowData): boolean {
+  if (process.env.NODE_ENV === 'production' && flow.draft) return false;
+  if (!siteConfig.posts?.showFuturePosts) {
+    if (new Date(flow.date) > new Date()) return false;
+  }
+  return true;
+}
+
 function parseFlowFile(fullPath: string, slug: string): FlowData {
   const fileContents = readUtf8File(fullPath);
   const { data: rawData, content } = matter(fileContents);
@@ -107,17 +118,11 @@ export function getAllFlows(): FlowData[] {
     }
   }
 
-  return flows
-    .filter(flow => {
-      if (process.env.NODE_ENV === 'production' && flow.draft) return false;
-      if (!siteConfig.posts?.showFuturePosts) {
-        const flowDate = new Date(flow.date);
-        const now = new Date();
-        if (flowDate > now) return false;
-      }
-      return true;
-    })
-    .sort(byDateDesc);
+  return flows.filter(isFlowVisible).sort(byDateDesc);
+}
+
+function visibleOrNull(flow: FlowData): FlowData | null {
+  return isFlowVisible(flow) ? flow : null;
 }
 
 export function getFlowBySlug(slug: string): FlowData | null {
@@ -134,14 +139,14 @@ export function getFlowBySlug(slug: string): FlowData | null {
   // Try flat file
   const mdxPath = path.join(basePath, `${day}.mdx`);
   const mdPath = path.join(basePath, `${day}.md`);
-  if (fs.existsSync(mdxPath)) return parseFlowFile(mdxPath, slug);
-  if (fs.existsSync(mdPath)) return parseFlowFile(mdPath, slug);
+  if (fs.existsSync(mdxPath)) return visibleOrNull(parseFlowFile(mdxPath, slug));
+  if (fs.existsSync(mdPath)) return visibleOrNull(parseFlowFile(mdPath, slug));
 
   // Try folder
   const indexMdx = path.join(basePath, day, 'index.mdx');
   const indexMd = path.join(basePath, day, 'index.md');
-  if (fs.existsSync(indexMdx)) return parseFlowFile(indexMdx, slug);
-  if (fs.existsSync(indexMd)) return parseFlowFile(indexMd, slug);
+  if (fs.existsSync(indexMdx)) return visibleOrNull(parseFlowFile(indexMdx, slug));
+  if (fs.existsSync(indexMd)) return visibleOrNull(parseFlowFile(indexMd, slug));
 
   return null;
 }

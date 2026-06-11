@@ -138,7 +138,7 @@ Integrations:
 
 One module per concern; the dependency direction is acyclic and enforced by `src/lib/content/dependency-graph.test.ts`:
 
-```
+```text
 types → io/cache → series-metadata → parse → posts → series → {related, discovery}
                                           ↘ books / flows / notes (leaf domains)
 ```
