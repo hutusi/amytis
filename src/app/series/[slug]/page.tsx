@@ -1,4 +1,4 @@
-import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors } from '@/lib/content/series';
+import { getSeriesData, getSeriesPosts, getCollectionPosts, resolveSeriesAuthors } from '@/lib/content/series';
 import { getAuthorSlug } from '@/lib/content/authors';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
@@ -10,53 +10,27 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
-import { findSeriesByRedirectFrom } from '@/lib/series-redirects';
-import { safeDecodeParam } from '@/lib/route-params';
+import { seriesSlugParams, resolveSeriesParam } from '@/lib/route-aliases';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
 export async function generateStaticParams() {
-  const allSeries = getAllSeries();
-  const slugs = new Set(Object.keys(allSeries));
-
-  // Also include old slugs from redirectFrom entries at /series/[old-slug].
-  for (const seriesSlug of Object.keys(allSeries)) {
-    const data = getSeriesData(seriesSlug);
-    for (const from of data?.redirectFrom ?? []) {
-      const segments = from.split('/').filter(Boolean);
-      if (segments.length !== 2 || segments[0] !== 'series') continue;
-      if (from === `/series/${seriesSlug}`) continue;
-      slugs.add(segments[1]);
-    }
-  }
-
-  // Work around Next dev static-param checks for percent-encoded Unicode paths
-  // under `output: "export"` — dev server may receive encoded forms of Unicode slugs.
-  if (process.env.NODE_ENV !== 'production') {
-    for (const slug of [...slugs]) {
-      slugs.add(encodeURIComponent(slug));
-    }
-  }
-
-  if (slugs.size === 0) return [{ slug: '_' }];
-  return Array.from(slugs).map((slug) => ({ slug }));
+  return seriesSlugParams();
 }
 
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = safeDecodeParam(rawSlug);
-  const currentPath = `/series/${slug}`;
-
-  const redirect = findSeriesByRedirectFrom(currentPath);
-  if (redirect) {
+  const resolution = resolveSeriesParam(rawSlug);
+  if (resolution.kind === 'alias') {
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
-      title: redirect.data.title,
-      alternates: { canonical: `${siteUrl}/series/${redirect.slug}` },
+      title: resolution.data.title,
+      alternates: { canonical: `${siteUrl}/series/${resolution.canonicalSlug}` },
     };
   }
+  const slug = resolution.slug;
 
   const seriesData = getSeriesData(slug);
 
@@ -98,13 +72,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
-  const slug = safeDecodeParam(rawSlug);
-  const currentPath = `/series/${slug}`;
-
-  const redirect = findSeriesByRedirectFrom(currentPath);
-  if (redirect) {
-    return <RedirectPage to={`/series/${redirect.slug}`} />;
+  const resolution = resolveSeriesParam(rawSlug);
+  if (resolution.kind === 'alias') {
+    return <RedirectPage to={`/series/${resolution.canonicalSlug}`} />;
   }
+  const slug = resolution.slug;
 
   const seriesData = getSeriesData(slug);
   const isCollection = seriesData?.type === 'collection';
