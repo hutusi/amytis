@@ -317,7 +317,7 @@ amytis/
       flows/            # Flow 路由
     components/         # React 组件
     lib/
-      markdown.ts       # 数据访问层
+      content/          # 数据访问层（posts、series、books、flows、notes）
   tests/                # 单元、集成、e2e、工具测试
   packages/
     create-amytis/      # `bun create amytis` 脚手架 CLI

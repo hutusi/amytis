@@ -1,4 +1,5 @@
 import React from 'react';
+import { PROSE_CLASSES } from '@/lib/prose-classes';
 import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import RssFeedWidget from '@/components/RssFeedWidget';
 import Mermaid from '@/components/Mermaid';
@@ -318,15 +319,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     <>
     {latex && <KatexStyles />}
     <ArticleCopyCleaner>
-      <div className="prose prose-lg max-w-none min-w-0 overflow-x-hidden text-foreground
-            prose-headings:font-serif prose-headings:text-heading
-            prose-p:text-foreground prose-p:leading-loose
-            prose-strong:text-heading prose-strong:font-semibold
-            prose-code:bg-muted/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:border prose-code:border-muted/20 prose-code:text-[0.9em] prose-code:font-medium
-            prose-code:before:content-none prose-code:after:content-none
-            prose-blockquote:italic
-            prose-th:text-heading prose-td:text-foreground
-            dark:prose-invert">
+      <div className={PROSE_CLASSES}>
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={rehypePlugins}
