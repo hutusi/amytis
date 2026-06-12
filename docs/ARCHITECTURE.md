@@ -47,10 +47,8 @@ src/app/
   books/page.tsx                    # Books index
   books/[slug]/page.tsx             # Book landing
   books/[slug]/[chapter]/page.tsx   # Book chapter
-  flows/page.tsx                    # Flow index (daily/calendar view)
+  flows/page.tsx                    # Flow index (calendar sidebar + full-content card feed)
   flows/page/[page]/page.tsx        # Flow pagination
-  flows/stream/page.tsx             # Flow stream view (full content, month-grouped)
-  flows/stream/page/[page]/page.tsx # Flow stream pagination
   flows/[year]/page.tsx
   flows/[year]/[month]/page.tsx
   flows/[year]/[month]/[day]/page.tsx
@@ -121,11 +119,11 @@ Post & series surfaces:
 Notes & flows:
 
 - `NoteSidebar`, `TagContentTabs`
-- `FlowContent` — client wrapper for flow pages with tag filtering state
+- `FlowContent` — client wrapper for flow archive pages with tag filtering state
 - `FlowCalendarSidebar` — calendar sidebar with date navigation, browse panel, clickable tag filters
 - `FlowTimelineEntry` — individual flow entry in timeline list
-- `FlowStream` — month-grouped full-content card stream at `/flows/stream`
-- `FlowViewSwitcher` — Daily/Stream pill switcher on flow pages
+- `FlowStream` — month-grouped full-content card feed on the flow index (server)
+- `FlowIndexClient` — client wrapper for the flow index; tag filtering swaps the server-rendered card feed for a compact filtered timeline
 
 Search & discovery:
 
