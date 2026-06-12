@@ -98,7 +98,6 @@ const Noop = { default: () => null };
 mock.module('@/components/PageHeader', () => Noop);
 mock.module('@/components/FlowContent', () => Noop);
 mock.module('@/components/FlowIndexClient', () => Noop);
-mock.module('@/components/FlowViewSwitcher', () => Noop);
 mock.module('@/components/NoteContent', () => Noop);
 mock.module('@/components/FlowCalendarSidebar', () => Noop);
 mock.module('@/components/MarkdownRenderer', () => Noop);
@@ -266,12 +265,6 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params[0]).toEqual({ page: '2' });
     });
 
-    test('flows/stream/page/[page] always returns at least [{ page: "2" }]', async () => {
-      const { generateStaticParams } = await import('../../src/app/flows/stream/page/[page]/page');
-      const params = generateStaticParams();
-      expect(params.length).toBeGreaterThanOrEqual(1);
-      expect(params[0]).toEqual({ page: '2' });
-    });
   });
 
   describe('notes routes', () => {
