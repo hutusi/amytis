@@ -31,16 +31,24 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
 
   return (
     <div>
-      {groups.map(group => (
-        <section key={group.key}>
-          <div className="flex items-center gap-4 mt-12 first:mt-0 mb-6">
-            <h2 className="shrink-0 text-xs font-mono uppercase tracking-[0.2em] text-muted">
+      <div className="relative border-l-2 border-muted/20 pl-6 sm:pl-10 space-y-12">
+        {groups.map(group => (
+          <section key={group.key} className="relative">
+            {/* Month node — hollow accent dot centered on the rail. Offset =
+                left padding + 1px to reach the 2px border's center, then
+                -translate-x-1/2 to center the dot (same math as /archive). */}
+            <div
+              className="absolute -left-[calc(1.5rem+1px)] sm:-left-[calc(2.5rem+1px)] -translate-x-1/2 top-1.5 w-3 h-3 rounded-full bg-background border-2 border-accent/50"
+              aria-hidden="true"
+            />
+            <h2 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-6">
               {group.label}
+              <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-muted/10 rounded px-1.5 py-0.5 align-middle leading-none">
+                {group.flows.length}
+              </span>
             </h2>
-            <div className="flex-1 h-px bg-muted/15" aria-hidden="true" />
-          </div>
 
-          <div className="space-y-8">
+            <div className="space-y-8">
             {group.flows.map(flow => (
               <article
                 key={flow.slug}
@@ -98,9 +106,10 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                 )}
               </article>
             ))}
-          </div>
-        </section>
-      ))}
+            </div>
+          </section>
+        ))}
+      </div>
 
       {pagination && pagination.totalPages > 1 && (
         <div className="mt-12">
