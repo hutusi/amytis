@@ -1,22 +1,39 @@
 import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 
-const CONTAINER_OPENER_RE = /^:::[ \t]+([a-zA-Z][\w-]*)(?:[ \t]+([^\n]+))?[ \t]*$/;
+// Space form: `::: name [optional title]`. The space makes the whole line
+// invisible to remark-directive, so it must always be rewritten.
+const SPACED_OPENER_RE = /^:::[ \t]+([a-zA-Z][\w-]*)(?:[ \t]+([^\n]+))?[ \t]*$/;
+// No-space form WITH a bare title: `:::name Some title`. remark-directive
+// accepts `:::name` but rejects bare text after the name, so without
+// rewriting, the line falls through as literal paragraph text. A bare
+// `:::name` (e.g. `:::code-group`) is already valid directive syntax and a
+// canonical `:::name[title]` must not be touched — the `[^\n[{]` first title
+// character excludes both label (`[`) and attribute (`{`) openers.
+const BARE_TITLE_OPENER_RE = /^:::([a-zA-Z][\w-]*)[ \t]+([^\n[{][^\n]*?)[ \t]*$/;
 const FENCE_OPEN_RE = /^[ \t]*(`{3,}|~{3,})/;
 
 function normalizeContainerLine(line: string): string {
-  return line.replace(
-    CONTAINER_OPENER_RE,
-    (_match, name: string, label: string | undefined) =>
-      label ? `:::${name}[${label.trim()}]` : `:::${name}`,
-  );
+  const spaced = line.match(SPACED_OPENER_RE);
+  if (spaced) {
+    const [, name, label] = spaced;
+    return label ? `:::${name}[${label.trim()}]` : `:::${name}`;
+  }
+  const bareTitle = line.match(BARE_TITLE_OPENER_RE);
+  if (bareTitle) {
+    const [, name, label] = bareTitle;
+    return `:::${name}[${label.trim()}]`;
+  }
+  return line;
 }
 
 /**
- * Pre-process VuePress's relaxed container opener (`::: name [optional title]`)
- * into remark-directive's canonical form (`:::name[title]`). The Markdown spec
- * variant remark-directive recognizes is space-less; the dmla source — and
- * VuePress in general — uses a space-after-colons style with an inline title.
+ * Pre-process VuePress's relaxed container openers into remark-directive's
+ * canonical form (`:::name[title]`). VuePress accepts both a spaced style
+ * (`::: name [optional title]`, used by the dmla source) and a no-space style
+ * with a bare inline title (`:::name Some title`, used by the fenix source);
+ * remark-directive recognizes neither — the spaced form isn't a directive at
+ * all, and bare text after the name disqualifies the no-space form.
  *
  * Skips fenced code blocks (`` ``` `` / `~~~`) so a documentation example that
  * shows VuePress container syntax verbatim doesn't get rewritten as if it were
