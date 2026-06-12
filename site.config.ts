@@ -56,7 +56,9 @@ export const siteConfig = {
     { name: "Books", url: "/books", weight: 4, dropdown: [] },
     { name: "About", url: "/about", weight: 5 },
     { name: "More", url: "", weight: 6, children: [
-      { name: "Archive", url: "/archive" },
+      { name: "Notes", url: "/notes" },
+      { name: "Graph", url: "/graph" },
+      { name: "Archive", url: "/archive", dividerBefore: true },
       { name: "Tags", url: "/tags" },
       { name: "Links", url: "/links" },
       { name: "Subscribe", url: "/subscribe", dividerBefore: true },

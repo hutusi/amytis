@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useState, useEffect } from 'react';
-import { isFeatureEnabled } from '@/lib/features';
+import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
@@ -23,16 +23,6 @@ interface NavbarProps {
   booksList?: NavItem[];
 }
 
-// Map from nav URL to feature key
-const FEATURE_URLS: Partial<Record<string, keyof typeof siteConfig.features>> = {
-  '/posts': 'posts',
-  '/flows': 'flow',
-  '/notes': 'flow',
-  '/graph': 'flow',
-  '/series': 'series',
-  '/books': 'books',
-};
-
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, language } = useLanguage();
   const pathname = usePathname();
@@ -40,16 +30,10 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const navItems = [...siteConfig.nav]
-    .filter(item => {
-      const featureKey = FEATURE_URLS[item.url];
-      if (!featureKey) return true; // not a feature-gated item, always show
-      return isFeatureEnabled(featureKey);
-    })
-    .sort((a, b) => a.weight - b.weight);
+  const navItems = visibleNavItems(siteConfig.nav);
 
   const getLabel = (name: string, url: string): string => {
-    const featureKey = FEATURE_URLS[url];
+    const featureKey = featureLabelKey(url);
     if (featureKey && siteConfig.features?.[featureKey]?.name) {
       return resolveLocaleValue(siteConfig.features[featureKey].name, language);
     }
@@ -59,9 +43,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   };
 
   function isActive(url: string): boolean {
-    if (url === '/flows') {
-      return pathname.startsWith('/flows') || pathname.startsWith('/notes') || pathname.startsWith('/graph');
-    }
+    if (!url) return false;
     if (url === '/') return pathname === '/';
     return pathname.startsWith(url);
   }
@@ -234,12 +216,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                     </button>
                     <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[160px]">
                       <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
-                        {item.children.map((child: NavChildItem) => {
+                        {item.children.map((child: NavChildItem, childIdx: number) => {
                           const ChildComp = child.external ? 'a' : Link;
                           const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
                           return (
                             <Fragment key={child.url}>
-                              {child.dividerBefore && <div className="h-px bg-muted/10 my-1" />}
+                              {child.dividerBefore && childIdx > 0 && <div className="h-px bg-muted/10 my-1" />}
                               <ChildComp
                                 href={child.url}
                                 {...childProps}
@@ -449,12 +431,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </button>
                       {isOpen && (
                         <div className="ml-4 pl-3 border-l-2 border-muted/10 flex flex-col gap-1 mb-1">
-                          {item.children.map((child: NavChildItem) => {
+                          {item.children.map((child: NavChildItem, childIdx: number) => {
                             const ChildComp = child.external ? 'a' : Link;
                             const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
                             return (
                               <Fragment key={child.url}>
-                                {child.dividerBefore && <div className="h-px bg-muted/10 my-1" />}
+                                {child.dividerBefore && childIdx > 0 && <div className="h-px bg-muted/10 my-1" />}
                                 <ChildComp
                                   href={child.url}
                                   {...childProps}
