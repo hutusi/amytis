@@ -1,5 +1,6 @@
 import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
 import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
+import { resolveFromParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
@@ -31,8 +32,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ author: string }> }): Promise<Metadata> {
   const { author: rawAuthor } = await params;
-  const decodedAuthorParam = decodeURIComponent(rawAuthor);
-  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+  const resolvedAuthor = resolveFromParam(rawAuthor, resolveAuthorParam);
 
   if (!resolvedAuthor) {
     return {
@@ -53,8 +53,7 @@ export default async function AuthorPage({
   params: Promise<{ author: string }>;
 }) {
   const { author: rawAuthor } = await params;
-  const decodedAuthorParam = decodeURIComponent(rawAuthor);
-  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+  const resolvedAuthor = resolveFromParam(rawAuthor, resolveAuthorParam);
 
   if (!resolvedAuthor) {
     notFound();
