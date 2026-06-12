@@ -996,8 +996,19 @@ html.dark .rst-rendered aside.admonition-danger {
   vertical-align: middle;
 }
 
+/* Wide display formulas (e.g. large matrices) must not be clipped by the
+ * prose root's overflow-x-hidden: each block becomes its own quiet
+ * horizontal scroll region. Normal-width formulas are unaffected — the
+ * scrollbar only appears when the formula is wider than the column.
+ * (rST math already does this via `.rst-rendered math` above.)
+ * The vertical padding keeps superscripts/descenders clear of the scroll
+ * container's edge so they aren't cut when a scrollbar engages. */
 .katex-display {
   text-align: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 0.25rem 0;
 }
 
 .katex-display > .katex {
