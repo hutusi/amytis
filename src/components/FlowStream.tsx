@@ -32,16 +32,16 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
     <div className="max-w-2xl mx-auto">
       {groups.map(group => (
         <section key={group.key}>
-          <div className="flex items-center gap-4 mt-16 first:mt-0 mb-10">
+          <div className="flex items-center gap-4 mt-12 first:mt-0 mb-6">
             <h2 className="shrink-0 text-xs font-mono uppercase tracking-[0.2em] text-muted">
               {group.label}
             </h2>
             <div className="flex-1 h-px bg-muted/15" aria-hidden="true" />
           </div>
 
-          <div className="space-y-16">
+          <div className="space-y-8">
             {group.flows.map(flow => (
-              <article key={flow.slug}>
+              <article key={flow.slug} className="rounded-xl border border-muted/20 bg-muted/5 p-6 sm:p-8">
                 <header className="mb-4">
                   <Link href={`/flows/${flow.slug}`} className="group/date no-underline">
                     <time
@@ -74,7 +74,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                 />
 
                 {flow.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-5 border-t border-muted/10 pt-4 flex flex-wrap gap-2">
                     {flow.tags.map(tag => (
                       <Tag key={tag} tag={tag} variant="compact" />
                     ))}
@@ -87,7 +87,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
       ))}
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="mt-16">
+        <div className="mt-12">
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}
