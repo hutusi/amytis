@@ -4,9 +4,9 @@ import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { firstPage } from '@/lib/pagination';
-import { t, tWith, resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale } from '@/lib/i18n';
 import NoteContent from '@/components/NoteContent';
-import FlowHubTabs from '@/components/FlowHubTabs';
+import PageHeader from '@/components/PageHeader';
 
 const PAGE_SIZE = siteConfig.pagination.notes ?? 20;
 
@@ -23,7 +23,12 @@ export default function NotesPage() {
 
   return (
     <div className="layout-main">
-      <FlowHubTabs subtitle={tWith('notes_subtitle', { count: allNotes.length })} />
+      <PageHeader
+        titleKey="notes"
+        subtitleKey="notes_subtitle"
+        subtitleParams={{ count: allNotes.length }}
+        className="mb-12"
+      />
       <NoteContent
         notes={notes}
         tags={tags}

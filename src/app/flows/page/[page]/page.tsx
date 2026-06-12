@@ -4,9 +4,10 @@ import { paginate, paginationStaticParams } from '@/lib/pagination';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, tWith, resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale } from '@/lib/i18n';
 import FlowContent from '@/components/FlowContent';
-import FlowHubTabs from '@/components/FlowHubTabs';
+import FlowViewSwitcher from '@/components/FlowViewSwitcher';
+import PageHeader from '@/components/PageHeader';
 
 const PAGE_SIZE = siteConfig.pagination.flows;
 
@@ -40,7 +41,13 @@ export default async function FlowsPaginatedPage({ params }: { params: Promise<{
 
   return (
     <div className="layout-main">
-      <FlowHubTabs subtitle={tWith('page_of_total', { page, total: totalPages })} />
+      <PageHeader
+        titleKey="flow"
+        subtitleKey="page_of_total"
+        subtitleParams={{ page, total: totalPages }}
+        className="mb-8"
+      />
+      <FlowViewSwitcher />
       <FlowContent
         flows={flows}
         allFlows={allFlowItems}

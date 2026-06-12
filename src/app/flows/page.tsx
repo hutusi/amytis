@@ -4,9 +4,10 @@ import { firstPage } from '@/lib/pagination';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, tWith, resolveLocale } from '@/lib/i18n';
+import { t, resolveLocale } from '@/lib/i18n';
 import FlowContent from '@/components/FlowContent';
-import FlowHubTabs from '@/components/FlowHubTabs';
+import FlowViewSwitcher from '@/components/FlowViewSwitcher';
+import PageHeader from '@/components/PageHeader';
 
 const PAGE_SIZE = siteConfig.pagination.flows;
 
@@ -27,7 +28,13 @@ export default function FlowsPage() {
 
   return (
     <div className="layout-main">
-      <FlowHubTabs subtitle={tWith('flow_subtitle', { count: allFlows.length })} />
+      <PageHeader
+        titleKey="flow"
+        subtitleKey="flow_subtitle"
+        subtitleParams={{ count: allFlows.length }}
+        className="mb-8"
+      />
+      <FlowViewSwitcher />
       <FlowContent
         flows={flows}
         allFlows={allFlowItems}
