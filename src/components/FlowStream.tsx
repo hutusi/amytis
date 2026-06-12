@@ -3,6 +3,7 @@ import Tag from '@/components/Tag';
 import Pagination from '@/components/Pagination';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { groupFlowsByMonth, flowStreamLocaleTag } from '@/lib/flow-stream';
+import { getFlowUrl } from '@/lib/urls';
 import type { FlowData } from '@/lib/content/flows';
 import type { SlugRegistryEntry } from '@/lib/content/discovery';
 
@@ -43,7 +44,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
             {group.flows.map(flow => (
               <article key={flow.slug} className="rounded-xl border border-muted/20 bg-muted/5 p-6 sm:p-8">
                 <header className="mb-4">
-                  <Link href={`/flows/${flow.slug}`} className="group/date no-underline">
+                  <Link href={getFlowUrl(flow.slug)} className="group/date no-underline">
                     <time
                       dateTime={flow.date}
                       className="text-sm font-mono text-accent group-hover/date:text-accent-hover transition-colors"
@@ -51,13 +52,13 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                       {flow.date}
                     </time>
                     <span className="ml-2 text-xs text-muted/60">
-                      {weekdayFmt.format(new Date(flow.date))}
+                      {weekdayFmt.format(new Date(`${flow.date}T00:00:00Z`))}
                     </span>
                   </Link>
                   {flow.title !== flow.date && (
                     <h3 className="mt-1.5 text-xl font-serif font-bold text-heading">
                       <Link
-                        href={`/flows/${flow.slug}`}
+                        href={getFlowUrl(flow.slug)}
                         className="no-underline hover:text-accent transition-colors"
                       >
                         {flow.title}

@@ -14,7 +14,7 @@ const PAGE_SIZE = siteConfig.pagination.flows;
 
 export const metadata: Metadata = {
   title: `${t('flow')} · ${t('flow_view_stream')} | ${resolveLocale(siteConfig.title)}`,
-  description: 'Daily notes in one continuous stream.',
+  description: t('flow_stream_description'),
 };
 
 export default function FlowStreamPage() {
