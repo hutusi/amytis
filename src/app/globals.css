@@ -1011,8 +1011,17 @@ html.dark .rst-rendered aside.admonition-danger {
   padding: 0.25rem 0;
 }
 
-.katex-display > .katex {
-  text-align: center;
+/* Shrink-wrap the formula so the scroll container sizes to it. KaTeX's own
+ * stylesheet makes this a centered BLOCK — a centered line wider than the
+ * column overflows BOTH edges, and a scroll container can only reach the
+ * inline-end side, leaving the formula's left edge unreachable. As an
+ * inline-block it starts at the left content edge and overflows right
+ * only — fully scrollable; narrower formulas are still centered by the
+ * parent's text-align. The doubled .katex class bumps specificity above
+ * KaTeX's vendor rule, which can load after this stylesheet. */
+.katex-display > .katex.katex {
+  display: inline-block;
+  text-align: initial;
 }
 
 /* Tailwind Typography zeros padding on first/last table cells so unframed
