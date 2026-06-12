@@ -18,9 +18,9 @@ interface FlowStreamProps {
 }
 
 /**
- * Continuous reading view: full flow content in a single centered column,
- * grouped under month dividers. Server component — markdown renders at build
- * time through the same pipeline as the flow detail page.
+ * Full-content card feed on the flow index, grouped under month dividers.
+ * Server component — markdown renders at build time through the same
+ * pipeline as the flow detail page. Column width comes from the parent.
  */
 export default function FlowStream({ flows, slugRegistry, pagination }: FlowStreamProps) {
   const groups = groupFlowsByMonth(flows);
@@ -30,7 +30,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
   });
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       {groups.map(group => (
         <section key={group.key}>
           <div className="flex items-center gap-4 mt-12 first:mt-0 mb-6">
@@ -42,21 +42,36 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
 
           <div className="space-y-8">
             {group.flows.map(flow => (
-              <article key={flow.slug} className="rounded-xl border border-muted/20 bg-muted/5 p-6 sm:p-8">
+              <article
+                key={flow.slug}
+                className="rounded-2xl border border-muted/15 bg-muted/5 p-6 sm:p-8 shadow-[0_1px_3px_rgb(0_0_0/0.04)]"
+              >
                 <header className="mb-4">
-                  <Link href={getFlowUrl(flow.slug)} className="group/date no-underline">
-                    <time
-                      dateTime={flow.date}
-                      className="text-sm font-mono text-accent group-hover/date:text-accent-hover transition-colors"
+                  <div className="flex items-baseline justify-between gap-4">
+                    <Link href={getFlowUrl(flow.slug)} className="group/date no-underline min-w-0">
+                      <time
+                        dateTime={flow.date}
+                        className="text-sm font-mono text-accent group-hover/date:text-accent-hover transition-colors"
+                      >
+                        {flow.date}
+                      </time>
+                      <span className="ml-2 text-xs text-muted/60">
+                        {weekdayFmt.format(new Date(`${flow.date}T00:00:00Z`))}
+                      </span>
+                    </Link>
+                    {/* Duplicate of the date permalink — kept out of the tab
+                        order and the accessibility tree on purpose. */}
+                    <Link
+                      href={getFlowUrl(flow.slug)}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className="shrink-0 no-underline text-base leading-none text-muted/40 hover:text-accent transition-colors"
                     >
-                      {flow.date}
-                    </time>
-                    <span className="ml-2 text-xs text-muted/60">
-                      {weekdayFmt.format(new Date(`${flow.date}T00:00:00Z`))}
-                    </span>
-                  </Link>
+                      →
+                    </Link>
+                  </div>
                   {flow.title !== flow.date && (
-                    <h3 className="mt-1.5 text-xl font-serif font-bold text-heading">
+                    <h3 className="mt-2 text-xl font-serif font-bold text-heading">
                       <Link
                         href={getFlowUrl(flow.slug)}
                         className="no-underline hover:text-accent transition-colors"
@@ -75,7 +90,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                 />
 
                 {flow.tags.length > 0 && (
-                  <div className="mt-5 border-t border-muted/10 pt-4 flex flex-wrap gap-2">
+                  <div className="mt-6 border-t border-muted/10 pt-4 flex flex-wrap gap-2">
                     {flow.tags.map(tag => (
                       <Tag key={tag} tag={tag} variant="compact" />
                     ))}
