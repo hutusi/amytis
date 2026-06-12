@@ -264,6 +264,13 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(params.length).toBeGreaterThanOrEqual(1);
       expect(params[0]).toEqual({ page: '2' });
     });
+
+    test('flows/stream/page/[page] always returns at least [{ page: "2" }]', async () => {
+      const { generateStaticParams } = await import('../../src/app/flows/stream/page/[page]/page');
+      const params = generateStaticParams();
+      expect(params.length).toBeGreaterThanOrEqual(1);
+      expect(params[0]).toEqual({ page: '2' });
+    });
   });
 
   describe('notes routes', () => {
