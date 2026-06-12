@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - `src/app/`: Next.js App Router pages and route handlers (`posts`, `series`, `books`, `flows`, `notes`, `tags`, `authors`, feeds, graph, sitemap, custom `[slug]` routes).
 - `src/components/`: Reusable UI building blocks (cards, navigation, search, i18n/theme controls).
-- `src/lib/`: Content parsing and shared logic (`markdown.ts`, feed helpers, URL helpers, rehype/remark utilities).
+- `src/lib/`: Content parsing and shared logic (the `content/` data layer, feed helpers, URL helpers, rehype/remark utilities).
 - `content/`: Markdown/MDX source content for posts, series, books, notes, flows, and static pages. Use folder posts (`index.mdx` + `images/` or `assets/`) when media is co-located.
 - `tests/`: Integration/e2e/tooling suites; keep focused utility tests near source (example: `src/lib/markdown.test.ts`).
 - `scripts/`: Bun-based authoring/import/build tooling.

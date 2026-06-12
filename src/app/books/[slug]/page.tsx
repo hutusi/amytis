@@ -1,4 +1,5 @@
-import { getBookData, getAllBooks, getAuthorSlug, type BookTocSection, type BookChapterRef } from '@/lib/markdown';
+import { getAuthorSlug } from '@/lib/content/authors';
+import { getBookData, getAllBooks, type BookTocSection, type BookChapterRef } from '@/lib/content/books';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
@@ -8,7 +9,7 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { buildBookJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
-import { safeDecodeParam } from '@/lib/series-redirects';
+import { safeDecodeParam } from '@/lib/route-params';
 
 // Visual depth limit for nested-section headings. After the first two levels
 // we keep nesting structurally but stop bumping the heading style so deeply

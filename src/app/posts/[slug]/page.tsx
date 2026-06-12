@@ -1,4 +1,9 @@
-import { getPostBySlug, getAllPosts, getRelatedPosts, getSeriesPosts, getSeriesData, getAdjacentPosts, buildSlugRegistry, getBacklinks, getCollectionsForPost, PostData } from '@/lib/markdown';
+import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
+import { safeDecodeParam } from '@/lib/route-params';
+import { getRelatedPosts, getAdjacentPosts } from '@/lib/content/related';
+import { getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
+import { getPostBySlug, getAllPosts } from '@/lib/content/posts';
+import type { PostData } from '@/lib/content/types';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -8,14 +13,6 @@ import { resolveLocale } from '@/lib/i18n';
 import { getPostsBasePath, getPostUrl } from '@/lib/urls';
 import { buildPostJsonLd, serializeJsonLd, resolveImageUrl } from '@/lib/json-ld';
 import RedirectPage from '@/components/RedirectPage';
-
-function safeDecodeParam(param: string): string {
-  try {
-    return decodeURIComponent(param);
-  } catch {
-    return param;
-  }
-}
 
 function resolvePostFromParam(rawSlug: string) {
   const decoded = safeDecodeParam(rawSlug);

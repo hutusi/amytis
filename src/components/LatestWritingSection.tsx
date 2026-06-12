@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import PostList from './PostList';
 import { useLanguage } from './LanguageProvider';
-import { PostData } from '@/lib/markdown';
+import type { PostData } from '@/lib/content/types';
 import { getPostsListUrl } from '@/lib/urls';
 
 interface LatestWritingSectionProps {

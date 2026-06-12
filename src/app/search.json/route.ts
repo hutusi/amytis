@@ -1,4 +1,7 @@
-import { getAllPosts, getAllBooks, getBookChapter, getAllFlows, getAllNotes } from '@/lib/markdown';
+import { getAllPosts } from '@/lib/content/posts';
+import { getAllNotes } from '@/lib/content/notes';
+import { getAllFlows } from '@/lib/content/flows';
+import { getAllBooks, getBookChapter } from '@/lib/content/books';
 import { stripMarkdown } from '@/lib/search-utils';
 
 export const dynamic = 'force-static';

@@ -1,4 +1,6 @@
-import { getAllFlows, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowTags } from '@/lib/content/flows';
+import { isFeatureEnabled } from '@/lib/features';
+import { paginate, paginationStaticParams } from '@/lib/pagination';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -9,15 +11,9 @@ import FlowHubTabs from '@/components/FlowHubTabs';
 const PAGE_SIZE = siteConfig.pagination.flows;
 
 export function generateStaticParams() {
-  if (siteConfig.features?.flow?.enabled === false) return [{ page: '2' }];
-  const allFlows = getAllFlows();
-  const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
-
-  // Always generate at least page 2 for static export compatibility
-  const pageCount = Math.max(1, totalPages - 1);
-  return Array.from({ length: pageCount }, (_, i) => ({
-    page: (i + 2).toString(),
-  }));
+  return paginationStaticParams(getAllFlows().length, PAGE_SIZE, {
+    enabled: isFeatureEnabled('flow'),
+  });
 }
 
 export const dynamicParams = false;
@@ -30,20 +26,16 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 }
 
 export default async function FlowsPaginatedPage({ params }: { params: Promise<{ page: string }> }) {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const { page: pageStr } = await params;
   const page = parseInt(pageStr, 10);
   const allFlows = getAllFlows();
-  const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
-
-  if (page > totalPages) notFound();
+  const slice = paginate(allFlows, page, PAGE_SIZE);
+  if (!slice || page < 2) notFound();
+  const { items: flows, totalPages } = slice;
 
   const entryDates = allFlows.map(f => f.date);
   const tags = getFlowTags();
-
-  const start = (page - 1) * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const flows = allFlows.slice(start, end);
   const allFlowItems = allFlows.map(({ slug, date, title, excerpt, tags }) => ({ slug, date, title, excerpt, tags }));
 
   return (

@@ -11,7 +11,7 @@ Amytis: static digital-garden blog (Next.js 16 App Router, React 19, Tailwind v4
 ```bash
 bun dev                 # dev server (Turbopack, http://localhost:3000)
 bun run lint            # ESLint
-bun test                # all tests
+bun run test            # all tests (NOT bare `bun test` — that sweeps in Playwright e2e specs and fails)
 bun run build           # production build (image optimization + Pagefind)
 bun run build:dev       # faster build; regenerates public/pagefind/ for search-in-dev
 bun run clean           # nuke .next, out, public/posts when caches misbehave
@@ -26,7 +26,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - Standard routes follow folder names under `src/app/`: `/posts`, `/series`, `/tags`, `/notes`, `/books`, `/authors`, `/archive`, `/graph`, `/flows/[year]/[month]/[day]`. Book chapters are a catch-all: `books/[slug]/[...chapter]` (supports nested chapter IDs like `maths/linear/intro`).
 - **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
 - Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; search index at `search.json`.
-- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), redirects (`series-redirects.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
+- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
 
 ## Design principles
 
@@ -37,7 +37,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 ## Integration-point rules (always go through X)
 
 - **URLs:** always `getPostUrl()` / `getPostsBasePath()` / `getSeriesCustomPaths()` from `src/lib/urls.ts`. Never hardcode `/posts/[slug]` — posts may live at `/articles/[slug]`, custom prefixes (`series.customPaths`), or under `posts.basePath`.
-- **Content reads:** always via `src/lib/markdown.ts` (`getAllPosts`, `getPostBySlug`, `getSeriesData`, etc.). Frontmatter validation belongs in its Zod schemas, not in route files.
+- **Content reads:** always via the `src/lib/content/` data layer — one module per domain (`posts.ts`, `series.ts`, `books.ts`, `flows.ts`, `notes.ts`, `authors.ts`, `related.ts`, `discovery.ts`). Frontmatter validation belongs in its Zod schemas (`content/parse.ts` and the domain modules), not in route files. Dependency direction is acyclic — `types → io/cache → series-metadata → parse → posts → series → {related, discovery}` — and enforced by `src/lib/content/dependency-graph.test.ts`.
 - **Search utilities:** pure helpers (URL type detection, date extraction, title cleaning, markdown stripping) live in `src/lib/search-utils.ts` and are shared by the `Search` component and the search-index route. Don't duplicate them.
 - **i18n strings:** add to `src/i18n/translations.ts`. Locale-aware config fields are `string | Record<string, string>`; resolve via `resolveLocale()` / `resolveLocaleValue()` from `src/lib/i18n.ts`.
 
@@ -49,9 +49,9 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 Feature-local gotchas live in path-scoped rules under `.claude/rules/` and auto-load when you touch matching files: `rst.md` (docutils setup, sanitize-html allowlist, disk-cache version) and `immersive-reading.md` (chrome-hiding hooks, provider boundaries, prefs persistence).
 
-- **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/markdown.ts`, `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling.
+- **`turbopackIgnore` on fs reads.** Any `fs.readFileSync()` path expression must be preceded by `/* turbopackIgnore: true */` (see `src/lib/rehype-image-metadata.ts`). Missing it causes incorrect bundling. Inside `src/lib/content/` every read goes through `readUtf8File` in `content/io.ts` (the single annotated site, enforced by a guard test) — don't add bare `fs.readFileSync` calls there.
 - **No AVIF for `coverImage`.** Upstream bug in `next-image-export-optimizer` emits `.webp` files but a `srcset` pointing at `.avif` → 404 in prod. Use `.jpg` / `.png` / `.webp`. See `docs/TROUBLESHOOTING.md`.
-- **Unicode slugs.** Dynamic route pages call `safeDecodeParam()` and try decoded / raw / NFC / NFD variants — don't shortcut with bare `decodeURIComponent()` (it throws on malformed input). When touching dynamic routes, verify both ASCII and Unicode slugs.
+- **Unicode slugs.** Dynamic route pages use `safeDecodeParam()` / `resolveFromParam()` from `src/lib/route-params.ts` to try decoded / raw / NFC / NFD variants — don't shortcut with bare `decodeURIComponent()` (it throws on malformed input) and don't redefine these helpers locally. When touching dynamic routes, verify both ASCII and Unicode slugs.
 - **`generateStaticParams` returns raw values.** Don't `encodeURIComponent` route params; Next.js handles encoding. Don't link to placeholder routes like `/posts/[slug]` — always link to concrete URLs.
 - **Series format is locked.** A series index can be `index.md` / `.mdx` / `README.md` / `README.mdx` / `index.rst` / `README.rst` (first match wins). All child posts must match. Mixing formats is a build error.
 - **Pagefind index.** `bun run build:dev` regenerates `public/pagefind/`; search returns stale results until you rerun it after content changes.
@@ -76,16 +76,16 @@ For a new feature or non-trivial change:
 - **Do NOT run `bun run build:dev` (or `bun run build` / `bun run validate`) unless the user asks OR it is genuinely needed.** It takes ~1–2 minutes (Turbopack compile + 800+ static pages + Pagefind index) and the cost adds up fast across many small steps. None of these are "needed" on their own: markdown pipeline edits, schema changes, route moves, branch tip, pre-PR readiness, "just to be safe."
 - "Genuinely needed" means lint+test **cannot** catch the failure mode you're worried about — e.g. a strict-build invariant that only fires during static export (a `throw` in `generateStaticParams`, a `redirectFrom` collision, a Zod-schema failure that only triggers on real content). If unsure, prefer asking over running.
 - `bun run validate` chains lint + test + build:dev; same rule — same bar.
-- Touched `src/lib/markdown.ts`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
+- Touched `src/lib/content/**`, `src/lib/urls.ts`, or `site.config.ts`? Add an integration test under `tests/integration/`.
 - Touched any dynamic route? Verify both ASCII and Unicode slugs render.
 
 ## Context compression hints
 
 When compressing history, preserve in priority order:
 
-1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/markdown.ts`.
+1. **Build-time invariants touched** — strict-build/throw boundaries, Zod schemas, `site.config.ts` shape, helpers in `src/lib/urls.ts` / `src/lib/content/**`.
 2. **Modified files and why** — file list with one-line reasons, not the diff.
-3. **Verification status** — `bun run lint && bun test` (and `build:dev` if run) pass/fail.
+3. **Verification status** — `bun run lint && bun run test` (and `build:dev` if run) pass/fail.
 4. **Cache version bumps** — `RST_RENDERER_DISK_CACHE_VERSION` etc.; easy to lose after compression.
 5. **Open TODOs and rollback notes.**
 6. **Tool output**: drop; keep pass/fail summary only.

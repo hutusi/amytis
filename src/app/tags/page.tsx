@@ -1,4 +1,4 @@
-import { getAllTags } from '@/lib/markdown';
+import { getAllTags } from '@/lib/content/discovery';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { t, resolveLocale } from '@/lib/i18n';

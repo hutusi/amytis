@@ -5,7 +5,6 @@ import {
   getPythonRendererInvocationCountForTests,
   getRstRendererDiskCachePathForTests,
   getPythonCommandSpecForRstRenderer,
-  normalizePythonRstMetadata,
   resetRstRendererCachesForTests,
   resetPythonCommandSpecForTests,
   renderRstFile,
@@ -39,39 +38,6 @@ afterAll(() => {
 });
 
 describe('rst-renderer bridge', () => {
-  test('normalizes python metadata using the existing rst rules', () => {
-    const metadata = normalizePythonRstMetadata({
-      date: '2026-04-07',
-      tags: ['rst', 'docs'],
-      featured: false,
-      redirectFrom: ['/series/old-slug'],
-      coverImage: './images/cover.png',
-      customField: 'ignored',
-    });
-
-    expect(metadata).toEqual({
-      date: '2026-04-07',
-      tags: ['rst', 'docs'],
-      featured: false,
-      redirectFrom: ['/series/old-slug'],
-      coverImage: './images/cover.png',
-    });
-  });
-
-  test.each([
-    ['2022-3-17', '2022-03-17'],
-    ['2022-3-7', '2022-03-07'],
-  ])('normalizes legacy non-zero-padded dates from python output (%s)', (input, expected) => {
-    const metadata = normalizePythonRstMetadata({ date: input });
-    expect(metadata.date).toBe(expected);
-  });
-
-  test('rejects malformed supported metadata from python output', () => {
-    expect(() => normalizePythonRstMetadata({ draft: 'maybe' })).toThrow(RstParseError);
-    expect(() => normalizePythonRstMetadata({ date: '2026-16-01' })).toThrow(RstParseError);
-    expect(() => normalizePythonRstMetadata({ type: 'post' })).toThrow(RstParseError);
-  });
-
   test('validates the expected python renderer result shape', () => {
     expect(() => validatePythonRstResult({
       title: 'Title',

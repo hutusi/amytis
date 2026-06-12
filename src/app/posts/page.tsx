@@ -1,4 +1,4 @@
-import { getListingPosts } from '@/lib/markdown';
+import { getListingPosts } from '@/lib/content/posts';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../site.config';
@@ -7,6 +7,7 @@ import { t, resolveLocale, tWith } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath } from '@/lib/urls';
 import { notFound } from 'next/navigation';
+import { firstPage } from '@/lib/pagination';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
@@ -21,9 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function AllPostsPage() {
   if (getPostsBasePath() !== 'posts') notFound();
   const allPosts = getListingPosts();
-  const page = 1;
-  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
-  const posts = allPosts.slice(0, PAGE_SIZE);
+  const { items: posts, page, totalPages } = firstPage(allPosts, PAGE_SIZE);
 
   return (
     <div className="layout-main">

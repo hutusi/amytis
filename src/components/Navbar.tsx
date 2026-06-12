@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState, useEffect } from 'react';
+import { isFeatureEnabled } from '@/lib/features';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
@@ -43,7 +44,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
     .filter(item => {
       const featureKey = FEATURE_URLS[item.url];
       if (!featureKey) return true; // not a feature-gated item, always show
-      return siteConfig.features?.[featureKey]?.enabled !== false;
+      return isFeatureEnabled(featureKey);
     })
     .sort((a, b) => a.weight - b.weight);
 

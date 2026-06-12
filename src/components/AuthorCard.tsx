@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ExportedImage from 'next-image-export-optimizer';
-import { getAuthorSlug } from '@/lib/markdown';
+import { getAuthorSlug } from '@/lib/content/authors';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
 import { shouldBypassImageOptimization } from '@/lib/image-utils';

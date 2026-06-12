@@ -1,5 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
-import { getAllBooks, getFeaturedBooks } from "../../src/lib/markdown";
+import { getAllBooks, getBookData, getFeaturedBooks } from '../../src/lib/content/books';
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Books", () => {
@@ -57,6 +59,36 @@ describe("Integration: Books", () => {
       });
     } finally {
       restoreEnvVar("NODE_ENV", prev);
+    }
+  });
+
+  test("getBookData throws at build time when a TOC chapter has no file on disk", () => {
+    // Strict-build invariant: a misconfigured TOC must fail the export, not
+    // emit a book with broken chapter links.
+    const slug = "__test-missing-chapter__";
+    const bookDir = path.join(process.cwd(), "content", "books", slug);
+    fs.mkdirSync(bookDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(bookDir, "index.mdx"),
+      [
+        "---",
+        'title: "Broken TOC Book"',
+        "date: 2026-01-01",
+        "chapters:",
+        '  - title: "Ghost Chapter"',
+        "    id: does-not-exist",
+        "---",
+        "",
+        "Intro",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    try {
+      expect(() => getBookData(slug)).toThrow(/no matching file on disk.*"does-not-exist"/);
+    } finally {
+      fs.rmSync(bookDir, { recursive: true, force: true });
     }
   });
 });

@@ -1,22 +1,13 @@
-import { getAllPosts } from '@/lib/markdown';
+import { getAllPosts } from '@/lib/content/posts';
 import { siteConfig } from '../../../../site.config';
 import PostCard from '@/components/PostCard';
 import Pagination from '@/components/Pagination';
 import { notFound } from 'next/navigation';
+import { paginate, paginationStaticParams } from '@/lib/pagination';
 import PageHeader from '@/components/PageHeader';
 
 export async function generateStaticParams() {
-  const allPosts = getAllPosts();
-  const pageSize = siteConfig.pagination.posts;
-  const totalPages = Math.ceil(allPosts.length / pageSize);
-
-  // Generate params for pages 2 to totalPages
-  const params = [];
-  for (let i = 2; i <= totalPages; i++) {
-    params.push({ page: i.toString() });
-  }
-  if (params.length === 0) return [{ page: '2' }];
-  return params;
+  return paginationStaticParams(getAllPosts().length, siteConfig.pagination.posts);
 }
 
 export const dynamicParams = false;
@@ -28,17 +19,11 @@ export default async function PaginatedPage({
 }) {
   const { page } = await params;
   const currentPage = parseInt(page, 10);
-  const allPosts = getAllPosts();
-  const pageSize = siteConfig.pagination.posts;
-  const totalPages = Math.ceil(allPosts.length / pageSize);
-
-  if (isNaN(currentPage) || currentPage < 2 || currentPage > totalPages) {
+  const slice = paginate(getAllPosts(), currentPage, siteConfig.pagination.posts);
+  if (!slice || currentPage < 2) {
     notFound();
   }
-
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const posts = allPosts.slice(startIndex, endIndex);
+  const { items: posts, totalPages } = slice;
 
   return (
     <div className="layout-main">

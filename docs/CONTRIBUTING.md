@@ -177,7 +177,9 @@ Amytis relies on static export (`output: "export"`) with `trailingSlash: true`.
 - In `generateStaticParams()`, return raw segment values and let Next.js handle encoding.
 - Do not pre-encode route params with `encodeURIComponent`.
 - Do not link to placeholder routes such as `/posts/[slug]`; always link to concrete URLs.
-- When touching dynamic routes, verify both ASCII and Unicode slugs.
+- When touching dynamic routes, verify both ASCII and Unicode slugs (decode params via `src/lib/route-params.ts`, never bare `decodeURIComponent`).
+- Alias/static-params logic for `[slug]`, `[slug]/[postSlug]`, and series redirects lives in `src/lib/route-aliases.ts` — routes are thin adapters over its providers and resolvers; don't reimplement collision checks in route files.
+- Paginated routes compute page math via `paginate()` / `paginationStaticParams()` from `src/lib/pagination.ts`. Keep `generateStaticParams` / `generateMetadata` / the page component as literal exports in each route file — Next.js statically analyzes them, so no route factories.
 
 ## Code Style
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isFeatureEnabled } from '@/lib/features';
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,7 +8,8 @@ import BrowserDetectionBanner from "@/components/BrowserDetectionBanner";
 import { siteConfig } from "../../site.config";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { getAllSeries, getAllBooks, getSeriesData } from "@/lib/markdown";
+import { getAllSeries, getSeriesData } from '@/lib/content/series';
+import { getAllBooks } from '@/lib/content/books';
 import { resolveLocale } from "@/lib/i18n";
 import "./globals.css";
 
@@ -99,13 +101,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const features = siteConfig.features;
-
   // Build series list for navbar (only when series feature is enabled)
   const seriesNavItem = siteConfig.nav.find(item => item.url === '/series');
   const featuredSeries = seriesNavItem?.dropdown;
   let seriesList: { name: string; slug: string }[] = [];
-  if (features?.series?.enabled !== false) {
+  if (isFeatureEnabled('series')) {
     const allSeries = getAllSeries();
     const seriesKeys = Object.keys(allSeries).sort();
     const filteredKeys = featuredSeries && featuredSeries.length > 0
@@ -121,7 +121,7 @@ export default function RootLayout({
   const booksNavItem = siteConfig.nav.find(item => item.url === '/books');
   const featuredBookSlugs = booksNavItem?.dropdown;
   let booksList: { name: string; slug: string }[] = [];
-  if (features?.books?.enabled !== false) {
+  if (isFeatureEnabled('books')) {
     const allBooks = getAllBooks();
     booksList = featuredBookSlugs && featuredBookSlugs.length > 0
       ? allBooks

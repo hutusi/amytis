@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext, Heading } from '@/lib/markdown';
+import type { PostData, CollectionContext, Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useImmersiveReading } from './ImmersiveReadingProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';

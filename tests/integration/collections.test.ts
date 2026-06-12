@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  getSeriesData,
-  getCollectionPosts,
-  getCollectionsForPost,
-  getAllSeries,
-} from "../../src/lib/markdown";
+import { getSeriesData, getCollectionPosts, getCollectionsForPost, getAllSeries } from '../../src/lib/content/series';
 
 describe("Integration: Collections", () => {
   // ── getSeriesData ───────────────────────────────────────────────

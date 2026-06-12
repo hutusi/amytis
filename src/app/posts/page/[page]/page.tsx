@@ -1,4 +1,4 @@
-import { getListingPosts } from '@/lib/markdown';
+import { getListingPosts } from '@/lib/content/posts';
 import PostList from '@/components/PostList';
 import Pagination from '@/components/Pagination';
 import { siteConfig } from '../../../../../site.config';
@@ -7,20 +7,16 @@ import { notFound } from 'next/navigation';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import { getPostsBasePath } from '@/lib/urls';
+import { paginate, paginationStaticParams } from '@/lib/pagination';
 
 const PAGE_SIZE = siteConfig.pagination.posts;
 
 export function generateStaticParams() {
-  if (getPostsBasePath() !== 'posts') return [{ page: '_' }]; // Route disabled; custom path handles this
-  const allPosts = getListingPosts();
-  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
-
-  // Generate params for page 2 to totalPages (page 1 is handled by /posts/page.tsx)
-  if (totalPages <= 1) return [{ page: '2' }];
-
-  return Array.from({ length: totalPages - 1 }, (_, i) => ({
-    page: (i + 2).toString(),
-  }));
+  // Disabled when posts live under a custom basePath ([slug]/page/[page] handles it)
+  return paginationStaticParams(getListingPosts().length, PAGE_SIZE, {
+    enabled: getPostsBasePath() === 'posts',
+    disabledSentinel: '_',
+  });
 }
 
 export const dynamicParams = false;
@@ -37,14 +33,9 @@ export async function generateMetadata({ params }: { params: Promise<{ page: str
 export default async function PostsPage({ params }: { params: Promise<{ page: string }> }) {
   const { page: pageStr } = await params;
   const page = parseInt(pageStr);
-  const allPosts = getListingPosts();
-  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
-
-  if (isNaN(page) || page < 2 || page > totalPages) notFound();
-
-  const start = (page - 1) * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const posts = allPosts.slice(start, end);
+  const slice = paginate(getListingPosts(), page, PAGE_SIZE);
+  if (!slice || page < 2) notFound();
+  const { items: posts, totalPages } = slice;
 
   return (
     <div className="layout-main">

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { PostData, CollectionContext } from '@/lib/markdown';
+import type { PostData, CollectionContext } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import PrevNextNav from './PrevNextNav';

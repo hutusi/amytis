@@ -1,40 +1,14 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { afterEach, describe, expect, test } from "bun:test";
-import { RstParseError } from "./rst";
+import { describe, expect, test } from "bun:test";
 import {
   generateExcerpt,
   calculateReadingMinutes,
+  calculateReadingMinutesFromText,
   calculateWordCount,
+  calculateWordCountFromText,
   getHeadings,
-  getAuthorSlug,
-  getPythonRstRendererAvailabilityForTests,
-  parseMarkdownFileForTests,
-  parseRstFileForTests,
-  resetPythonRstRendererAvailabilityForTests,
-} from "./markdown";
+} from "./text-metrics";
 
-const previousEnablePythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
-const previousRstPython = process.env.AMYTIS_RST_PYTHON;
-
-afterEach(() => {
-  if (previousEnablePythonRst === undefined) {
-    delete process.env.AMYTIS_ENABLE_PYTHON_RST;
-  } else {
-    process.env.AMYTIS_ENABLE_PYTHON_RST = previousEnablePythonRst;
-  }
-
-  if (previousRstPython === undefined) {
-    delete process.env.AMYTIS_RST_PYTHON;
-  } else {
-    process.env.AMYTIS_RST_PYTHON = previousRstPython;
-  }
-
-  resetPythonRstRendererAvailabilityForTests();
-});
-
-describe("markdown utils", () => {
+describe("text metrics", () => {
   describe("generateExcerpt", () => {
     test("should return content as is if short enough", () => {
       const text = "Hello world";
@@ -144,6 +118,26 @@ describe("markdown utils", () => {
     });
   });
 
+  describe("plain-text variants (Python rST renderer path)", () => {
+    test("FromText variants skip markup stripping but use the same tokenizer", () => {
+      const text = Array(600).fill("word").join(" ");
+      expect(calculateWordCountFromText(text)).toBe(600);
+      expect(calculateReadingMinutesFromText(text)).toBe(3);
+    });
+
+    test("FromText counts mixed Latin + Han like the markdown variant", () => {
+      const latin = Array(200).fill("word").join(" ");
+      const han = "中".repeat(300);
+      expect(calculateWordCountFromText(`${latin} ${han}`)).toBe(500);
+      expect(calculateReadingMinutesFromText(`${latin} ${han}`)).toBe(2);
+    });
+
+    test("FromText agrees with the markdown variant on plain input", () => {
+      const plain = "Hello world this is plain text 中文字符";
+      expect(calculateWordCountFromText(plain)).toBe(calculateWordCount(plain));
+    });
+  });
+
   describe("getHeadings", () => {
     test("extracts H2 headings with slugified IDs", () => {
       const content = "## Hello World\n\nSome text\n\n## Another Section";
@@ -189,120 +183,6 @@ describe("markdown utils", () => {
       const content = "Just plain text with no headings at all.";
       const headings = getHeadings(content);
       expect(headings).toEqual([]);
-    });
-  });
-
-  describe("getAuthorSlug", () => {
-    test("creates stable, URL-safe slugs for author names", () => {
-      expect(getAuthorSlug("Amytis Team")).toBe("amytis-team");
-      expect(getAuthorSlug("[author]")).toBe("author");
-      expect(getAuthorSlug(" John Hu ")).toBe("john-hu");
-    });
-  });
-
-  describe("rST parsing fallbacks", () => {
-    test("uses markdown file mtime when frontmatter date and slug date are missing", () => {
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-md-"));
-      const filePath = path.join(tempDir, "legacy.mdx");
-      fs.writeFileSync(
-        filePath,
-        [
-          "---",
-          'title: "Legacy Markdown"',
-          "---",
-          "",
-          "Body",
-          "",
-        ].join("\n"),
-        "utf8",
-      );
-
-      const expectedDate = "2021-03-17";
-      const expectedTime = new Date(`${expectedDate}T12:00:00Z`);
-      fs.utimesSync(filePath, expectedTime, expectedTime);
-
-      try {
-        const post = parseMarkdownFileForTests(filePath, "legacy");
-        expect(post.date).toBe(expectedDate);
-      } finally {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }
-    });
-
-    test("includes the source file path in rst parse errors", () => {
-      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
-
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-rst-"));
-      const filePath = path.join(tempDir, "broken.rst");
-      fs.writeFileSync(
-        filePath,
-        [
-          ":Date: 2021-16-15",
-          "",
-          "Broken Title",
-          "************",
-          "",
-          "Body",
-          "",
-        ].join("\n"),
-        "utf8",
-      );
-
-      try {
-        expect(() => parseRstFileForTests(filePath, "broken")).toThrow(
-          new RstParseError(`Invalid date: 2021-16-15 (${filePath})`)
-        );
-      } finally {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }
-    });
-
-    test("falls back to the legacy rst parser when python runtime is unavailable", () => {
-      process.env.AMYTIS_ENABLE_PYTHON_RST = "1";
-      process.env.AMYTIS_RST_PYTHON = "python-does-not-exist";
-      resetPythonRstRendererAvailabilityForTests();
-
-      const post = parseRstFileForTests(
-        path.join(process.cwd(), "content/series/rst-legacy/getting-started.rst"),
-        "getting-started",
-        undefined,
-        "rst-legacy",
-      );
-
-      expect(post.title).toBe("Getting Started With rST");
-      expect(post.renderedHtml).toBeUndefined();
-      expect(post.content).toContain("Overview\n--------");
-      expect(post.content).toContain(".. code-block:: ts");
-      expect(getPythonRstRendererAvailabilityForTests()).toBe(false);
-    });
-
-    test("uses rst file mtime when metadata date and slug date are missing", () => {
-      process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
-
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-rst-"));
-      const filePath = path.join(tempDir, "legacy.rst");
-      fs.writeFileSync(
-        filePath,
-        [
-          "Legacy rST",
-          "**********",
-          "",
-          "Body",
-          "",
-        ].join("\n"),
-        "utf8",
-      );
-
-      const expectedDate = "2020-04-09";
-      const expectedTime = new Date(`${expectedDate}T12:00:00Z`);
-      fs.utimesSync(filePath, expectedTime, expectedTime);
-
-      try {
-        const post = parseRstFileForTests(filePath, "legacy");
-        expect(post.date).toBe(expectedDate);
-      } finally {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }
     });
   });
 });

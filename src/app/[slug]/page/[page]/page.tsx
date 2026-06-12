@@ -1,4 +1,6 @@
-import { getListingPosts, getAllSeries, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, resolveSeriesAuthors } from '@/lib/content/series';
+import { getAuthorSlug } from '@/lib/content/authors';
+import { getListingPosts } from '@/lib/content/posts';
 import PostList from '@/components/PostList';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
@@ -9,72 +11,15 @@ import { t, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
-import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths } from '@/lib/urls';
+import { getPostsBasePath } from '@/lib/urls';
+import { prefixedPageParams, resolveSeriesListingPrefix } from '@/lib/route-aliases';
+import { paginate } from '@/lib/pagination';
 
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
 
-function resolveSeriesSlug(prefix: string, customPaths: Record<string, string>): string | undefined {
-  return (
-    Object.entries(customPaths).find(([, path]) => path === prefix)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, prefix) && getSeriesData(prefix) ? prefix : undefined)
-  );
-}
-
 export async function generateStaticParams() {
-  const params: { slug: string; page: string }[] = [];
-
-  // Custom posts basePath — paginated listing pages (page 2+)
-  const basePath = getPostsBasePath();
-  if (basePath !== 'posts') {
-    const allPosts = getListingPosts();
-    const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
-    for (let i = 2; i <= totalPages; i++) {
-      params.push({ slug: basePath, page: i.toString() });
-    }
-  }
-
-  // Series custom paths — paginated series listing (page 2+)
-  const customPaths = getSeriesCustomPaths();
-  for (const [seriesSlug, customPath] of Object.entries(customPaths)) {
-    const posts = getSeriesPosts(seriesSlug);
-    const totalPages = Math.ceil(posts.length / SERIES_PAGE_SIZE);
-    for (let i = 2; i <= totalPages; i++) {
-      params.push({ slug: customPath, page: i.toString() });
-    }
-  }
-
-  // Series auto-paths — paginated series listing (page 2+)
-  const customPathValues = new Set(Object.values(customPaths));
-  if (getSeriesAutoPaths()) {
-    for (const [seriesSlug, posts] of Object.entries(getAllSeries())) {
-      if (Object.hasOwn(customPaths, seriesSlug)) continue; // series has its own customPaths key override — skip
-      if (customPathValues.has(seriesSlug)) continue; // slug collides with another series' custom path value — skip
-      const totalPages = Math.ceil(posts.length / SERIES_PAGE_SIZE);
-      for (let i = 2; i <= totalPages; i++) {
-        params.push({ slug: seriesSlug, page: i.toString() });
-      }
-    }
-  }
-
-  // Work around Next dev static-param checks for percent-encoded Unicode slugs
-  // under `output: "export"` — dev server may receive encoded forms of the
-  // prefix segment for paginated listings.
-  if (process.env.NODE_ENV !== 'production') {
-    const existing = new Set(params.map(p => `${p.slug}/${p.page}`));
-    for (const p of [...params]) {
-      const encodedSlug = encodeURIComponent(p.slug);
-      const key = `${encodedSlug}/${p.page}`;
-      if (!existing.has(key)) {
-        existing.add(key);
-        params.push({ slug: encodedSlug, page: p.page });
-      }
-    }
-  }
-
-  // Placeholder keeps Next.js happy with output: export when no custom paths configured.
-  // dynamicParams = false ensures any unrecognised slug/page combo returns 404.
-  return params.length > 0 ? params : [{ slug: '_', page: '2' }];
+  return prefixedPageParams();
 }
 
 export const dynamicParams = false;
@@ -86,8 +31,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug: prefix, page } = await params;
   const basePath = getPostsBasePath();
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = resolveSeriesSlug(prefix, customPaths);
+  const matchedSeriesSlug = resolveSeriesListingPrefix(prefix);
 
   if (prefix === basePath && basePath !== 'posts') {
     return {
@@ -117,18 +61,13 @@ export default async function PrefixPageRoute({
   if (isNaN(page) || page < 2) notFound();
 
   const basePath = getPostsBasePath();
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = resolveSeriesSlug(prefix, customPaths);
+  const matchedSeriesSlug = resolveSeriesListingPrefix(prefix);
 
   // Custom posts basePath listing
   if (prefix === basePath && basePath !== 'posts') {
-    const allPosts = getListingPosts();
-    const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
-
-    if (page > totalPages) notFound();
-
-    const start = (page - 1) * POST_PAGE_SIZE;
-    const posts = allPosts.slice(start, start + POST_PAGE_SIZE);
+    const slice = paginate(getListingPosts(), page, POST_PAGE_SIZE);
+    if (!slice) notFound();
+    const { items: posts, totalPages } = slice;
 
     return (
       <div className="layout-main">
@@ -155,31 +94,14 @@ export default async function PrefixPageRoute({
       notFound();
     }
 
-    const totalPages = Math.ceil(allPosts.length / SERIES_PAGE_SIZE);
-    if (page > totalPages) notFound();
-
-    const start = (page - 1) * SERIES_PAGE_SIZE;
-    const posts = allPosts.slice(start, start + SERIES_PAGE_SIZE);
+    const slice = paginate(allPosts, page, SERIES_PAGE_SIZE);
+    if (!slice) notFound();
+    const { items: posts, totalPages, start } = slice;
 
     const title = seriesData?.title || matchedSeriesSlug.charAt(0).toUpperCase() + matchedSeriesSlug.slice(1);
     const description = seriesData?.excerpt;
     const coverImage = seriesData?.coverImage;
-
-    const explicitAuthors = getSeriesAuthors(matchedSeriesSlug);
-    let authors: string[];
-    if (explicitAuthors) {
-      authors = explicitAuthors;
-    } else if (allPosts.length > 0) {
-      const counts = new Map<string, number>();
-      for (const post of allPosts) {
-        for (const author of post.authors) {
-          counts.set(author, (counts.get(author) || 0) + 1);
-        }
-      }
-      authors = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
-    } else {
-      authors = [];
-    }
+    const authors = resolveSeriesAuthors(matchedSeriesSlug, allPosts);
 
     return (
       <div className="layout-main">

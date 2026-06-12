@@ -1,4 +1,6 @@
-import { getPageBySlug, getAllPages, getAllPosts, getAllSeries, getListingPosts, getSeriesData, getSeriesPosts, getSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, resolveSeriesAuthors } from '@/lib/content/series';
+import { getAuthorSlug } from '@/lib/content/authors';
+import { getListingPosts } from '@/lib/content/posts';
 import { notFound } from 'next/navigation';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
@@ -11,123 +13,53 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../site.config';
 import { resolveLocale, t } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
-import { getPostsBasePath, getSeriesCustomPaths, getSeriesAutoPaths, getPostUrl, RESERVED_ROUTE_SEGMENTS } from '@/lib/urls';
+import { topLevelSlugParams, resolveTopLevelSlug } from '@/lib/route-aliases';
 import RedirectPage from '@/components/RedirectPage';
 
 const POST_PAGE_SIZE = siteConfig.pagination.posts;
 const SERIES_PAGE_SIZE = siteConfig.pagination.series;
 
-function resolveSeriesSlug(slug: string, customPaths: Record<string, string>): string | undefined {
-  return (
-    Object.entries(customPaths).find(([, path]) => path === slug)?.[0] ??
-    (getSeriesAutoPaths() && !Object.hasOwn(customPaths, slug) && getSeriesData(slug) ? slug : undefined)
-  );
-}
-
 /**
  * Generates the static paths for all top-level pages at build time,
  * plus any custom URL prefixes configured for posts or series.
+ * Alias collisions throw inside topLevelSlugParams (strict build).
  */
 export async function generateStaticParams() {
-  const pages = getAllPages();
-  const params = pages.map((page) => ({ slug: page.slug }));
-
-  // Add custom posts basePath listing (e.g. /articles)
-  const basePath = getPostsBasePath();
-  if (basePath !== 'posts') {
-    params.push({ slug: basePath });
-  }
-
-  // Add series custom path listings (e.g. /weeklies)
-  const customPaths = getSeriesCustomPaths();
-  for (const customPath of Object.values(customPaths)) {
-    params.push({ slug: customPath });
-  }
-
-  // Add series auto-path listings (e.g. /my-series) when autoPaths is enabled
-  const customPathValues = new Set(Object.values(customPaths));
-  const autoPathSlugs: string[] = [];
-  if (getSeriesAutoPaths()) {
-    for (const seriesSlug of Object.keys(getAllSeries())) {
-      if (Object.hasOwn(customPaths, seriesSlug)) continue; // series has its own customPaths key override — skip
-      if (customPathValues.has(seriesSlug)) continue; // slug collides with another series' custom path value — skip
-      autoPathSlugs.push(seriesSlug);
-      params.push({ slug: seriesSlug });
-    }
-  }
-
-  // Add single-segment redirectFrom paths (e.g. /old-slug).
-  // Throws on any alias that collides with a reserved top-level slug or a
-  // duplicate alias across posts — strict build catches misconfiguration early.
-  const reservedSlugs = new Set([
-    ...pages.map(p => p.slug),
-    basePath,
-    ...Object.values(customPaths),
-    ...autoPathSlugs,
-    ...RESERVED_ROUTE_SEGMENTS,
-  ]);
-  for (const post of getAllPosts()) {
-    for (const from of post.redirectFrom ?? []) {
-      const segments = from.split('/').filter(Boolean);
-      if (segments.length !== 1) continue;
-      if (from === getPostUrl(post)) continue;
-      const alias = segments[0];
-      if (reservedSlugs.has(alias)) {
-        throw new Error(
-          `[amytis] redirectFrom "${from}" in post "${post.slug}" conflicts with an existing top-level route or redirect alias.`
-        );
-      }
-      reservedSlugs.add(alias);
-      params.push({ slug: alias });
-    }
-  }
-
-  return params;
+  return topLevelSlugParams();
 }
 
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const resolution = resolveTopLevelSlug(rawSlug);
 
-  // Custom posts basePath
-  const basePath = getPostsBasePath();
-  if (slug === basePath && basePath !== 'posts') {
-    return {
-      title: `${t('posts')} | ${resolveLocale(siteConfig.title)}`,
-      description: t('posts_description'),
-    };
-  }
-
-  // Series custom paths
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = resolveSeriesSlug(slug, customPaths);
-  if (matchedSeriesSlug) {
-    const seriesData = getSeriesData(matchedSeriesSlug);
-    if (seriesData) {
+  switch (resolution?.kind) {
+    case 'postsListing':
       return {
-        title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
-        description: seriesData.excerpt,
+        title: `${t('posts')} | ${resolveLocale(siteConfig.title)}`,
+        description: t('posts_description'),
       };
+    case 'seriesListing': {
+      const seriesData = getSeriesData(resolution.seriesSlug);
+      if (seriesData) {
+        return {
+          title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
+          description: seriesData.excerpt,
+        };
+      }
+      return { title: 'Page Not Found' };
     }
+    case 'page':
+      return {
+        title: `${resolution.page.title} | ${resolveLocale(siteConfig.title)}`,
+        description: resolution.page.excerpt,
+      };
+    case 'redirect':
+      return { title: resolution.post.title };
+    default:
+      return { title: 'Page Not Found' };
   }
-
-  const page = getPageBySlug(slug);
-  if (page) {
-    return {
-      title: `${page.title} | ${resolveLocale(siteConfig.title)}`,
-      description: page.excerpt,
-    };
-  }
-
-  // Single-segment redirectFrom — only if no real page exists for this slug
-  const redirectPost = getAllPosts().find(p => p.redirectFrom?.includes(`/${slug}`));
-  if (redirectPost) {
-    return { title: redirectPost.title };
-  }
-
-  return { title: 'Page Not Found' };
 }
 
 export default async function Page({
@@ -136,11 +68,12 @@ export default async function Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const resolution = resolveTopLevelSlug(rawSlug);
+  if (!resolution) notFound();
 
-  // Check if slug matches custom posts basePath
-  const basePath = getPostsBasePath();
-  if (slug === basePath && basePath !== 'posts') {
+  // Custom posts basePath listing (e.g. /articles)
+  if (resolution.kind === 'postsListing') {
+    const { basePath } = resolution;
     const allPosts = getListingPosts();
     const totalPages = Math.ceil(allPosts.length / POST_PAGE_SIZE);
     const posts = allPosts.slice(0, POST_PAGE_SIZE);
@@ -163,10 +96,9 @@ export default async function Page({
     );
   }
 
-  // Check if slug matches a series custom path
-  const customPaths = getSeriesCustomPaths();
-  const matchedSeriesSlug = resolveSeriesSlug(slug, customPaths);
-  if (matchedSeriesSlug) {
+  // Series listing at a custom or auto path (e.g. /weeklies, /my-series)
+  if (resolution.kind === 'seriesListing') {
+    const matchedSeriesSlug = resolution.seriesSlug;
     const seriesData = getSeriesData(matchedSeriesSlug);
     const allPosts = getSeriesPosts(matchedSeriesSlug);
 
@@ -180,22 +112,7 @@ export default async function Page({
     const title = seriesData?.title || matchedSeriesSlug.charAt(0).toUpperCase() + matchedSeriesSlug.slice(1);
     const description = seriesData?.excerpt;
     const coverImage = seriesData?.coverImage;
-
-    const explicitAuthors = getSeriesAuthors(matchedSeriesSlug);
-    let authors: string[];
-    if (explicitAuthors) {
-      authors = explicitAuthors;
-    } else if (allPosts.length > 0) {
-      const counts = new Map<string, number>();
-      for (const post of allPosts) {
-        for (const author of post.authors) {
-          counts.set(author, (counts.get(author) || 0) + 1);
-        }
-      }
-      authors = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
-    } else {
-      authors = [];
-    }
+    const authors = resolveSeriesAuthors(matchedSeriesSlug, allPosts);
 
     return (
       <div className="layout-main">
@@ -240,26 +157,21 @@ export default async function Page({
         <SeriesCatalog posts={posts} totalPosts={allPosts.length} />
         {totalPages > 1 && (
           <div className="mt-12">
-            <Pagination currentPage={1} totalPages={totalPages} basePath={`/${slug}`} />
+            <Pagination currentPage={1} totalPages={totalPages} basePath={`/${resolution.prefix}`} />
           </div>
         )}
       </div>
     );
   }
 
-  // Default: static page — check this before redirectFrom to prevent aliased slugs from hijacking real pages
-  const page = getPageBySlug(slug);
-
-  if (!page) {
-    // Single-segment redirectFrom — only if no real page exists for this slug
-    const redirectPost = getAllPosts().find(p => p.redirectFrom?.includes(`/${slug}`));
-    if (redirectPost) {
-      return <RedirectPage to={getPostUrl(redirectPost)} />;
-    }
-    notFound();
+  // Single-segment redirectFrom — resolveTopLevelSlug only reports this when
+  // no real page exists for the slug, so aliases can't hijack real pages.
+  if (resolution.kind === 'redirect') {
+    return <RedirectPage to={resolution.to} />;
   }
 
-  // Determine layout based on frontmatter, defaulting to 'simple' for pages
+  // Default: static page
+  const page = resolution.page;
   const layout = page.layout || 'simple';
 
   if (layout === 'post') {

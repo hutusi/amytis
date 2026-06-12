@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getAllPosts, getPostBySlug, getRelatedPosts, getSeriesPosts } from "../../src/lib/markdown";
+import { setEnvVar, restoreEnvVar } from "../helpers/env";
+import { getRelatedPosts } from '../../src/lib/content/related';
+import { getSeriesPosts } from '../../src/lib/content/series';
+import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Posts", () => {
   test("should load all posts from content directory", () => {
@@ -53,5 +56,33 @@ describe("Integration: Posts", () => {
     
     // If we want to test real series, we need to mock data or have a post with series.
     // For now, empty array is a valid result if no series exists.
+  });
+});
+
+describe("Integration: post visibility filtering", () => {
+  test("draft posts are visible outside production", () => {
+    const slugs = getAllPosts().map((p) => p.slug);
+    expect(slugs).toContain("draft-post");
+  });
+
+  test("draft posts are excluded in production", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalPythonRst = process.env.AMYTIS_ENABLE_PYTHON_RST;
+    try {
+      setEnvVar("NODE_ENV", "production");
+      setEnvVar("AMYTIS_ENABLE_PYTHON_RST", "0");
+      const slugs = getAllPosts().map((p) => p.slug);
+      expect(slugs).not.toContain("draft-post");
+    } finally {
+      restoreEnvVar("NODE_ENV", originalEnv);
+      restoreEnvVar("AMYTIS_ENABLE_PYTHON_RST", originalPythonRst);
+    }
+  });
+
+  test("future-dated posts are excluded while posts.showFuturePosts is false", () => {
+    // content/posts/future-post.mdx is dated 2126.
+    const slugs = getAllPosts().map((p) => p.slug);
+    expect(slugs).not.toContain("future-post");
+    expect(getPostBySlug("future-post")).toBeNull();
   });
 });

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { getAuthorSlug, PostData, BacklinkSource, SlugRegistryEntry, CollectionContext } from '@/lib/markdown';
+import type { BacklinkSource, SlugRegistryEntry } from '@/lib/content/discovery';
+import { getAuthorSlug } from '@/lib/content/authors';
+import type { PostData, CollectionContext } from '@/lib/content/types';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import RelatedPosts from '@/components/RelatedPosts';

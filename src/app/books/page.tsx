@@ -1,4 +1,4 @@
-import { getAllBooks } from '@/lib/markdown';
+import { getAllBooks } from '@/lib/content/books';
 import { getBookUrl } from '@/lib/urls';
 import Link from 'next/link';
 import { siteConfig } from '../../../site.config';

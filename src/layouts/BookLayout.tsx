@@ -1,5 +1,5 @@
 import path from 'path';
-import { BookData, BookChapterData, getBookDirPath } from '@/lib/markdown';
+import { getBookDirPath, type BookData, type BookChapterData } from '@/lib/content/books';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import BookReadingShell from '@/components/BookReadingShell';
 import { getBookChapterUrl } from '@/lib/urls';

@@ -1,6 +1,7 @@
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { PROSE_CLASSES } from '@/lib/prose-classes';
 import KatexStyles from '@/components/KatexStyles';
-import type { SlugRegistryEntry } from '@/lib/markdown';
+import type { SlugRegistryEntry } from '@/lib/content/discovery';
 import { rstToMarkdown } from '@/lib/rst';
 import { applyShikiToRstHtml } from '@/lib/shiki-rst';
 import sanitizeHtml from 'sanitize-html';
@@ -12,16 +13,6 @@ interface RstRendererProps {
   slug?: string;
   slugRegistry?: Map<string, SlugRegistryEntry>;
 }
-
-const proseClasses = `prose prose-lg max-w-none min-w-0 overflow-x-hidden text-foreground
-      prose-headings:font-serif prose-headings:text-heading
-      prose-p:text-foreground prose-p:leading-loose
-      prose-strong:text-heading prose-strong:font-semibold
-      prose-code:bg-muted/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:border prose-code:border-muted/20 prose-code:text-[0.9em] prose-code:font-medium
-      prose-code:before:content-none prose-code:after:content-none
-      prose-blockquote:italic
-      prose-th:text-heading prose-td:text-foreground
-      dark:prose-invert`;
 
 const allowedTags = [
   ...(sanitizeHtml.defaults.allowedTags ?? []),
@@ -138,7 +129,7 @@ export default async function RstRenderer({ content, html, latex = false, slug, 
         {latex && <KatexStyles />}
         <div className="bg-background">
           <div
-            className={`${proseClasses} rst-rendered`}
+            className={`${PROSE_CLASSES} rst-rendered`}
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
           />
         </div>

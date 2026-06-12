@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit';
 import type { Root, Text, Parent } from 'mdast';
-import type { SlugRegistryEntry } from './markdown';
+import type { SlugRegistryEntry } from './content/discovery';
 
 interface WikilinksOptions {
   slugRegistry: Map<string, SlugRegistryEntry>;

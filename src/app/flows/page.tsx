@@ -1,4 +1,6 @@
-import { getAllFlows, getFlowTags } from '@/lib/markdown';
+import { getAllFlows, getFlowTags } from '@/lib/content/flows';
+import { isFeatureEnabled } from '@/lib/features';
+import { firstPage } from '@/lib/pagination';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -14,10 +16,9 @@ export const metadata: Metadata = {
 };
 
 export default function FlowsPage() {
-  if (siteConfig.features?.flow?.enabled === false) notFound();
+  if (!isFeatureEnabled('flow')) notFound();
   const allFlows = getAllFlows();
-  const totalPages = Math.ceil(allFlows.length / PAGE_SIZE);
-  const flows = allFlows.slice(0, PAGE_SIZE);
+  const { items: flows, totalPages } = firstPage(allFlows, PAGE_SIZE);
   const entryDates = allFlows.map(f => f.date);
   const tags = getFlowTags();
   const allFlowItems = totalPages > 1

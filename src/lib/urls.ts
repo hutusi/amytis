@@ -101,6 +101,11 @@ export function getFlowUrl(slug: string): string {
   return `/flows/${slug}`;
 }
 
+/** Returns the canonical URL path for a knowledge-base note. */
+export function getNoteUrl(slug: string): string {
+  return `/notes/${slug}`;
+}
+
 /** Returns the canonical URL path for a static page (e.g. /about, /subscribe). */
 export function getStaticPageUrl(slug: string): string {
   return `/${slug}`;

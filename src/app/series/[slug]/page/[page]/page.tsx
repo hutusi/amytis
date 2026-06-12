@@ -1,4 +1,5 @@
-import { getSeriesData, getSeriesPosts, getCollectionPosts, getAllSeries, resolveSeriesAuthors, getAuthorSlug } from '@/lib/markdown';
+import { getSeriesData, getSeriesPosts, getCollectionPosts, resolveSeriesAuthors } from '@/lib/content/series';
+import { getAuthorSlug } from '@/lib/content/authors';
 import { notFound } from 'next/navigation';
 import SeriesCatalog from '@/components/SeriesCatalog';
 import Pagination from '@/components/Pagination';
@@ -9,90 +10,28 @@ import Link from 'next/link';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
 import { getSeriesListUrl } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
-import { findSeriesByRedirectFrom, safeDecodeParam } from '@/lib/series-redirects';
+import { seriesPageParams, resolveSeriesParam } from '@/lib/route-aliases';
+import { paginate } from '@/lib/pagination';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
 export async function generateStaticParams() {
-  const allSeries = getAllSeries();
-  const seriesBasePath = getSeriesListUrl();
-  const seen = new Set<string>();
-  const reservedSlugs = new Set(Object.keys(allSeries));
-  const claimedAliases = new Map<string, string>();
-  const params: { slug: string; page: string }[] = [];
-  const pushParam = (slug: string, page: string) => {
-    const key = `${slug}:${page}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    params.push({ slug, page });
-  };
-
-  Object.keys(allSeries).forEach(slug => {
-    const posts = allSeries[slug];
-    const totalPages = Math.ceil(posts.length / PAGE_SIZE);
-    if (totalPages > 1) {
-      for (let i = 2; i <= totalPages; i++) {
-        pushParam(slug, i.toString());
-      }
-    }
-
-    const data = getSeriesData(slug);
-    for (const from of data?.redirectFrom ?? []) {
-      const segments = from.split('/').filter(Boolean);
-      const expectedBase = seriesBasePath.replace(/^\/+|\/+$/g, '');
-      if (segments.length !== 2 || segments[0] !== expectedBase) continue;
-      const aliasSlug = segments[1];
-      if (aliasSlug === slug || totalPages <= 1) continue;
-      const claimedBy = claimedAliases.get(aliasSlug);
-      if (claimedBy && claimedBy !== slug) {
-        throw new Error(
-          `[amytis] series redirectFrom alias "${from}" is claimed by both "${claimedBy}" and "${slug}".`
-        );
-      }
-      if (!claimedBy && reservedSlugs.has(aliasSlug)) {
-        throw new Error(
-          `[amytis] series redirectFrom alias "${from}" for "${slug}" conflicts with an existing series slug.`
-        );
-      }
-      claimedAliases.set(aliasSlug, slug);
-      reservedSlugs.add(aliasSlug);
-      for (let i = 2; i <= totalPages; i++) {
-        pushParam(aliasSlug, i.toString());
-      }
-    }
-  });
-
-  if (process.env.NODE_ENV !== 'production') {
-    const encodedParams = params
-      .filter(param => encodeURIComponent(param.slug) !== param.slug)
-      .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }))
-      .filter(param => {
-        const key = `${param.slug}:${param.page}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    params.push(...encodedParams);
-  }
-
-  if (params.length === 0) return [{ slug: '_', page: '2' }];
-  return params;
+  return seriesPageParams();
 }
 
 export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; page: string }> }): Promise<Metadata> {
   const { slug: rawSlug, page } = await params;
-  const slug = safeDecodeParam(rawSlug);
-  const currentPath = `${getSeriesListUrl()}/${slug}`;
-  const redirect = findSeriesByRedirectFrom(currentPath);
-  if (redirect) {
+  const resolution = resolveSeriesParam(rawSlug);
+  if (resolution.kind === 'alias') {
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
-      title: redirect.data.title,
-      alternates: { canonical: `${siteUrl}${getSeriesListUrl()}/${redirect.slug}/page/${page}` },
+      title: resolution.data.title,
+      alternates: { canonical: `${siteUrl}${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}` },
     };
   }
+  const slug = resolution.slug;
 
   const seriesData = getSeriesData(slug);
   const title = seriesData?.title || slug;
@@ -105,13 +44,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string; page: string }> }) {
   const { slug: rawSlug, page: pageStr } = await params;
-  const slug = safeDecodeParam(rawSlug);
   const page = parseInt(pageStr);
-  const currentPath = `${getSeriesListUrl()}/${slug}`;
-  const redirect = findSeriesByRedirectFrom(currentPath);
-  if (redirect) {
-    return <RedirectPage to={`${getSeriesListUrl()}/${redirect.slug}/page/${page}`} />;
+  const resolution = resolveSeriesParam(rawSlug);
+  if (resolution.kind === 'alias') {
+    return <RedirectPage to={`${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}`} />;
   }
+  const slug = resolution.slug;
 
   const seriesData = getSeriesData(slug);
   const isCollection = seriesData?.type === 'collection';
@@ -121,11 +59,9 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
     notFound();
   }
 
-  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
-  
-  const start = (page - 1) * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const posts = allPosts.slice(start, end);
+  const slice = paginate(allPosts, page, PAGE_SIZE);
+  if (!slice || page < 2) notFound();
+  const { items: posts, totalPages, start } = slice;
 
   // Fallback title
   const title = seriesData?.title || slug.charAt(0).toUpperCase() + slug.slice(1);
@@ -134,8 +70,6 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
 
   const authors = resolveSeriesAuthors(slug, allPosts);
 
-  // Calculate the starting index for this page
-  const startIndex = (page - 1) * PAGE_SIZE;
 
   return (
     <div className="layout-main">
@@ -184,10 +118,10 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
       </header>
 
       {/* Series Catalog */}
-      <SeriesCatalog posts={posts} startIndex={startIndex} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
+      <SeriesCatalog posts={posts} startIndex={start} totalPosts={allPosts.length} collectionSlug={isCollection ? slug : undefined} />
 
       <div className="mt-12">
-        <Pagination currentPage={page} totalPages={totalPages} basePath={`/series/${slug}`} />
+        <Pagination currentPage={page} totalPages={totalPages} basePath={getSeriesListUrl() + `/${slug}`} />
       </div>
     </div>
   );

@@ -311,7 +311,7 @@ amytis/
       flows/            # Flow routes
     components/         # React components
     lib/
-      markdown.ts       # Data access layer
+      content/          # Data access layer (posts, series, books, flows, notes)
   tests/                # Unit, integration, e2e, tooling tests
   packages/
     create-amytis/      # `bun create amytis` scaffold CLI
