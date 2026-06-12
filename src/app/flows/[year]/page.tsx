@@ -1,6 +1,7 @@
 import { getAllFlows, getFlowsByYear } from '@/lib/content/flows';
 import { buildSlugRegistry } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
+import { toFlowIndexItems } from '@/lib/flow-stream';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -89,7 +90,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         className="mb-12"
       />
       <FlowIndexClient
-        allFlows={flows.map(({ slug, date, title, excerpt, tags }) => ({ slug, date, title, excerpt, tags }))}
+        allFlows={toFlowIndexItems(flows)}
         entryDates={allFlows.map(f => f.date)}
         tags={tags}
         currentDate={flows[0]?.date}

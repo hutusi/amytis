@@ -2,6 +2,7 @@ import { getAllFlows, getFlowTags } from '@/lib/content/flows';
 import { buildSlugRegistry } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
 import { firstPage } from '@/lib/pagination';
+import { toFlowIndexItems } from '@/lib/flow-stream';
 import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -32,7 +33,7 @@ export default function FlowsPage() {
         className="mb-12"
       />
       <FlowIndexClient
-        allFlows={allFlows.map(({ slug, date, title, excerpt, tags }) => ({ slug, date, title, excerpt, tags }))}
+        allFlows={toFlowIndexItems(allFlows)}
         entryDates={allFlows.map(f => f.date)}
         tags={getFlowTags()}
         feed={

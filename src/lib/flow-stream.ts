@@ -1,5 +1,22 @@
 import { siteConfig } from '../../site.config';
 
+export interface FlowIndexItem {
+  slug: string;
+  date: string;
+  title?: string;
+  excerpt: string;
+  tags: string[];
+}
+
+/**
+ * Shape full FlowData records into the light items FlowIndexClient filters
+ * on (drops content/headings). Shared by all four flow index routes so
+ * their prop shape can't drift.
+ */
+export function toFlowIndexItems<T extends FlowIndexItem>(flows: T[]): FlowIndexItem[] {
+  return flows.map(({ slug, date, title, excerpt, tags }) => ({ slug, date, title, excerpt, tags }));
+}
+
 export interface FlowMonthLabelSegment {
   text: string;
   /** Which archive this segment anchors to; null for plain literals. */

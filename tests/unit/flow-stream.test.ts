@@ -1,7 +1,18 @@
 import { describe, test, expect } from 'bun:test';
-import { groupFlowsByMonth } from '../../src/lib/flow-stream';
+import { groupFlowsByMonth, toFlowIndexItems } from '../../src/lib/flow-stream';
 
 const flow = (date: string) => ({ date, slug: date.replaceAll('-', '/') });
+
+describe('toFlowIndexItems', () => {
+  test('keeps only the light fields (drops content etc.)', () => {
+    const items = toFlowIndexItems([
+      { slug: '2026/03/07', date: '2026-03-07', title: 'T', excerpt: 'E', tags: ['a'], content: 'FULL BODY' },
+    ]);
+    expect(items).toEqual([
+      { slug: '2026/03/07', date: '2026-03-07', title: 'T', excerpt: 'E', tags: ['a'] },
+    ]);
+  });
+});
 
 describe('groupFlowsByMonth', () => {
   test('empty input returns no groups', () => {

@@ -4,18 +4,11 @@ import { useState, useMemo, type ReactNode } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import FlowTimelineEntry from '@/components/FlowTimelineEntry';
-
-interface FlowItem {
-  slug: string;
-  date: string;
-  title?: string;
-  excerpt: string;
-  tags: string[];
-}
+import type { FlowIndexItem } from '@/lib/flow-stream';
 
 interface FlowIndexClientProps {
   /** Light items across ALL pages — tag filtering searches the whole archive. */
-  allFlows: FlowItem[];
+  allFlows: FlowIndexItem[];
   entryDates: string[];
   tags: Record<string, number>;
   /**

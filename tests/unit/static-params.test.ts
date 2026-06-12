@@ -97,6 +97,7 @@ const Noop = { default: () => null };
 
 mock.module('@/components/PageHeader', () => Noop);
 mock.module('@/components/FlowIndexClient', () => Noop);
+mock.module('@/components/FlowStream', () => Noop);
 mock.module('@/components/NoteContent', () => Noop);
 mock.module('@/components/FlowCalendarSidebar', () => Noop);
 mock.module('@/components/MarkdownRenderer', () => Noop);
