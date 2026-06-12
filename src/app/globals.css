@@ -16,6 +16,10 @@ html {
   --accent-hover: #047857; /* Emerald 700 */
   --muted: #78716c; /* Stone 500 - Improved contrast */
   --code-fg: #1c1917; /* Stone 900 - High contrast neutral */
+  /* Warm contrast hue for surfaces & hairlines at ultra-low alpha
+     (`muted` is a gray and deadens the warm paper background; use
+     ink/[0.02–0.08] for fills and micro-borders instead). */
+  --ink: #1c1917; /* Stone 900 */
 }
 
 .dark {
@@ -26,6 +30,7 @@ html {
   --accent-hover: #10b981; /* Emerald 500 */
   --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
   --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
+  --ink: #fafaf9; /* Stone 50 */
 }
 
 /* Palette Overrides */
@@ -512,6 +517,35 @@ html.dark .shiki .line.warning {
     @apply relative overflow-hidden rounded-2xl border border-muted/20 bg-muted/5 p-8 transition-all hover:border-accent/30;
   }
 
+  /* Flow feed card — "double weak contrast": no single strong signal,
+     three whisper-level ones (ultra-low warm fill, top-sheen layer,
+     micro-border) plus an inner top highlight and a seat shadow. */
+  .flow-card {
+    @apply rounded-2xl p-6 sm:p-8;
+    background-color: rgb(28 25 23 / 0.02);
+    background-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.55),
+      rgb(255 255 255 / 0) 55%
+    );
+    border: 1px solid rgb(28 25 23 / 0.06);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.65),
+      0 1px 2px rgb(28 25 23 / 0.03);
+  }
+  .dark .flow-card {
+    background-color: rgb(255 255 255 / 0.03);
+    background-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.025),
+      rgb(255 255 255 / 0) 55%
+    );
+    border-color: rgb(255 255 255 / 0.07);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 1px 2px rgb(0 0 0 / 0.2);
+  }
+
   .badge-accent {
     @apply mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent;
   }
@@ -665,6 +699,7 @@ html.dark .shiki .line.warning {
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
+  --color-ink: var(--ink);
   
   /* Map Typography colors to our variables for consistency */
   --color-prose-body: var(--foreground);

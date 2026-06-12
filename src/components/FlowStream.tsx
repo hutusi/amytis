@@ -31,7 +31,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
 
   return (
     <div>
-      <div className="relative border-l-2 border-muted/20 pl-6 sm:pl-10 space-y-12">
+      <div className="relative border-l-2 border-ink/[0.08] pl-6 sm:pl-10 space-y-12">
         {groups.map(group => (
           <section key={group.key} className="relative">
             {/* Month node — hollow accent dot centered on the rail. Offset =
@@ -43,17 +43,14 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
             />
             <h2 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-6">
               {group.label}
-              <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-muted/10 rounded px-1.5 py-0.5 align-middle leading-none">
+              <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted bg-ink/[0.05] rounded px-1.5 py-0.5 align-middle leading-none">
                 {group.flows.length}
               </span>
             </h2>
 
             <div className="space-y-8">
             {group.flows.map(flow => (
-              <article
-                key={flow.slug}
-                className="rounded-2xl border border-muted/15 bg-muted/5 p-6 sm:p-8 shadow-[0_1px_3px_rgb(0_0_0/0.04)]"
-              >
+              <article key={flow.slug} className="flow-card">
                 <header className="mb-4">
                   <div className="flex items-baseline justify-between gap-4">
                     <Link href={getFlowUrl(flow.slug)} className="group/date no-underline min-w-0">
@@ -98,7 +95,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                 />
 
                 {flow.tags.length > 0 && (
-                  <div className="mt-6 border-t border-muted/10 pt-4 flex flex-wrap gap-2">
+                  <div className="mt-6 border-t border-ink/[0.05] pt-4 flex flex-wrap gap-2">
                     {flow.tags.map(tag => (
                       <Tag key={tag} tag={tag} variant="compact" />
                     ))}
