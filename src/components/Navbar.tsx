@@ -45,7 +45,8 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   function isActive(url: string): boolean {
     if (!url) return false;
     if (url === '/') return pathname === '/';
-    return pathname.startsWith(url);
+    // Segment-aware prefix match: '/posts' must not claim '/posts-archive'.
+    return pathname === url || pathname.startsWith(url + '/');
   }
 
   // Scroll-aware transparency
@@ -200,7 +201,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
 
               // Static children dropdown (e.g., "More")
               if (item.children && item.children.length > 0) {
-                const childActive = item.children.some(c => c.url && pathname.startsWith(c.url));
+                const childActive = item.children.some(c => isActive(c.url));
                 return (
                   <div key={item.url || item.name} className="relative group">
                     <button
@@ -413,7 +414,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                 if (item.children && item.children.length > 0) {
                   const dropdownKey = item.url || item.name;
                   const isOpen = openDropdown === dropdownKey;
-                  const childActive = item.children.some(c => c.url && pathname.startsWith(c.url));
+                  const childActive = item.children.some(c => isActive(c.url));
                   return (
                     <div key={dropdownKey}>
                       <button

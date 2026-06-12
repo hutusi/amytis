@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { featureLabelKey, visibleNavItems } from '../../src/lib/nav';
+import { featureLabelKey, isNavUrlEnabled, visibleNavItems } from '../../src/lib/nav';
+import { siteConfig } from '../../site.config';
 import type { NavItem } from '../../site.config';
 
 const NAV: NavItem[] = [
@@ -45,6 +46,25 @@ describe('visibleNavItems', () => {
     const before = JSON.stringify(NAV);
     visibleNavItems(NAV, flowDisabled);
     expect(JSON.stringify(NAV)).toBe(before);
+  });
+});
+
+describe('default gating (real FEATURE_URLS / isNavUrlEnabled, no injected predicate)', () => {
+  test('flow-gated urls are enabled with the live repo config (features.flow on)', () => {
+    expect(isNavUrlEnabled('/flows')).toBe(true);
+    expect(isNavUrlEnabled('/notes')).toBe(true);
+    expect(isNavUrlEnabled('/graph')).toBe(true);
+  });
+
+  test('ungated urls are always enabled', () => {
+    expect(isNavUrlEnabled('/about')).toBe(true);
+    expect(isNavUrlEnabled('')).toBe(true);
+  });
+
+  test('visibleNavItems with the live config keeps Notes/Graph in the More menu', () => {
+    const more = visibleNavItems(siteConfig.nav).find(i => i.children);
+    expect(more?.children?.some(c => c.url === '/notes')).toBe(true);
+    expect(more?.children?.some(c => c.url === '/graph')).toBe(true);
   });
 });
 
