@@ -42,14 +42,14 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
     // `useLanguage()` hook serves the user's saved locale on hydration. The
     // real fix is per-locale URL routing, tracked as a separate refactor.
     <nav
-      className="mt-12 pt-12 border-t border-muted/20 grid grid-cols-1 sm:grid-cols-2 gap-3"
+      className="mt-12 pt-12 border-t border-ink/[0.07] grid grid-cols-1 sm:grid-cols-2 gap-3"
       aria-label={t('post_navigation')}
       suppressHydrationWarning
     >
       {effectivePrev && (
         <Link
           href={postHref(effectivePrev)}
-          className="group flex flex-col gap-1.5 p-4 rounded-xl border border-muted/15 hover:border-accent/30 hover:bg-accent/5 transition-all no-underline"
+          className="group flex flex-col gap-1.5 p-4 rounded-2xl border border-ink/[0.06] hover:border-accent/30 hover:bg-accent/5 transition-all no-underline"
         >
           <span
             className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5"
@@ -70,7 +70,7 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
       {effectiveNext && (
         <Link
           href={postHref(effectiveNext)}
-          className={`group flex flex-col gap-1.5 p-4 rounded-xl border border-muted/15 hover:border-accent/30 hover:bg-accent/5 transition-all no-underline sm:items-end sm:text-right${!effectivePrev ? ' sm:col-start-2' : ''}`}
+          className={`group flex flex-col gap-1.5 p-4 rounded-2xl border border-ink/[0.06] hover:border-accent/30 hover:bg-accent/5 transition-all no-underline sm:items-end sm:text-right${!effectivePrev ? ' sm:col-start-2' : ''}`}
         >
           <span
             className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5"

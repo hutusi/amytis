@@ -18,9 +18,9 @@ export default function Tag({ tag, count, variant = 'default', showHash = true }
   const baseClasses = 'no-underline transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50';
 
   const variantClasses = {
-    default: 'inline-flex px-3 py-1 bg-muted/10 rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent',
+    default: 'inline-flex px-3 py-1 bg-ink/[0.05] rounded-full text-xs font-medium text-muted hover:bg-accent/10 hover:text-accent',
     compact: 'text-xs text-muted hover:text-accent',
-    large: 'group relative inline-flex items-center px-4 py-2 rounded-xl border border-muted/20 bg-muted/5 hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5',
+    large: 'group relative inline-flex items-center px-4 py-2 rounded-2xl border border-ink/[0.07] bg-ink/[0.02] hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5',
   };
 
   return (

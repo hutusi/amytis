@@ -12,10 +12,10 @@ export default function RelatedPosts({ posts }: { posts: PostData[] }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {posts.map(post => (
           <Link key={post.slug} href={getPostUrl(post)} className="group block no-underline">
-            <article className="flex flex-col h-full">
+            <article className="ink-card flex flex-col h-full p-5 transition-colors group-hover:border-accent/30">
                <div className="text-xs font-sans text-muted mb-2 flex items-center gap-2">
                  <time className="font-mono">{post.date}</time>
-                 <span className="w-1 h-1 rounded-full bg-muted/30" />
+                 <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
                  <span className="uppercase tracking-widest text-[0.6rem] font-semibold text-accent/80">
                    {post.category}
                  </span>

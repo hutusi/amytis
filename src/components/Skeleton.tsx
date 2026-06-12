@@ -15,7 +15,7 @@ export function Skeleton({
   width,
   height,
 }: SkeletonProps) {
-  const baseClasses = 'animate-pulse bg-muted/20';
+  const baseClasses = 'animate-pulse bg-ink/[0.08]';
 
   const variantClasses = {
     text: 'rounded',
@@ -59,7 +59,7 @@ export function PostCardSkeleton() {
  */
 export function PostListSkeleton() {
   return (
-    <div className="py-8 border-b border-muted/10 flex gap-8">
+    <div className="py-8 border-b border-ink/[0.05] flex gap-8">
       <div className="flex-1 space-y-3">
         <Skeleton className="h-3 w-24" variant="text" />
         <Skeleton className="h-6 w-3/4" variant="text" />
@@ -86,7 +86,7 @@ export function SeriesCardSkeleton() {
         <Skeleton className="h-5 w-20 rounded-full" />
         <Skeleton className="h-7 w-2/3" variant="text" />
         <Skeleton className="h-4 w-full" variant="text" />
-        <div className="pt-6 border-t border-muted/10 space-y-2">
+        <div className="pt-6 border-t border-ink/[0.05] space-y-2">
           <div className="flex items-center gap-3">
             <Skeleton className="w-6 h-6" variant="circular" />
             <Skeleton className="h-4 w-32" variant="text" />

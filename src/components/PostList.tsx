@@ -37,10 +37,10 @@ export default function PostList({
           />
 
           {/* Content card */}
-          <div className="rounded-2xl border border-muted/20 bg-muted/5 overflow-hidden transition-all duration-300 group-hover:border-accent/30 group-hover:bg-muted/10 group-hover:shadow-lg group-hover:shadow-accent/5 h-32 sm:h-auto">
+          <div className="ink-card overflow-hidden transition-all duration-300 group-hover:border-accent/30 group-hover:bg-ink/[0.04] group-hover:shadow-md group-hover:shadow-accent/5 h-32 sm:h-auto">
             <div className="flex flex-row h-full">
               {/* Thumbnail */}
-              <div className="relative w-32 sm:w-48 flex-shrink-0 overflow-hidden bg-muted/10">
+              <div className="relative w-32 sm:w-48 flex-shrink-0 overflow-hidden bg-ink/[0.04]">
                 <Link href={getPostUrl(post)} className="relative z-10 block h-full w-full" tabIndex={-1} aria-hidden>
                   <CoverImage
                     src={post.coverImage}
@@ -90,7 +90,7 @@ export default function PostList({
                       <Link
                         key={tag}
                         href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
-                        className="relative z-10 text-xs px-2 py-0.5 rounded-full bg-muted/10 text-muted/70 hover:bg-accent/10 hover:text-accent transition-colors no-underline"
+                        className="relative z-10 text-xs px-2 py-0.5 rounded-full bg-ink/[0.05] text-muted/70 hover:bg-accent/10 hover:text-accent transition-colors no-underline"
                       >
                         {tag}
                       </Link>

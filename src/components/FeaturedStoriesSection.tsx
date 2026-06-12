@@ -116,7 +116,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
         {/* Hero card — full image with obi (belly band) text overlay */}
         <div className={secondary.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}>
           <Link href={getPostUrl(hero)} className={`group block no-underline${secondary.length > 0 ? ' h-full' : ''}`}>
-            <div className={`relative overflow-hidden rounded-2xl bg-muted/10 ${secondary.length > 0 ? 'aspect-[16/9] lg:aspect-auto lg:h-full' : 'aspect-[16/9]'}`}>
+            <div className={`relative overflow-hidden rounded-2xl bg-ink/[0.04] ${secondary.length > 0 ? 'aspect-[16/9] lg:aspect-auto lg:h-full' : 'aspect-[16/9]'}`}>
               <CoverImage
                 src={hero.coverImage}
                 title={hero.title}
@@ -155,7 +155,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
               <Link
                 key={post.slug}
                 href={getPostUrl(post)}
-                className="group flex no-underline rounded-2xl border border-muted/20 bg-muted/5 overflow-hidden hover:border-accent/30 hover:bg-muted/10 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300 h-32"
+                className="group flex no-underline ink-card overflow-hidden hover:border-accent/30 hover:bg-ink/[0.04] hover:shadow-md hover:shadow-accent/5 transition-all duration-300 h-32"
               >
                 {/* Text content */}
                 <div className="flex-1 p-4 flex flex-col min-w-0">
@@ -176,7 +176,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                   )}
                 </div>
                 {/* Cover image — flush to right edge, full card height */}
-                <div className="relative w-32 flex-shrink-0 overflow-hidden bg-muted/10">
+                <div className="relative w-32 flex-shrink-0 overflow-hidden bg-ink/[0.04]">
                   <CoverImage
                     src={post.coverImage}
                     title={post.title}

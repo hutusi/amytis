@@ -40,7 +40,7 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
     <div>
       {/* Type tabs — only shown when both content types exist */}
       {hasBoth && (
-        <div role="tablist" className="flex mb-8 border-b border-muted/20">
+        <div role="tablist" className="flex mb-8 border-b border-ink/[0.07]">
           {tabs.map(({ key, label, count }) => (
             <button
               key={key}

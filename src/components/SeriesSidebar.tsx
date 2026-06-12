@@ -39,7 +39,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
       className="hidden lg:block sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto w-56 pr-4 scrollbar-hide"
     >
       {/* Series Header */}
-      <div className="mb-6 pb-4 border-b border-muted/10">
+      <div className="mb-6 pb-4 border-b border-ink/[0.05]">
         <Link
           href={`/series/${seriesSlug}`}
           className="group block no-underline"
@@ -54,7 +54,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
 
         {/* Progress indicator */}
         <div className="mt-3 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-muted/10 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-ink/[0.05] rounded-full overflow-hidden">
             <div
               className="h-full bg-accent/60 rounded-full transition-all duration-500"
               style={{ width: `${((currentIndex + 1) / posts.length) * 100}%` }}
@@ -70,7 +70,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
       <nav aria-label="Series navigation">
         <ul className="space-y-1 relative">
           {/* Timeline connector line */}
-          <div className="absolute left-[11px] top-3 bottom-3 w-px bg-muted/15" />
+          <div className="absolute left-[11px] top-3 bottom-3 w-px bg-ink/[0.06]" />
 
           {posts.map((post, index) => {
             const isCurrent = post.slug === currentSlug;
@@ -83,7 +83,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
                   className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
                     isCurrent
                       ? 'bg-accent/5'
-                      : 'hover:bg-muted/5'
+                      : 'hover:bg-ink/[0.04]'
                   }`}
                   aria-current={isCurrent ? 'page' : undefined}
                 >
@@ -93,7 +93,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
                       ? 'bg-accent text-white shadow-sm shadow-accent/30'
                       : isPast
                         ? 'bg-accent/20 text-accent'
-                        : 'bg-muted/10 text-muted group-hover:bg-muted/20 group-hover:text-foreground'
+                        : 'bg-ink/[0.05] text-muted group-hover:bg-ink/[0.08] group-hover:text-foreground'
                   }`}>
                     {padNumber(index + 1)}
                   </div>
@@ -118,7 +118,7 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
       </nav>
 
       {/* Footer link */}
-      <div className="mt-6 pt-4 border-t border-muted/10">
+      <div className="mt-6 pt-4 border-t border-ink/[0.05]">
         <Link
           href={`/series/${seriesSlug}`}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"

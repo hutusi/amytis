@@ -1,5 +1,6 @@
 import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
 import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
+import { resolveFromParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
@@ -31,8 +32,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ author: string }> }): Promise<Metadata> {
   const { author: rawAuthor } = await params;
-  const decodedAuthorParam = decodeURIComponent(rawAuthor);
-  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+  const resolvedAuthor = resolveFromParam(rawAuthor, resolveAuthorParam);
 
   if (!resolvedAuthor) {
     return {
@@ -53,8 +53,7 @@ export default async function AuthorPage({
   params: Promise<{ author: string }>;
 }) {
   const { author: rawAuthor } = await params;
-  const decodedAuthorParam = decodeURIComponent(rawAuthor);
-  const resolvedAuthor = resolveAuthorParam(decodedAuthorParam);
+  const resolvedAuthor = resolveFromParam(rawAuthor, resolveAuthorParam);
 
   if (!resolvedAuthor) {
     notFound();
@@ -139,7 +138,7 @@ export default async function AuthorPage({
             {authorBooks.map(book => (
               <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
                 <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-muted/10">
+                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
                     <CoverImage
                       src={book.coverImage}
                       title={book.title}
@@ -175,7 +174,7 @@ export default async function AuthorPage({
             {authorSeries.map(({ slug, data, postCount }) => (
               <Link key={slug} href={`/series/${slug}`} className="group block no-underline">
                 <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-muted/10">
+                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
                     <CoverImage
                       src={data.coverImage}
                       title={data.title}
