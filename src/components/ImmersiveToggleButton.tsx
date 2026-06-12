@@ -20,7 +20,7 @@ export default function ImmersiveToggleButton() {
       onClick={toggle}
       title={label}
       aria-label={label}
-      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-sans text-muted hover:text-accent hover:bg-muted/10 transition-colors border border-transparent hover:border-muted/20 select-none"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-sans text-muted hover:text-accent hover:bg-ink/[0.05] transition-colors border border-transparent hover:border-ink/[0.08] select-none"
     >
       <svg
         width="14"

@@ -78,7 +78,7 @@ export default function ImmersiveSeriesSidebar({
       className="block w-full h-full overflow-y-auto px-4 py-6 scrollbar-hide hover:scrollbar-thin"
     >
       {/* Header — series / collection label + post count + title link */}
-      <div className="mb-6 pb-4 border-b border-muted/10">
+      <div className="mb-6 pb-4 border-b border-ink/[0.05]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
             {isCollectionContext ? t('collection') : t('series')}
@@ -110,8 +110,8 @@ export default function ImmersiveSeriesSidebar({
                     isCurrent
                       ? 'bg-accent/10 text-accent font-semibold border-l-2 border-accent'
                       : isPast
-                        ? 'text-foreground/70 hover:text-foreground hover:bg-muted/5'
-                        : 'text-muted hover:text-foreground hover:bg-muted/5'
+                        ? 'text-foreground/70 hover:text-foreground hover:bg-ink/[0.04]'
+                        : 'text-muted hover:text-foreground hover:bg-ink/[0.04]'
                   }`}
                   aria-current={isCurrent ? 'page' : undefined}
                 >
@@ -127,7 +127,7 @@ export default function ImmersiveSeriesSidebar({
       {/* Footer — points at the series listing (not back to the current
           series detail, which the header already links to). Matches
           BookSidebar's "All Books" footer pattern. */}
-      <div className="mt-6 pt-4 border-t border-muted/10">
+      <div className="mt-6 pt-4 border-t border-ink/[0.05]">
         <Link
           href={getSeriesListUrl()}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"

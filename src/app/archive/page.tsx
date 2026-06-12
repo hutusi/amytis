@@ -76,7 +76,7 @@ export default function ArchivePage() {
                 <a
                   key={year}
                   href={`#${year}`}
-                  className="text-xs font-mono text-muted hover:text-accent border border-muted/20 hover:border-accent/40 rounded px-3 py-1 transition-all duration-200 no-underline"
+                  className="text-xs font-mono text-muted hover:text-accent border border-ink/[0.07] hover:border-accent/40 rounded px-3 py-1 transition-all duration-200 no-underline"
                 >
                   {year}
                 </a>
@@ -108,7 +108,7 @@ export default function ArchivePage() {
                 </div>
                 
                 {/* Content Timeline */}
-                <div className="relative border-l-2 border-muted/20 pl-8 md:pl-12 space-y-16">
+                <div className="relative border-l-2 border-ink/[0.08] pl-8 md:pl-12 space-y-16">
                   {months.map((month) => {
                     const monthPosts = groupedPosts[year][month];
                     return (
@@ -118,7 +118,7 @@ export default function ArchivePage() {
                         
                         <h3 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-8">
                           {getMonthName(Number(month))}
-                          <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-muted/10 rounded px-1.5 py-0.5 align-middle leading-none">
+                          <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-ink/[0.05] rounded px-1.5 py-0.5 align-middle leading-none">
                             {monthPosts.length}
                           </span>
                         </h3>
@@ -128,7 +128,10 @@ export default function ArchivePage() {
                             const day = post.date.split('-')[2];
                             return (
                               <li key={post.slug} className="group">
-                                <Link href={getPostUrl(post)} className="block no-underline">
+                                <Link
+                                  href={getPostUrl(post)}
+                                  className="block no-underline rounded-lg px-2 -mx-2 py-1 -my-1 hover:bg-ink/[0.03] transition-colors"
+                                >
                                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-6">
                                     <div className="flex items-baseline gap-6 min-w-0 flex-1">
                                       <span className="font-mono text-base text-muted shrink-0 w-8">

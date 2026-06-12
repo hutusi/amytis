@@ -48,16 +48,16 @@ export default function BookReadingShell({
   const { enabled } = useImmersiveReading();
 
   const chapterHeader = (
-    <header className="mb-12 pb-8 border-b border-muted/10">
+    <header className="mb-12 pb-8 border-b border-ink/[0.05]">
       <div className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {t('chapter')}
         </span>
-        <span className="w-1 h-1 rounded-full bg-muted/30" />
+        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
         <span className="font-mono">
           {chapter.wordCount.toLocaleString()} {t('words')}
         </span>
-        <span className="w-1 h-1 rounded-full bg-muted/30" />
+        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
         <span className="font-mono text-muted/70">
           {chapter.readingMinutes} {t('reading_time')}
         </span>
@@ -81,7 +81,7 @@ export default function BookReadingShell({
   );
 
   const prevNext = (
-    <div className="mt-16 pt-8 border-t border-muted/10">
+    <div className="mt-16 pt-8 border-t border-ink/[0.05]">
       <PrevNextNav prev={prev} next={next} size="lg" />
     </div>
   );

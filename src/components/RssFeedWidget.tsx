@@ -20,7 +20,7 @@ function FeedRow({ url, label }: { url: string; label?: string }) {
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/5 border border-muted/15 not-prose">
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-ink/[0.02] border border-ink/[0.06] not-prose">
       {label && <span className="text-xs font-medium text-muted/40 shrink-0 uppercase tracking-wide">{label}</span>}
       <code className="text-xs font-mono text-muted/60 flex-1 truncate">{url}</code>
       <button

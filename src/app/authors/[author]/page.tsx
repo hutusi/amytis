@@ -139,7 +139,7 @@ export default async function AuthorPage({
             {authorBooks.map(book => (
               <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
                 <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-muted/10">
+                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
                     <CoverImage
                       src={book.coverImage}
                       title={book.title}
@@ -175,7 +175,7 @@ export default async function AuthorPage({
             {authorSeries.map(({ slug, data, postCount }) => (
               <Link key={slug} href={`/series/${slug}`} className="group block no-underline">
                 <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-muted/10">
+                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
                     <CoverImage
                       src={data.coverImage}
                       title={data.title}

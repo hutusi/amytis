@@ -51,7 +51,7 @@ const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
 const TYPE_STYLES: Record<string, string> = {
   Flow: 'border-accent/30 text-accent',
   Book: 'border-foreground/30 text-foreground/60',
-  Post: 'border-muted/30 text-muted',
+  Post: 'border-ink/[0.10] text-muted',
   Note: 'border-emerald-400/30 text-emerald-600 dark:text-emerald-400',
 };
 
@@ -329,7 +329,7 @@ export default function Search() {
             aria-modal="true"
             aria-label="Search"
             onKeyDown={handleModalKeyDown}
-            className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-muted/20 rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+            className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-ink/[0.07] rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
             {/* Screen-reader live region for result counts */}
             <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -340,7 +340,7 @@ export default function Search() {
               )}
             </div>
             {/* Input row */}
-            <div className="flex items-center px-4 py-3 border-b border-muted/10 shrink-0">
+            <div className="flex items-center px-4 py-3 border-b border-ink/[0.05] shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted mr-3 shrink-0"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input
                 ref={inputRef}
@@ -361,7 +361,7 @@ export default function Search() {
                 </svg>
               )}
               {/* ESC hint — desktop only, hidden while fetching */}
-              {!isFetching && <div className="hidden sm:block text-xs text-muted border border-muted/20 px-1.5 py-0.5 rounded ml-2">ESC</div>}
+              {!isFetching && <div className="hidden sm:block text-xs text-muted border border-ink/[0.07] px-1.5 py-0.5 rounded ml-2">ESC</div>}
               {/* Close button — mobile only */}
               <button
                 onClick={() => setIsOpen(false)}
@@ -374,7 +374,7 @@ export default function Search() {
 
             {/* Type filter tabs — visible when results exist */}
             {allResults.length > 0 && (
-              <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-muted/10 shrink-0" role="tablist" aria-label="Filter by type">
+              <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-ink/[0.05] shrink-0" role="tablist" aria-label="Filter by type">
                 {CONTENT_TYPES.filter((type) => type === 'All' || typeCounts[type] > 0).map((type, i) => (
                   <button
                     key={type}
@@ -384,7 +384,7 @@ export default function Search() {
                     className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
                       activeType === type
                         ? 'bg-accent/10 text-accent font-medium'
-                        : 'text-muted hover:text-foreground hover:bg-muted/5'
+                        : 'text-muted hover:text-foreground hover:bg-ink/[0.04]'
                     }`}
                   >
                     {type === 'All' ? t('search_all') : getTypeLabel(type)}
@@ -407,7 +407,7 @@ export default function Search() {
                         href={result.url}
                         onClick={() => handleNavigate(query)}
                         onMouseEnter={() => setActiveIndex(index)}
-                        className={`block px-4 py-3 transition-colors ${index === activeIndex ? 'bg-muted/10' : 'hover:bg-muted/5'}`}
+                        className={`block px-4 py-3 transition-colors ${index === activeIndex ? 'bg-ink/[0.05]' : 'hover:bg-ink/[0.04]'}`}
                       >
                         <div className="flex items-baseline justify-between gap-2">
                           <div className="text-sm font-serif font-bold text-heading truncate">
@@ -435,7 +435,7 @@ export default function Search() {
 
               {/* Result count when capped */}
               {displayedResults.length > 0 && totalFilteredCount > MAX_RESULTS && (
-                <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-muted/10 text-center">
+                <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-ink/[0.05] text-center">
                   {tWith('search_showing', { shown: displayedResults.length, total: totalFilteredCount })}
                 </div>
               )}
@@ -451,7 +451,7 @@ export default function Search() {
                   <p>Search index not found.</p>
                   <p>
                     Run{' '}
-                    <code className="text-xs bg-muted/10 px-1 py-0.5 rounded">
+                    <code className="text-xs bg-ink/[0.05] px-1 py-0.5 rounded">
                       bun run build:dev
                     </code>{' '}
                     to generate it.
@@ -478,7 +478,7 @@ export default function Search() {
                       <li key={s}>
                         <button
                           onClick={() => setQuery(s)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-muted hover:text-foreground hover:bg-muted/5 transition-colors"
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-muted hover:text-foreground hover:bg-ink/[0.04] transition-colors"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                             <circle cx="11" cy="11" r="8" />
@@ -495,7 +495,7 @@ export default function Search() {
 
               {/* Search tips — shown when input is empty and search is available */}
               {!query && !isUnavailable && (
-                <div className="px-4 py-3 border-t border-muted/10">
+                <div className="px-4 py-3 border-t border-ink/[0.05]">
                   <p className="text-[10px] font-medium text-muted/50 uppercase tracking-wider mb-2">{t('search_tips')}</p>
                   <div className="flex flex-col gap-1.5">
                     {([

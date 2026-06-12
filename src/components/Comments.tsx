@@ -29,7 +29,7 @@ export default function Comments({ slug, postUrl }: { slug: string; postUrl?: st
 
   if (provider === 'giscus' && giscus.repo) {
     return (
-      <div className="mt-12 pt-12 border-t border-muted/20">
+      <div className="mt-12 pt-12 border-t border-ink/[0.07]">
         <Giscus
           id="comments"
           repo={giscus.repo as `${string}/${string}`}
@@ -51,7 +51,7 @@ export default function Comments({ slug, postUrl }: { slug: string; postUrl?: st
 
   if (provider === 'disqus' && disqus.shortname) {
     return (
-      <div className="mt-12 pt-12 border-t border-muted/20">
+      <div className="mt-12 pt-12 border-t border-ink/[0.07]">
         <div id="disqus_thread"></div>
         <script
           dangerouslySetInnerHTML={{

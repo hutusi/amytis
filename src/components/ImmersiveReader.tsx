@@ -104,7 +104,7 @@ export default function ImmersiveReader({
       />
 
       {progress > 0 && (
-        <div className="h-0.5 w-full bg-muted/10 shrink-0">
+        <div className="h-0.5 w-full bg-ink/[0.05] shrink-0">
           <div
             className="h-full bg-accent/70 transition-[width] duration-150 ease-out"
             style={{ width: `${progress}%` }}
@@ -114,7 +114,7 @@ export default function ImmersiveReader({
 
       <div className="flex-1 min-h-0 flex">
         {sidebarOpen && (
-          <aside className="w-[280px] shrink-0 border-r border-muted/15 bg-background/60">
+          <aside className="w-[280px] shrink-0 border-r border-ink/[0.06] bg-background/60">
             {sidebar}
           </aside>
         )}

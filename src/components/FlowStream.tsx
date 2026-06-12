@@ -54,7 +54,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                         margins, so segment texts render trimmed. */}
                     {i > 0 && (
                       <span
-                        className="mx-2 inline-block h-1 w-1 rounded-full bg-muted/30 align-middle"
+                        className="mx-2 inline-block h-1 w-1 rounded-full bg-ink/[0.12] align-middle"
                         aria-hidden="true"
                       />
                     )}

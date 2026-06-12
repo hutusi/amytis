@@ -35,7 +35,7 @@ export default function ImmersiveReaderTopBar({
       // above those, so the Aa popover (which renders inside the header and
       // visually overflows down into the article area) stays on top and
       // clickable when it overlaps a code block.
-      className="relative z-30 h-12 flex items-center gap-3 px-3 border-b border-muted/15 bg-background/95 backdrop-blur-md shrink-0 select-none"
+      className="relative z-30 h-12 flex items-center gap-3 px-3 border-b border-ink/[0.06] bg-background/95 backdrop-blur-md shrink-0 select-none"
     >
       <button
         type="button"
@@ -43,7 +43,7 @@ export default function ImmersiveReaderTopBar({
         aria-pressed={sidebarOpen}
         aria-label={sidebarOpen ? t('collapse_sidebar') : t('expand_sidebar')}
         title={sidebarOpen ? t('collapse_sidebar') : t('expand_sidebar')}
-        className="h-8 w-8 inline-flex items-center justify-center rounded-md text-foreground/80 hover:text-accent hover:bg-muted/10 transition-colors"
+        className="h-8 w-8 inline-flex items-center justify-center rounded-md text-foreground/80 hover:text-accent hover:bg-ink/[0.05] transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <line x1="3" y1="6" x2="21" y2="6" />
@@ -77,8 +77,8 @@ export default function ImmersiveReaderTopBar({
           title={t('reading_preferences')}
           className={`h-8 w-9 inline-flex items-center justify-center rounded-md transition-colors ${
             prefsPanelOpen
-              ? 'bg-muted/10 text-accent'
-              : 'text-foreground/80 hover:text-accent hover:bg-muted/10'
+              ? 'bg-ink/[0.05] text-accent'
+              : 'text-foreground/80 hover:text-accent hover:bg-ink/[0.05]'
           }`}
         >
           <span aria-hidden="true" className="font-serif leading-none">
@@ -94,7 +94,7 @@ export default function ImmersiveReaderTopBar({
         onClick={exit}
         aria-label={t('exit_reading_mode')}
         title={t('exit_reading_mode')}
-        className="h-8 w-8 inline-flex items-center justify-center rounded-md text-foreground/80 hover:text-accent hover:bg-muted/10 transition-colors shrink-0"
+        className="h-8 w-8 inline-flex items-center justify-center rounded-md text-foreground/80 hover:text-accent hover:bg-ink/[0.05] transition-colors shrink-0"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18" />

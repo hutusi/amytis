@@ -86,7 +86,7 @@ function OptionButton({
       className={`relative flex items-center justify-center rounded-lg transition-all duration-150 ${
         active
           ? 'ring-2 ring-accent ring-offset-2 ring-offset-background'
-          : 'ring-1 ring-muted/20 hover:ring-muted/40'
+          : 'ring-1 ring-ink/[0.10] hover:ring-ink/[0.20]'
       } ${className}`}
     >
       {children}
@@ -132,7 +132,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
       ref={rootRef}
       role="dialog"
       aria-label={t('reading_preferences')}
-      className="absolute top-full right-0 mt-2 z-50 min-w-[280px] bg-background/95 backdrop-blur-md border border-muted/20 rounded-xl shadow-xl p-5 animate-slide-down"
+      className="absolute top-full right-0 mt-2 z-50 min-w-[280px] bg-background/95 backdrop-blur-md border border-ink/[0.07] rounded-xl shadow-xl p-5 animate-slide-down"
     >
       {/* Font Size */}
       <div className="mb-5">
@@ -183,7 +183,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
                 >
                   Aa
                 </span>
-                <span className="block w-full text-[9px] text-muted py-0.5 bg-background border-t border-muted/15">
+                <span className="block w-full text-[9px] text-muted py-0.5 bg-background border-t border-ink/[0.06]">
                   {t(opt.labelKey)}
                 </span>
               </OptionButton>
@@ -231,7 +231,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
       </div>
 
       {/* Reset to defaults — non-destructive (re-pickable), no confirmation. */}
-      <div className="mt-4 pt-3 border-t border-muted/15 flex justify-end">
+      <div className="mt-4 pt-3 border-t border-ink/[0.06] flex justify-end">
         <button
           type="button"
           onClick={resetPrefs}

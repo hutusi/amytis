@@ -88,7 +88,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
     return (
       <button
         onClick={() => setLanguage(nextLocale)}
-        className="group flex items-center rounded-full border border-muted/20 bg-transparent hover:border-accent/40 transition-all duration-200"
+        className="group flex items-center rounded-full border border-ink/[0.08] bg-transparent hover:border-accent/40 transition-all duration-200"
         aria-label={`Switch language to ${LOCALE_LABELS[nextLocale] ?? nextLocale}`}
         title={`Switch to ${LOCALE_LABELS[nextLocale] ?? nextLocale}`}
       >
