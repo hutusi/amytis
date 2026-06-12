@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { renderAsync } from "@/test-utils/render";
+import { normalizeVuepressContainerSyntax } from "@/lib/remark-vuepress-containers";
 
 describe("Integration: VuePress :::container alerts", () => {
   test(":::note renders as a note GitHub Alert", async () => {
@@ -86,6 +87,42 @@ describe("Integration: VuePress :::container alerts", () => {
     // The real container outside the code block still renders as an alert.
     expect(html).toContain('class="alert alert-tip"');
     expect(html).toContain("真实的提示");
+  });
+
+  test("no-space opener with a bare title (fenix style) renders an alert with the custom title", async () => {
+    // VuePress also accepts `:::tip Some title` (no space after the colons).
+    // remark-directive rejects bare text after the name, so without
+    // normalization this line falls through as literal paragraph text.
+    const html = await renderAsync(
+      MarkdownRenderer({
+        content: [
+          ":::tip 无服务架构（Serverless）",
+          "",
+          "如果说微服务架构是分布式系统这条路的极致。",
+          "",
+          ":::",
+        ].join("\n"),
+      }),
+    );
+    expect(html).toContain('class="alert alert-tip"');
+    expect(html).toContain("无服务架构（Serverless）");
+    expect(html).toContain("如果说微服务架构是分布式系统这条路的极致。");
+    expect(html).not.toContain(":::");
+  });
+
+  test("normalizer rewrites only the forms remark-directive cannot parse", () => {
+    // Spaced forms (always rewritten)
+    expect(normalizeVuepressContainerSyntax("::: tip Some Title")).toBe(":::tip[Some Title]");
+    expect(normalizeVuepressContainerSyntax("::: warning")).toBe(":::warning");
+    // No-space form with a bare title (rewritten — the fenix style)
+    expect(normalizeVuepressContainerSyntax(":::tip 无服务架构（Serverless）"))
+      .toBe(":::tip[无服务架构（Serverless）]");
+    // Already-valid directive syntax (untouched)
+    expect(normalizeVuepressContainerSyntax(":::code-group")).toBe(":::code-group");
+    expect(normalizeVuepressContainerSyntax(":::tip")).toBe(":::tip");
+    expect(normalizeVuepressContainerSyntax(":::tip[已有标题]")).toBe(":::tip[已有标题]");
+    expect(normalizeVuepressContainerSyntax(":::tip{.classy}")).toBe(":::tip{.classy}");
+    expect(normalizeVuepressContainerSyntax(":::")).toBe(":::");
   });
 
   test("fence character type matters (~~~ vs ```)", async () => {
