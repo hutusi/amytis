@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import Tag from '@/components/Tag';
 import Pagination from '@/components/Pagination';
@@ -44,19 +45,31 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
               aria-hidden="true"
             />
             <h2 className="text-base font-sans font-bold uppercase tracking-widest mb-6">
-              {group.labelParts.map((seg, i) =>
-                seg.link ? (
-                  <Link
-                    key={i}
-                    href={seg.link === 'year' ? `/flows/${groupYear}` : `/flows/${groupYear}/${groupMonth}`}
-                    className="no-underline text-accent hover:text-accent-hover transition-colors"
-                  >
-                    {seg.text}
-                  </Link>
-                ) : (
-                  <span key={i} className="text-accent">{seg.text}</span>
-                )
-              )}
+              {group.labelParts
+                .filter(seg => seg.text.trim().length > 0)
+                .map((seg, i) => (
+                  <Fragment key={i}>
+                    {/* Dot separator (PostCard meta vocabulary) makes the two
+                        click targets visibly distinct; spacing comes from its
+                        margins, so segment texts render trimmed. */}
+                    {i > 0 && (
+                      <span
+                        className="mx-2 inline-block h-1 w-1 rounded-full bg-muted/30 align-middle"
+                        aria-hidden="true"
+                      />
+                    )}
+                    {seg.link ? (
+                      <Link
+                        href={seg.link === 'year' ? `/flows/${groupYear}` : `/flows/${groupYear}/${groupMonth}`}
+                        className="no-underline text-accent hover:text-accent-hover transition-colors"
+                      >
+                        {seg.text.trim()}
+                      </Link>
+                    ) : (
+                      <span className="text-accent">{seg.text.trim()}</span>
+                    )}
+                  </Fragment>
+                ))}
               <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted bg-ink/[0.05] rounded px-1.5 py-0.5 align-middle leading-none">
                 {group.flows.length}
               </span>
