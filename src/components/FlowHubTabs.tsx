@@ -15,7 +15,8 @@ export default function FlowHubTabs({ subtitle }: FlowHubTabsProps) {
   // Normalize: strip trailing slash added by next.config trailingSlash:true
   const path = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 
-  const isFlowsActive = path === '/flows' || path.startsWith('/flows/page');
+  const isStreamActive = path === '/flows/stream' || path.startsWith('/flows/stream/page');
+  const isFlowsActive = path === '/flows' || path.startsWith('/flows/page') || isStreamActive;
   const isNotesActive = path === '/notes' || path.startsWith('/notes/page');
   const isGraphActive = path.startsWith('/graph');
 
@@ -42,8 +43,40 @@ export default function FlowHubTabs({ subtitle }: FlowHubTabsProps) {
           </Link>
         ))}
       </div>
-      {subtitle && (
-        <p className="mt-3 text-sm text-muted">{subtitle}</p>
+      {(subtitle || isFlowsActive) && (
+        <div className="mt-3 flex items-center justify-between gap-4">
+          {subtitle ? <p className="text-sm text-muted">{subtitle}</p> : <span />}
+          {isFlowsActive && (
+            <div
+              role="group"
+              aria-label={t('flow_view_mode')}
+              className="flex shrink-0 items-center rounded-full border border-muted/20 p-0.5 text-xs"
+            >
+              <Link
+                href="/flows"
+                aria-current={!isStreamActive ? 'page' : undefined}
+                className={`px-3 py-1 rounded-full no-underline transition-colors ${
+                  !isStreamActive
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'text-muted hover:text-heading'
+                }`}
+              >
+                {t('flow_view_daily')}
+              </Link>
+              <Link
+                href="/flows/stream"
+                aria-current={isStreamActive ? 'page' : undefined}
+                className={`px-3 py-1 rounded-full no-underline transition-colors ${
+                  isStreamActive
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'text-muted hover:text-heading'
+                }`}
+              >
+                {t('flow_view_stream')}
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
