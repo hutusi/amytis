@@ -81,7 +81,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   return (
     <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] select-none">
       {breadcrumb && <div className="mb-4">{breadcrumb}</div>}
-      <div className="border border-muted/20 rounded-lg p-4">
+      <div className="border border-ink/[0.07] bg-ink/[0.015] rounded-lg p-4">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-3">
           <button
@@ -157,7 +157,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
         </div>
 
         {/* Browse toggle */}
-        <div className="mt-3 pt-3 border-t border-muted/20">
+        <div className="mt-3 pt-3 border-t border-ink/[0.06]">
           <button
             onClick={() => setShowBrowse(!showBrowse)}
             className="flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors w-full"
@@ -227,7 +227,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
 
       {/* Tags */}
       {tags && Object.keys(tags).length > 0 && (
-        <div className="mt-3 border border-muted/20 rounded-lg p-4">
+        <div className="mt-3 border border-ink/[0.07] bg-ink/[0.015] rounded-lg p-4">
           <div className="text-xs font-medium text-muted mb-2">{t('tags')}</div>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(tags)
@@ -239,7 +239,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border transition-colors ${
                     selectedTag === tag
                       ? 'bg-accent text-white border-accent'
-                      : 'border-muted/20 text-muted hover:border-accent hover:text-accent'
+                      : 'border-ink/[0.08] text-muted hover:border-accent hover:text-accent'
                   }`}
                 >
                   {tag}

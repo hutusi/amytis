@@ -46,7 +46,7 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
   const pages = getPages();
 
   return (
-    <nav className="flex justify-center items-center gap-2 mt-8 border-t border-muted/10 pt-6" aria-label="Pagination">
+    <nav className="flex justify-center items-center gap-2 mt-8 border-t border-ink/[0.05] pt-6" aria-label="Pagination">
       {/* Previous */}
       {currentPage > 1 ? (
         <Link
@@ -87,7 +87,7 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
               className={`min-w-[40px] h-10 flex items-center justify-center rounded-lg text-sm font-sans font-medium transition-all no-underline ${
                 isCurrent
                   ? 'bg-accent text-white shadow-md shadow-accent/20'
-                  : 'text-muted hover:bg-muted/10 hover:text-accent'
+                  : 'text-muted hover:bg-ink/[0.05] hover:text-accent'
               }`}
               aria-current={isCurrent ? 'page' : undefined}
             >

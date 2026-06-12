@@ -64,7 +64,7 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed }: Fl
                     className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full border transition-colors ${
                       selectedTag === tag
                         ? 'bg-accent text-white border-accent'
-                        : 'border-muted/20 text-muted hover:border-accent hover:text-accent'
+                        : 'border-ink/[0.08] text-muted hover:border-accent hover:text-accent'
                     }`}
                   >
                     {tag}
@@ -83,7 +83,7 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed }: Fl
               </span>
               <button
                 onClick={() => setSelectedTag(null)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-muted/20 text-xs hover:border-accent hover:text-accent transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-ink/[0.08] text-xs hover:border-accent hover:text-accent transition-colors"
               >
                 ✕ {t('clear')}
               </button>
