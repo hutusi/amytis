@@ -42,7 +42,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
   const nextPost = currentIndex < effectivePosts.length - 1 ? effectivePosts[currentIndex + 1] : null;
 
   return (
-    <div data-testid="series-list" className="p-5 bg-muted/5 rounded-xl border border-muted/20">
+    <div data-testid="series-list" className="ink-card p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Link
@@ -57,13 +57,13 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
             {effectiveTitle}
           </span>
         </Link>
-        <span className="text-xs font-mono text-muted bg-muted/10 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-mono text-muted bg-ink/[0.05] px-2 py-0.5 rounded-full">
           {currentIndex + 1}/{effectivePosts.length}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-muted/10 rounded-full overflow-hidden mb-4">
+      <div className="h-1 bg-ink/[0.05] rounded-full overflow-hidden mb-4">
         <div
           className="h-full bg-accent/60 rounded-full transition-all duration-500"
           style={{ width: `${((currentIndex + 1) / effectivePosts.length) * 100}%` }}
@@ -83,7 +83,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
       >
-        <span className="h-px flex-1 bg-muted/10" />
+        <span className="h-px flex-1 bg-ink/[0.05]" />
         <span className="flex items-center gap-1">
           {isExpanded ? t('hide') : t('all_posts')}
           <svg
@@ -93,7 +93,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </span>
-        <span className="h-px flex-1 bg-muted/10" />
+        <span className="h-px flex-1 bg-ink/[0.05]" />
       </button>
 
       {/* Collapsible posts list */}
@@ -117,12 +117,12 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
                 ) : (
                   <Link
                     href={postHref(post)}
-                    className="group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg hover:bg-muted/5 no-underline transition-colors"
+                    className="group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg hover:bg-ink/[0.04] no-underline transition-colors"
                   >
                     <span className={`flex-shrink-0 w-5 h-5 rounded-full text-[10px] font-mono font-bold flex items-center justify-center transition-colors ${
                       isPast
                         ? 'bg-accent/20 text-accent'
-                        : 'bg-muted/10 text-muted group-hover:bg-muted/20'
+                        : 'bg-ink/[0.05] text-muted group-hover:bg-ink/[0.08]'
                     }`}>
                       {padNumber(index + 1)}
                     </span>
@@ -142,7 +142,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
       )}
 
       {/* Footer */}
-      <div className="mt-4 pt-3 border-t border-muted/10">
+      <div className="mt-4 pt-3 border-t border-ink/[0.05]">
         <Link
           href={`/series/${effectiveSlug}`}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"
