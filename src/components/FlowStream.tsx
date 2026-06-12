@@ -32,7 +32,9 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
   return (
     <div>
       <div className="relative border-l-2 border-ink/[0.08] pl-6 sm:pl-10 space-y-12">
-        {groups.map(group => (
+        {groups.map(group => {
+          const [groupYear, groupMonth] = group.key.split('-');
+          return (
           <section key={group.key} className="relative">
             {/* Month node — hollow accent dot centered on the rail. Offset =
                 left padding + 1px to reach the 2px border's center, then
@@ -41,8 +43,13 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
               className="absolute -left-[calc(1.5rem+1px)] sm:-left-[calc(2.5rem+1px)] -translate-x-1/2 top-1.5 w-3 h-3 rounded-full bg-background border-2 border-accent/50"
               aria-hidden="true"
             />
-            <h2 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-6">
-              {group.label}
+            <h2 className="text-base font-sans font-bold uppercase tracking-widest mb-6">
+              <Link
+                href={`/flows/${groupYear}/${groupMonth}`}
+                className="no-underline text-accent hover:text-accent-hover transition-colors"
+              >
+                {group.label}
+              </Link>
               <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted bg-ink/[0.05] rounded px-1.5 py-0.5 align-middle leading-none">
                 {group.flows.length}
               </span>
@@ -105,7 +112,8 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
             ))}
             </div>
           </section>
-        ))}
+          );
+        })}
       </div>
 
       {pagination && pagination.totalPages > 1 && (
