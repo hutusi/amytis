@@ -119,11 +119,10 @@ Post & series surfaces:
 Notes & flows:
 
 - `NoteSidebar`, `TagContentTabs`
-- `FlowContent` — client wrapper for flow archive pages with tag filtering state
 - `FlowCalendarSidebar` — calendar sidebar with date navigation, browse panel, clickable tag filters
 - `FlowTimelineEntry` — individual flow entry in timeline list
 - `FlowStream` — month-grouped full-content card feed on the flow index (server)
-- `FlowIndexClient` — client wrapper for the flow index; tag filtering swaps the server-rendered card feed for a compact filtered timeline
+- `FlowIndexClient` — client wrapper for the flow index and year/month archives; tag filtering swaps the server-rendered card feed for a compact filtered timeline
 
 Search & discovery:
 

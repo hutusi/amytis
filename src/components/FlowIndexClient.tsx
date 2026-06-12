@@ -24,9 +24,13 @@ interface FlowIndexClientProps {
    * pagination hides automatically.
    */
   feed: ReactNode;
+  /** Breadcrumb node rendered at the top of the calendar sidebar (archives). */
+  breadcrumb?: ReactNode;
+  /** Initial month shown by the calendar (archives). */
+  currentDate?: string;
 }
 
-export default function FlowIndexClient({ allFlows, entryDates, tags, feed }: FlowIndexClientProps) {
+export default function FlowIndexClient({ allFlows, entryDates, tags, feed, breadcrumb, currentDate }: FlowIndexClientProps) {
   const { t } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -45,9 +49,11 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed }: Fl
     <div className="flex gap-10">
       <FlowCalendarSidebar
         entryDates={entryDates}
+        currentDate={currentDate}
         tags={tags}
         selectedTag={selectedTag}
         onTagSelect={handleTagSelect}
+        breadcrumb={breadcrumb}
       />
 
       <div className="flex-1 min-w-0">

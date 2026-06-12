@@ -1,4 +1,5 @@
-import { getAllFlows, getFlowsByYear, getFlowTags } from '@/lib/content/flows';
+import { getAllFlows, getFlowsByYear } from '@/lib/content/flows';
+import { buildSlugRegistry } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
@@ -6,7 +7,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { t, tWith, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
-import FlowContent from '@/components/FlowContent';
+import FlowIndexClient from '@/components/FlowIndexClient';
+import FlowStream from '@/components/FlowStream';
 
 export function generateStaticParams() {
   if (!isFeatureEnabled('flow')) return [{ year: '_' }];
@@ -32,8 +34,13 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
   if (flows.length === 0) notFound();
 
   const allFlows = getAllFlows();
-  const entryDates = allFlows.map(f => f.date);
-  const tags = getFlowTags();
+  const slugRegistry = buildSlugRegistry();
+
+  // Tag counts scoped to this year, so the sidebar filter matches the feed.
+  const tags: Record<string, number> = {};
+  for (const flow of flows) {
+    for (const tag of flow.tags) tags[tag] = (tags[tag] || 0) + 1;
+  }
 
   // Build month counts for this year
   const monthCounts: Record<string, number> = {};
@@ -62,7 +69,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
           <Link
             key={m}
             href={`/flows/${year}/${m}`}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-muted/20 text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-ink/[0.08] text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
           >
             {monthNames[parseInt(m, 10) - 1]}
             <span className="text-muted text-[10px]">({monthCounts[m]})</span>
@@ -79,14 +86,15 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         titleParams={{ year }}
         subtitleKey="flow_subtitle"
         subtitleParams={{ count: flows.length }}
+        className="mb-12"
       />
-
-      <FlowContent
-        flows={flows}
-        entryDates={entryDates}
+      <FlowIndexClient
+        allFlows={flows.map(({ slug, date, title, excerpt, tags }) => ({ slug, date, title, excerpt, tags }))}
+        entryDates={allFlows.map(f => f.date)}
         tags={tags}
         currentDate={flows[0]?.date}
         breadcrumb={breadcrumb}
+        feed={<FlowStream flows={flows} slugRegistry={slugRegistry} />}
       />
     </div>
   );
