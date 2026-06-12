@@ -44,12 +44,19 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
               aria-hidden="true"
             />
             <h2 className="text-base font-sans font-bold uppercase tracking-widest mb-6">
-              <Link
-                href={`/flows/${groupYear}/${groupMonth}`}
-                className="no-underline text-accent hover:text-accent-hover transition-colors"
-              >
-                {group.label}
-              </Link>
+              {group.labelParts.map((seg, i) =>
+                seg.link ? (
+                  <Link
+                    key={i}
+                    href={seg.link === 'year' ? `/flows/${groupYear}` : `/flows/${groupYear}/${groupMonth}`}
+                    className="no-underline text-accent hover:text-accent-hover transition-colors"
+                  >
+                    {seg.text}
+                  </Link>
+                ) : (
+                  <span key={i} className="text-accent">{seg.text}</span>
+                )
+              )}
               <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted bg-ink/[0.05] rounded px-1.5 py-0.5 align-middle leading-none">
                 {group.flows.length}
               </span>
