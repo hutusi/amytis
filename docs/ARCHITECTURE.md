@@ -100,7 +100,6 @@ Layout & navigation:
 
 - `Navbar`, `Footer`, `Hero` (configurable homepage hero with collapsible intro)
 - `LanguageSwitch` (i18n language selector), `ThemeToggle` (light/dark mode)
-- `FlowHubTabs`
 
 Content renderers:
 
@@ -125,6 +124,8 @@ Notes & flows:
 - `FlowContent` — client wrapper for flow pages with tag filtering state
 - `FlowCalendarSidebar` — calendar sidebar with date navigation, browse panel, clickable tag filters
 - `FlowTimelineEntry` — individual flow entry in timeline list
+- `FlowStream` — month-grouped full-content card stream at `/flows/stream`
+- `FlowViewSwitcher` — Daily/Stream pill switcher on flow pages
 
 Search & discovery:
 
