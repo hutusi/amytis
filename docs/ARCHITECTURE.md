@@ -47,8 +47,10 @@ src/app/
   books/page.tsx                    # Books index
   books/[slug]/page.tsx             # Book landing
   books/[slug]/[chapter]/page.tsx   # Book chapter
-  flows/page.tsx                    # Flow index
+  flows/page.tsx                    # Flow index (daily/calendar view)
   flows/page/[page]/page.tsx        # Flow pagination
+  flows/stream/page.tsx             # Flow stream view (full content, month-grouped)
+  flows/stream/page/[page]/page.tsx # Flow stream pagination
   flows/[year]/page.tsx
   flows/[year]/[month]/page.tsx
   flows/[year]/[month]/[day]/page.tsx
