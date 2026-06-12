@@ -59,9 +59,15 @@ interface MarkdownRendererProps {
    * for everyone, but the link rewriter needs source-path context).
    */
   bookContext?: BookChapterLinksOptions;
+  /**
+   * Set when rendering multiple documents on one page (e.g. the flow stream)
+   * to keep rehype-slug heading ids unique across documents. Note GFM footnote
+   * ids come from remark-rehype, not rehype-slug, and are not prefixed.
+   */
+  headingIdPrefix?: string;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext, headingIdPrefix }: MarkdownRendererProps) {
   // remark-directive must precede remark-code-group AND remark-vuepress-containers
   // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
   // — they touch disjoint node types.
@@ -79,7 +85,12 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   // rehypeFenceMeta must run BEFORE rehypeRaw — rehypeRaw round-trips through HTML
   // serialization, which drops node.data.meta (a non-HTML field). Copying meta to a
   // real data-meta attribute first lets it survive the round trip.
-  const rehypePlugins: PluggableList = [rehypeFenceMeta, rehypeRaw, rehypeSlug, [rehypeImageMetadata, { slug, cdnBaseUrl }]];
+  const rehypePlugins: PluggableList = [
+    rehypeFenceMeta,
+    rehypeRaw,
+    headingIdPrefix ? [rehypeSlug, { prefix: headingIdPrefix }] : rehypeSlug,
+    [rehypeImageMetadata, { slug, cdnBaseUrl }],
+  ];
 
   if (slugRegistry && slugRegistry.size > 0) {
     remarkPlugins.push([remarkWikilinks, { slugRegistry }]);

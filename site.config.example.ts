@@ -63,7 +63,9 @@ export const siteConfig = {
     { name: "Series", url: "/series", weight: 2 },
     { name: "About", url: "/about", weight: 3 },
     { name: "More", url: "", weight: 4, children: [
-      { name: "Archive", url: "/archive" },
+      { name: "Notes", url: "/notes" },   // hidden while features.flow is disabled
+      { name: "Graph", url: "/graph" },   // hidden while features.flow is disabled
+      { name: "Archive", url: "/archive", dividerBefore: true },
       { name: "Tags", url: "/tags" },
       { name: "Subscribe", url: "/subscribe", dividerBefore: true },
     ]},

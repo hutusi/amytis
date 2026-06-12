@@ -47,7 +47,7 @@ src/app/
   books/page.tsx                    # Books index
   books/[slug]/page.tsx             # Book landing
   books/[slug]/[chapter]/page.tsx   # Book chapter
-  flows/page.tsx                    # Flow index
+  flows/page.tsx                    # Flow index (calendar sidebar + full-content card feed)
   flows/page/[page]/page.tsx        # Flow pagination
   flows/[year]/page.tsx
   flows/[year]/[month]/page.tsx
@@ -98,7 +98,6 @@ Layout & navigation:
 
 - `Navbar`, `Footer`, `Hero` (configurable homepage hero with collapsible intro)
 - `LanguageSwitch` (i18n language selector), `ThemeToggle` (light/dark mode)
-- `FlowHubTabs`
 
 Content renderers:
 
@@ -120,9 +119,10 @@ Post & series surfaces:
 Notes & flows:
 
 - `NoteSidebar`, `TagContentTabs`
-- `FlowContent` — client wrapper for flow pages with tag filtering state
 - `FlowCalendarSidebar` — calendar sidebar with date navigation, browse panel, clickable tag filters
 - `FlowTimelineEntry` — individual flow entry in timeline list
+- `FlowStream` — month-grouped full-content card feed on the flow index (server)
+- `FlowIndexClient` — client wrapper for the flow index and year/month archives; tag filtering swaps the server-rendered card feed for a compact filtered timeline
 
 Search & discovery:
 

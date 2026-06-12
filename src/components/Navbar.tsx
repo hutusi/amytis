@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useState, useEffect } from 'react';
-import { isFeatureEnabled } from '@/lib/features';
+import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
@@ -23,16 +23,6 @@ interface NavbarProps {
   booksList?: NavItem[];
 }
 
-// Map from nav URL to feature key
-const FEATURE_URLS: Partial<Record<string, keyof typeof siteConfig.features>> = {
-  '/posts': 'posts',
-  '/flows': 'flow',
-  '/notes': 'flow',
-  '/graph': 'flow',
-  '/series': 'series',
-  '/books': 'books',
-};
-
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, language } = useLanguage();
   const pathname = usePathname();
@@ -40,16 +30,10 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const navItems = [...siteConfig.nav]
-    .filter(item => {
-      const featureKey = FEATURE_URLS[item.url];
-      if (!featureKey) return true; // not a feature-gated item, always show
-      return isFeatureEnabled(featureKey);
-    })
-    .sort((a, b) => a.weight - b.weight);
+  const navItems = visibleNavItems(siteConfig.nav);
 
   const getLabel = (name: string, url: string): string => {
-    const featureKey = FEATURE_URLS[url];
+    const featureKey = featureLabelKey(url);
     if (featureKey && siteConfig.features?.[featureKey]?.name) {
       return resolveLocaleValue(siteConfig.features[featureKey].name, language);
     }
@@ -59,11 +43,10 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   };
 
   function isActive(url: string): boolean {
-    if (url === '/flows') {
-      return pathname.startsWith('/flows') || pathname.startsWith('/notes') || pathname.startsWith('/graph');
-    }
+    if (!url) return false;
     if (url === '/') return pathname === '/';
-    return pathname.startsWith(url);
+    // Segment-aware prefix match: '/posts' must not claim '/posts-archive'.
+    return pathname === url || pathname.startsWith(url + '/');
   }
 
   // Scroll-aware transparency
@@ -96,7 +79,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
       data-site-nav
       className={`fixed top-0 left-0 w-full z-50 border-b transition-all duration-300 select-none ${
       isScrolled
-        ? 'border-muted/10 bg-background/90 backdrop-blur-md shadow-sm'
+        ? 'border-ink/[0.06] bg-background/90 backdrop-blur-md shadow-sm'
         : 'border-transparent bg-transparent'
     }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -155,20 +138,20 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </Link>
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
                         {booksList.map(b => (
                           <Link
                             key={b.slug}
                             href={`/books/${b.slug}`}
-                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline whitespace-nowrap"
+                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg transition-colors no-underline whitespace-nowrap"
                           >
                             {b.name}
                           </Link>
                         ))}
-                        <div className="h-px bg-muted/10 my-1"></div>
+                        <div className="h-px bg-ink/[0.06] my-1"></div>
                         <Link
                           href="/books"
-                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline"
+                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-ink/[0.04] rounded-lg transition-colors no-underline"
                         >
                           {t('all_books')} →
                         </Link>
@@ -193,20 +176,20 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </Link>
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
                         {seriesList.map(s => (
                           <Link
                             key={s.slug}
                             href={`/series/${s.slug}`}
-                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline whitespace-nowrap"
+                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg transition-colors no-underline whitespace-nowrap"
                           >
                             {s.name}
                           </Link>
                         ))}
-                        <div className="h-px bg-muted/10 my-1"></div>
+                        <div className="h-px bg-ink/[0.06] my-1"></div>
                         <Link
                           href="/series"
-                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline"
+                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-ink/[0.04] rounded-lg transition-colors no-underline"
                         >
                           {t('all_series')} →
                         </Link>
@@ -218,7 +201,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
 
               // Static children dropdown (e.g., "More")
               if (item.children && item.children.length > 0) {
-                const childActive = item.children.some(c => c.url && pathname.startsWith(c.url));
+                const childActive = item.children.some(c => isActive(c.url));
                 return (
                   <div key={item.url || item.name} className="relative group">
                     <button
@@ -233,17 +216,17 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </button>
                     <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[160px]">
-                      <div className="bg-background/95 backdrop-blur-md border border-muted/10 rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
-                        {item.children.map((child: NavChildItem) => {
+                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                        {item.children.map((child: NavChildItem, childIdx: number) => {
                           const ChildComp = child.external ? 'a' : Link;
                           const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
                           return (
                             <Fragment key={child.url}>
-                              {child.dividerBefore && <div className="h-px bg-muted/10 my-1" />}
+                              {child.dividerBefore && childIdx > 0 && <div className="h-px bg-ink/[0.06] my-1" />}
                               <ChildComp
                                 href={child.url}
                                 {...childProps}
-                                className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg transition-colors no-underline whitespace-nowrap"
+                                className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg transition-colors no-underline whitespace-nowrap"
                               >
                                 {getLabel(child.name, child.url)}
                               </ChildComp>
@@ -285,7 +268,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
               );
             })}
           </div>
-          <div className="w-px h-4 bg-muted/20 mx-1 hidden md:block"></div>
+          <div className="w-px h-4 bg-ink/[0.08] mx-1 hidden md:block"></div>
           {/* Hamburger button - mobile only */}
           <button
             className="md:hidden p-3 -mr-3 text-foreground/80 hover:text-heading transition-colors"
@@ -323,7 +306,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
             onClick={() => closeMenu()}
           />
           {/* Menu */}
-          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-muted/10 shadow-lg animate-slide-down" data-testid="mobile-nav-panel">
+          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-ink/[0.06] shadow-lg animate-slide-down" data-testid="mobile-nav-panel">
             <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
               {navItems.map((item) => {
                 const isExternal = !!('external' in item && item.external);
@@ -354,12 +337,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                         </button>
                       </div>
                       {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-muted/10 flex flex-col gap-1 mb-1">
+                        <div className="ml-4 pl-3 border-l-2 border-ink/[0.06] flex flex-col gap-1 mb-1">
                           {seriesList.map(s => (
                             <Link
                               key={s.slug}
                               href={`/series/${s.slug}`}
-                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
+                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg no-underline transition-colors"
                               onClick={() => closeMenu()}
                             >
                               {s.name}
@@ -367,7 +350,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                           ))}
                           <Link
                             href="/series"
-                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
+                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-ink/[0.04] rounded-lg no-underline transition-colors"
                             onClick={() => closeMenu()}
                           >
                             {t('all_series')} →
@@ -403,12 +386,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                         </button>
                       </div>
                       {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-muted/10 flex flex-col gap-1 mb-1">
+                        <div className="ml-4 pl-3 border-l-2 border-ink/[0.06] flex flex-col gap-1 mb-1">
                           {booksList.map(b => (
                             <Link
                               key={b.slug}
                               href={`/books/${b.slug}`}
-                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
+                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg no-underline transition-colors"
                               onClick={() => closeMenu()}
                             >
                               {b.name}
@@ -416,7 +399,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                           ))}
                           <Link
                             href="/books"
-                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
+                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-ink/[0.04] rounded-lg no-underline transition-colors"
                             onClick={() => closeMenu()}
                           >
                             {t('all_books')} →
@@ -431,13 +414,13 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                 if (item.children && item.children.length > 0) {
                   const dropdownKey = item.url || item.name;
                   const isOpen = openDropdown === dropdownKey;
-                  const childActive = item.children.some(c => c.url && pathname.startsWith(c.url));
+                  const childActive = item.children.some(c => isActive(c.url));
                   return (
                     <div key={dropdownKey}>
                       <button
                         type="button"
                         className={`w-full flex items-center justify-between px-3 py-3 text-base font-sans font-medium rounded-lg transition-colors ${
-                          childActive ? 'text-accent' : 'text-foreground/80 hover:text-accent hover:bg-muted/5'
+                          childActive ? 'text-accent' : 'text-foreground/80 hover:text-accent hover:bg-ink/[0.04]'
                         }`}
                         onClick={() => setOpenDropdown(isOpen ? null : dropdownKey)}
                         aria-expanded={isOpen}
@@ -448,17 +431,17 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                         </svg>
                       </button>
                       {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-muted/10 flex flex-col gap-1 mb-1">
-                          {item.children.map((child: NavChildItem) => {
+                        <div className="ml-4 pl-3 border-l-2 border-ink/[0.06] flex flex-col gap-1 mb-1">
+                          {item.children.map((child: NavChildItem, childIdx: number) => {
                             const ChildComp = child.external ? 'a' : Link;
                             const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
                             return (
                               <Fragment key={child.url}>
-                                {child.dividerBefore && <div className="h-px bg-muted/10 my-1" />}
+                                {child.dividerBefore && childIdx > 0 && <div className="h-px bg-ink/[0.06] my-1" />}
                                 <ChildComp
                                   href={child.url}
                                   {...childProps}
-                                  className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-muted/5 rounded-lg no-underline transition-colors"
+                                  className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-ink/[0.04] rounded-lg no-underline transition-colors"
                                   onClick={() => closeMenu()}
                                 >
                                   {getLabel(child.name, child.url)}
@@ -481,7 +464,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                     href={item.url}
                     {...props}
                     className={`flex items-center gap-2 px-3 py-3 text-base font-sans font-medium rounded-lg no-underline transition-colors ${
-                      active ? 'text-accent' : 'text-foreground/80 hover:text-accent hover:bg-muted/5'
+                      active ? 'text-accent' : 'text-foreground/80 hover:text-accent hover:bg-ink/[0.04]'
                     }`}
                     onClick={() => closeMenu()}
                   >
@@ -494,7 +477,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                   </Component>
                 );
               })}
-              <div className="mt-2 pt-3 border-t border-muted/10 px-3">
+              <div className="mt-2 pt-3 border-t border-ink/[0.06] px-3">
                 <LanguageSwitch />
               </div>
             </div>

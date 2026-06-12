@@ -7,7 +7,6 @@ import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import NoteContent from '@/components/NoteContent';
-import FlowHubTabs from '@/components/FlowHubTabs';
 
 const PAGE_SIZE = siteConfig.pagination.notes ?? 20;
 
@@ -44,7 +43,6 @@ export default async function NotesPaginatedPage({ params }: { params: Promise<{
         subtitleParams={{ page, total: totalPages }}
         className="mb-12"
       />
-      <FlowHubTabs />
       <NoteContent
         notes={notes}
         tags={tags}

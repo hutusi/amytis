@@ -13,7 +13,7 @@ export default function FlowTimelineEntry({ date, title, excerpt, tags, slug }: 
   const hasExplicitTitle = title && title !== date;
 
   return (
-    <article className="relative pl-6 pb-8 border-l-2 border-muted/20 last:pb-0">
+    <article className="relative pl-6 pb-8 border-l-2 border-ink/[0.08] last:pb-0">
       {/* Timeline dot */}
       <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent" />
 
