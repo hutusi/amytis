@@ -546,6 +546,33 @@ html.dark .shiki .line.warning {
       0 1px 2px rgb(0 0 0 / 0.2);
   }
 
+  /* Scroll-driven reveal for flow cards — progressive enhancement only:
+     browsers without animation-timeline support (or readers preferring
+     reduced motion) simply see static cards. Longhand properties on
+     purpose: the `animation` shorthand resets animation-timeline to auto. */
+  @keyframes flow-card-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .flow-card {
+        animation-name: flow-card-reveal;
+        animation-timeline: view();
+        animation-range: entry 0% entry 50%; /* fully revealed once half-entered */
+        animation-fill-mode: both;
+        animation-timing-function: ease-out;
+      }
+    }
+  }
+
   .badge-accent {
     @apply mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent;
   }
