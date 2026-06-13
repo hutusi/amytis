@@ -4,8 +4,8 @@ import { resolveFromParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
-import CoverImage from '@/components/CoverImage';
-import Link from 'next/link';
+import ContentCard from '@/components/ContentCard';
+import { getBookUrl, getSeriesUrl } from '@/lib/urls';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
@@ -136,31 +136,16 @@ export default async function AuthorPage({
           <h2 className="text-2xl font-serif font-bold text-heading mb-8"><TranslatedText translationKey="books" /></h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {authorBooks.map(book => (
-              <Link key={book.slug} href={`/books/${book.slug}`} className="group block no-underline">
-                <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
-                    <CoverImage
-                      src={book.coverImage}
-                      title={book.title}
-                      slug={book.slug}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <span className="badge-accent mb-3 inline-block">
-                      {book.chapters.length} {t('chapters_count')}
-                    </span>
-                    <h3 className="mb-2 font-serif text-xl font-bold text-heading group-hover:text-accent transition-colors">
-                      {book.title}
-                    </h3>
-                    {book.excerpt && (
-                      <p className="text-sm text-muted font-serif italic leading-relaxed line-clamp-2">
-                        {book.excerpt}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              <ContentCard
+                key={book.slug}
+                href={getBookUrl(book.slug)}
+                title={book.title}
+                slug={book.slug}
+                coverImage={book.coverImage}
+                badge={`${book.chapters.length} ${t('chapters_count')}`}
+                excerpt={book.excerpt}
+                size="compact"
+              />
             ))}
           </div>
         </section>
@@ -172,31 +157,16 @@ export default async function AuthorPage({
           <h2 className="text-2xl font-serif font-bold text-heading mb-8"><TranslatedText translationKey="series" /></h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {authorSeries.map(({ slug, data, postCount }) => (
-              <Link key={slug} href={`/series/${slug}`} className="group block no-underline">
-                <div className="card-base h-full group flex flex-col p-0 overflow-hidden">
-                  <div className="relative h-40 w-full overflow-hidden bg-ink/[0.04]">
-                    <CoverImage
-                      src={data.coverImage}
-                      title={data.title}
-                      slug={slug}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <span className="badge-accent mb-3 inline-block">
-                      {postCount} {t('parts')}
-                    </span>
-                    <h3 className="mb-2 font-serif text-xl font-bold text-heading group-hover:text-accent transition-colors">
-                      {data.title}
-                    </h3>
-                    {data.excerpt && (
-                      <p className="text-sm text-muted font-serif italic leading-relaxed line-clamp-2">
-                        {data.excerpt}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              <ContentCard
+                key={slug}
+                href={getSeriesUrl(slug)}
+                title={data.title}
+                slug={slug}
+                coverImage={data.coverImage}
+                badge={`${postCount} ${t('parts')}`}
+                excerpt={data.excerpt}
+                size="compact"
+              />
             ))}
           </div>
         </section>
