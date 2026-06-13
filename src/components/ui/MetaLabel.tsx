@@ -18,11 +18,10 @@ interface MetaLabelProps {
 
 /**
  * The small uppercase "eyebrow" / meta label used across sidebars, cards, and
- * section headers. Centralizes the repeated
- * `text-[10px] font-sans font-bold uppercase tracking-widest` micro-label
- * styling that was hand-rolled in 15+ places. Polymorphic via `as`; extra
- * classes (margins, flex, hover) compose through `className`. The class string
- * itself lives in `metaLabel()` (ui-classes.ts) — the single source of truth.
+ * section headers. Centralizes the repeated uppercase micro-label styling that
+ * was hand-rolled in 15+ places. Polymorphic via `as`; extra classes (margins,
+ * flex, hover) compose through `className`. The class string itself lives in
+ * `metaLabel()` (ui-classes.ts) — the single source of truth.
  */
 export default function MetaLabel({
   children,
