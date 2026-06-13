@@ -37,4 +37,19 @@ describe('createListingMetadata', () => {
     );
     expect(createListingMetadata({ titleKey: 'notes', page: 2, totalPages: 3 }).description).toBeUndefined();
   });
+
+  test('throws when page and totalPages are not both set', () => {
+    expect(() => createListingMetadata({ titleKey: 'posts', page: 2 })).toThrow(/both be set or both be unset/);
+    expect(() => createListingMetadata({ titleKey: 'posts', totalPages: 5 })).toThrow(/both be set or both be unset/);
+  });
+
+  test('throws when page exceeds totalPages', () => {
+    expect(() => createListingMetadata({ titleKey: 'posts', page: 6, totalPages: 5 })).toThrow(/exceeds totalPages/);
+  });
+
+  test('throws when descriptionKey is set without count', () => {
+    expect(() => createListingMetadata({ titleKey: 'posts', descriptionKey: 'posts_subtitle' })).toThrow(
+      /count is required/,
+    );
+  });
 });

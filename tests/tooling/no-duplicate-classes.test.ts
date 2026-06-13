@@ -14,7 +14,11 @@ import { describe, expect, test } from 'bun:test';
  * at all. Mirrors the fs.readFileSync grep-guard in src/lib/content/io.test.ts.
  */
 
+const REPO_ROOT = process.cwd();
 const ROOTS = ['src/components', 'src/app'];
+
+/** Normalized (forward-slash) repo-relative path, for stable allow-list matching. */
+const relPath = (file: string): string => path.relative(REPO_ROOT, file).split(path.sep).join('/');
 
 const RULES: Array<{ label: string; pattern: RegExp; allow: string[] }> = [
   {
@@ -25,7 +29,7 @@ const RULES: Array<{ label: string; pattern: RegExp; allow: string[] }> = [
   {
     label: 'tag pill — use <Tag variant="pill">',
     pattern: /px-2 py-0\.5 rounded-full bg-ink\/\[0\.05\] text-muted\/70/,
-    allow: ['Tag.tsx'],
+    allow: ['src/components/Tag.tsx'],
   },
   {
     label: 'card hover — use CARD_HOVER from ui-classes',
@@ -40,12 +44,12 @@ const RULES: Array<{ label: string; pattern: RegExp; allow: string[] }> = [
   {
     label: 'meta dot — use <MetaDot>',
     pattern: /(?:w-1 h-1|h-1 w-1) rounded-full bg-ink\/\[0\.12\]/,
-    allow: ['MetaDot.tsx'],
+    allow: ['src/components/ui/MetaDot.tsx'],
   },
   {
     label: 'section heading — use <SectionHeading>',
     pattern: /text-2xl sm:text-3xl font-serif font-bold text-heading/,
-    allow: ['SectionHeading.tsx'],
+    allow: ['src/components/ui/SectionHeading.tsx'],
   },
   {
     label: 'dropdown panel — use the .dropdown-panel utility',
@@ -79,9 +83,9 @@ describe('design-system class de-duplication guard', () => {
   for (const rule of RULES) {
     test(`not re-inlined: ${rule.label}`, () => {
       const offenders = files
-        .filter(file => !rule.allow.includes(path.basename(file)))
+        .filter(file => !rule.allow.includes(relPath(file)))
         .filter(file => rule.pattern.test(fs.readFileSync(/* turbopackIgnore: true */ file, 'utf8')))
-        .map(file => path.relative(process.cwd(), file));
+        .map(relPath);
       expect(offenders).toEqual([]);
     });
   }

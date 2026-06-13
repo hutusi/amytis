@@ -33,6 +33,15 @@ export function createListingMetadata({
   descriptionOneKey,
   count,
 }: ListingMetadataOptions): Metadata {
+  // Strict build over silent failure: catch caller mistakes here rather than
+  // emitting a quietly-wrong title/description.
+  if ((page != null) !== (totalPages != null)) {
+    throw new Error('createListingMetadata: page and totalPages must both be set or both be unset');
+  }
+  if (page != null && totalPages != null && page > totalPages) {
+    throw new Error(`createListingMetadata: page (${page}) exceeds totalPages (${totalPages})`);
+  }
+
   const siteTitle = resolveLocale(siteConfig.title);
   const section = t(titleKey);
   const title =
@@ -42,10 +51,11 @@ export function createListingMetadata({
 
   let resolvedDescription = description;
   if (resolvedDescription === undefined && descriptionKey) {
+    if (count === undefined) {
+      throw new Error('createListingMetadata: count is required when descriptionKey is set');
+    }
     resolvedDescription =
-      count === 1 && descriptionOneKey
-        ? t(descriptionOneKey)
-        : tWith(descriptionKey, { count: count ?? 0 });
+      count === 1 && descriptionOneKey ? t(descriptionOneKey) : tWith(descriptionKey, { count });
   }
 
   return resolvedDescription !== undefined ? { title, description: resolvedDescription } : { title };
