@@ -6,6 +6,7 @@ import type { BacklinkSource } from '@/lib/content/discovery';
 import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import TocPanel from './TocPanel';
+import MetaLabel from './ui/MetaLabel';
 
 interface NoteSidebarProps {
   headings: Heading[];
@@ -31,16 +32,16 @@ export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }
       {/* Backlinks */}
       {backlinks.length > 0 && (
         <div>
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted block mb-3">
+          <MetaLabel className="block mb-3">
             {t('backlinks')}
-          </span>
+          </MetaLabel>
           <div className="flex flex-col gap-3">
             {backlinks.map(bl => (
               <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5 shrink-0">
+                  <MetaLabel className="text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5 shrink-0">
                     {bl.type}
-                  </span>
+                  </MetaLabel>
                   <Link
                     href={bl.url}
                     className="text-sm text-heading hover:text-accent no-underline transition-colors truncate"

@@ -8,6 +8,7 @@ import { useLanguage } from './LanguageProvider';
 import { useImmersiveReading } from './ImmersiveReadingProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
 import InlineBookToc from './InlineBookToc';
+import MetaLabel from './ui/MetaLabel';
 import { getPostUrl, getPostUrlInCollection, getSeriesListUrl, getSeriesUrl } from '@/lib/urls';
 
 // Dedicated TOC sidebar for the immersive reader on a series post. Visually
@@ -80,9 +81,9 @@ export default function ImmersiveSeriesSidebar({
       {/* Header — series / collection label + post count + title link */}
       <div className="mb-6 pb-4 border-b border-ink/[0.05]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
+          <MetaLabel tone="accent">
             {isCollectionContext ? t('collection') : t('series')}
-          </span>
+          </MetaLabel>
           <span className="text-xs font-mono text-muted whitespace-nowrap">
             {currentIndex + 1}/{effectivePosts.length}
           </span>

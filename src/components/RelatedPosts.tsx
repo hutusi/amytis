@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
 import { t } from '@/lib/i18n';
 import { getPostUrl } from '@/lib/urls';
+import MetaDot from './ui/MetaDot';
 
 export default function RelatedPosts({ posts }: { posts: PostData[] }) {
   if (!posts || posts.length === 0) return null;
@@ -15,7 +16,7 @@ export default function RelatedPosts({ posts }: { posts: PostData[] }) {
             <article className="ink-card flex flex-col h-full p-5 transition-colors group-hover:border-accent/30">
                <div className="text-xs font-sans text-muted mb-2 flex items-center gap-2">
                  <time className="font-mono">{post.date}</time>
-                 <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+                 <MetaDot />
                  <span className="uppercase tracking-widest text-[0.6rem] font-semibold text-accent/80">
                    {post.category}
                  </span>

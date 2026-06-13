@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
@@ -59,7 +60,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
   return (
     <section id="featured-series" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
+        <SectionHeading>{t('curated_series')}</SectionHeading>
         <div className="flex items-center gap-4">
           {order === 'shuffle' && allSeries.length > maxItems && (
             <button

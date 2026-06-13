@@ -138,7 +138,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </Link>
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
                         {booksList.map(b => (
                           <Link
                             key={b.slug}
@@ -176,7 +176,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </Link>
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
                         {seriesList.map(s => (
                           <Link
                             key={s.slug}
@@ -216,7 +216,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                       </svg>
                     </button>
                     <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[160px]">
-                      <div className="bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl p-2 flex flex-col gap-1 animate-slide-down">
+                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
                         {item.children.map((child: NavChildItem, childIdx: number) => {
                           const ChildComp = child.external ? 'a' : Link;
                           const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};

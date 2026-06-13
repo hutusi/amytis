@@ -21,3 +21,16 @@ export const CARD_HOVER =
  */
 export const COVER_ZOOM =
   'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105';
+
+/**
+ * The uppercase micro-label base styling. The `MetaLabel` primitive in
+ * `src/components/ui/` is the preferred way to render these; this raw-string
+ * helper exists for the few cases that need the classes on a non-label element
+ * (e.g. a `<Link>` that is itself styled as a label). Keep this the single
+ * source of truth for the string.
+ */
+export const META_LABEL_BASE = 'text-[10px] font-sans font-bold uppercase tracking-widest';
+
+export function metaLabel(tone: 'muted' | 'accent' = 'muted'): string {
+  return `${META_LABEL_BASE} ${tone === 'accent' ? 'text-accent' : 'text-muted'}`;
+}

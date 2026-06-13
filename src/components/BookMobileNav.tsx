@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry } from '@/lib/content/books';
 import { useLanguage } from './LanguageProvider';
 import PrevNextNav from './PrevNextNav';
+import MetaLabel from './ui/MetaLabel';
 import { getBookChapterUrl } from '@/lib/urls';
 
 interface BookMobileNavProps {
@@ -64,9 +65,9 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Link href={`/books/${bookSlug}`} className="group flex items-center gap-2 no-underline">
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
+          <MetaLabel tone="accent">
             {t('book')}
-          </span>
+          </MetaLabel>
           <span className="text-[10px] text-muted">&bull;</span>
           <span className="text-sm font-serif font-bold text-heading group-hover:text-accent transition-colors">
             {bookTitle}
@@ -98,7 +99,7 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
       >
-        <span className="h-px flex-1 bg-ink/[0.05]" />
+        <span className="divider-hairline" />
         <span className="flex items-center gap-1">
           {isExpanded ? t('hide') : t('chapters_count')}
           <svg
@@ -108,7 +109,7 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </span>
-        <span className="h-px flex-1 bg-ink/[0.05]" />
+        <span className="divider-hairline" />
       </button>
 
       {/* Collapsible chapter list */}

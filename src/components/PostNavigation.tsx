@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { PostData, CollectionContext } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
+import MetaLabel from './ui/MetaLabel';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 
 interface PostNavigationProps {
@@ -51,15 +52,12 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
           href={postHref(effectivePrev)}
           className="group flex flex-col gap-1.5 p-4 rounded-2xl border border-ink/[0.06] hover:border-accent/30 hover:bg-accent/5 transition-all no-underline"
         >
-          <span
-            className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5"
-            suppressHydrationWarning
-          >
+          <MetaLabel className="flex items-center gap-1.5" suppressHydrationWarning>
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             {t('prev')}
-          </span>
+          </MetaLabel>
           <span className="text-sm font-serif font-semibold text-heading group-hover:text-accent transition-colors line-clamp-2 leading-snug">
             {effectivePrev.title}
           </span>
@@ -72,15 +70,12 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
           href={postHref(effectiveNext)}
           className={`group flex flex-col gap-1.5 p-4 rounded-2xl border border-ink/[0.06] hover:border-accent/30 hover:bg-accent/5 transition-all no-underline sm:items-end sm:text-right${!effectivePrev ? ' sm:col-start-2' : ''}`}
         >
-          <span
-            className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted flex items-center gap-1.5"
-            suppressHydrationWarning
-          >
+          <MetaLabel className="flex items-center gap-1.5" suppressHydrationWarning>
             {t('next')}
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
-          </span>
+          </MetaLabel>
           <span className="text-sm font-serif font-semibold text-heading group-hover:text-accent transition-colors line-clamp-2 leading-snug">
             {effectiveNext.title}
           </span>

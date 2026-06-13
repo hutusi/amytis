@@ -5,6 +5,7 @@ import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useActiveHeading } from '@/hooks/useActiveHeading';
 import { scrollToHeading } from '@/lib/scroll-utils';
+import MetaLabel from './ui/MetaLabel';
 
 interface TocPanelProps {
   headings: Heading[];
@@ -25,12 +26,9 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
     // real fix is per-locale URL routing, tracked as a separate refactor.
     <nav aria-label={t('on_this_page')} className={className} suppressHydrationWarning>
       <div className="flex items-center justify-between mb-3">
-        <span
-          className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted"
-          suppressHydrationWarning
-        >
+        <MetaLabel suppressHydrationWarning>
           {t('on_this_page')}
-        </span>
+        </MetaLabel>
         <button
           type="button"
           onClick={() => setCollapsed(prev => !prev)}

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import HorizontalScroll from './HorizontalScroll';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
@@ -58,7 +59,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
   return (
     <section id="featured-books" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('selected_books')}</h2>
+        <SectionHeading>{t('selected_books')}</SectionHeading>
         <div className="flex items-center gap-4">
           {order === 'shuffle' && books.length > maxItems && (
             <button

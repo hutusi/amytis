@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import PostList from './PostList';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import type { PostData } from '@/lib/content/types';
 import { getPostsListUrl } from '@/lib/urls';
@@ -16,7 +17,7 @@ export default function LatestWritingSection({ posts }: LatestWritingSectionProp
   return (
     <section id="latest-posts">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('latest_writing')}</h2>
+        <SectionHeading>{t('latest_writing')}</SectionHeading>
         <Link
           href={getPostsListUrl()}
           className="text-sm text-muted hover:text-accent transition-colors no-underline"

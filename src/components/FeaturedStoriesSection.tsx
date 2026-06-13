@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
@@ -97,7 +98,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
   return (
     <section id="featured-posts" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
+        <SectionHeading>{t('featured_articles')}</SectionHeading>
         {canShuffle && (
           <button
             onClick={handleShuffle}

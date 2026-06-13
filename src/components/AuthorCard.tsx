@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ExportedImage from 'next-image-export-optimizer';
+import MetaLabel from './ui/MetaLabel';
 import { getAuthorSlug } from '@/lib/content/authors';
 import { siteConfig } from '../../site.config';
 import { t } from '@/lib/i18n';
@@ -45,9 +46,9 @@ export default function AuthorCard({ authors }: { authors: string[] }) {
               )}
 
               <div className="min-w-0">
-                <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-1">
+                <MetaLabel as="p" className="mb-1">
                   {t('written_by')}
-                </p>
+                </MetaLabel>
                 <Link
                   href={`/authors/${slug}`}
                   className="font-serif font-semibold text-lg text-heading hover:text-accent transition-colors no-underline"

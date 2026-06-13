@@ -10,6 +10,7 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveToggleButton from '@/components/ImmersiveToggleButton';
+import MetaDot from '@/components/ui/MetaDot';
 import type { BookTocItem, BookChapterEntry } from '@/lib/content/books';
 import type { Heading } from '@/lib/content/types';
 import { getBookUrl } from '@/lib/urls';
@@ -53,11 +54,11 @@ export default function BookReadingShell({
         <span className="uppercase tracking-widest font-semibold text-accent">
           {t('chapter')}
         </span>
-        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+        <MetaDot />
         <span className="font-mono">
           {chapter.wordCount.toLocaleString()} {t('words')}
         </span>
-        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+        <MetaDot />
         <span className="font-mono text-muted/70">
           {chapter.readingMinutes} {t('reading_time')}
         </span>

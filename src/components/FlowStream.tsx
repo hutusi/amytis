@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Tag from '@/components/Tag';
 import Pagination from '@/components/Pagination';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import MetaDot from '@/components/ui/MetaDot';
 import { groupFlowsByMonth, flowStreamLocaleTag } from '@/lib/flow-stream';
 import { getFlowUrl } from '@/lib/urls';
 import type { FlowData } from '@/lib/content/flows';
@@ -52,12 +53,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                     {/* Dot separator (PostCard meta vocabulary) makes the two
                         click targets visibly distinct; spacing comes from its
                         margins, so segment texts render trimmed. */}
-                    {i > 0 && (
-                      <span
-                        className="mx-2 inline-block h-1 w-1 rounded-full bg-ink/[0.12] align-middle"
-                        aria-hidden="true"
-                      />
-                    )}
+                    {i > 0 && <MetaDot className="mx-2 inline-block align-middle" />}
                     {seg.link ? (
                       <Link
                         href={seg.link === 'year' ? `/flows/${groupYear}` : `/flows/${groupYear}/${groupMonth}`}
