@@ -9,6 +9,8 @@ import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { cn } from '@/lib/cn';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export interface BookItem {
   slug: string;
@@ -94,7 +96,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   src={book.coverImage}
                   title={book.title}
                   slug={book.slug}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className={cn(COVER_ZOOM, 'duration-700')}
                   loading={idx === 0 ? 'eager' : undefined}
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />

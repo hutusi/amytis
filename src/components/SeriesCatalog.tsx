@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
+import Tag from './Tag';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/cn';
+import { CARD_HOVER, COVER_ZOOM } from '@/lib/ui-classes';
 
 interface SeriesCatalogProps {
   posts: PostData[];
@@ -42,7 +45,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, colle
               </div>
 
               {/* Right side: Content card */}
-              <div className="ink-card flex-1 overflow-hidden transition-all duration-300 group-hover:border-accent/30 group-hover:bg-ink/[0.04] group-hover:shadow-md group-hover:shadow-accent/5">
+              <div className={cn('ink-card flex-1 overflow-hidden transition-all duration-300', CARD_HOVER)}>
                 <div className="flex flex-col sm:flex-row">
                   {/* Thumbnail */}
                   <div className="relative w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 overflow-hidden bg-ink/[0.04]">
@@ -51,7 +54,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, colle
                         src={post.coverImage}
                         title={post.title}
                         slug={post.slug}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className={COVER_ZOOM}
                       />
                     </Link>
                     {/* Mobile number badge */}
@@ -93,13 +96,7 @@ export default function SeriesCatalog({ posts, startIndex = 0, totalPosts, colle
                     {post.tags && post.tags.length > 0 && (
                       <div className="mt-auto flex flex-wrap gap-2">
                         {post.tags.slice(0, 3).map(tag => (
-                          <Link
-                            key={tag}
-                            href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
-                            className="relative z-10 text-xs px-2 py-0.5 rounded-full bg-ink/[0.05] text-muted/70 hover:bg-accent/10 hover:text-accent transition-colors no-underline"
-                          >
-                            {tag}
-                          </Link>
+                          <Tag key={tag} tag={tag} variant="pill" className="relative z-10" />
                         ))}
                       </div>
                     )}

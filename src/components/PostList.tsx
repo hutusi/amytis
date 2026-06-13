@@ -1,8 +1,11 @@
 import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
+import Tag from './Tag';
 import { getPostUrl } from '@/lib/urls';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/cn';
+import { CARD_HOVER, COVER_ZOOM } from '@/lib/ui-classes';
 
 interface PostListProps {
   posts: PostData[];
@@ -37,7 +40,7 @@ export default function PostList({
           />
 
           {/* Content card */}
-          <div className="ink-card overflow-hidden transition-all duration-300 group-hover:border-accent/30 group-hover:bg-ink/[0.04] group-hover:shadow-md group-hover:shadow-accent/5 h-32 sm:h-auto">
+          <div className={cn('ink-card overflow-hidden transition-all duration-300', CARD_HOVER, 'h-32 sm:h-auto')}>
             <div className="flex flex-row h-full">
               {/* Thumbnail */}
               <div className="relative w-32 sm:w-48 flex-shrink-0 overflow-hidden bg-ink/[0.04]">
@@ -46,7 +49,7 @@ export default function PostList({
                     src={post.coverImage}
                     title={post.title}
                     slug={post.slug}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={COVER_ZOOM}
                   />
                 </Link>
               </div>
@@ -87,13 +90,7 @@ export default function PostList({
                 {showTags && post.tags && post.tags.length > 0 && (
                   <div className="mt-auto flex flex-wrap gap-2">
                     {post.tags.slice(0, 3).map(tag => (
-                      <Link
-                        key={tag}
-                        href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
-                        className="relative z-10 text-xs px-2 py-0.5 rounded-full bg-ink/[0.05] text-muted/70 hover:bg-accent/10 hover:text-accent transition-colors no-underline"
-                      >
-                        {tag}
-                      </Link>
+                      <Tag key={tag} tag={tag} variant="pill" className="relative z-10" />
                     ))}
                   </div>
                 )}

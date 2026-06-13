@@ -8,6 +8,8 @@ import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
+import { cn } from '@/lib/cn';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export interface FeaturedPost {
   slug: string;
@@ -122,7 +124,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                 src={hero.coverImage}
                 title={hero.title}
                 slug={hero.slug}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className={cn(COVER_ZOOM, 'duration-700')}
                 loading="eager"
               />
               {/* Gradient overlay */}
@@ -182,7 +184,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                     src={post.coverImage}
                     title={post.title}
                     slug={post.slug}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={COVER_ZOOM}
                   />
                 </div>
               </Link>

@@ -3,6 +3,7 @@ import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
 import MetaDot from './ui/MetaDot';
 import { getPostUrl } from '@/lib/urls';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export default function PostCard({ post }: { post: PostData }) {
   return (
@@ -13,7 +14,7 @@ export default function PostCard({ post }: { post: PostData }) {
             src={post.coverImage} 
             title={post.title} 
             slug={post.slug} 
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={COVER_ZOOM}
           />
         </div>
         <div className="flex flex-1 flex-col p-5">
