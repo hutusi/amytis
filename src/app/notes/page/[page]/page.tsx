@@ -4,7 +4,7 @@ import { paginate, paginationStaticParams } from '@/lib/pagination';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, resolveLocale } from '@/lib/i18n';
+import { createListingMetadata } from '@/lib/metadata';
 import PageHeader from '@/components/PageHeader';
 import NoteContent from '@/components/NoteContent';
 
@@ -20,9 +20,8 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ page: string }> }): Promise<Metadata> {
   const { page } = await params;
-  return {
-    title: `${t('notes')} - ${page} | ${resolveLocale(siteConfig.title)}`,
-  };
+  const totalPages = Math.ceil(getAllNotes().length / PAGE_SIZE);
+  return createListingMetadata({ titleKey: 'notes', page: parseInt(page, 10), totalPages });
 }
 
 export default async function NotesPaginatedPage({ params }: { params: Promise<{ page: string }> }) {

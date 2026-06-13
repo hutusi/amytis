@@ -4,16 +4,16 @@ import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { firstPage } from '@/lib/pagination';
-import { t, resolveLocale } from '@/lib/i18n';
+import { createListingMetadata } from '@/lib/metadata';
 import NoteContent from '@/components/NoteContent';
 import PageHeader from '@/components/PageHeader';
 
 const PAGE_SIZE = siteConfig.pagination.notes ?? 20;
 
-export const metadata: Metadata = {
-  title: `${t('notes')} | ${resolveLocale(siteConfig.title)}`,
+export const metadata: Metadata = createListingMetadata({
+  titleKey: 'notes',
   description: 'Knowledge base notes.',
-};
+});
 
 export default function NotesPage() {
   if (!isFeatureEnabled('flow')) notFound();

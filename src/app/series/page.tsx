@@ -1,18 +1,14 @@
 import { getAllSeries, getSeriesData, getSeriesLatestPostDate, resolveSeriesAuthors } from '@/lib/content/series';
 import { getSeriesUrl } from '@/lib/urls';
-import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import ContentCard from '@/components/ContentCard';
-import { t, resolveLocale, tWith } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { createListingMetadata } from '@/lib/metadata';
 import PageHeader from '@/components/PageHeader';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const allSeries = getAllSeries();
-  const count = Object.keys(allSeries).length;
-  return {
-    title: `${t('series')} | ${resolveLocale(siteConfig.title)}`,
-    description: tWith('series_subtitle', { count }),
-  };
+  const count = Object.keys(getAllSeries()).length;
+  return createListingMetadata({ titleKey: 'series', descriptionKey: 'series_subtitle', count });
 }
 
 export default function SeriesIndexPage() {

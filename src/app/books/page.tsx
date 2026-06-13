@@ -1,17 +1,19 @@
 import { getAllBooks } from '@/lib/content/books';
 import { getBookUrl } from '@/lib/urls';
-import { siteConfig } from '../../../site.config';
 import { Metadata } from 'next';
 import ContentCard from '@/components/ContentCard';
-import { t, resolveLocale, tWith } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { createListingMetadata } from '@/lib/metadata';
 import PageHeader from '@/components/PageHeader';
 
 export async function generateMetadata(): Promise<Metadata> {
   const books = getAllBooks();
-  return {
-    title: `${t('books')} | ${resolveLocale(siteConfig.title)}`,
-    description: books.length === 1 ? t('books_subtitle_one') : tWith('books_subtitle', { count: books.length }),
-  };
+  return createListingMetadata({
+    titleKey: 'books',
+    descriptionKey: 'books_subtitle',
+    descriptionOneKey: 'books_subtitle_one',
+    count: books.length,
+  });
 }
 
 export default function BooksPage() {
