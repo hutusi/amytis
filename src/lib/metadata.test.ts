@@ -43,8 +43,10 @@ describe('createListingMetadata', () => {
     expect(() => createListingMetadata({ titleKey: 'posts', totalPages: 5 })).toThrow(/both be set or both be unset/);
   });
 
-  test('throws when page exceeds totalPages', () => {
-    expect(() => createListingMetadata({ titleKey: 'posts', page: 6, totalPages: 5 })).toThrow(/exceeds totalPages/);
+  test('allows an out-of-range sentinel page (page > totalPages) without throwing', () => {
+    // paginationStaticParams emits page: 2 even for single-page listings; the
+    // route component notFound()s it, so metadata must not crash the build.
+    expect(() => createListingMetadata({ titleKey: 'flow', page: 2, totalPages: 1 })).not.toThrow();
   });
 
   test('throws when descriptionKey is set without count', () => {

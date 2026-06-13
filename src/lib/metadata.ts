@@ -34,12 +34,12 @@ export function createListingMetadata({
   count,
 }: ListingMetadataOptions): Metadata {
   // Strict build over silent failure: catch caller mistakes here rather than
-  // emitting a quietly-wrong title/description.
+  // emitting a quietly-wrong title/description. (We deliberately do NOT assert
+  // page <= totalPages: paginationStaticParams emits a sentinel `page: 2` even
+  // for single-page listings, so generateMetadata legitimately runs for an
+  // out-of-range page that the route component then notFound()s.)
   if ((page != null) !== (totalPages != null)) {
     throw new Error('createListingMetadata: page and totalPages must both be set or both be unset');
-  }
-  if (page != null && totalPages != null && page > totalPages) {
-    throw new Error(`createListingMetadata: page (${page}) exceeds totalPages (${totalPages})`);
   }
 
   const siteTitle = resolveLocale(siteConfig.title);
