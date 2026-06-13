@@ -12,6 +12,7 @@ import {
 import type { Heading } from './types';
 import { notesDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Notes: flat knowledge-base entries in content/notes/. Notes support
@@ -20,9 +21,9 @@ import { createProdMemo } from './cache';
 
 const NoteSchema = z.object({
   title: z.string(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
-  tags: z.array(z.string()).optional().default([]),
-  draft: z.boolean().optional().default(false),
+  date: dateField.optional(),
+  tags: tagsField,
+  draft: draftField,
   aliases: z.array(z.string()).optional().default([]),
   toc: z.boolean().optional().default(true),
   backlinks: z.boolean().optional().default(true),

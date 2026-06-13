@@ -11,6 +11,7 @@ import {
 } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
+import { dateField, draftField } from './schema';
 
 /**
  * Books: long-form content with an explicit TOC in the book index's
@@ -116,10 +117,10 @@ const BookTocItemSchema: z.ZodType<BookTocItem> = z.union([
 export const BookSchema = z.object({
   title: z.string(),
   excerpt: z.string().optional(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]),
+  date: dateField,
   coverImage: z.string().optional(),
   featured: z.boolean().optional().default(false),
-  draft: z.boolean().optional().default(false),
+  draft: draftField,
   authors: z.array(z.string()).optional().default([]),
   latex: z.boolean().optional().default(false),
   showChapterExcerpt: z.boolean().optional().default(false),

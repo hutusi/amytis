@@ -14,6 +14,7 @@ import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from '..
 import type { PostData, CollectionItem, Heading } from './types';
 import { contentDirectory, readUtf8File } from './io';
 import { getSeriesAuthors, getSeriesTitle } from './series-metadata';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Frontmatter validation and file→PostData parsing for Markdown and rST
@@ -41,11 +42,11 @@ const CollectionItemSchema = z.union([
 
 export const PostSchema = z.object({
   title: z.string(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
+  date: dateField.optional(),
   subtitle: z.string().optional(),
   excerpt: z.string().optional(),
   category: z.string().optional().default('Uncategorized'),
-  tags: z.array(z.string()).optional().default([]),
+  tags: tagsField,
   authors: z.array(z.string()).optional(),
   author: z.string().optional(),
   layout: z.string().optional().default('post'),
@@ -57,7 +58,7 @@ export const PostSchema = z.object({
   items: z.array(CollectionItemSchema).optional(),
   featured: z.boolean().optional().default(false),
   pinned: z.boolean().optional().default(false),
-  draft: z.boolean().optional().default(false),
+  draft: draftField,
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
   commentable: z.boolean().optional(),

@@ -7,6 +7,7 @@ import { byDateDesc } from '../sort';
 import { generateExcerpt, getHeadings } from '../text-metrics';
 import type { Heading } from './types';
 import { flowsDirectory, readUtf8File } from './io';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Flows: daily notes stored as content/flows/YYYY/MM/DD.{md,mdx}
@@ -15,9 +16,9 @@ import { flowsDirectory, readUtf8File } from './io';
 
 const FlowSchema = z.object({
   title: z.string().optional(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
-  tags: z.array(z.string()).optional().default([]),
-  draft: z.boolean().optional().default(false),
+  date: dateField.optional(),
+  tags: tagsField,
+  draft: draftField,
   commentable: z.boolean().optional(),
 });
 
