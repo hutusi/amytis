@@ -72,7 +72,8 @@ const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
 // Bumped when the docutils renderer's HTML output shape changes:
 // v2 emitted <pre data-amytis-code> markers; v3 additionally emits
 // <div data-amytis-code-group> wrappers around .. code-group:: nests.
-const RST_RENDERER_DISK_CACHE_VERSION = '4';
+// v5 invalidates cache after the shiki 4.1->4.2 highlighter bump.
+const RST_RENDERER_DISK_CACHE_VERSION = '5';
 const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
 let pythonRendererInvocationCount = 0;
