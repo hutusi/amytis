@@ -3,12 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { byDateDesc } from '../sort';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
 import { dateField, draftField } from './schema';
@@ -295,11 +290,9 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
     return null;
   }
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
-  const headings = getHeadings(content);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
-  const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+  const { contentWithoutH1, excerpt: derivedExcerpt, headings, readingMinutes, wordCount } =
+    extractContentMetrics(content);
+  const excerpt = data.excerpt || derivedExcerpt;
 
   // Find prev/next
   const chapterIndex = book.chapters.findIndex(ch => ch.id === chapterSlug);

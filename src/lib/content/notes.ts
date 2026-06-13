@@ -3,12 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { byDateDesc } from '../sort';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { notesDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
@@ -58,12 +53,8 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
   }
   const data = parsed.data;
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt, headings, readingMinutes, wordCount } = extractContentMetrics(content);
   const date = data.date || fs.statSync(fullPath).mtime.toISOString().split('T')[0];
-  const excerpt = generateExcerpt(contentWithoutH1);
-  const headings = getHeadings(content);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
 
   return {
     slug,

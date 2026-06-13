@@ -3,12 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { siteConfig } from '../../../site.config';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import { parseRstDocument, RstParseError } from '../rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from '../rst-renderer';
 import type { PostData, CollectionItem, Heading } from './types';
@@ -187,7 +182,8 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
   }
   const data = parsed.data;
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt: derivedExcerpt, headings, readingMinutes, wordCount } =
+    extractContentMetrics(content);
 
   const effectiveSeriesSlug = data.series || seriesName;
   let authors: string[] = [];
@@ -211,15 +207,11 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
     }
   }
 
-  const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
+  const excerpt = data.excerpt || derivedExcerpt;
 
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
   if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
-
-  const headings = getHeadings(content);
 
   let coverImage = data.coverImage;
   if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {

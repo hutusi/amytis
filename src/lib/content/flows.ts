@@ -4,7 +4,7 @@ import matter from 'gray-matter';
 import { z } from 'zod';
 import { siteConfig } from '../../../site.config';
 import { byDateDesc } from '../sort';
-import { generateExcerpt, getHeadings } from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { flowsDirectory, readUtf8File } from './io';
 import { dateField, draftField, tagsField } from './schema';
@@ -57,10 +57,8 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   const data = parsed.data;
 
   const h1Match = content.match(/^\s*#\s+(.+)/);
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt, headings } = extractContentMetrics(content, { withCounts: false });
   const date = data.date || slug.replace(/\//g, '-'); // slug is YYYY/MM/DD, convert to YYYY-MM-DD
-  const excerpt = generateExcerpt(contentWithoutH1);
-  const headings = getHeadings(content);
 
   return {
     slug,
