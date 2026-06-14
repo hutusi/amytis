@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useLanguage } from './LanguageProvider';
 import { LuTag, LuX, LuSearch } from 'react-icons/lu';
+import { cn } from '@/lib/cn';
+import { metaLabel } from '@/lib/ui-classes';
 
 const INITIAL_SHOW = 12;
 
@@ -52,7 +54,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
         {/* Section heading → links to all tags, shows total count */}
         <Link
           href="/tags"
-          className="flex items-center gap-1.5 text-[10px] font-sans font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline mb-3"
+          className={cn(metaLabel(), 'flex items-center gap-1.5 hover:text-accent transition-colors no-underline mb-3')}
         >
           <LuTag className="w-3 h-3" />
           <span>{t('tags')}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useLanguage } from './LanguageProvider';
+import MetaDot from './ui/MetaDot';
 
 interface AuthorStatsProps {
   postCount: number;
@@ -17,17 +18,17 @@ export default function AuthorStats({ postCount, seriesCount, categoryCount, boo
       <span>{postCount} {t('posts').toLowerCase()}</span>
       {bookCount > 0 && (
         <>
-          <span className="h-1 w-1 rounded-full bg-ink/[0.12]" />
+          <MetaDot />
           <span>{bookCount} {t('books').toLowerCase()}</span>
         </>
       )}
       {seriesCount > 0 && (
         <>
-          <span className="h-1 w-1 rounded-full bg-ink/[0.12]" />
+          <MetaDot />
           <span>{seriesCount} {t('series').toLowerCase()}</span>
         </>
       )}
-      <span className="h-1 w-1 rounded-full bg-ink/[0.12]" />
+      <MetaDot />
       <span>{categoryCount} {t('categories').toLowerCase()}</span>
     </div>
   );

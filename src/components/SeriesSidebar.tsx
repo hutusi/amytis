@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
+import MetaLabel from './ui/MetaLabel';
 import { getPostUrl } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';
 
@@ -44,9 +45,9 @@ export default function SeriesSidebar({ seriesSlug, seriesTitle, posts, currentS
           href={`/series/${seriesSlug}`}
           className="group block no-underline"
         >
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent mb-2 block">
+          <MetaLabel tone="accent" className="mb-2 block">
             {t('series')}
-          </span>
+          </MetaLabel>
           <h3 className="font-serif font-bold text-heading text-lg leading-snug group-hover:text-accent transition-colors">
             {seriesTitle}
           </h3>

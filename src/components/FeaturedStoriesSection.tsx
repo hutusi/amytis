@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
+import { cn } from '@/lib/cn';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export interface FeaturedPost {
   slug: string;
@@ -97,7 +100,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
   return (
     <section id="featured-posts" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('featured_articles')}</h2>
+        <SectionHeading>{t('featured_articles')}</SectionHeading>
         {canShuffle && (
           <button
             onClick={handleShuffle}
@@ -121,7 +124,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                 src={hero.coverImage}
                 title={hero.title}
                 slug={hero.slug}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className={cn(COVER_ZOOM, 'duration-700')}
                 loading="eager"
               />
               {/* Gradient overlay */}
@@ -181,7 +184,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                     src={post.coverImage}
                     title={post.title}
                     slug={post.slug}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={COVER_ZOOM}
                   />
                 </div>
               </Link>

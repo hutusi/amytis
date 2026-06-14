@@ -3,15 +3,11 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { byDateDesc } from '../sort';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { notesDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Notes: flat knowledge-base entries in content/notes/. Notes support
@@ -20,9 +16,9 @@ import { createProdMemo } from './cache';
 
 const NoteSchema = z.object({
   title: z.string(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
-  tags: z.array(z.string()).optional().default([]),
-  draft: z.boolean().optional().default(false),
+  date: dateField.optional(),
+  tags: tagsField,
+  draft: draftField,
   aliases: z.array(z.string()).optional().default([]),
   toc: z.boolean().optional().default(true),
   backlinks: z.boolean().optional().default(true),
@@ -57,12 +53,8 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
   }
   const data = parsed.data;
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt, headings, readingMinutes, wordCount } = extractContentMetrics(content);
   const date = data.date || fs.statSync(fullPath).mtime.toISOString().split('T')[0];
-  const excerpt = generateExcerpt(contentWithoutH1);
-  const headings = getHeadings(content);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
 
   return {
     slug,

@@ -3,14 +3,10 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { byDateDesc } from '../sort';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
+import { dateField, draftField } from './schema';
 
 /**
  * Books: long-form content with an explicit TOC in the book index's
@@ -116,10 +112,10 @@ const BookTocItemSchema: z.ZodType<BookTocItem> = z.union([
 export const BookSchema = z.object({
   title: z.string(),
   excerpt: z.string().optional(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]),
+  date: dateField,
   coverImage: z.string().optional(),
   featured: z.boolean().optional().default(false),
-  draft: z.boolean().optional().default(false),
+  draft: draftField,
   authors: z.array(z.string()).optional().default([]),
   latex: z.boolean().optional().default(false),
   showChapterExcerpt: z.boolean().optional().default(false),
@@ -294,11 +290,9 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
     return null;
   }
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
-  const headings = getHeadings(content);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
-  const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
+  const { contentWithoutH1, excerpt: derivedExcerpt, headings, readingMinutes, wordCount } =
+    extractContentMetrics(content);
+  const excerpt = data.excerpt || derivedExcerpt;
 
   // Find prev/next
   const chapterIndex = book.chapters.findIndex(ch => ch.id === chapterSlug);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLanguage } from './LanguageProvider';
 import PostList from './PostList';
 import FlowTimelineEntry from './FlowTimelineEntry';
+import MetaLabel from './ui/MetaLabel';
 import type { PostData } from '@/lib/content/types';
 
 type Tab = 'all' | 'posts' | 'flows';
@@ -67,12 +68,12 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
       {showPosts && posts.length > 0 && (
         <div>
           {showSectionHeaders && (
-            <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-6">
+            <MetaLabel as="h2" className="mb-6">
               {t('posts')}
               <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
                 {posts.length}
               </span>
-            </h2>
+            </MetaLabel>
           )}
           <PostList posts={posts} />
         </div>
@@ -82,12 +83,12 @@ export default function TagContentTabs({ posts, flows }: TagContentTabsProps) {
       {showFlows && flows.length > 0 && (
         <div className={showPosts && posts.length > 0 ? 'mt-12' : ''}>
           {showSectionHeaders && (
-            <h2 className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-4">
+            <MetaLabel as="h2" className="mb-4">
               {t('flow_notes')}
               <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
                 {flows.length}
               </span>
-            </h2>
+            </MetaLabel>
           )}
           <div>
             {flows.map(flow => (

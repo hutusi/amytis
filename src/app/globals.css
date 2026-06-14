@@ -587,6 +587,17 @@ html.dark .shiki .line.warning {
     @apply mb-4 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent;
   }
 
+  /* Hairline divider used inside flex rows (e.g. collapsible section toggles). */
+  .divider-hairline {
+    @apply h-px flex-1 bg-ink/[0.05];
+  }
+
+  /* Floating dropdown / popover surface. Call sites add their own padding,
+     layout, positioning, and the `animate-slide-down` entrance. */
+  .dropdown-panel {
+    @apply bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl;
+  }
+
   .scrollbar-hide-default {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE 10+ */

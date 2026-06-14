@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { BacklinkSource } from '@/lib/content/discovery';
 import { t } from '@/lib/i18n';
+import MetaLabel from '@/components/ui/MetaLabel';
 
 interface BacklinksProps {
   backlinks: BacklinkSource[];
@@ -18,9 +19,9 @@ export default function Backlinks({ backlinks }: BacklinksProps) {
         {backlinks.map(bl => (
           <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5">
+              <MetaLabel className="text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5">
                 {bl.type}
-              </span>
+              </MetaLabel>
               <Link
                 href={bl.url}
                 className="text-sm font-medium text-heading hover:text-accent no-underline transition-colors"

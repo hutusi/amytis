@@ -119,3 +119,47 @@ export function getHeadings(content: string): Heading[] {
   }
   return headings;
 }
+
+interface ContentMetrics {
+  /** Body with a leading H1 removed (the H1 is rendered as the title instead). */
+  contentWithoutH1: string;
+  /** Excerpt derived from `contentWithoutH1`. */
+  excerpt: string;
+  /** H2/H3 headings, parsed from the original content (H1 is never a heading). */
+  headings: Heading[];
+}
+
+interface ContentMetricsWithCounts extends ContentMetrics {
+  readingMinutes: number;
+  wordCount: number;
+}
+
+/**
+ * The shared content-metrics extraction that posts/notes/flows/book-chapters
+ * all performed inline: strip a leading H1, derive the excerpt from the
+ * stripped body, and collect headings from the original content. Reading-time
+ * and word-count are included by default; pass `{ withCounts: false }` to skip
+ * them (flows don't surface those metrics). Callers keep their own H1-text
+ * capture and `data.excerpt ||` fallback where they need them.
+ */
+export function extractContentMetrics(content: string, opts?: { withCounts?: true }): ContentMetricsWithCounts;
+export function extractContentMetrics(content: string, opts: { withCounts: false }): ContentMetrics;
+export function extractContentMetrics(
+  content: string,
+  opts: { withCounts?: boolean } = {},
+): ContentMetrics | ContentMetricsWithCounts {
+  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const excerpt = generateExcerpt(contentWithoutH1);
+  const headings = getHeadings(content);
+
+  if (opts.withCounts === false) {
+    return { contentWithoutH1, excerpt, headings };
+  }
+  return {
+    contentWithoutH1,
+    excerpt,
+    headings,
+    readingMinutes: calculateReadingMinutes(contentWithoutH1),
+    wordCount: calculateWordCount(contentWithoutH1),
+  };
+}

@@ -4,9 +4,10 @@ import matter from 'gray-matter';
 import { z } from 'zod';
 import { siteConfig } from '../../../site.config';
 import { byDateDesc } from '../sort';
-import { generateExcerpt, getHeadings } from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { flowsDirectory, readUtf8File } from './io';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Flows: daily notes stored as content/flows/YYYY/MM/DD.{md,mdx}
@@ -15,9 +16,9 @@ import { flowsDirectory, readUtf8File } from './io';
 
 const FlowSchema = z.object({
   title: z.string().optional(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
-  tags: z.array(z.string()).optional().default([]),
-  draft: z.boolean().optional().default(false),
+  date: dateField.optional(),
+  tags: tagsField,
+  draft: draftField,
   commentable: z.boolean().optional(),
 });
 
@@ -56,10 +57,8 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   const data = parsed.data;
 
   const h1Match = content.match(/^\s*#\s+(.+)/);
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt, headings } = extractContentMetrics(content, { withCounts: false });
   const date = data.date || slug.replace(/\//g, '-'); // slug is YYYY/MM/DD, convert to YYYY-MM-DD
-  const excerpt = generateExcerpt(contentWithoutH1);
-  const headings = getHeadings(content);
 
   return {
     slug,

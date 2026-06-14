@@ -8,6 +8,7 @@ import {
   type ReadingTheme,
 } from '@/components/ImmersiveReadingProvider';
 import { useLanguage } from '@/components/LanguageProvider';
+import MetaLabel from '@/components/ui/MetaLabel';
 import type { TranslationKey } from '@/i18n/translations';
 
 interface ImmersiveReadingPrefsPopoverProps {
@@ -55,9 +56,9 @@ const THEME_SWATCH_STYLE: Record<ReadingTheme, string> = {
 
 function GroupHeading({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted/80 mb-2">
+    <MetaLabel as="div" className="text-muted/80 mb-2">
       {children}
-    </div>
+    </MetaLabel>
   );
 }
 
@@ -132,7 +133,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
       ref={rootRef}
       role="dialog"
       aria-label={t('reading_preferences')}
-      className="absolute top-full right-0 mt-2 z-50 min-w-[280px] bg-background/95 backdrop-blur-md border border-ink/[0.07] rounded-xl shadow-xl p-5 animate-slide-down"
+      className="absolute top-full right-0 mt-2 z-50 min-w-[280px] dropdown-panel p-5 animate-slide-down"
     >
       {/* Font Size */}
       <div className="mb-5">

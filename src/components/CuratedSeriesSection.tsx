@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
+import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
+import { cn } from '@/lib/cn';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export interface SeriesItem {
   name: string;
@@ -59,7 +62,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
   return (
     <section id="featured-series" className="mb-12 sm:mb-24">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-heading">{t('curated_series')}</h2>
+        <SectionHeading>{t('curated_series')}</SectionHeading>
         <div className="flex items-center gap-4">
           {order === 'shuffle' && allSeries.length > maxItems && (
             <button
@@ -94,7 +97,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                   src={series.coverImage}
                   title={series.title}
                   slug={series.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className={cn(COVER_ZOOM, 'duration-700')}
                   loading={idx === 0 ? 'eager' : undefined}
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />

@@ -3,17 +3,13 @@ import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
 import { siteConfig } from '../../../site.config';
-import {
-  calculateReadingMinutes,
-  calculateWordCount,
-  generateExcerpt,
-  getHeadings,
-} from '../text-metrics';
+import { extractContentMetrics } from '../text-metrics';
 import { parseRstDocument, RstParseError } from '../rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from '../rst-renderer';
 import type { PostData, CollectionItem, Heading } from './types';
 import { contentDirectory, readUtf8File } from './io';
 import { getSeriesAuthors, getSeriesTitle } from './series-metadata';
+import { dateField, draftField, tagsField } from './schema';
 
 /**
  * Frontmatter validation and file→PostData parsing for Markdown and rST
@@ -41,11 +37,11 @@ const CollectionItemSchema = z.union([
 
 export const PostSchema = z.object({
   title: z.string(),
-  date: z.union([z.string(), z.date()]).transform(val => new Date(val).toISOString().split('T')[0]).optional(),
+  date: dateField.optional(),
   subtitle: z.string().optional(),
   excerpt: z.string().optional(),
   category: z.string().optional().default('Uncategorized'),
-  tags: z.array(z.string()).optional().default([]),
+  tags: tagsField,
   authors: z.array(z.string()).optional(),
   author: z.string().optional(),
   layout: z.string().optional().default('post'),
@@ -57,7 +53,7 @@ export const PostSchema = z.object({
   items: z.array(CollectionItemSchema).optional(),
   featured: z.boolean().optional().default(false),
   pinned: z.boolean().optional().default(false),
-  draft: z.boolean().optional().default(false),
+  draft: draftField,
   latex: z.boolean().optional().default(false),
   toc: z.boolean().optional().default(true),
   commentable: z.boolean().optional(),
@@ -186,7 +182,8 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
   }
   const data = parsed.data;
 
-  const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+  const { contentWithoutH1, excerpt: derivedExcerpt, headings, readingMinutes, wordCount } =
+    extractContentMetrics(content);
 
   const effectiveSeriesSlug = data.series || seriesName;
   let authors: string[] = [];
@@ -210,15 +207,11 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
     }
   }
 
-  const excerpt = data.excerpt || generateExcerpt(contentWithoutH1);
-  const readingMinutes = calculateReadingMinutes(contentWithoutH1);
-  const wordCount = calculateWordCount(contentWithoutH1);
+  const excerpt = data.excerpt || derivedExcerpt;
 
   let date = data.date;
   if (!date && dateFromFileName) date = dateFromFileName;
   if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
-
-  const headings = getHeadings(content);
 
   let coverImage = data.coverImage;
   if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {

@@ -6,6 +6,7 @@ import {
   calculateWordCount,
   calculateWordCountFromText,
   getHeadings,
+  extractContentMetrics,
 } from "./text-metrics";
 
 describe("text metrics", () => {
@@ -183,6 +184,40 @@ describe("text metrics", () => {
       const content = "Just plain text with no headings at all.";
       const headings = getHeadings(content);
       expect(headings).toEqual([]);
+    });
+  });
+
+  describe("extractContentMetrics", () => {
+    const content = "# Title\n\nIntro paragraph.\n\n## Section\n\nMore text here.";
+
+    test("strips the leading H1 and derives excerpt + headings", () => {
+      const m = extractContentMetrics(content);
+      expect(m.contentWithoutH1.startsWith("# Title")).toBe(false);
+      expect(m.contentWithoutH1).toContain("Intro paragraph.");
+      expect(m.excerpt).toContain("Intro paragraph.");
+      expect(m.headings.map((h) => h.text)).toEqual(["Section"]);
+    });
+
+    test("includes reading time and word count by default", () => {
+      const m = extractContentMetrics(content);
+      expect(typeof m.readingMinutes).toBe("number");
+      expect(m.readingMinutes).toBeGreaterThanOrEqual(1);
+      expect(typeof m.wordCount).toBe("number");
+    });
+
+    test("omits counts when withCounts is false", () => {
+      const m = extractContentMetrics(content, { withCounts: false });
+      expect("readingMinutes" in m).toBe(false);
+      expect("wordCount" in m).toBe(false);
+      expect(m.headings.map((h) => h.text)).toEqual(["Section"]);
+    });
+
+    test("matches the inline pattern it replaced (byte-identical)", () => {
+      const m = extractContentMetrics(content);
+      const expectedStripped = content.replace(/^\s*#\s+[^\n]+/, "").trim();
+      expect(m.contentWithoutH1).toBe(expectedStripped);
+      expect(m.excerpt).toBe(generateExcerpt(expectedStripped));
+      expect(m.headings).toEqual(getHeadings(content));
     });
   });
 });

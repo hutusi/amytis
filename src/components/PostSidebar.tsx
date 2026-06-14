@@ -10,6 +10,7 @@ import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
 import { padNumber } from '@/lib/format-utils';
 import TocPanel from './TocPanel';
 import ShareBar from './ShareBar';
+import MetaLabel from './ui/MetaLabel';
 import { siteConfig } from '../../site.config';
 
 interface PostSidebarProps {
@@ -91,12 +92,9 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
           {/* Header — always visible */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <span
-                className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent"
-                suppressHydrationWarning
-              >
+              <MetaLabel tone="accent" suppressHydrationWarning>
                 {isCollectionContext ? t('collection') : t('series')}
-              </span>
+              </MetaLabel>
               <span className="text-[10px] font-mono text-muted/60">
                 {progressIndex >= 0 ? progressIndex + 1 : '?'} / {effectivePosts!.length}
               </span>
@@ -193,12 +191,9 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
 
       {shareUrl && siteConfig.share?.enabled && (
         <div className="mt-6 pt-6 border-t border-ink/[0.05]">
-          <p
-            className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mb-3"
-            suppressHydrationWarning
-          >
+          <MetaLabel as="p" className="mb-3" suppressHydrationWarning>
             {t('share_post')}
-          </p>
+          </MetaLabel>
           <ShareBar url={shareUrl} title={shareTitle ?? ''} />
         </div>
       )}

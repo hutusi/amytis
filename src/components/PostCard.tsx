@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
+import MetaDot from './ui/MetaDot';
 import { getPostUrl } from '@/lib/urls';
+import { COVER_ZOOM } from '@/lib/ui-classes';
 
 export default function PostCard({ post }: { post: PostData }) {
   return (
@@ -12,13 +14,13 @@ export default function PostCard({ post }: { post: PostData }) {
             src={post.coverImage} 
             title={post.title} 
             slug={post.slug} 
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={COVER_ZOOM}
           />
         </div>
         <div className="flex flex-1 flex-col p-5">
           <div className="mb-3 flex items-center gap-2 text-xs font-sans text-muted">
             <span className="font-mono text-accent">{post.date}</span>
-            <span className="h-1 w-1 rounded-full bg-ink/[0.12]" />
+            <MetaDot />
             <span className="uppercase tracking-widest">{post.category}</span>
           </div>
           <h3 className="mb-1 font-serif text-lg font-bold text-heading/80 transition-colors group-hover:text-accent">

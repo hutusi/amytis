@@ -6,7 +6,7 @@ import { toFlowIndexItems } from '@/lib/flow-stream';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, resolveLocale } from '@/lib/i18n';
+import { createListingMetadata } from '@/lib/metadata';
 import FlowIndexClient from '@/components/FlowIndexClient';
 import FlowStream from '@/components/FlowStream';
 import PageHeader from '@/components/PageHeader';
@@ -23,9 +23,8 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ page: string }> }): Promise<Metadata> {
   const { page } = await params;
-  return {
-    title: `${t('flow')} - ${page} | ${resolveLocale(siteConfig.title)}`,
-  };
+  const totalPages = Math.ceil(getAllFlows().length / PAGE_SIZE);
+  return createListingMetadata({ titleKey: 'flow', page: parseInt(page, 10), totalPages });
 }
 
 export default async function FlowsPaginatedPage({ params }: { params: Promise<{ page: string }> }) {

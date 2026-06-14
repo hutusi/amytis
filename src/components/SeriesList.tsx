@@ -7,6 +7,7 @@ import type { PostData, CollectionContext } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import PrevNextNav from './PrevNextNav';
+import MetaLabel from './ui/MetaLabel';
 import { padNumber } from '@/lib/format-utils';
 
 interface SeriesListProps {
@@ -49,9 +50,9 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
           href={`/series/${effectiveSlug}`}
           className="group flex items-center gap-2 no-underline"
         >
-          <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-accent">
+          <MetaLabel tone="accent">
             {isCollectionContext ? t('collection') : t('series')}
-          </span>
+          </MetaLabel>
           <span className="text-[10px] text-muted">•</span>
           <span className="text-sm font-serif font-bold text-heading group-hover:text-accent transition-colors">
             {effectiveTitle}
@@ -83,7 +84,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
       >
-        <span className="h-px flex-1 bg-ink/[0.05]" />
+        <span className="divider-hairline" />
         <span className="flex items-center gap-1">
           {isExpanded ? t('hide') : t('all_posts')}
           <svg
@@ -93,7 +94,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </span>
-        <span className="h-px flex-1 bg-ink/[0.05]" />
+        <span className="divider-hairline" />
       </button>
 
       {/* Collapsible posts list */}
