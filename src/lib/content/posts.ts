@@ -141,8 +141,12 @@ export function getFeaturedPosts(): PostData[] {
  */
 function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string; headings?: Heading[] } | null {
   for (const ext of ['.mdx', '.md']) {
-    const filePath = path.join(pagesDirectory, `${slug}.${locale}${ext}`);
-    if (fs.existsSync(filePath)) {
+    // The `${slug}.${locale}${ext}` template is a build-time content lookup,
+    // not a module to trace. Without these turbopackIgnore annotations
+    // Turbopack expands it to a `<dynamic>.<dynamic>.<ext>` glob and traces the
+    // whole project (also surfaces as the next.config.ts NFT warning). See CLAUDE.md.
+    const filePath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.${locale}${ext}`);
+    if (fs.existsSync(/* turbopackIgnore: true */ filePath)) {
       try {
         const { data, content } = matter(readUtf8File(filePath));
         const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();

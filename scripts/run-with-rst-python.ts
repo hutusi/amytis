@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
-const [command, ...args] = Bun.argv.slice(2);
+const [command, ...args] = process.argv.slice(2);
 
 if (!command) {
   console.error('Missing command to run.');

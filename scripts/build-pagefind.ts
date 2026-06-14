@@ -160,7 +160,7 @@ async function buildPagefind(sitePath: string, outputPath: string): Promise<void
 }
 
 async function main() {
-  const { sitePath, outputPath } = parseArgs(Bun.argv.slice(2));
+  const { sitePath, outputPath } = parseArgs(process.argv.slice(2));
   await buildPagefind(sitePath, outputPath);
 }
 
