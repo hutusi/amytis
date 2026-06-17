@@ -16,16 +16,16 @@ const FONT_SIZE_REM: Record<ReadingFontSize, string> = {
 };
 
 const COLUMN_WIDTH_CLASS: Record<ReadingColumnWidth, string> = {
-  narrow: 'max-w-2xl',
-  medium: 'max-w-3xl',
-  wide: 'max-w-4xl',
-  full: 'max-w-none',
+  narrow: 'max-w-2xl', //  672px — comfortable focused column
+  medium: 'max-w-4xl', //  896px
+  wide: 'max-w-[88rem]', // 1408px — default; fills a widescreen without going edge-to-edge
+  full: 'max-w-none', //  unconstrained
 };
 
 const COLUMN_PADDING_CLASS: Record<ReadingColumnWidth, string> = {
   narrow: 'px-6 sm:px-8',
   medium: 'px-6 sm:px-8',
-  wide: 'px-6 sm:px-8',
+  wide: 'px-6 sm:px-10',
   full: 'px-6 sm:px-10',
 };
 
