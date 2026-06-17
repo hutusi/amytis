@@ -39,9 +39,9 @@ const THEME_OPTIONS: Array<{ value: ReadingTheme; labelKey: TranslationKey }> = 
 ];
 
 const WIDTH_OPTIONS: Array<{ value: ReadingColumnWidth; labelKey: TranslationKey; barWidthPct: number }> = [
-  { value: 'narrow', labelKey: 'width_narrow', barWidthPct: 35 },
-  { value: 'medium', labelKey: 'width_medium', barWidthPct: 55 },
-  { value: 'wide', labelKey: 'width_wide', barWidthPct: 75 },
+  { value: 'narrow', labelKey: 'width_narrow', barWidthPct: 40 },
+  { value: 'medium', labelKey: 'width_medium', barWidthPct: 60 },
+  { value: 'wide', labelKey: 'width_wide', barWidthPct: 80 },
   { value: 'full', labelKey: 'width_full', barWidthPct: 100 },
 ];
 
