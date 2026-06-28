@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import mermaid from "mermaid";
 import { useTheme } from "next-themes";
 
 // Mermaid bundles its own KaTeX and invokes it with `{throwOnError: true,
@@ -47,8 +46,18 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   }, []);
 
   useEffect(() => {
-    if (ref.current && chart && mounted) {
+    if (!ref.current || !chart || !mounted) return;
+
+    let cancelled = false;
+
+    (async () => {
       installConsoleWarnFilter();
+
+      // Load the ~600kb mermaid library on demand — only once a diagram
+      // actually mounts client-side — so diagram-free pages never ship it.
+      const mermaid = (await import("mermaid")).default;
+      if (cancelled) return;
+
       const currentTheme = theme === 'system' ? systemTheme : theme;
       const isDark = currentTheme === 'dark';
 
@@ -85,15 +94,19 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
       });
 
       const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-      mermaid.render(id, chart)
-        .then(({ svg }) => {
-          setSvg(svg);
-        })
-        .catch((error) => {
-          console.error("Mermaid rendering error:", error);
-          setSvg(`<div class="p-4 text-red-500 bg-red-50 border border-red-200 rounded text-sm font-mono">Failed to render diagram. Syntax error?</div>`);
-        });
-    }
+      try {
+        const { svg } = await mermaid.render(id, chart);
+        if (!cancelled) setSvg(svg);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Mermaid rendering error:", error);
+        setSvg(`<div class="p-4 text-red-500 bg-red-50 border border-red-200 rounded text-sm font-mono">Failed to render diagram. Syntax error?</div>`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [chart, theme, systemTheme, mounted]);
 
   return (
