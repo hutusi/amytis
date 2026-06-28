@@ -217,8 +217,11 @@ export function getBookData(slug: string): BookData | null {
 
   const parsed = BookSchema.safeParse(rawData);
   if (!parsed.success) {
-    console.error(`Invalid book frontmatter in ${fullPath}:`, parsed.error.format());
-    return null;
+    // Invalid frontmatter is a build-time error, not a silent skip — consistent
+    // with the missing-chapter throw below (strict-build invariant).
+    throw new Error(
+      `[amytis] Invalid book frontmatter in ${fullPath}: ${JSON.stringify(parsed.error.format())}`
+    );
   }
   const data = parsed.data;
 
@@ -281,8 +284,11 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
 
   const parsed = BookChapterSchema.safeParse(rawData);
   if (!parsed.success) {
-    console.error(`Invalid chapter frontmatter in ${fullPath}:`, parsed.error.format());
-    return null;
+    // A chapter listed in the TOC with broken frontmatter must fail the build,
+    // not silently 404 (strict-build invariant; matches getBookData above).
+    throw new Error(
+      `[amytis] Invalid chapter frontmatter in ${fullPath}: ${JSON.stringify(parsed.error.format())}`
+    );
   }
   const data = parsed.data;
 

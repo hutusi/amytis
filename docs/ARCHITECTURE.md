@@ -435,3 +435,18 @@ Shiki code blocks deliberately keep their normal theme.
 default disabled) must stay in sync. Any schema change to one must be mirrored
 in the other. Locale-aware fields use `{ en, zh }` in `site.config.ts` and
 plain strings in the example.
+
+### Config validation
+
+`src/lib/config-schema.ts` holds a Zod `SiteConfigSchema` that validates
+`site.config.ts` at module load — the root layout imports `siteConfig` from
+there (not from `site.config` directly), so a malformed config fails the build
+with a readable `[amytis]` message instead of surfacing as a cryptic runtime
+error in a route (strict-build invariant). The schema accepts both shipped
+shapes: every locale-aware field is `string | Record<string, string>`, so the
+single-locale example and the bilingual repo config both pass. Objects use
+Zod's default semantics (unknown keys ignored), so adding a config field never
+breaks validation — but a renamed/mistyped *required* key is still caught. An
+integration test (`tests/integration/config-schema.test.ts`) parses both
+configs as a drift guard. Mirror any schema change here when you change either
+config file.

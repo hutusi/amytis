@@ -91,4 +91,24 @@ describe("Integration: Books", () => {
       fs.rmSync(bookDir, { recursive: true, force: true });
     }
   });
+
+  test("getBookData throws on invalid frontmatter instead of silently skipping", () => {
+    // Strict-build invariant: a malformed book index must fail the export, not
+    // silently vanish (consistent with the missing-chapter throw above).
+    const slug = "__test-bad-frontmatter__";
+    const bookDir = path.join(process.cwd(), "content", "books", slug);
+    fs.mkdirSync(bookDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(bookDir, "index.mdx"),
+      // `title` is required by BookSchema; omitting it must throw.
+      ["---", "date: 2026-01-01", "chapters: []", "---", "", "Intro", ""].join("\n"),
+      "utf8",
+    );
+
+    try {
+      expect(() => getBookData(slug)).toThrow(/Invalid book frontmatter/);
+    } finally {
+      fs.rmSync(bookDir, { recursive: true, force: true });
+    }
+  });
 });
