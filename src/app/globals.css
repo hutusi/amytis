@@ -771,7 +771,23 @@ html.dark .shiki .line.warning {
   --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
   --color-ink: var(--ink);
-  
+
+  /* Ink-alpha token scale — the single source of truth for subtle surfaces and
+     hairline borders. Defined as color-mix(var(--ink) …) so they stay
+     theme-aware (--ink flips in .dark) and render identically to the
+     `*-ink/[N]` arbitrary values they replace. Use these instead of
+     hand-typed `bg-ink/[0.0x]` / `border-ink/[0.0x]`.
+       border-line          subtle borders, hairlines, dividers
+       border-line-strong   stronger borders, button outlines, rings
+       bg-surface-faint     barely-there fills (sidebars, insets)
+       bg-surface-soft      cards, hover fills, code-inline
+       bg-surface-raised    raised / active fills, dots */
+  --color-line:           color-mix(in oklab, var(--ink) 6%,   transparent);
+  --color-line-strong:    color-mix(in oklab, var(--ink) 8.5%, transparent);
+  --color-surface-faint:  color-mix(in oklab, var(--ink) 2%,   transparent);
+  --color-surface-soft:   color-mix(in oklab, var(--ink) 4.5%, transparent);
+  --color-surface-raised: color-mix(in oklab, var(--ink) 10%,  transparent);
+
   /* Map Typography colors to our variables for consistency */
   --color-prose-body: var(--foreground);
   --color-prose-headings: var(--heading);
