@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { getAllTags, buildSlugRegistry, getBacklinks } from '../../src/lib/content/discovery';
 import { getAllPosts } from '../../src/lib/content/posts';
@@ -61,6 +63,29 @@ describe('Integration: discovery (slug registry, backlinks, tags)', () => {
       for (const entry of seriesEntries) {
         expect(entry.url).toMatch(/^\/series\//);
         expect(entry.title.length).toBeGreaterThan(0);
+      }
+    });
+
+    test('throws on a slug/alias collision instead of silently overwriting', () => {
+      // Strict-build invariant: wikilink targets must be unambiguous. Two notes
+      // where one's alias equals the other's slug is a collision and must throw
+      // regardless of filesystem read order (slug-vs-alias collide either way).
+      const notesDir = path.join(process.cwd(), 'content', 'notes');
+      fs.mkdirSync(notesDir, { recursive: true });
+      const noteA = path.join(notesDir, '__test-confl-a__.md');
+      const noteB = path.join(notesDir, '__test-confl-b__.md');
+      fs.writeFileSync(noteA, ['---', 'title: Conflict A', '---', '', 'A', ''].join('\n'), 'utf8');
+      fs.writeFileSync(
+        noteB,
+        ['---', 'title: Conflict B', 'aliases: ["__test-confl-a__"]', '---', '', 'B', ''].join('\n'),
+        'utf8',
+      );
+
+      try {
+        expect(() => buildSlugRegistry()).toThrow(/collides/);
+      } finally {
+        fs.rmSync(noteA, { force: true });
+        fs.rmSync(noteB, { force: true });
       }
     });
   });

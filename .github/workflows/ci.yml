@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -14,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # This job only reads the repo; don't leave the token in git config.
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -26,8 +30,58 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Typecheck
+        run: bun run typecheck
+
       - name: Run Tests
         run: bun run test
 
       - name: Build
         run: bun run build:dev
+
+      - name: E2E (serve static export)
+        run: |
+          # Serve the static export and run the bun e2e specs against it.
+          # The specs skip when no server responds, so fail loudly if the
+          # server never comes up — otherwise e2e would be a silent no-op.
+          bunx serve@14 out -l 3000 &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000 >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          if ! curl -sf http://localhost:3000 >/dev/null 2>&1; then
+            echo "Static server failed to start on :3000" >&2
+            exit 1
+          fi
+          bun run test:e2e
+          STATUS=$?
+          kill "$SERVER_PID" 2>/dev/null || true
+          exit $STATUS
+
+  production-build:
+    name: Production build (full)
+    runs-on: ubuntu-latest
+    # The full production build (image optimization + prod Pagefind path) is
+    # ~1-2 min heavier than build:dev and exercises the export-only paths PRs
+    # don't. Gated to manual runs so it never slows the PR loop — trigger it
+    # from the Actions tab before a release.
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # This job only reads the repo; don't leave the token in git config.
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.11
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build (production)
+        run: bun run build

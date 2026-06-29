@@ -81,16 +81,26 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
     );
 
     getAllNotes().forEach(n => {
-      if (map.has(n.slug)) {
-        console.warn(`[slugRegistry] Note slug "${n.slug}" conflicts with an existing entry.`);
+      // Slugs and aliases must be unique across all content so a wikilink
+      // [[target]] resolves unambiguously. A collision is a build-time error,
+      // not a silent overwrite (strict-build invariant).
+      const existing = map.get(n.slug);
+      if (existing) {
+        throw new Error(
+          `[amytis] Note slug "${n.slug}" collides with an existing ${existing.type} of the same slug. ` +
+          `Slugs must be unique across posts, flows, notes, and series so wikilinks resolve unambiguously.`
+        );
       }
       map.set(n.slug, { url: getNoteUrl(n.slug), type: 'note', title: n.title });
       n.aliases.forEach(a => {
-        if (map.has(a)) {
-          console.warn(`[slugRegistry] Note alias "${a}" (→ ${n.slug}) conflicts with existing slug; skipping.`);
-        } else {
-          map.set(a, { url: getNoteUrl(n.slug), type: 'note', title: n.title });
+        const existingAlias = map.get(a);
+        if (existingAlias) {
+          throw new Error(
+            `[amytis] Note alias "${a}" (→ "${n.slug}") collides with an existing ${existingAlias.type}. ` +
+            `Aliases must be unique across all content so wikilinks resolve unambiguously.`
+          );
         }
+        map.set(a, { url: getNoteUrl(n.slug), type: 'note', title: n.title });
       });
     });
 
@@ -98,6 +108,16 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
       fs.readdirSync(seriesDirectory, { withFileTypes: true }).forEach(entry => {
         if (!entry.isDirectory()) return;
         const slug = entry.name;
+        // Same uniqueness contract as notes: a series slug must not collide
+        // with an existing post / flow / note / alias, or wikilinks become
+        // ambiguous (strict-build invariant).
+        const existing = map.get(slug);
+        if (existing) {
+          throw new Error(
+            `[amytis] Series slug "${slug}" collides with an existing ${existing.type} of the same slug. ` +
+            `Slugs must be unique across posts, flows, notes, and series so wikilinks resolve unambiguously.`
+          );
+        }
         const seriesData = getSeriesData(slug);
         map.set(slug, {
           url: getSeriesUrl(slug),

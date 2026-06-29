@@ -89,11 +89,9 @@ export function getAllNotes(): NoteData[] {
       if (!item.name.endsWith('.md') && !item.name.endsWith('.mdx')) continue;
       const slug = item.name.replace(/\.mdx?$/, '');
       const fullPath = path.join(notesDirectory, item.name);
-      try {
-        notes.push(parseNoteFile(fullPath, slug));
-      } catch (e) {
-        console.error(`Error parsing note ${fullPath}:`, e);
-      }
+      // Let parse errors propagate — a malformed note must fail the build, not
+      // silently vanish (strict-build invariant; matches getAllFlows).
+      notes.push(parseNoteFile(fullPath, slug));
     }
 
     return notes
@@ -113,13 +111,11 @@ export function getNoteBySlug(slug: string): NoteData | null {
   else if (fs.existsSync(mdPath)) fullPath = mdPath;
   else return null;
 
-  try {
-    const note = parseNoteFile(fullPath, slug);
-    if (process.env.NODE_ENV === 'production' && note.draft) return null;
-    return note;
-  } catch {
-    return null;
-  }
+  // null only when the note doesn't exist; a malformed note throws (strict-build,
+  // matches getFlowBySlug).
+  const note = parseNoteFile(fullPath, slug);
+  if (process.env.NODE_ENV === 'production' && note.draft) return null;
+  return note;
 }
 
 export function getAdjacentNotes(slug: string): { prev: NoteData | null; next: NoteData | null } {

@@ -740,6 +740,29 @@ html.dark .shiki .line.warning {
   }
 }
 
+/* Respect the OS "reduce motion" preference: collapse animations/transitions to
+   near-instant and disable smooth scrolling. This covers the custom entrance
+   animations above (fade-in / slide-up / slide-down + animation-delay-*), the
+   navbar smooth-scroll (html { scroll-behavior: smooth }), and every
+   transition-* utility — without per-element opt-in. The flow-card reveal is
+   already gated behind `prefers-reduced-motion: no-preference`, so it stays off
+   here too. WCAG 2.3.3 (Animation from Interactions). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: -1ms !important; /* skip animation-delay-* so delayed/backwards entrances don't stay hidden */
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -127,13 +127,21 @@ bun run clean                       # removes .next, out, public/posts
 ## Running Tests
 
 ```bash
-bun test                   # Run all tests
+bun run test               # Run all tests (NOT bare `bun test` — that sweeps in Playwright specs and fails)
+bun run typecheck          # Type-check the repo with tsc --noEmit
 bun run test:unit          # Run unit tests
 bun run test:int           # Run integration tests
-bun run test:e2e           # Run end-to-end tests
+bun run test:e2e           # Run end-to-end specs (need the site served at http://localhost:3000)
 bun run test:mobile        # Run Playwright mobile compatibility tests
 bun run validate           # Lint + test + build:dev
 ```
+
+The `test:e2e` specs fetch `http://localhost:3000` and skip when nothing
+responds, so serve a build first — e.g. `bun run build:dev && bunx serve out -l 3000`
+in one terminal, then `bun run test:e2e` in another. CI (`.github/workflows/ci.yml`)
+does this automatically after the build, and fails if the server doesn't come up.
+CI also runs `bun run typecheck`; the full production build (`bun run build`) is a
+manual `workflow_dispatch` job.
 
 ### Mobile Compatibility Tests
 

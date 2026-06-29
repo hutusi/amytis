@@ -5,7 +5,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import BrowserDetectionBanner from "@/components/BrowserDetectionBanner";
-import { siteConfig } from "../../site.config";
+// Import from config-schema (not site.config directly) so the build-time Zod
+// validation runs: the root layout renders for every page, so a malformed
+// config fails the build with a readable message.
+import { siteConfig } from "@/lib/config-schema";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { getAllSeries, getSeriesData } from '@/lib/content/series';

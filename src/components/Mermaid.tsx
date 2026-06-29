@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import mermaid from "mermaid";
 import { useTheme } from "next-themes";
 
 // Mermaid bundles its own KaTeX and invokes it with `{throwOnError: true,
@@ -47,53 +46,70 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   }, []);
 
   useEffect(() => {
-    if (ref.current && chart && mounted) {
-      installConsoleWarnFilter();
-      const currentTheme = theme === 'system' ? systemTheme : theme;
-      const isDark = currentTheme === 'dark';
+    if (!ref.current || !chart || !mounted) return;
 
-      // Colors matching globals.css
-      const colors = {
-        background: isDark ? "#1c1917" : "#fafaf9", // Stone 900 / 50
-        primary: isDark ? "#1c1917" : "#fafaf9",
-        text: isDark ? "#fafaf9" : "#1c1917", // Stone 50 / 900
-        border: isDark ? "#34d399" : "#059669", // Emerald 400 / 600
-        line: isDark ? "#57534e" : "#a8a29e", // Stone 600 / 400
-      };
+    let cancelled = false;
 
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: "base",
-        fontFamily: "var(--font-sans)",
-        themeVariables: {
-          background: colors.background,
-          mainBkg: colors.background,
-          primaryColor: colors.primary,
-          primaryTextColor: colors.text,
-          primaryBorderColor: colors.border,
-          lineColor: colors.line,
-          secondaryColor: colors.background,
-          tertiaryColor: colors.background,
-          noteBkgColor: colors.background,
-          noteTextColor: colors.text,
-          noteBorderColor: colors.line,
-        },
-        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
-        sequence: { useMaxWidth: true, showSequenceNumbers: true },
-        er: { useMaxWidth: true },
-        securityLevel: "loose",
-      });
+    (async () => {
+      // One try/catch over the whole pipeline: a failed dynamic import (chunk
+      // load error) or initialize() must surface the error UI too, not just a
+      // render() failure — otherwise the diagram silently stays blank.
+      try {
+        installConsoleWarnFilter();
 
-      const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-      mermaid.render(id, chart)
-        .then(({ svg }) => {
-          setSvg(svg);
-        })
-        .catch((error) => {
-          console.error("Mermaid rendering error:", error);
-          setSvg(`<div class="p-4 text-red-500 bg-red-50 border border-red-200 rounded text-sm font-mono">Failed to render diagram. Syntax error?</div>`);
+        // Load the ~600kb mermaid library on demand — only once a diagram
+        // actually mounts client-side — so diagram-free pages never ship it.
+        const mermaid = (await import("mermaid")).default;
+        if (cancelled) return;
+
+        const currentTheme = theme === 'system' ? systemTheme : theme;
+        const isDark = currentTheme === 'dark';
+
+        // Colors matching globals.css
+        const colors = {
+          background: isDark ? "#1c1917" : "#fafaf9", // Stone 900 / 50
+          primary: isDark ? "#1c1917" : "#fafaf9",
+          text: isDark ? "#fafaf9" : "#1c1917", // Stone 50 / 900
+          border: isDark ? "#34d399" : "#059669", // Emerald 400 / 600
+          line: isDark ? "#57534e" : "#a8a29e", // Stone 600 / 400
+        };
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          fontFamily: "var(--font-sans)",
+          themeVariables: {
+            background: colors.background,
+            mainBkg: colors.background,
+            primaryColor: colors.primary,
+            primaryTextColor: colors.text,
+            primaryBorderColor: colors.border,
+            lineColor: colors.line,
+            secondaryColor: colors.background,
+            tertiaryColor: colors.background,
+            noteBkgColor: colors.background,
+            noteTextColor: colors.text,
+            noteBorderColor: colors.line,
+          },
+          flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+          sequence: { useMaxWidth: true, showSequenceNumbers: true },
+          er: { useMaxWidth: true },
+          securityLevel: "loose",
         });
-    }
+
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+        const { svg } = await mermaid.render(id, chart);
+        if (!cancelled) setSvg(svg);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Mermaid rendering error:", error);
+        setSvg(`<div class="p-4 text-red-500 bg-red-50 border border-red-200 rounded text-sm font-mono">Failed to render diagram. Syntax error?</div>`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [chart, theme, systemTheme, mounted]);
 
   return (
