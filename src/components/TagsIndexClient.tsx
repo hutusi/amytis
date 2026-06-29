@@ -139,7 +139,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
               <div key={letter} className={i > 0 ? 'mt-10' : ''}>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-xs font-mono font-bold text-muted/40 w-4">{letter}</span>
-                  <div className="flex-1 h-px bg-ink/[0.05]" />
+                  <div className="divider-hairline" />
                 </div>
                 <div className="flex flex-wrap gap-3 items-baseline">
                   {letterGroups![letter].map(([tag, count]) => (

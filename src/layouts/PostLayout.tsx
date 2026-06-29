@@ -10,6 +10,7 @@ import SeriesList from '@/components/SeriesList';
 import PostSidebar from '@/components/PostSidebar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
+import { metaLabel } from '@/lib/ui-classes';
 import ExternalLinks from '@/components/ExternalLinks';
 import Backlinks from '@/components/Backlinks';
 import Tag from '@/components/Tag';
@@ -192,7 +193,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
 
             {post.tags && post.tags.length > 0 && (
               <div className="mt-12 pt-12 border-t border-ink/[0.07] flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-muted mr-1">{t('tags')}</span>
+                <span className={`${metaLabel('muted')} mr-1`}>{t('tags')}</span>
                 {post.tags.map((tag) => (
                   <Tag key={tag} tag={tag} variant="default" />
                 ))}
