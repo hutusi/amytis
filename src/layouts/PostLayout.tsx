@@ -56,7 +56,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   // both places (only one of the two trees ever mounts, so it renders once).
   // Includes the immersive toggle when the post is in a series.
   const articleHeader = (
-    <header className="mb-16 border-b border-ink/[0.05] pb-8">
+    <header className="mb-16 border-b border-line pb-8">
       {post.draft && (
         <div className="mb-4">
           <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -68,13 +68,13 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
         <span className="uppercase tracking-widest font-semibold text-accent">
           {post.category}
         </span>
-        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+        <span className="w-1 h-1 rounded-full bg-surface-raised" />
         <time className="font-mono" data-pagefind-meta="date[content]">{post.date}</time>
-        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+        <span className="w-1 h-1 rounded-full bg-surface-raised" />
         <span className="font-mono">
           {post.wordCount.toLocaleString()} {t('words')}
         </span>
-        <span className="w-1 h-1 rounded-full bg-ink/[0.12]" />
+        <span className="w-1 h-1 rounded-full bg-surface-raised" />
         <span className="font-mono text-muted/70">{post.readingMinutes} {t('reading_time')}</span>
         {hasSeries && (
           <span className="ml-auto">
@@ -135,7 +135,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
     <>
       {articleHeader}
       {bodyRenderer}
-      <div className="mt-16 pt-8 border-t border-ink/[0.05]">
+      <div className="mt-16 pt-8 border-t border-line">
         <Suspense fallback={null}>
           <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} currentSlug={post.slug} collectionContexts={collectionContexts} />
         </Suspense>
@@ -192,7 +192,7 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
             )}
 
             {post.tags && post.tags.length > 0 && (
-              <div className="mt-12 pt-12 border-t border-ink/[0.07] flex flex-wrap items-center gap-2">
+              <div className="mt-12 pt-12 border-t border-line flex flex-wrap items-center gap-2">
                 <span className={`${metaLabel('muted')} mr-1`}>{t('tags')}</span>
                 {post.tags.map((tag) => (
                   <Tag key={tag} tag={tag} variant="default" />

@@ -12,7 +12,7 @@
  * ancestor (the `<Link className="group">` wrapper). Compose onto `.ink-card`.
  */
 export const CARD_HOVER =
-  'group-hover:border-accent/30 group-hover:bg-ink/[0.04] group-hover:shadow-md group-hover:shadow-accent/5';
+  'group-hover:border-accent/30 group-hover:bg-surface-soft group-hover:shadow-md group-hover:shadow-accent/5';
 
 /**
  * Cover-image zoom-on-hover. Default transition is `duration-500`; the slower

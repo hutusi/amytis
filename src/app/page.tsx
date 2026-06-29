@@ -213,7 +213,7 @@ export default function Home() {
         );
         if (divideBeforeSeries) {
           renderList.push(
-            <div key="series-divider" className="border-t border-ink/[0.05] mb-8 sm:mb-16" />
+            <div key="series-divider" className="border-t border-line mb-8 sm:mb-16" />
           );
         }
       }

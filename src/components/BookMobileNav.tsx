@@ -36,7 +36,7 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
       <Link
         key={key}
         href={getBookChapterUrl(bookSlug, ch.id)}
-        className={`block py-1.5 px-2 rounded-lg text-sm no-underline hover:bg-ink/[0.04] transition-colors ${
+        className={`block py-1.5 px-2 rounded-lg text-sm no-underline hover:bg-surface-soft transition-colors ${
           isPast ? 'text-foreground/70 hover:text-foreground' : 'text-muted hover:text-foreground'
         }`}
       >
@@ -73,13 +73,13 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
             {bookTitle}
           </span>
         </Link>
-        <span className="text-xs font-mono text-muted bg-ink/[0.05] px-2 py-0.5 rounded-full">
+        <span className="text-xs font-mono text-muted bg-surface-soft px-2 py-0.5 rounded-full">
           {currentIndex + 1}/{chapters.length}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-ink/[0.05] rounded-full overflow-hidden mb-4">
+      <div className="h-1 bg-surface-soft rounded-full overflow-hidden mb-4">
         <div
           className="h-full bg-accent/60 rounded-full transition-all duration-500"
           style={{ width: `${((currentIndex + 1) / chapters.length) * 100}%` }}

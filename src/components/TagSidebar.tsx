@@ -72,7 +72,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('filter_tags')}
             aria-label={t('filter_tags')}
-            className="w-full pl-8 pr-7 py-1.5 text-xs bg-ink/[0.02] border border-ink/[0.06] rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-surface-faint border border-line rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
           />
           {filter && (
             <button
@@ -93,13 +93,13 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             const showSeparator = appendedAt !== null && index === appendedAt;
             return (
               <div key={tag}>
-                {showSeparator && <div className="my-1.5 h-px bg-ink/[0.05]" />}
+                {showSeparator && <div className="my-1.5 h-px bg-surface-soft" />}
                 <Link
                   href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
                   className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm no-underline transition-colors ${
                     isActive
                       ? 'bg-accent/10 text-accent font-medium'
-                      : 'text-foreground/70 hover:text-foreground hover:bg-ink/[0.05]'
+                      : 'text-foreground/70 hover:text-foreground hover:bg-surface-soft'
                   }`}
                 >
                   <span className="truncate">{tag}</span>

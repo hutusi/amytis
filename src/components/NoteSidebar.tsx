@@ -25,7 +25,7 @@ export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }
       {showToc && (
         <TocPanel
           headings={headings}
-          className={`mb-6 ${backlinks.length > 0 ? 'pb-6 border-b border-ink/[0.05]' : ''}`}
+          className={`mb-6 ${backlinks.length > 0 ? 'pb-6 border-b border-line' : ''}`}
         />
       )}
 
@@ -39,7 +39,7 @@ export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }
             {backlinks.map(bl => (
               <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <MetaLabel className="text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5 shrink-0">
+                  <MetaLabel className="text-muted/60 border border-line rounded px-1.5 py-0.5 shrink-0">
                     {bl.type}
                   </MetaLabel>
                   <Link

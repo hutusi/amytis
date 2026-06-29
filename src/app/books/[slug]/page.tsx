@@ -44,7 +44,7 @@ function renderTocSection(section: BookTocSection, slug: string, keyPrefix: stri
   return (
     <div key={keyPrefix} className={depth === 0 ? '' : 'mt-3'}>
       <h3 className={headingClass}>{section.section}</h3>
-      <ol className="space-y-2 pl-4 border-l-2 border-ink/[0.05]">
+      <ol className="space-y-2 pl-4 border-l-2 border-line">
         {section.items.map((child, idx) =>
           'section' in child
             ? <li key={`${keyPrefix}-${idx}`}>{renderTocSection(child, slug, `${keyPrefix}-${idx}`, depth + 1)}</li>
@@ -178,7 +178,7 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
                   so back-navigation doesn't re-trigger it. */}
               <Link
                 href={`${getBookChapterUrl(book.slug, firstChapter.id)}?immersive=1`}
-                className="inline-flex items-center gap-2 px-5 py-3 border border-ink/[0.10] text-foreground/80 hover:text-accent hover:border-accent/50 rounded-xl font-sans font-medium text-sm no-underline transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 border border-line-strong text-foreground/80 hover:text-accent hover:border-accent/50 rounded-xl font-sans font-medium text-sm no-underline transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 7V5a2 2 0 0 1 2-2h2" />
@@ -204,7 +204,7 @@ export default async function BookLandingPage({ params }: { params: Promise<{ sl
                   <h3 className="text-sm font-sans font-bold uppercase tracking-wider text-muted mb-3">
                     {item.part}
                   </h3>
-                  <ol className="space-y-2 pl-4 border-l-2 border-ink/[0.05]">
+                  <ol className="space-y-2 pl-4 border-l-2 border-line">
                     {item.chapters.map(ch => chapterRow(ch, book.slug, ch.id))}
                   </ol>
                 </div>

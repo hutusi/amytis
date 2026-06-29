@@ -24,7 +24,7 @@ function TagLink({ tag, count, min, max }: { tag: string; count: number; min: nu
   return (
     <Link
       href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
-      className={`group inline-flex items-baseline gap-1.5 rounded-2xl border border-ink/[0.07] bg-ink/[0.02] hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 no-underline transition-all duration-200 ${getTagClasses(count, min, max)}`}
+      className={`group inline-flex items-baseline gap-1.5 rounded-2xl border border-line bg-surface-faint hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 no-underline transition-all duration-200 ${getTagClasses(count, min, max)}`}
     >
       <span className="text-foreground group-hover:text-accent transition-colors">{tag}</span>
       <span className="font-mono text-muted/50 group-hover:text-accent/50 transition-colors" style={{ fontSize: '0.7em' }}>{count}</span>
@@ -77,7 +77,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('filter_tags')}
             aria-label={t('filter_tags')}
-            className="w-full pl-9 pr-8 py-2 text-sm bg-ink/[0.02] border border-ink/[0.06] rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
+            className="w-full pl-9 pr-8 py-2 text-sm bg-surface-faint border border-line rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
           />
           {filter && (
             <button
@@ -90,12 +90,12 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
           )}
         </div>
 
-        <div className="flex rounded-lg border border-ink/[0.06] overflow-hidden text-xs font-sans font-semibold self-start">
+        <div className="flex rounded-lg border border-line overflow-hidden text-xs font-sans font-semibold self-start">
           <button
             type="button"
             onClick={() => setSort('popular')}
             aria-pressed={sort === 'popular'}
-            className={`px-4 py-2 transition-colors ${sort === 'popular' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-ink/[0.04]'}`}
+            className={`px-4 py-2 transition-colors ${sort === 'popular' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-surface-soft'}`}
           >
             {t('sort_popular')}
           </button>
@@ -103,7 +103,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             type="button"
             onClick={() => setSort('alpha')}
             aria-pressed={sort === 'alpha'}
-            className={`px-4 py-2 border-l border-ink/[0.06] transition-colors ${sort === 'alpha' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-ink/[0.04]'}`}
+            className={`px-4 py-2 border-l border-line transition-colors ${sort === 'alpha' ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground hover:bg-surface-soft'}`}
           >
             {t('sort_az')}
           </button>

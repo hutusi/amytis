@@ -153,7 +153,7 @@ export default async function SeriesPage({ params }: { params: Promise<{ slug: s
                     so back-navigation doesn't re-trigger it. */}
                 <Link
                   href={immersiveHref}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-ink/[0.10] text-foreground/80 hover:text-accent hover:border-accent/50 rounded-full text-sm font-medium no-underline transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-line-strong text-foreground/80 hover:text-accent hover:border-accent/50 rounded-full text-sm font-medium no-underline transition-colors"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M3 7V5a2 2 0 0 1 2-2h2" />

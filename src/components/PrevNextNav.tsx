@@ -30,7 +30,7 @@ export default function PrevNextNav({ prev, next, size = 'sm' }: PrevNextNavProp
       {prev ? (
         <Link
           href={prev.href}
-          className={`flex-1 flex items-center ${gap} ${padding} ${rounding} bg-ink/[0.02] hover:bg-ink/[0.05] no-underline transition-colors group`}
+          className={`flex-1 flex items-center ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group`}
         >
           <svg className={`${iconSize} flex-shrink-0 text-muted group-hover:text-accent transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -46,7 +46,7 @@ export default function PrevNextNav({ prev, next, size = 'sm' }: PrevNextNavProp
       {next ? (
         <Link
           href={next.href}
-          className={`flex-1 flex items-center justify-end ${gap} ${padding} ${rounding} bg-ink/[0.02] hover:bg-ink/[0.05] no-underline transition-colors group text-right`}
+          className={`flex-1 flex items-center justify-end ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group text-right`}
         >
           <div className="min-w-0">
             <MetaLabel className={`block ${labelMargin}`}>{t('next')}</MetaLabel>

@@ -11,7 +11,7 @@ export default function Backlinks({ backlinks }: BacklinksProps) {
   if (!backlinks.length) return null;
 
   return (
-    <div className="mt-12 pt-12 border-t border-ink/[0.07]">
+    <div className="mt-12 pt-12 border-t border-line">
       <h3 className="text-sm font-sans font-semibold uppercase tracking-widest text-muted mb-4">
         {t('backlinks')}
       </h3>
@@ -19,7 +19,7 @@ export default function Backlinks({ backlinks }: BacklinksProps) {
         {backlinks.map(bl => (
           <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <MetaLabel className="text-muted/60 border border-ink/[0.07] rounded px-1.5 py-0.5">
+              <MetaLabel className="text-muted/60 border border-line rounded px-1.5 py-0.5">
                 {bl.type}
               </MetaLabel>
               <Link

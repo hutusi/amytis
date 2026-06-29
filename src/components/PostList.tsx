@@ -43,7 +43,7 @@ export default function PostList({
           <div className={cn('ink-card overflow-hidden transition-all duration-300', CARD_HOVER, 'h-32 sm:h-auto')}>
             <div className="flex flex-row h-full">
               {/* Thumbnail */}
-              <div className="relative w-32 sm:w-48 flex-shrink-0 overflow-hidden bg-ink/[0.04]">
+              <div className="relative w-32 sm:w-48 flex-shrink-0 overflow-hidden bg-surface-soft">
                 <Link href={getPostUrl(post)} className="relative z-10 block h-full w-full" tabIndex={-1} aria-hidden>
                   <CoverImage
                     src={post.coverImage}

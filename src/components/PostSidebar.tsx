@@ -83,7 +83,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
       {/* TOC — always at top */}
       <TocPanel
         headings={activeHeadings}
-        className={`mb-6 ${hasSeries ? 'pb-4 border-b border-ink/[0.05]' : ''}`}
+        className={`mb-6 ${hasSeries ? 'pb-4 border-b border-line' : ''}`}
       />
 
       {/* Series / Collection section — below TOC */}
@@ -124,7 +124,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
           {!seriesCollapsed && (
             <>
               <nav aria-label="Series navigation" className="mb-4 animate-slide-down">
-                <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-ink/[0.06]">
+                <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-surface-soft">
                   {getVisibleIndices(effectivePosts!.length, currentIndex).map((item, i) => {
                     if (item === 'ellipsis') {
                       return (
@@ -143,7 +143,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
                         <Link
                           href={postHref(post)}
                           className={`group flex items-start gap-3 py-2 px-2 -mx-2 rounded-lg no-underline transition-all duration-200 ${
-                            isCurrent ? 'bg-accent/5' : 'hover:bg-ink/[0.04]'
+                            isCurrent ? 'bg-accent/5' : 'hover:bg-surface-soft'
                           }`}
                           aria-current={isCurrent ? 'page' : undefined}
                         >
@@ -152,7 +152,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
                               ? 'bg-accent text-white shadow-sm shadow-accent/30'
                               : isPast
                                 ? 'bg-accent/20 text-accent'
-                                : 'bg-ink/[0.05] text-muted group-hover:bg-ink/[0.08] group-hover:text-foreground'
+                                : 'bg-surface-soft text-muted group-hover:bg-surface-raised group-hover:text-foreground'
                           }`}>
                             {padNumber(item + 1)}
                           </div>
@@ -190,7 +190,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
       )}
 
       {shareUrl && siteConfig.share?.enabled && (
-        <div className="mt-6 pt-6 border-t border-ink/[0.05]">
+        <div className="mt-6 pt-6 border-t border-line">
           <MetaLabel as="p" className="mb-3" suppressHydrationWarning>
             {t('share_post')}
           </MetaLabel>

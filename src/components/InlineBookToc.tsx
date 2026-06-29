@@ -28,7 +28,7 @@ export default function InlineBookToc({ headings }: { headings: Heading[] }) {
         {t('on_this_page')}
       </button>
       {!collapsed && (
-        <ul className="space-y-0.5 border-l border-ink/[0.06] animate-slide-down">
+        <ul className="space-y-0.5 border-l border-line animate-slide-down">
           {headings.map(h => {
             const isActive = h.id === activeHeadingId;
             return (

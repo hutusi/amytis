@@ -74,7 +74,7 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
     }
   };
 
-  const btnClass = 'inline-flex items-center justify-center w-8 h-8 rounded text-muted hover:text-accent hover:bg-ink/[0.05] transition-colors';
+  const btnClass = 'inline-flex items-center justify-center w-8 h-8 rounded text-muted hover:text-accent hover:bg-surface-soft transition-colors';
 
   return (
     // suppressHydrationWarning on locale-bound nodes is a band-aid for the

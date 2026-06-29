@@ -589,13 +589,13 @@ html.dark .shiki .line.warning {
 
   /* Hairline divider used inside flex rows (e.g. collapsible section toggles). */
   .divider-hairline {
-    @apply h-px flex-1 bg-ink/[0.05];
+    @apply h-px flex-1 bg-surface-soft;
   }
 
   /* Floating dropdown / popover surface. Call sites add their own padding,
      layout, positioning, and the `animate-slide-down` entrance. */
   .dropdown-panel {
-    @apply bg-background/95 backdrop-blur-md border border-ink/[0.06] rounded-xl shadow-xl;
+    @apply bg-background/95 backdrop-blur-md border border-line rounded-xl shadow-xl;
   }
 
   .scrollbar-hide-default {
@@ -639,7 +639,7 @@ html.dark .shiki .line.warning {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-ink/[0.10] text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-line-strong text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
   }
 
   /* Typography - Standardized heading styles */
@@ -771,7 +771,23 @@ html.dark .shiki .line.warning {
   --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
   --color-ink: var(--ink);
-  
+
+  /* Ink-alpha token scale — the single source of truth for subtle surfaces and
+     hairline borders. Defined as color-mix(var(--ink) …) so they stay
+     theme-aware (--ink flips in .dark) and render identically to the
+     per-utility ink/opacity arbitrary values they replace. Use these
+     instead of hand-typed ink-with-opacity utilities.
+       border-line          subtle borders, hairlines, dividers
+       border-line-strong   stronger borders, button outlines, rings
+       bg-surface-faint     barely-there fills (sidebars, insets)
+       bg-surface-soft      cards, hover fills, code-inline
+       bg-surface-raised    raised / active fills, dots */
+  --color-line:           color-mix(in oklab, var(--ink) 6%,   transparent);
+  --color-line-strong:    color-mix(in oklab, var(--ink) 8.5%, transparent);
+  --color-surface-faint:  color-mix(in oklab, var(--ink) 2%,   transparent);
+  --color-surface-soft:   color-mix(in oklab, var(--ink) 4.5%, transparent);
+  --color-surface-raised: color-mix(in oklab, var(--ink) 10%,  transparent);
+
   /* Map Typography colors to our variables for consistency */
   --color-prose-body: var(--foreground);
   --color-prose-headings: var(--heading);

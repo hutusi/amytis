@@ -49,7 +49,7 @@ export default function BookReadingShell({
   const { enabled } = useImmersiveReading();
 
   const chapterHeader = (
-    <header className="mb-12 pb-8 border-b border-ink/[0.05]">
+    <header className="mb-12 pb-8 border-b border-line">
       <div className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {t('chapter')}
@@ -82,7 +82,7 @@ export default function BookReadingShell({
   );
 
   const prevNext = (
-    <div className="mt-16 pt-8 border-t border-ink/[0.05]">
+    <div className="mt-16 pt-8 border-t border-line">
       <PrevNextNav prev={prev} next={next} size="lg" />
     </div>
   );

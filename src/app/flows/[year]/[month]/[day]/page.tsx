@@ -116,7 +116,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           )}
 
           {/* Prev/Next navigation */}
-          <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-ink/[0.07] grid grid-cols-2 gap-4">
+          <nav aria-label="Post navigation" className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
             {prev ? (
               <Link
                 href={`/flows/${prev.slug}`}
