@@ -5,6 +5,7 @@ import { useLanguage } from '@/components/LanguageProvider';
 import Link from 'next/link';
 import Tag from '@/components/Tag';
 import Pagination from '@/components/Pagination';
+import { metaLabel } from '@/lib/ui-classes';
 
 interface NoteItem {
   slug: string;
@@ -46,7 +47,7 @@ export default function NoteContent({ notes, tags, pagination }: NoteContentProp
         <div className="border border-ink/[0.07] bg-ink/[0.015] rounded-lg p-4 space-y-1">
           {sortedTags.length > 0 && (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-3">{t('tags')}</p>
+              <p className={`${metaLabel('muted')} mb-3`}>{t('tags')}</p>
               <button
                 onClick={() => setSelectedTag(null)}
                 className={`block w-full text-left text-sm px-2 py-1 rounded transition-colors ${!selectedTag ? 'text-accent font-medium' : 'text-muted hover:text-foreground'}`}
