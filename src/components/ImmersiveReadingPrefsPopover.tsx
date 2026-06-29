@@ -77,6 +77,10 @@ function OptionButton({
   children: ReactNode;
   className?: string;
 }) {
+  // Inactive swatches show a hairline ring (ring-line-strong, ~8.5%) that
+  // deepens on hover. The hover ring intentionally stays a raw ring-ink/[0.20]:
+  // 20% is a one-off emphasis well beyond the token scale's range (its strongest
+  // step is 10%), so it doesn't warrant a dedicated token.
   return (
     <button
       type="button"
