@@ -92,7 +92,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
           />
         )}
         <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
-          <header className="mb-8 border-b border-ink/[0.05] pb-8">
+          <header className="mb-8 border-b border-line pb-8">
             {note.draft && (
               <div className="mb-4">
                 <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -124,7 +124,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
           )}
 
           {/* Prev/Next navigation */}
-          <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-ink/[0.07] grid grid-cols-2 gap-4">
+          <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
             {prev ? (
               <Link href={`/notes/${prev.slug}`} className="group text-left no-underline">
                 <span className="text-xs text-muted">{t('older')}</span>

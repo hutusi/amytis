@@ -28,9 +28,9 @@ export default async function CodeBlock({
   return (
     <div
       data-cb-root=""
-      className="cb-root relative my-6 w-full min-w-0 max-w-full rounded-lg border border-ink/[0.07] bg-background/50 overflow-hidden shadow-sm"
+      className="cb-root relative my-6 w-full min-w-0 max-w-full rounded-lg border border-line bg-background/50 overflow-hidden shadow-sm"
     >
-      <div className="cb-header flex items-center justify-between px-4 py-2 border-b border-ink/[0.05] bg-ink/[0.02] gap-3">
+      <div className="cb-header flex items-center justify-between px-4 py-2 border-b border-line bg-surface-faint gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <span className="cb-lang text-xs font-mono text-muted tracking-wider">
             {displayLang}

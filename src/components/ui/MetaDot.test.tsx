@@ -9,7 +9,7 @@ describe('MetaDot', () => {
     expect(html).toContain('w-1');
     expect(html).toContain('h-1');
     expect(html).toContain('rounded-full');
-    expect(html).toContain('bg-ink/[0.12]');
+    expect(html).toContain('bg-surface-raised');
   });
 
   test('merges extra classes via className', () => {

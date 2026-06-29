@@ -87,7 +87,7 @@ function OptionButton({
       className={`relative flex items-center justify-center rounded-lg transition-all duration-150 ${
         active
           ? 'ring-2 ring-accent ring-offset-2 ring-offset-background'
-          : 'ring-1 ring-ink/[0.10] hover:ring-ink/[0.20]'
+          : 'ring-1 ring-line-strong hover:ring-ink/[0.20]'
       } ${className}`}
     >
       {children}
@@ -184,7 +184,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
                 >
                   Aa
                 </span>
-                <span className="block w-full text-[9px] text-muted py-0.5 bg-background border-t border-ink/[0.06]">
+                <span className="block w-full text-[9px] text-muted py-0.5 bg-background border-t border-line">
                   {t(opt.labelKey)}
                 </span>
               </OptionButton>
@@ -232,7 +232,7 @@ export default function ImmersiveReadingPrefsPopover({ toggleButtonRef }: Immers
       </div>
 
       {/* Reset to defaults — non-destructive (re-pickable), no confirmation. */}
-      <div className="mt-4 pt-3 border-t border-ink/[0.06] flex justify-end">
+      <div className="mt-4 pt-3 border-t border-line flex justify-end">
         <button
           type="button"
           onClick={resetPrefs}

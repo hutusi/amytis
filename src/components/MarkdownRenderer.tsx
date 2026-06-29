@@ -130,7 +130,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { children, node: _node, ...rest } = props as React.TableHTMLAttributes<HTMLTableElement> & ExtraProps;
       return (
-        <div className="overflow-x-auto my-8 border border-ink/[0.07] rounded-lg">
+        <div className="overflow-x-auto my-8 border border-line rounded-lg">
           <table {...rest} className="min-w-full text-left text-sm">
             {children}
           </table>

@@ -91,7 +91,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}
             >
-              <Link href={getBookUrl(book.slug)} className="relative h-44 w-full overflow-hidden bg-ink/[0.04] block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
+              <Link href={getBookUrl(book.slug)} className="relative h-44 w-full overflow-hidden bg-surface-soft block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
                 <CoverImage
                   src={book.coverImage}
                   title={book.title}
@@ -123,7 +123,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   </p>
                 )}
                 {book.firstChapter && (
-                  <div className="mt-auto pt-6 border-t border-ink/[0.05]">
+                  <div className="mt-auto pt-6 border-t border-line">
                     <Link
                       href={getBookChapterUrl(book.slug, book.firstChapter)}
                       className="text-sm font-sans font-bold text-accent flex items-center gap-1.5 no-underline hover:gap-2.5 transition-all"

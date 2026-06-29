@@ -9,7 +9,7 @@ export default function PostCard({ post }: { post: PostData }) {
   return (
     <Link href={getPostUrl(post)} className="group block h-full no-underline">
       <div className="ink-card flex flex-col h-full overflow-hidden transition-all duration-300 hover:border-accent/40 hover:shadow-md hover:shadow-accent/5">
-        <div className="relative h-32 w-full overflow-hidden bg-ink/[0.04]">
+        <div className="relative h-32 w-full overflow-hidden bg-surface-soft">
           <CoverImage 
             src={post.coverImage} 
             title={post.title} 

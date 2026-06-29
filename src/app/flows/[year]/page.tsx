@@ -70,7 +70,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
           <Link
             key={m}
             href={`/flows/${year}/${m}`}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-ink/[0.08] text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-line-strong text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
           >
             {monthNames[parseInt(m, 10) - 1]}
             <span className="text-muted text-[10px]">({monthCounts[m]})</span>

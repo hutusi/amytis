@@ -92,7 +92,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}
             >
-              <Link href={series.url} className="relative h-44 w-full overflow-hidden bg-ink/[0.04] block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
+              <Link href={series.url} className="relative h-44 w-full overflow-hidden bg-surface-soft block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
                 <CoverImage
                   src={series.coverImage}
                   title={series.title}
@@ -116,7 +116,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                 <p className="mb-6 text-muted font-serif italic line-clamp-2 text-base">
                   {series.excerpt}
                 </p>
-                <div className="mt-auto pt-6 border-t border-ink/[0.05]">
+                <div className="mt-auto pt-6 border-t border-line">
                   <div className="flex flex-col gap-2">
                     {series.topPosts.map((p, idx) => (
                       <Link
@@ -124,7 +124,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                         href={getPostUrl({ slug: p.slug, series: series.name })}
                         className="flex items-center gap-3 group/link no-underline"
                       >
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-ink/[0.05] text-[10px] flex items-center justify-center font-mono text-muted group-hover/link:bg-accent/10 group-hover/link:text-accent transition-colors">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-soft text-[10px] flex items-center justify-center font-mono text-muted group-hover/link:bg-accent/10 group-hover/link:text-accent transition-colors">
                           {idx + 1}
                         </span>
                         <span className="text-sm text-foreground/80 group-hover/link:text-accent transition-colors truncate">

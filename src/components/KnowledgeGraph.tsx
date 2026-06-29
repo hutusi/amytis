@@ -271,9 +271,9 @@ export default function KnowledgeGraph() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-ink/[0.07] bg-ink/[0.02] p-8 text-center text-sm text-muted">
+      <div className="rounded-lg border border-line bg-surface-faint p-8 text-center text-sm text-muted">
         <p className="mb-2">{error}</p>
-        <code className="text-xs bg-ink/[0.05] px-1.5 py-0.5 rounded">bun run build:graph</code>
+        <code className="text-xs bg-surface-soft px-1.5 py-0.5 rounded">bun run build:graph</code>
       </div>
     );
   }
@@ -291,14 +291,14 @@ export default function KnowledgeGraph() {
           placeholder="Search nodes…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-ink/[0.07] rounded-lg bg-transparent outline-none focus:border-accent"
+          className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-transparent outline-none focus:border-accent"
         />
         <div className="space-y-1">
           {filtered.map(n => (
             <Link
               key={n.id}
               href={n.url}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-ink/[0.04] no-underline text-sm text-foreground"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-soft no-underline text-sm text-foreground"
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -325,7 +325,7 @@ export default function KnowledgeGraph() {
             className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded-full border transition-colors ${
               activeTypes.has(type)
                 ? 'border-current text-foreground'
-                : 'border-ink/[0.07] text-muted'
+                : 'border-line text-muted'
             }`}
           >
             <span className="w-2 h-2 rounded-full" style={{ background: NODE_COLORS[type] }} />
@@ -342,7 +342,7 @@ export default function KnowledgeGraph() {
       {/* Graph SVG */}
       <svg
         ref={svgRef}
-        className="w-full rounded-lg border border-ink/[0.07] bg-ink/[0.02]"
+        className="w-full rounded-lg border border-line bg-surface-faint"
         style={{ height: '600px' }}
       />
     </div>

@@ -58,13 +58,13 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
             {effectiveTitle}
           </span>
         </Link>
-        <span className="text-xs font-mono text-muted bg-ink/[0.05] px-2 py-0.5 rounded-full">
+        <span className="text-xs font-mono text-muted bg-surface-soft px-2 py-0.5 rounded-full">
           {currentIndex + 1}/{effectivePosts.length}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-ink/[0.05] rounded-full overflow-hidden mb-4">
+      <div className="h-1 bg-surface-soft rounded-full overflow-hidden mb-4">
         <div
           className="h-full bg-accent/60 rounded-full transition-all duration-500"
           style={{ width: `${((currentIndex + 1) / effectivePosts.length) * 100}%` }}
@@ -118,12 +118,12 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
                 ) : (
                   <Link
                     href={postHref(post)}
-                    className="group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg hover:bg-ink/[0.04] no-underline transition-colors"
+                    className="group flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg hover:bg-surface-soft no-underline transition-colors"
                   >
                     <span className={`flex-shrink-0 w-5 h-5 rounded-full text-[10px] font-mono font-bold flex items-center justify-center transition-colors ${
                       isPast
                         ? 'bg-accent/20 text-accent'
-                        : 'bg-ink/[0.05] text-muted group-hover:bg-ink/[0.08]'
+                        : 'bg-surface-soft text-muted group-hover:bg-surface-raised'
                     }`}>
                       {padNumber(index + 1)}
                     </span>
@@ -143,7 +143,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
       )}
 
       {/* Footer */}
-      <div className="mt-4 pt-3 border-t border-ink/[0.05]">
+      <div className="mt-4 pt-3 border-t border-line">
         <Link
           href={`/series/${effectiveSlug}`}
           className="text-xs font-sans text-muted hover:text-accent transition-colors no-underline flex items-center gap-1"

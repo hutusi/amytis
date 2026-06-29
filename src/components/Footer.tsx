@@ -11,7 +11,7 @@ export default function Footer() {
   const { t, language } = useLanguage();
   
   return (
-    <footer data-site-footer className="bg-ink/[0.02] border-t border-ink/[0.05] mt-auto select-none">
+    <footer data-site-footer className="bg-surface-faint border-t border-line mt-auto select-none">
       <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10 lg:mb-12">
           {/* Brand */}
@@ -87,7 +87,7 @@ export default function Footer() {
         </div>
         
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-ink/[0.05] flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
+        <div className="pt-8 border-t border-line flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
           <span>{resolveLocaleValue(siteConfig.footerText, language)}</span>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
              {siteConfig.i18n.enabled !== false && siteConfig.i18n.locales.length >= 2 && (

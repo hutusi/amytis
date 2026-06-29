@@ -47,7 +47,7 @@ export default function ContentCard({
       {/* ink-card surface + card-base's chrome minus its built-in p-8, so the
           inner padding below doesn't have to fight a p-0 override. */}
       <div className="ink-card group relative flex h-full flex-col overflow-hidden transition-all hover:border-accent/30">
-        <div className={cn('relative w-full overflow-hidden bg-ink/[0.04]', compact ? 'h-40' : 'h-48')}>
+        <div className={cn('relative w-full overflow-hidden bg-surface-soft', compact ? 'h-40' : 'h-48')}>
           <CoverImage src={coverImage} title={title} slug={slug} className={COVER_ZOOM} />
         </div>
         <div className={compact ? 'p-6' : 'p-8'}>
