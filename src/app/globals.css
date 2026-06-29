@@ -755,8 +755,10 @@ html.dark .shiki .line.warning {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: -1ms !important; /* skip animation-delay-* so delayed/backwards entrances don't stay hidden */
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

@@ -27,10 +27,12 @@ describe("SiteConfigSchema", () => {
     expect(() => validateSiteConfig(bad)).toThrow(/pagination\.posts/);
   });
 
-  test("rejects a zero/negative pagination value", () => {
-    const bad = structuredClone(siteConfig) as Record<string, unknown>;
-    (bad.pagination as Record<string, unknown>).posts = 0;
-    expect(SiteConfigSchema.safeParse(bad).success).toBe(false);
+  test("rejects a zero or negative pagination value", () => {
+    for (const value of [0, -1]) {
+      const bad = structuredClone(siteConfig) as Record<string, unknown>;
+      (bad.pagination as Record<string, unknown>).posts = value;
+      expect(SiteConfigSchema.safeParse(bad).success).toBe(false);
+    }
   });
 
   test("rejects an unknown themeColor", () => {

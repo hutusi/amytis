@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # This job only reads the repo; don't leave the token in git config.
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -41,7 +44,7 @@ jobs:
           # Serve the static export and run the bun e2e specs against it.
           # The specs skip when no server responds, so fail loudly if the
           # server never comes up — otherwise e2e would be a silent no-op.
-          bunx serve@latest out -l 3000 &
+          bunx serve@14 out -l 3000 &
           SERVER_PID=$!
           for i in $(seq 1 30); do
             if curl -sf http://localhost:3000 >/dev/null 2>&1; then break; fi
@@ -68,6 +71,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # This job only reads the repo; don't leave the token in git config.
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1

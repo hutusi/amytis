@@ -108,6 +108,16 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
       fs.readdirSync(seriesDirectory, { withFileTypes: true }).forEach(entry => {
         if (!entry.isDirectory()) return;
         const slug = entry.name;
+        // Same uniqueness contract as notes: a series slug must not collide
+        // with an existing post / flow / note / alias, or wikilinks become
+        // ambiguous (strict-build invariant).
+        const existing = map.get(slug);
+        if (existing) {
+          throw new Error(
+            `[amytis] Series slug "${slug}" collides with an existing ${existing.type} of the same slug. ` +
+            `Slugs must be unique across posts, flows, notes, and series so wikilinks resolve unambiguously.`
+          );
+        }
         const seriesData = getSeriesData(slug);
         map.set(slug, {
           url: getSeriesUrl(slug),

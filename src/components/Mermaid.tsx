@@ -51,50 +51,53 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
     let cancelled = false;
 
     (async () => {
-      installConsoleWarnFilter();
-
-      // Load the ~600kb mermaid library on demand — only once a diagram
-      // actually mounts client-side — so diagram-free pages never ship it.
-      const mermaid = (await import("mermaid")).default;
-      if (cancelled) return;
-
-      const currentTheme = theme === 'system' ? systemTheme : theme;
-      const isDark = currentTheme === 'dark';
-
-      // Colors matching globals.css
-      const colors = {
-        background: isDark ? "#1c1917" : "#fafaf9", // Stone 900 / 50
-        primary: isDark ? "#1c1917" : "#fafaf9",
-        text: isDark ? "#fafaf9" : "#1c1917", // Stone 50 / 900
-        border: isDark ? "#34d399" : "#059669", // Emerald 400 / 600
-        line: isDark ? "#57534e" : "#a8a29e", // Stone 600 / 400
-      };
-
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: "base",
-        fontFamily: "var(--font-sans)",
-        themeVariables: {
-          background: colors.background,
-          mainBkg: colors.background,
-          primaryColor: colors.primary,
-          primaryTextColor: colors.text,
-          primaryBorderColor: colors.border,
-          lineColor: colors.line,
-          secondaryColor: colors.background,
-          tertiaryColor: colors.background,
-          noteBkgColor: colors.background,
-          noteTextColor: colors.text,
-          noteBorderColor: colors.line,
-        },
-        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
-        sequence: { useMaxWidth: true, showSequenceNumbers: true },
-        er: { useMaxWidth: true },
-        securityLevel: "loose",
-      });
-
-      const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+      // One try/catch over the whole pipeline: a failed dynamic import (chunk
+      // load error) or initialize() must surface the error UI too, not just a
+      // render() failure — otherwise the diagram silently stays blank.
       try {
+        installConsoleWarnFilter();
+
+        // Load the ~600kb mermaid library on demand — only once a diagram
+        // actually mounts client-side — so diagram-free pages never ship it.
+        const mermaid = (await import("mermaid")).default;
+        if (cancelled) return;
+
+        const currentTheme = theme === 'system' ? systemTheme : theme;
+        const isDark = currentTheme === 'dark';
+
+        // Colors matching globals.css
+        const colors = {
+          background: isDark ? "#1c1917" : "#fafaf9", // Stone 900 / 50
+          primary: isDark ? "#1c1917" : "#fafaf9",
+          text: isDark ? "#fafaf9" : "#1c1917", // Stone 50 / 900
+          border: isDark ? "#34d399" : "#059669", // Emerald 400 / 600
+          line: isDark ? "#57534e" : "#a8a29e", // Stone 600 / 400
+        };
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          fontFamily: "var(--font-sans)",
+          themeVariables: {
+            background: colors.background,
+            mainBkg: colors.background,
+            primaryColor: colors.primary,
+            primaryTextColor: colors.text,
+            primaryBorderColor: colors.border,
+            lineColor: colors.line,
+            secondaryColor: colors.background,
+            tertiaryColor: colors.background,
+            noteBkgColor: colors.background,
+            noteTextColor: colors.text,
+            noteBorderColor: colors.line,
+          },
+          flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+          sequence: { useMaxWidth: true, showSequenceNumbers: true },
+          er: { useMaxWidth: true },
+          securityLevel: "loose",
+        });
+
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg } = await mermaid.render(id, chart);
         if (!cancelled) setSvg(svg);
       } catch (error) {
