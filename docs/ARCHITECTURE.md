@@ -46,7 +46,7 @@ src/app/
   series/[slug]/page/[page]/page.tsx
   books/page.tsx                    # Books index
   books/[slug]/page.tsx             # Book landing
-  books/[slug]/[chapter]/page.tsx   # Book chapter
+  books/[slug]/[...chapter]/page.tsx # Book chapter (catch-all: nested chapter ids)
   flows/page.tsx                    # Flow index (calendar sidebar + full-content card feed)
   flows/page/[page]/page.tsx        # Flow pagination
   flows/[year]/page.tsx
