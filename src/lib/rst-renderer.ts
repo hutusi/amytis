@@ -93,7 +93,7 @@ export function resetRstRendererCachesForTests(): void {
   rstRenderCache.clear();
   resolvedPythonCommandSpec = null;
   pythonRendererInvocationCount = 0;
-  cachedRendererCodeHash = null;
+  cachedRendererCode = null;
 }
 
 function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null | undefined): string {
@@ -111,18 +111,28 @@ function getRstRendererSourceHash(filePath: string): string {
 // sourceHash and pythonCacheKey do NOT capture. Including it in the cache key
 // auto-invalidates on renderer-code changes, so the docutils output shape no
 // longer needs a manual RST_RENDERER_DISK_CACHE_VERSION bump.
-let cachedRendererCodeHash: string | null = null;
+//
+// Cached and re-validated against the script's mtime+size (like getRenderCacheKey),
+// so a long-lived process (e.g. `next dev`) picks up an edit to render-rst.py
+// without a restart; a build is a fresh process and reads it once.
+let cachedRendererCode: { mtimeMs: number; size: number; hash: string } | null = null;
 function getRstRendererCodeHash(): string {
-  if (cachedRendererCodeHash !== null) return cachedRendererCodeHash;
   const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
+  let stats: fs.Stats;
   try {
-    cachedRendererCodeHash = createHash('sha1').update(fs.readFileSync(scriptPath)).digest('hex');
+    stats = fs.statSync(scriptPath);
   } catch {
-    // Don't crash rendering if the script can't be read — fall back to a
-    // constant so entries still validate on version/sourceHash.
-    cachedRendererCodeHash = 'no-render-script';
+    // Don't crash rendering if the script is missing — fall back to a constant
+    // so entries still validate on version/sourceHash.
+    cachedRendererCode = null;
+    return 'no-render-script';
   }
-  return cachedRendererCodeHash;
+  if (cachedRendererCode && cachedRendererCode.mtimeMs === stats.mtimeMs && cachedRendererCode.size === stats.size) {
+    return cachedRendererCode.hash;
+  }
+  const hash = createHash('sha1').update(/* turbopackIgnore: true */ fs.readFileSync(scriptPath)).digest('hex');
+  cachedRendererCode = { mtimeMs: stats.mtimeMs, size: stats.size, hash };
+  return hash;
 }
 
 export function getRstRendererCodeHashForTests(): string {
