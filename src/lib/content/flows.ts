@@ -7,6 +7,7 @@ import { byDateDesc } from '../sort';
 import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { flowsDirectory, readUtf8File } from './io';
+import { createProdMemo } from './cache';
 import { dateField, draftField, tagsField } from './schema';
 
 /**
@@ -73,7 +74,14 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
   };
 }
 
+const allFlowsMemo = createProdMemo<FlowData[]>();
+
 export function getAllFlows(): FlowData[] {
+  // Prod-only memo: dev re-reads every call so HMR sees fresh flows.
+  return allFlowsMemo.get(computeAllFlows);
+}
+
+function computeAllFlows(): FlowData[] {
   if (!fs.existsSync(flowsDirectory)) return [];
 
   const flows: FlowData[] = [];

@@ -6,6 +6,7 @@ import { byDateDesc } from '../sort';
 import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
+import { createProdMemo } from './cache';
 import { dateField, draftField } from './schema';
 
 /**
@@ -339,21 +340,28 @@ export function getBookDirPath(bookSlug: string): string {
   return path.join(booksDirectory, bookSlug);
 }
 
+const allBooksMemo = createProdMemo<BookData[]>();
+
 export function getAllBooks(): BookData[] {
-  if (!fs.existsSync(booksDirectory)) return [];
+  // Prod-only memo: getAllBooks runs from the root layout (books nav), so on a
+  // static export it would otherwise re-read + re-parse every book index on
+  // every page. Dev re-reads each call so HMR sees fresh books.
+  return allBooksMemo.get(() => {
+    if (!fs.existsSync(booksDirectory)) return [];
 
-  const entries = fs.readdirSync(booksDirectory, { withFileTypes: true });
-  const books: BookData[] = [];
+    const entries = fs.readdirSync(booksDirectory, { withFileTypes: true });
+    const books: BookData[] = [];
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const book = getBookData(entry.name);
-    if (!book) continue;
-    if (process.env.NODE_ENV === 'production' && book.draft) continue;
-    books.push(book);
-  }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const book = getBookData(entry.name);
+      if (!book) continue;
+      if (process.env.NODE_ENV === 'production' && book.draft) continue;
+      books.push(book);
+    }
 
-  return books.sort(byDateDesc);
+    return books.sort(byDateDesc);
+  });
 }
 
 export function getFeaturedBooks(): BookData[] {
