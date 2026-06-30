@@ -63,29 +63,40 @@ If a machine still has a stale `.next/`, clear it once with `bun run clean`, the
 
 ## `bun run build` fails on Windows with `Module not found: Can't resolve 'postcss'` / `'shiki'`
 
-**Symptom** (Windows only; macOS/Linux build fine) — Turbopack fails during compile:
+**Symptom** (Windows only; macOS/Linux build fine) — the build fails to compile, with the **same** error
+under *both* bundlers (`next build` and `next build --webpack`):
 
 ```
 ./node_modules/sanitize-html/index.js  Module not found: Can't resolve 'postcss'
 ./src/lib/shiki.ts                      Module not found: Can't resolve 'shiki'
-> Build error occurred — Turbopack build failed with 2 errors
 ```
 
-**Cause.** Turbopack (Next.js's default bundler) has Windows-specific module-resolution bugs that don't
-occur on macOS/Linux — it can't resolve `shiki` (ESM with a complex `exports` map) or `postcss` (the
-CommonJS dependency that `sanitize-html` does `require('postcss')` on). See
-[vercel/next.js#86431](https://github.com/vercel/next.js/issues/86431) and
-[#85057](https://github.com/vercel/next.js/issues/85057) (both resolve correctly under Webpack).
+**Cause.** This is a `node_modules` problem, not a bundler problem — when both Turbopack *and* Webpack
+can't resolve the same packages "within module directories (node_modules)", the packages aren't resolvable
+on disk. The repo is a bun **workspace** (`packages/create-amytis`), so bun used its **isolated** linker — a
+symlinked `node_modules/.bun/` store. `shiki` (a top-level symlink) and `postcss` (a child dependency of
+`sanitize-html`, reachable only through the symlink chain) resolve fine on macOS/Linux but **not on
+Windows**, where bun's isolated symlinks are broken.
 
-**Resolution (already committed).** On Windows, `bun run build` automatically falls back to Next's
-**Webpack** bundler, which resolves these packages correctly. The switch lives in
-`scripts/run-with-rst-python.ts` (it appends `--webpack` to `next build` when `process.platform ===
-'win32'`); macOS / Linux / CI keep Turbopack. No action needed beyond pulling — just run `bun run build`.
+**Resolution.** Use bun's flat **hoisted** layout (real directories + hardlinks, no symlink store). A
+repo-root `bunfig.toml` makes it the default (`[install] linker = "hoisted"`), but **it only takes effect on
+`bun install`** — and `bun run clean` does **not** reinstall (it only removes `.next out public/...`). So
+re-materialize `node_modules` once:
 
-> Secondary measure: a repo-root `bunfig.toml` sets `linker = "hoisted"` to avoid bun's isolated
-> (symlinked) `node_modules` layout, which is itself unreliable on Windows. This takes effect only on a
-> fresh install — note `bun run clean` does **not** reinstall — so if you want it applied, delete
-> `node_modules` and run `bun install`. It is not required for the Webpack fix above.
+```bat
+:: Windows (cmd) — PowerShell: Remove-Item -Recurse -Force node_modules
+rmdir /s /q node_modules
+bun install --linker=hoisted
+bun run build
+```
+
+Confirm the layout flipped: `dir node_modules\shiki` and `dir node_modules\postcss` should now show **real
+directories** (not `<SYMLINK>`/`<JUNCTION>`, not "File Not Found"). Both bundlers then resolve them.
+
+> Secondary safety net: on Windows, `bun run build` also routes `next build` to Next's Webpack bundler (via
+> `scripts/run-with-rst-python.ts`, which appends `--webpack` on `win32`). This is not required once the
+> hoisted layout is in place — it's kept as a guard against Turbopack's separately-documented Windows path
+> quirks. macOS / Linux / CI always use Turbopack.
 
 > The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
 > `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
