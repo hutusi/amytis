@@ -60,3 +60,35 @@ to `include`, never to `exclude`):
 ```
 
 If a machine still has a stale `.next/`, clear it once with `bun run clean`, then `bun run build`.
+
+## `bun run build` fails on Windows with `Module not found: Can't resolve 'postcss'` / `'shiki'`
+
+**Symptom** (Windows only; macOS/Linux build fine) — Turbopack fails during compile:
+
+```
+./node_modules/sanitize-html/index.js  Module not found: Can't resolve 'postcss'
+./src/lib/shiki.ts                      Module not found: Can't resolve 'shiki'
+> Build error occurred — Turbopack build failed with 2 errors
+```
+
+**Cause.** This repo is a bun **workspace** (`packages/create-amytis`), and bun defaults workspaces to
+the **isolated** linker — a pnpm-style `node_modules/.bun/` store wired together with **symlinks**.
+`shiki` is a top-level symlink, and `postcss` (a child dependency of `sanitize-html`) is never hoisted —
+it is reachable only through the symlink chain. macOS/Linux follow these symlinks fine, but **isolated
+installs are broken on Windows** (a known bun limitation), so Turbopack can't resolve the symlinked
+packages.
+
+**Resolution (already committed).** A repo-root `bunfig.toml` forces the flat **hoisted** layout (real
+top-level directories + hardlinks, no symlink store), which resolves cross-platform:
+
+```toml
+[install]
+linker = "hoisted"
+```
+
+After pulling this, re-materialize `node_modules` once: delete `node_modules`, then `bun install`
+(or `bun install --linker hoisted` if your bun version ignores the config key), then `bun run build`.
+
+> The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
+> `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
+> apply to `spawnSync`. They appear on every platform and do not fail the build.

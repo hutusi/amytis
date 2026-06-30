@@ -1,0 +1,13 @@
+[install]
+# Force the flat/hoisted node_modules layout (npm / Yarn-classic style).
+#
+# bun defaults workspaces (this repo has packages/create-amytis) to the
+# "isolated" linker, which builds a symlinked node_modules/.bun store. Those
+# symlinks break Turbopack / Next.js module resolution on Windows — `shiki`
+# (a top-level symlink) and `postcss` (a child dep of sanitize-html, reachable
+# only through the symlink chain) fail to resolve with
+# "Module not found" during `next build`. The hoisted layout uses real
+# top-level directories with hardlinks/copies, which resolve cross-platform.
+#
+# See docs/TROUBLESHOOTING.md. Changing this requires re-running `bun install`.
+linker = "hoisted"
