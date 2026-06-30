@@ -39,7 +39,7 @@ bun test
   - `posts/`: Paginated post listing and individual post routes.
   - `flows/`: Stream-style daily notes or micro-blogging (`[year]/[month]/[day]`).
   - `series/`: Series overview and individual series catalog pages with pagination support.
-  - `books/`: Books overview and individual book/chapter pages (`[slug]/[chapter]`).
+  - `books/`: Books overview and individual book/chapter pages (`[slug]/[...chapter]`).
   - `notes/`: Evergreen notes index and individual note pages with backlinks.
   - `archive/`: Timeline-based chronological archive grouped by year and month.
   - `tags/`: Popularity-sorted tag cloud and filtered listings.
