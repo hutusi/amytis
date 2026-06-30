@@ -10,6 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
+# non-bun lockfiles — bun.lock is the source of truth. Windows contributors may
+# need `npm install` (bun's installer is unreliable on Windows; see docs/TROUBLESHOOTING.md),
+# which generates package-lock.json — keep it (and yarn/pnpm equivalents) out of the repo.
+/package-lock.json
+/yarn.lock
+/pnpm-lock.yaml
+
 # testing
 /coverage
 /playwright-report/

@@ -61,38 +61,35 @@ to `include`, never to `exclude`):
 
 If a machine still has a stale `.next/`, clear it once with `bun run clean`, then `bun run build`.
 
-## `bun run build` fails on Windows with `Module not found: Can't resolve 'postcss'` / `'shiki'`
+## Windows: use `npm install` (bun's installer is unreliable on Windows)
 
-**Symptom** (Windows only; macOS/Linux build fine) — the build fails to compile, with the **same** error
-under *both* bundlers (`next build` and `next build --webpack`):
+On Windows, `bun install` does not produce a working `node_modules` for this project — but the **bun
+runtime is fine**, so once dependencies are installed with npm, `bun run build` / `bun dev` / `bun run
+test` all work normally.
 
-```
-./node_modules/sanitize-html/index.js  Module not found: Can't resolve 'postcss'
-./src/lib/shiki.ts                      Module not found: Can't resolve 'shiki'
-```
-
-**Cause.** This is a `node_modules` problem, not a bundler problem — when both Turbopack *and* Webpack
-can't resolve the same packages "within module directories (node_modules)", the packages aren't resolvable
-on disk. The repo is a bun **workspace** (`packages/create-amytis`), so bun used its **isolated** linker — a
-symlinked `node_modules/.bun/` store. `shiki` (a top-level symlink) and `postcss` (a child dependency of
-`sanitize-html`, reachable only through the symlink chain) resolve fine on macOS/Linux but **not on
-Windows**, where bun's isolated symlinks are broken.
-
-**Resolution.** Use bun's flat **hoisted** layout (real directories + hardlinks, no symlink store). A
-repo-root `bunfig.toml` makes it the default (`[install] linker = "hoisted"`), but **it only takes effect on
-`bun install`** — and `bun run clean` does **not** reinstall (it only removes `.next out public/...`). So
-re-materialize `node_modules` once:
+**Install dependencies with npm on Windows:**
 
 ```bat
-:: Windows (cmd) — PowerShell: Remove-Item -Recurse -Force node_modules
+:: from the project root
 rmdir /s /q node_modules
-bun install --linker=hoisted
+npm install
 bun run build
 ```
 
-Confirm the layout flipped: `dir node_modules\shiki` and `dir node_modules\postcss` should now show **real
-directories** (not `<SYMLINK>`/`<JUNCTION>`, not "File Not Found"). Turbopack then resolves them and the
-build completes — no bundler change needed.
+(`bun.lock` stays the source of truth; the `package-lock.json` npm creates is git-ignored — don't commit
+it. macOS/Linux/CI keep using `bun install`.)
+
+**Why** — two distinct `bun install` failure modes on Windows, neither of which npm has:
+
+- **Isolated (bun's workspace default)** builds a symlinked `node_modules/.bun/` store. `shiki` (a
+  top-level symlink) and `postcss` (a child dep of `sanitize-html`, reachable only through the symlink
+  chain) then fail to resolve — the build dies with `Module not found: Can't resolve 'postcss' / 'shiki'`
+  under *both* Turbopack and Webpack (proving it's a `node_modules`-resolution problem, not a bundler one).
+- **Hoisted (`bun install --linker=hoisted`)** instead fails with `could not create process / Bun failed
+  to remap this bin to its proper location within node_modules / corrupted node_modules directory`, which
+  persists even after `bun install --force`.
+
+npm's flat layout sidesteps both: real top-level directories and Windows-correct bin shims.
 
 > The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
 > `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
