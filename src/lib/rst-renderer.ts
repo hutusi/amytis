@@ -130,7 +130,7 @@ function getRstRendererCodeHash(): string {
   if (cachedRendererCode && cachedRendererCode.mtimeMs === stats.mtimeMs && cachedRendererCode.size === stats.size) {
     return cachedRendererCode.hash;
   }
-  const hash = createHash('sha1').update(/* turbopackIgnore: true */ fs.readFileSync(scriptPath)).digest('hex');
+  const hash = createHash('sha1').update(fs.readFileSync(/* turbopackIgnore: true */ scriptPath)).digest('hex');
   cachedRendererCode = { mtimeMs: stats.mtimeMs, size: stats.size, hash };
   return hash;
 }
