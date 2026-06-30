@@ -10,7 +10,7 @@ import {
   parseSlugAndDate,
   assertSafeSeriesSlug,
 } from './io';
-import { createKeyedMemo } from './cache';
+import { createKeyedMemo, createProdKeyedMemo } from './cache';
 
 /**
  * Series index discovery and lightweight series metadata.
@@ -55,7 +55,20 @@ export function resolveUniqueSeriesIndex(seriesSlug: string, format: SeriesForma
   return matches[0] ?? null;
 }
 
+const seriesIndexInfoMemo = createProdKeyedMemo<string, SeriesIndexInfo | null>();
+
+/**
+ * Resolves a series' index file. Called repeatedly per slug (directly in
+ * getAllPosts and again inside getSeriesContentEntries, plus per-slug by
+ * getSeriesData/getSeriesTitle/getSeriesAuthors), so the result is memoized per
+ * slug in production. Dev recomputes each call so HMR sees a freshly-added
+ * index file. Throws still propagate (never cached).
+ */
 export function resolveSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
+  return seriesIndexInfoMemo.get(slug, () => computeSeriesIndexInfo(slug));
+}
+
+function computeSeriesIndexInfo(slug: string): SeriesIndexInfo | null {
   assertSafeSeriesSlug(slug);
   if (!fs.existsSync(seriesDirectory)) return null;
   const seriesPath = path.join(seriesDirectory, slug);

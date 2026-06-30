@@ -111,4 +111,18 @@ describe("Integration: Books", () => {
       fs.rmSync(bookDir, { recursive: true, force: true });
     }
   });
+
+  test("getAllBooks is memoized in production (stable reference across calls)", () => {
+    // Build-perf: getAllBooks runs from the root layout, so on a static export
+    // it must not re-read + re-parse every book index per page.
+    const prev = process.env.NODE_ENV;
+    setEnvVar("NODE_ENV", "production");
+    try {
+      const a = getAllBooks();
+      const b = getAllBooks();
+      expect(a).toBe(b); // same reference ⇒ memoized, not recomputed
+    } finally {
+      restoreEnvVar("NODE_ENV", prev);
+    }
+  });
 });

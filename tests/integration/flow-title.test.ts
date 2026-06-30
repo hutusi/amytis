@@ -88,4 +88,16 @@ describe("Integration: Flow visibility parity", () => {
       fs.rmSync(path.join(process.cwd(), "content", "flows", "2098"), { recursive: true, force: true });
     }
   });
+
+  test("getAllFlows is memoized in production (stable reference across calls)", () => {
+    const prev = process.env.NODE_ENV;
+    setEnvVar("NODE_ENV", "production");
+    try {
+      const a = getAllFlows();
+      const b = getAllFlows();
+      expect(a).toBe(b); // same reference ⇒ memoized, not recomputed
+    } finally {
+      restoreEnvVar("NODE_ENV", prev);
+    }
+  });
 });

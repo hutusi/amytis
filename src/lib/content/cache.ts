@@ -65,3 +65,19 @@ export function createProdMemo<T>(): { get(compute: () => T): T } {
     },
   };
 }
+
+/** Production-only, per-key memo: dev recomputes every call so HMR sees fresh content. */
+export function createProdKeyedMemo<K, V>(): { get(key: K, compute: () => V): V } {
+  const cache = new Map<K, V>();
+  return {
+    get(key, compute) {
+      if (process.env.NODE_ENV !== 'production') {
+        return compute();
+      }
+      if (cache.has(key)) return cache.get(key) as V;
+      const value = compute();
+      cache.set(key, value);
+      return value;
+    },
+  };
+}
