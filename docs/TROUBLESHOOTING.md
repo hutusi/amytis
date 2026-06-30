@@ -91,12 +91,8 @@ bun run build
 ```
 
 Confirm the layout flipped: `dir node_modules\shiki` and `dir node_modules\postcss` should now show **real
-directories** (not `<SYMLINK>`/`<JUNCTION>`, not "File Not Found"). Both bundlers then resolve them.
-
-> Secondary safety net: on Windows, `bun run build` also routes `next build` to Next's Webpack bundler (via
-> `scripts/run-with-rst-python.ts`, which appends `--webpack` on `win32`). This is not required once the
-> hoisted layout is in place — it's kept as a guard against Turbopack's separately-documented Windows path
-> quirks. macOS / Linux / CI always use Turbopack.
+directories** (not `<SYMLINK>`/`<JUNCTION>`, not "File Not Found"). Turbopack then resolves them and the
+build completes — no bundler change needed.
 
 > The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
 > `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
