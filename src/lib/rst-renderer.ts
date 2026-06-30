@@ -62,6 +62,7 @@ interface PythonCommandSpec {
 interface RstRendererDiskCacheEntry {
   version: string;
   sourceHash: string;
+  rendererHash: string;
   imageBaseSlug: string;
   pythonCacheKey: string;
   rendered: RenderedRstDocument;
@@ -69,10 +70,12 @@ interface RstRendererDiskCacheEntry {
 
 const rstRenderCache = new Map<string, RenderedRstDocument>();
 const PYTHON_RENDERER_MAX_BUFFER = 1024 * 1024 * 128;
-// Bumped when the docutils renderer's HTML output shape changes:
-// v2 emitted <pre data-amytis-code> markers; v3 additionally emits
-// <div data-amytis-code-group> wrappers around .. code-group:: nests.
-// v5 invalidates cache after the shiki 4.1->4.2 highlighter bump.
+// Coarse manual override for the disk cache. Changes to scripts/render-rst.py
+// now auto-invalidate via `rendererHash` (see getRstRendererCodeHash), so this
+// rarely needs bumping — only for cache-shape changes that originate OUTSIDE
+// the Python script (e.g. a new entry field, or a downstream consumer's
+// expectations). Historical bumps: v2/v3 marker changes; v5 was a
+// (now-redundant) Shiki bump — Shiki output isn't stored in this cache.
 const RST_RENDERER_DISK_CACHE_VERSION = '5';
 const rstRendererCacheDir = path.join(process.cwd(), '.cache', 'rst-renderer');
 let resolvedPythonCommandSpec: PythonCommandSpec | null = null;
@@ -90,6 +93,7 @@ export function resetRstRendererCachesForTests(): void {
   rstRenderCache.clear();
   resolvedPythonCommandSpec = null;
   pythonRendererInvocationCount = 0;
+  cachedRendererCodeHash = null;
 }
 
 function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null | undefined): string {
@@ -100,6 +104,33 @@ function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null 
 
 function getRstRendererSourceHash(filePath: string): string {
   return createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+// Hash of the renderer SCRIPT itself. Changing scripts/render-rst.py changes the
+// SHAPE of the cached HTML (e.g. the v2/v3 marker changes) — which the content
+// sourceHash and pythonCacheKey do NOT capture. Including it in the cache key
+// auto-invalidates on renderer-code changes, so the docutils output shape no
+// longer needs a manual RST_RENDERER_DISK_CACHE_VERSION bump.
+let cachedRendererCodeHash: string | null = null;
+function getRstRendererCodeHash(): string {
+  if (cachedRendererCodeHash !== null) return cachedRendererCodeHash;
+  const scriptPath = path.join(process.cwd(), 'scripts', 'render-rst.py');
+  try {
+    cachedRendererCodeHash = createHash('sha1').update(fs.readFileSync(scriptPath)).digest('hex');
+  } catch {
+    // Don't crash rendering if the script can't be read — fall back to a
+    // constant so entries still validate on version/sourceHash.
+    cachedRendererCodeHash = 'no-render-script';
+  }
+  return cachedRendererCodeHash;
+}
+
+export function getRstRendererCodeHashForTests(): string {
+  return getRstRendererCodeHash();
+}
+
+export function getRstRendererDiskCacheVersionForTests(): string {
+  return RST_RENDERER_DISK_CACHE_VERSION;
 }
 
 function canonicalizeSourcePath(filePath: string): string {
@@ -135,6 +166,7 @@ function loadRenderedRstDocumentFromDiskCache(filePath: string, imageBaseSlug: s
     const parsed = JSON.parse(raw) as Partial<RstRendererDiskCacheEntry>;
     if (
       parsed.version !== RST_RENDERER_DISK_CACHE_VERSION ||
+      parsed.rendererHash !== getRstRendererCodeHash() ||
       parsed.imageBaseSlug !== imageBaseSlug ||
       parsed.pythonCacheKey !== getPythonCommandSpecForRstRenderer().cacheKey ||
       parsed.sourceHash !== getRstRendererSourceHash(filePath) ||
@@ -149,11 +181,19 @@ function loadRenderedRstDocumentFromDiskCache(filePath: string, imageBaseSlug: s
   }
 }
 
+export function loadRenderedRstDocumentFromDiskCacheForTests(
+  filePath: string,
+  imageBaseSlug: string,
+): RenderedRstDocument | null {
+  return loadRenderedRstDocumentFromDiskCache(filePath, imageBaseSlug);
+}
+
 function writeRenderedRstDocumentToDiskCache(filePath: string, imageBaseSlug: string, rendered: RenderedRstDocument): void {
   const cachePath = getRstRendererDiskCachePath(filePath);
   const entry: RstRendererDiskCacheEntry = {
     version: RST_RENDERER_DISK_CACHE_VERSION,
     sourceHash: getRstRendererSourceHash(filePath),
+    rendererHash: getRstRendererCodeHash(),
     imageBaseSlug,
     pythonCacheKey: getPythonCommandSpecForRstRenderer().cacheKey,
     rendered,
