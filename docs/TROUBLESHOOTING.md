@@ -71,23 +71,21 @@ If a machine still has a stale `.next/`, clear it once with `bun run clean`, the
 > Build error occurred — Turbopack build failed with 2 errors
 ```
 
-**Cause.** This repo is a bun **workspace** (`packages/create-amytis`), and bun defaults workspaces to
-the **isolated** linker — a pnpm-style `node_modules/.bun/` store wired together with **symlinks**.
-`shiki` is a top-level symlink, and `postcss` (a child dependency of `sanitize-html`) is never hoisted —
-it is reachable only through the symlink chain. macOS/Linux follow these symlinks fine, but **isolated
-installs are broken on Windows** (a known bun limitation), so Turbopack can't resolve the symlinked
-packages.
+**Cause.** Turbopack (Next.js's default bundler) has Windows-specific module-resolution bugs that don't
+occur on macOS/Linux — it can't resolve `shiki` (ESM with a complex `exports` map) or `postcss` (the
+CommonJS dependency that `sanitize-html` does `require('postcss')` on). See
+[vercel/next.js#86431](https://github.com/vercel/next.js/issues/86431) and
+[#85057](https://github.com/vercel/next.js/issues/85057) (both resolve correctly under Webpack).
 
-**Resolution (already committed).** A repo-root `bunfig.toml` forces the flat **hoisted** layout (real
-top-level directories + hardlinks, no symlink store), which resolves cross-platform:
+**Resolution (already committed).** On Windows, `bun run build` automatically falls back to Next's
+**Webpack** bundler, which resolves these packages correctly. The switch lives in
+`scripts/run-with-rst-python.ts` (it appends `--webpack` to `next build` when `process.platform ===
+'win32'`); macOS / Linux / CI keep Turbopack. No action needed beyond pulling — just run `bun run build`.
 
-```toml
-[install]
-linker = "hoisted"
-```
-
-After pulling this, re-materialize `node_modules` once: delete `node_modules`, then `bun install`
-(or `bun install --linker hoisted` if your bun version ignores the config key), then `bun run build`.
+> Secondary measure: a repo-root `bunfig.toml` sets `linker = "hoisted"` to avoid bun's isolated
+> (symlinked) `node_modules` layout, which is itself unreliable on Windows. This takes effect only on a
+> fresh install — note `bun run clean` does **not** reinstall — so if you want it applied, delete
+> `node_modules` and run `bun install`. It is not required for the Webpack fix above.
 
 > The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
 > `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
