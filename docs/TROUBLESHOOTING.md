@@ -29,3 +29,68 @@ The messages come from **browser extensions** (e.g. uBlock Origin, Privacy Badge
 **Workaround:** Do not use `.avif` as a source format for cover images or any image referenced via `ExportedImage`. Use `.jpg`, `.png`, or `.webp` instead — the optimizer converts these to WebP correctly.
 
 AVIF is a great format in general, but this project's static-export image pipeline (`next-image-export-optimizer`) does not handle AVIF source files correctly until the upstream bug is fixed.
+
+## `bun run build` fails on Windows with a `validator.ts` "Cannot find module" type error
+
+**Symptom** (Windows only; macOS/Linux build fine):
+
+```
+We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  - include was updated to add '.next/dev/types/**/*.ts'
+Running TypeScript .Failed to type check.
+.next/dev/types/validator.ts:98:39
+Type error: Cannot find module '../../../src/app/books/[slug]/[chapter]/page.js'
+```
+
+**Cause.** `next dev` and `next build` write route-type files to *different* directories:
+`next build` → `.next/types/`, `next dev` → `.next/dev/types/`. A `.next/dev/types/validator.ts`
+left over from an older `next dev` run can still reference a route that has since been renamed
+or removed (here, `books/[slug]/[chapter]` → `books/[slug]/[...chapter]`). Next.js force-adds
+`.next/dev/types/**/*.ts` to `tsconfig.json`'s `include` on every build (and re-adds it if you
+remove it — see [vercel/next.js#85028](https://github.com/vercel/next.js/issues/85028)), so its
+in-build type checker loads that stale file and fails. `.next/` is gitignored, so only the
+machine holding the stale artifact is affected.
+
+**Resolution (already committed).** `tsconfig.json` excludes the dev-only route types so they
+are never type-checked, which `next dev`'s tsconfig reconfiguration can't undo (Next only adds
+to `include`, never to `exclude`):
+
+```jsonc
+"exclude": ["node_modules", ".next/dev/types"]
+```
+
+If a machine still has a stale `.next/`, clear it once with `bun run clean`, then `bun run build`.
+
+## Windows: use `npm install` (bun's installer is unreliable on Windows)
+
+On Windows, `bun install` does not produce a working `node_modules` for this project — but the **bun
+runtime is fine**, so once dependencies are installed with npm, `bun run build` / `bun dev` / `bun run
+test` all work normally.
+
+**Install dependencies with npm on Windows:**
+
+```bat
+:: from the project root
+rmdir /s /q node_modules
+npm install
+bun run build
+```
+
+(`bun.lock` stays the source of truth; the `package-lock.json` npm creates is git-ignored — don't commit
+it. macOS/Linux/CI keep using `bun install`.)
+
+**Why** — two distinct `bun install` failure modes on Windows, neither of which npm has:
+
+- **Isolated (bun's workspace default)** builds a symlinked `node_modules/.bun/` store. `shiki` (a
+  top-level symlink) and `postcss` (a child dep of `sanitize-html`, reachable only through the symlink
+  chain) then fail to resolve — the build dies with `Module not found: Can't resolve 'postcss' / 'shiki'`
+  under *both* Turbopack and Webpack (proving it's a `node_modules`-resolution problem, not a bundler one).
+- **Hoisted (`bun install --linker=hoisted`)** instead fails with `could not create process / Bun failed
+  to remap this bin to its proper location within node_modules / corrupted node_modules directory`, which
+  persists even after `bun install --force`.
+
+npm's flat layout sidesteps both: real top-level directories and Windows-correct bin shims.
+
+> The Turbopack warnings about `spawnSync` in `rst-renderer.ts` matching thousands of files (and the
+> `next.config.ts` NFT note) are unrelated, build-time-only, and harmless — `turbopackIgnore` does not
+> apply to `spawnSync`. They appear on every platform and do not fail the build.
