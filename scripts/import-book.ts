@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { slugifyCjk } from './lib/slug';
+import { isoDateStamp } from './lib/content-file';
 
 // Usage: bun run scripts/import-book.ts <main-file-path>
 // Example: bun run scripts/import-book.ts imports/books/agentic-design-patterns/chapters/Agentic\ Design\ Patterns.md
@@ -41,13 +43,6 @@ const toc: TocItem[] = [];
 let currentPart: PartGroup | null = null;
 const usedChapterIds = new Set<string>();
 
-function slugify(text: string): string {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-}
-
 function processChapter(title: string, rawPath: string): ChapterRef | null {
     // Decode URI component (e.g. %20 -> space)
     const cleanPath = decodeURIComponent(rawPath.replace(/^<|>$/g, ''));
@@ -63,9 +58,9 @@ function processChapter(title: string, rawPath: string): ChapterRef | null {
         return null;
     }
 
-    let id = slugify(path.basename(cleanPath).replace(/\.mdx?$/, ''));
+    let id = slugifyCjk(path.basename(cleanPath).replace(/\.mdx?$/, ''));
     if (!id) {
-        id = slugify(title);
+        id = slugifyCjk(title);
     }
     if (!id) {
         console.warn(`Warning: Could not derive chapter id, skipping: ${rawPath}`);
@@ -139,7 +134,7 @@ const bookTitle = h1Match ? h1Match[1].trim() : bookSlug.split('-').map(w => w.c
 
 const indexData = {
   title: bookTitle,
-  date: new Date().toISOString().split('T')[0],
+  date: isoDateStamp(),
   excerpt: `Imported book: ${bookTitle}`,
   chapters: toc,
   draft: false,

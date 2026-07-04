@@ -1,5 +1,6 @@
-import fs from 'fs';
 import path from 'path';
+import { slugifyCjk } from './lib/slug';
+import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile } from './lib/content-file';
 
 const args = process.argv.slice(2);
 const titleArg = args.filter(arg => !arg.startsWith('--'))[0];
@@ -10,35 +11,19 @@ if (!titleArg) {
   process.exit(1);
 }
 
-// Slugify title
-const slug = titleArg
-  .toLowerCase()
-  .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
-  .replace(/^-|-$/g, '');
+const slug = slugifyCjk(titleArg);
 
-const now = new Date();
-const dateStr = now.toISOString().split('T')[0];
-const ext = useMd ? '.md' : '.mdx';
+const dateStr = isoDateStamp();
+const { ext, altExt } = extPair(useMd);
 
 const notesDir = path.join(process.cwd(), 'content', 'notes');
 const targetPath = path.join(notesDir, `${slug}${ext}`);
-
-const altExt = useMd ? '.mdx' : '.md';
 const altPath = path.join(notesDir, `${slug}${altExt}`);
 
-if (fs.existsSync(targetPath)) {
-  console.error(`Error: Note already exists at ${targetPath}`);
-  process.exit(1);
-}
+exitIfExists(targetPath, 'note');
+exitIfExists(altPath, 'note');
 
-if (fs.existsSync(altPath)) {
-  console.error(`Error: Note already exists at ${altPath}`);
-  process.exit(1);
-}
-
-if (!fs.existsSync(notesDir)) {
-  fs.mkdirSync(notesDir, { recursive: true });
-}
+ensureDir(notesDir);
 
 const content = `---
 title: "${titleArg}"
@@ -49,5 +34,4 @@ aliases: []
 
 `;
 
-fs.writeFileSync(targetPath, content);
-console.log(`Created new note: ${targetPath}`);
+writeContentFile(targetPath, content, 'note');

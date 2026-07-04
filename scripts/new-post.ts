@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { slugifyAscii } from './lib/slug';
+import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile } from './lib/content-file';
 
 const args = process.argv.slice(2);
 const valuedFlags = ['--template', '--prefix', '--series'];
@@ -19,13 +21,10 @@ if (!title) {
   process.exit(1);
 }
 
-const slug = title
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/g, '-')
-  .replace(/(^-|-$)+/g, '');
+const slug = slugifyAscii(title);
 
-const date = new Date().toISOString().split('T')[0];
-const ext = useMd ? '.md' : '.mdx';
+const date = isoDateStamp();
+const { ext } = extPair(useMd);
 const prefixedSlug = prefix ? `${prefix}-${slug}` : slug;
 let targetPath = '';
 
@@ -38,9 +37,7 @@ if (series) {
   }
   if (useFolder) {
     const dirPath = path.join(seriesDir, prefixedSlug);
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
+    ensureDir(dirPath);
     fs.mkdirSync(path.join(dirPath, 'images'), { recursive: true });
     targetPath = path.join(dirPath, `index${ext}`);
   } else {
@@ -49,9 +46,7 @@ if (series) {
 } else if (useFolder) {
   const dirName = `${date}-${prefixedSlug}`;
   const dirPath = path.join(process.cwd(), 'content', 'posts', dirName);
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
+  ensureDir(dirPath);
   fs.mkdirSync(path.join(dirPath, 'images'), { recursive: true });
   targetPath = path.join(dirPath, `index${ext}`);
 } else {
@@ -89,10 +84,6 @@ Write your content here...
 
 content = content.replace(/{{title}}/g, title).replace(/{{date}}/g, date);
 
-if (fs.existsSync(targetPath)) {
-  console.error(`Error: Post already exists at ${targetPath}`);
-  process.exit(1);
-}
+exitIfExists(targetPath, 'post');
 
-fs.writeFileSync(targetPath, content);
-console.log(`Created new post: ${targetPath}`);
+writeContentFile(targetPath, content, 'post');

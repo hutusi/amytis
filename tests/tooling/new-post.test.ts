@@ -54,6 +54,21 @@ describe("Tooling: New Post Script", () => {
     createdFiles.push(filePath);
   });
 
+  test("should refuse to overwrite an existing post", () => {
+    const title = "Test Duplicate Post";
+    const first = spawnSync(["bun", SCRIPT_PATH, title]);
+    expect(first.exitCode).toBe(0);
+
+    const date = new Date().toISOString().split('T')[0];
+    const filePath = path.join(CONTENT_DIR, `${date}-test-duplicate-post.mdx`);
+    expect(fs.existsSync(filePath)).toBe(true);
+    createdFiles.push(filePath);
+
+    const second = spawnSync(["bun", SCRIPT_PATH, title]);
+    expect(second.exitCode).toBe(1);
+    expect(second.stderr.toString()).toContain("Error: Post already exists at");
+  });
+
   test("should create a folder post", () => {
     const title = "Test Folder Post";
     const result = spawnSync(["bun", SCRIPT_PATH, title, "--folder"]);

@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { slugifyCjkOrUntitled } from './lib/slug';
+import { isoDateStamp } from './lib/content-file';
 
 // Usage:
 //   bun run import-obsidian                          # import all new files from imports/obsidian/
@@ -75,26 +77,14 @@ function extractInlineTags(body: string): { body: string; tags: string[] } {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function slugify(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return slug || 'untitled';
-}
-
-function formatDate(d: Date): string {
-  return d.toISOString().split('T')[0];
-}
-
 function tagsLiteral(tags: string[]): string {
   return tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
 }
 
 // Transforms Obsidian [[Target Title]] → [[target-title]] and
 // [[Target Title|Label]] → [[target-title|Label]] using the same
-// slugify logic applied to filenames, so wikilinks resolve correctly
-// after import. Code spans/blocks are left untouched.
+// slugifyCjkOrUntitled logic applied to filenames, so wikilinks resolve
+// correctly after import. Code spans/blocks are left untouched.
 function transformWikilinks(body: string): string {
   const segments = body.split(/(```[\s\S]*?```|`[^`]+`)/g);
   return segments.map((seg, i) => {
@@ -102,7 +92,7 @@ function transformWikilinks(body: string): string {
     return seg.replace(
       /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g,
       (_, target, label) => {
-        const slug = slugify(target.trim());
+        const slug = slugifyCjkOrUntitled(target.trim());
         return label ? `[[${slug}|${label.trim()}]]` : `[[${slug}]]`;
       },
     );
@@ -179,7 +169,7 @@ function processFlow(filePath: string, filename: string): boolean {
 
 function processNote(filePath: string, filename: string): boolean {
   const titleFromFile = path.basename(filename, path.extname(filename));
-  const slug = slugify(titleFromFile);
+  const slug = slugifyCjkOrUntitled(titleFromFile);
 
   const outPath = path.join(NOTES_DIR, `${slug}.md`);
   const altPath = path.join(NOTES_DIR, `${slug}.mdx`);
@@ -192,7 +182,7 @@ function processNote(filePath: string, filename: string): boolean {
   const title   = (parsed.data.title as string | undefined) ?? titleFromFile;
   const date    = (parsed.data.date as string | undefined)
                ?? (parsed.data.created as string | undefined)
-               ?? formatDate(stat.mtime);
+               ?? isoDateStamp(stat.mtime);
   const existingTags: string[] = Array.isArray(parsed.data.tags) ? parsed.data.tags.map(String) : [];
   const aliases: string[]      = Array.isArray(parsed.data.aliases) ? parsed.data.aliases.map(String) : [];
 
