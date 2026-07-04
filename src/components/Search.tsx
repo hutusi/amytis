@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { isFeatureEnabled } from '@/lib/features';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -119,7 +119,17 @@ export default function Search() {
   const [isUnavailable, setIsUnavailable] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const tablistRef = useRef<HTMLDivElement>(null);
+  // Tracks whether the modal was actually open, so the close-effect only
+  // restores focus after a real close (not on mount).
+  const wasOpenRef = useRef(false);
+  const baseId = useId();
   const { t, tWith, language } = useLanguage();
+
+  const listboxId = `${baseId}-listbox`;
+  const optionId = (index: number) => `${baseId}-option-${index}`;
+  const tabId = (type: ContentType) => `${baseId}-tab-${type}`;
 
   const getTypeLabel = (type: Exclude<ContentType, 'All'>): string => {
     const featureKey = CONTENT_TYPE_FEATURE[type];
@@ -230,8 +240,15 @@ export default function Search() {
   // triggers the next.
   useEffect(() => {
     if (isOpen) {
+      wasOpenRef.current = true;
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
+      // Restore focus to the trigger after a real close so keyboard users
+      // aren't dropped at the top of the document.
+      if (wasOpenRef.current) {
+        wasOpenRef.current = false;
+        triggerRef.current?.focus();
+      }
       /* eslint-disable react-hooks/set-state-in-effect */
       setQuery('');
       setDebouncedQuery('');
@@ -289,8 +306,11 @@ export default function Search() {
 
   function handleModalKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key !== 'Tab') return;
+    // Result links and inactive tabs carry tabindex="-1" (combobox/tabs
+    // patterns: reachable via arrows, not Tab) — exclude them so the trap
+    // wraps at the real first/last tabbable.
     const focusable = searchRef.current?.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+      'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), input, [tabindex]:not([tabindex="-1"])'
     );
     if (!focusable || focusable.length === 0) return;
     const first = focusable[0];
@@ -300,6 +320,24 @@ export default function Search() {
     } else {
       if (document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
+  }
+
+  // Roving focus for the type tablist (ArrowLeft/ArrowRight move the active
+  // tab; only the active tab is in the Tab order, per the ARIA tabs pattern).
+  function handleTablistKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const visible = CONTENT_TYPES.filter((ct) => ct === 'All' || typeCounts[ct] > 0);
+    const current = visible.indexOf(activeType);
+    const next =
+      e.key === 'ArrowRight'
+        ? visible[(current + 1) % visible.length]
+        : visible[(current - 1 + visible.length) % visible.length];
+    setActiveType(next);
+    setActiveIndex(-1);
+    tablistRef.current
+      ?.querySelector<HTMLButtonElement>(`[data-type="${next}"]`)
+      ?.focus();
   }
 
   function clearRecentSearches() {
@@ -312,9 +350,10 @@ export default function Search() {
   return (
     <>
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(true)}
         className="text-foreground/80 hover:text-heading transition-colors duration-200"
-        aria-label="Search"
+        aria-label={t('search_label')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
       </button>
@@ -327,7 +366,7 @@ export default function Search() {
             ref={searchRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Search"
+            aria-label={t('search_label')}
             onKeyDown={handleModalKeyDown}
             className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-line rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
@@ -346,8 +385,12 @@ export default function Search() {
                 ref={inputRef}
                 type="text"
                 placeholder={t('search_placeholder')}
-                aria-label="Search"
+                aria-label={t('search_label')}
+                role="combobox"
                 aria-autocomplete="list"
+                aria-expanded={displayedResults.length > 0}
+                aria-controls={listboxId}
+                aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -366,7 +409,7 @@ export default function Search() {
               <button
                 onClick={() => setIsOpen(false)}
                 className="sm:hidden ml-2 p-1 text-muted hover:text-foreground transition-colors"
-                aria-label="Close search"
+                aria-label={t('search_close')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -374,12 +417,21 @@ export default function Search() {
 
             {/* Type filter tabs — visible when results exist */}
             {allResults.length > 0 && (
-              <div className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-line shrink-0" role="tablist" aria-label="Filter by type">
+              <div
+                ref={tablistRef}
+                className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-line shrink-0"
+                role="tablist"
+                aria-label={t('search_filter_type')}
+                onKeyDown={handleTablistKeyDown}
+              >
                 {CONTENT_TYPES.filter((type) => type === 'All' || typeCounts[type] > 0).map((type, i) => (
                   <button
                     key={type}
+                    id={tabId(type)}
+                    data-type={type}
                     role="tab"
                     aria-selected={activeType === type}
+                    tabIndex={activeType === type ? 0 : -1}
                     onClick={() => { setActiveType(type); setActiveIndex(-1); }}
                     className={`text-xs px-2 py-0.5 rounded-md transition-colors ${
                       activeType === type
@@ -395,18 +447,30 @@ export default function Search() {
               </div>
             )}
 
-            {/* Scrollable body: flex-1 on mobile, capped at 60vh on desktop */}
-            <div className="flex-1 sm:flex-none overflow-y-auto min-h-0 sm:max-h-[60vh]">
+            {/* Scrollable body: flex-1 on mobile, capped at 60vh on desktop.
+                Doubles as the tabpanel for the type tablist when tabs are shown. */}
+            <div
+              className="flex-1 sm:flex-none overflow-y-auto min-h-0 sm:max-h-[60vh]"
+              role={allResults.length > 0 ? 'tabpanel' : undefined}
+              aria-labelledby={allResults.length > 0 ? tabId(activeType) : undefined}
+            >
 
-              {/* Results */}
+              {/* Results — listbox owned by the combobox input via
+                  aria-controls/aria-activedescendant */}
               {displayedResults.length > 0 && (
-                <ul className="py-2">
+                <ul className="py-2" id={listboxId} role="listbox" aria-label={t('search_label')}>
                   {displayedResults.map((result, index) => (
-                    <li key={result.url}>
+                    <li
+                      key={result.url}
+                      id={optionId(index)}
+                      role="option"
+                      aria-selected={index === activeIndex}
+                    >
                       <Link
                         href={result.url}
                         onClick={() => handleNavigate(query)}
                         onMouseEnter={() => setActiveIndex(index)}
+                        tabIndex={-1}
                         className={`block px-4 py-3 transition-colors ${index === activeIndex ? 'bg-surface-soft' : 'hover:bg-surface-soft'}`}
                       >
                         <div className="flex items-baseline justify-between gap-2">
