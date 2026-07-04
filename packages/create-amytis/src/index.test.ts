@@ -103,6 +103,75 @@ describe("patchSiteConfig", () => {
     // file intentionally absent
     expect(() => patchSiteConfig(dir, "Title", "Desc")).not.toThrow();
   });
+
+  test("throws loudly when the config shape has drifted from the patch patterns", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    // A plain-string (single-locale) title — the shape site.config.example.ts
+    // uses — must not be silently skipped.
+    fs.writeFileSync(
+      path.join(dir, "site.config.ts"),
+      `const siteConfig = { title: "Amytis" };\nexport default siteConfig;\n`
+    );
+    expect(() => patchSiteConfig(dir, "Title", "Desc")).toThrow(/out of sync/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sync with the real repo files
+//
+// The scaffolder patches whatever site.config.ts / package.json ship in the
+// release tarball via shape-sensitive patterns. These tests run the patchers
+// against the REAL root files, so any schema change that would silently break
+// generated projects fails CI here first.
+// ---------------------------------------------------------------------------
+
+const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
+
+describe("sync with the real repo files", () => {
+  const tmpDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tmpDirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("patchSiteConfig patches the real site.config.ts", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.copyFileSync(path.join(repoRoot, "site.config.ts"), path.join(dir, "site.config.ts"));
+
+    patchSiteConfig(dir, "Sync Check Garden", "A sync-check description");
+
+    const result = fs.readFileSync(path.join(dir, "site.config.ts"), "utf8");
+    expect(result).toContain(`title: { en: "Sync Check Garden", zh: "Sync Check Garden" }`);
+    expect(result).toContain(
+      `description: { en: "A sync-check description", zh: "A sync-check description" }`
+    );
+    expect(result).toContain("Sync Check Garden. All rights reserved.");
+    expect(result).toContain("Sync Check Garden. 保留所有权利。");
+  });
+
+  test("patchPackageJson patches the real package.json", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.copyFileSync(path.join(repoRoot, "package.json"), path.join(dir, "package.json"));
+
+    patchPackageJson(dir, "sync-check-garden");
+
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")) as Record<
+      string,
+      unknown
+    >;
+    expect(pkg.name).toBe("sync-check-garden");
+    expect(pkg.private).toBe(true);
+    expect(pkg.repository).toBeUndefined();
+    expect(pkg.bugs).toBeUndefined();
+    expect(pkg.homepage).toBeUndefined();
+    // The scaffolded project must keep its build scripts intact.
+    expect((pkg.scripts as Record<string, string>).build).toBeTruthy();
+  });
 });
 
 // ---------------------------------------------------------------------------

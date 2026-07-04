@@ -158,6 +158,21 @@ function escapeTemplateLiteral(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
 }
 
+// Replace `pattern` in `src`, failing loudly when the pattern no longer
+// matches — a silent miss here means the downloaded site.config.ts shape
+// drifted from what this CLI knows how to patch, and the user would get an
+// unpatched site with no hint why.
+function mustReplace(src: string, pattern: RegExp, replacement: string, field: string): string {
+  if (!pattern.test(src)) {
+    throw new Error(
+      `create-amytis is out of sync with the downloaded site.config.ts: ` +
+      `could not find the "${field}" block to patch. Edit site.config.ts manually, ` +
+      `and please report this at https://github.com/hutusi/amytis/issues`
+    );
+  }
+  return src.replace(pattern, replacement);
+}
+
 export function patchSiteConfig(projectDir: string, title: string, description: string): void {
   const configPath = path.join(projectDir, "site.config.ts");
   if (!fs.existsSync(configPath)) {
@@ -168,22 +183,28 @@ export function patchSiteConfig(projectDir: string, title: string, description: 
   let src = fs.readFileSync(configPath, "utf8");
 
   // title: { en: "...", zh: "..." }
-  src = src.replace(
+  src = mustReplace(
+    src,
     /title:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/,
-    `title: { en: ${JSON.stringify(title)}, zh: ${JSON.stringify(title)} }`
+    `title: { en: ${JSON.stringify(title)}, zh: ${JSON.stringify(title)} }`,
+    "title"
   );
 
   // description: { en: "...", zh: "..." }
-  src = src.replace(
+  src = mustReplace(
+    src,
     /description:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/,
-    `description: { en: ${JSON.stringify(description)}, zh: ${JSON.stringify(description)} }`
+    `description: { en: ${JSON.stringify(description)}, zh: ${JSON.stringify(description)} }`,
+    "description"
   );
 
   // footerText — replace "Amytis" occurrences in template literals with project title
   const safeTitle = escapeTemplateLiteral(title);
-  src = src.replace(
+  src = mustReplace(
+    src,
     /footerText:\s*\{\s*en:\s*`[^`]*`,\s*zh:\s*`[^`]*`\s*\}/,
-    `footerText: { en: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\`, zh: \`© \${new Date().getFullYear()} ${safeTitle}. 保留所有权利。\` }`
+    `footerText: { en: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\`, zh: \`© \${new Date().getFullYear()} ${safeTitle}. 保留所有权利。\` }`,
+    "footerText"
   );
 
   fs.writeFileSync(configPath, src, "utf8");
