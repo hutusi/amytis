@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'bun:test';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from 'next-themes';
+import { LanguageProvider } from '@/components/LanguageProvider';
 import ThemeToggle from '@/components/ThemeToggle';
 
 /**
@@ -9,9 +10,11 @@ import ThemeToggle from '@/components/ThemeToggle';
  */
 function renderToggle() {
   return render(
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <ThemeToggle />
-    </ThemeProvider>,
+    <LanguageProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ThemeToggle />
+      </ThemeProvider>
+    </LanguageProvider>,
   );
 }
 

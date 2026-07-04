@@ -46,7 +46,7 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
   const pages = getPages();
 
   return (
-    <nav className="flex justify-center items-center gap-2 mt-8 border-t border-line pt-6" aria-label="Pagination">
+    <nav className="flex justify-center items-center gap-2 mt-8 border-t border-line pt-6" aria-label={t('pagination')}>
       {/* Previous */}
       {currentPage > 1 ? (
         <Link

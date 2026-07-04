@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import CodeBlock from "./CodeBlock";
+import { LanguageProvider } from "./LanguageProvider";
 
 async function renderCodeBlock(element: Awaited<ReturnType<typeof CodeBlock>>): Promise<string> {
-  return renderToStaticMarkup(element);
+  // The toolbar inside CodeBlock reads translations, so mirror the
+  // production wiring where LanguageProvider always wraps the tree.
+  return renderToStaticMarkup(<LanguageProvider>{element}</LanguageProvider>);
 }
 
 describe("CodeBlock", () => {
