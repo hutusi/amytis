@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { z } from 'zod';
+import { siteConfig } from '../../../site.config';
 import { byDateDesc } from '../sort';
 import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
@@ -251,7 +252,9 @@ export function getBookData(slug: string): BookData | null {
 
   let authors = data.authors;
   if (authors.length === 0) {
-    authors = ['Amytis'];
+    // Same fallback chain as posts (parse.ts): the site-wide default authors,
+    // not a hardcoded brand string.
+    authors = siteConfig.posts?.authors?.default ?? [];
   }
 
   return {
