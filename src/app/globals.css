@@ -598,6 +598,22 @@ html.dark .shiki .line.warning {
     @apply bg-background/95 backdrop-blur-md border border-line rounded-xl shadow-xl;
   }
 
+  /* Nav menu entries — single definition consumed by NavDropdown/NavAccordion.
+     Desktop panel items, panel footer link, and their mobile accordion
+     counterparts (tighter padding, no nowrap). */
+  .dropdown-item {
+    @apply block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline whitespace-nowrap;
+  }
+  .dropdown-item-footer {
+    @apply block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline;
+  }
+  .nav-accordion-item {
+    @apply block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors;
+  }
+  .nav-accordion-footer {
+    @apply block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors;
+  }
+
   .scrollbar-hide-default {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE 10+ */

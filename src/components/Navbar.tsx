@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,6 +9,8 @@ import type { NavChildItem } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
 import LanguageSwitch from './LanguageSwitch';
 import Search from '@/components/Search';
+import NavDropdown, { type NavMenuItem } from './NavDropdown';
+import NavAccordion from './NavAccordion';
 import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { TranslationKey } from '@/i18n/translations';
@@ -24,7 +26,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
-  const { t, language } = useLanguage();
+  const { t, tWith, language } = useLanguage();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,6 +76,30 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
     };
   }, [isMenuOpen]);
 
+  const seriesItems: NavMenuItem[] = seriesList.map((s) => ({
+    key: s.slug,
+    href: `/series/${s.slug}`,
+    label: s.name,
+  }));
+  const booksItems: NavMenuItem[] = booksList.map((b) => ({
+    key: b.slug,
+    href: `/books/${b.slug}`,
+    label: b.name,
+  }));
+  const childItems = (children: NavChildItem[]): NavMenuItem[] =>
+    children.map((child) => ({
+      key: child.url,
+      href: child.url,
+      label: getLabel(child.name, child.url),
+      external: child.external,
+      dividerBefore: child.dividerBefore,
+    }));
+
+  const submenuLabels = (label: string) => ({
+    expandLabel: tWith('nav_expand_submenu', { name: label }),
+    collapseLabel: tWith('nav_collapse_submenu', { name: label }),
+  });
+
   return (
     <nav
       data-site-nav
@@ -122,80 +148,35 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
               const Component = isExternal ? 'a' : Link;
               const props = isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {};
               const active = isActive(item.url);
+              const label = getLabel(item.name, item.url);
 
               if (item.url === '/books' && booksList.length > 0) {
                 return (
-                  <div key={item.url} className="relative group">
-                    <Link
-                      href={item.url}
-                      className={`text-sm font-sans font-medium no-underline transition-colors duration-200 flex items-center gap-1 py-4 ${
-                        active ? 'text-accent' : 'text-foreground/80 hover:text-heading'
-                      }`}
-                    >
-                      {getLabel(item.name, item.url)}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
-                    </Link>
-                    <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
-                        {booksList.map(b => (
-                          <Link
-                            key={b.slug}
-                            href={`/books/${b.slug}`}
-                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline whitespace-nowrap"
-                          >
-                            {b.name}
-                          </Link>
-                        ))}
-                        <div className="h-px bg-surface-soft my-1"></div>
-                        <Link
-                          href="/books"
-                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline"
-                        >
-                          {t('all_books')} →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+                  <NavDropdown
+                    key={item.url}
+                    label={label}
+                    href={item.url}
+                    active={active}
+                    items={booksItems}
+                    footer={{ href: '/books', label: `${t('all_books')} →` }}
+                    panelClassName="min-w-[200px] max-h-[70vh] overflow-y-auto"
+                    {...submenuLabels(label)}
+                  />
                 );
               }
 
               if (item.url === '/series' && seriesList.length > 0) {
                 return (
-                  <div key={item.url} className="relative group">
-                    <Link
-                      href={item.url}
-                      className={`text-sm font-sans font-medium no-underline transition-colors duration-200 flex items-center gap-1 py-4 ${
-                        active ? 'text-accent' : 'text-foreground/80 hover:text-heading'
-                      }`}
-                    >
-                      {getLabel(item.name, item.url)}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
-                    </Link>
-                    <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] max-h-[70vh] overflow-y-auto">
-                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
-                        {seriesList.map(s => (
-                          <Link
-                            key={s.slug}
-                            href={`/series/${s.slug}`}
-                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline whitespace-nowrap"
-                          >
-                            {s.name}
-                          </Link>
-                        ))}
-                        <div className="h-px bg-surface-soft my-1"></div>
-                        <Link
-                          href="/series"
-                          className="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline"
-                        >
-                          {t('all_series')} →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+                  <NavDropdown
+                    key={item.url}
+                    label={label}
+                    href={item.url}
+                    active={active}
+                    items={seriesItems}
+                    footer={{ href: '/series', label: `${t('all_series')} →` }}
+                    panelClassName="min-w-[200px] max-h-[70vh] overflow-y-auto"
+                    {...submenuLabels(label)}
+                  />
                 );
               }
 
@@ -203,39 +184,15 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
               if (item.children && item.children.length > 0) {
                 const childActive = item.children.some(c => isActive(c.url));
                 return (
-                  <div key={item.url || item.name} className="relative group">
-                    <button
-                      type="button"
-                      className={`text-sm font-sans font-medium transition-colors duration-200 flex items-center gap-1 py-4 bg-transparent border-0 cursor-pointer ${
-                        childActive ? 'text-accent' : 'text-foreground/80 hover:text-heading'
-                      }`}
-                    >
-                      {getLabel(item.name, item.url)}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:rotate-180 transition-transform">
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
-                    </button>
-                    <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[160px]">
-                      <div className="dropdown-panel p-2 flex flex-col gap-1 animate-slide-down">
-                        {item.children.map((child: NavChildItem, childIdx: number) => {
-                          const ChildComp = child.external ? 'a' : Link;
-                          const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-                          return (
-                            <Fragment key={child.url}>
-                              {child.dividerBefore && childIdx > 0 && <div className="h-px bg-surface-soft my-1" />}
-                              <ChildComp
-                                href={child.url}
-                                {...childProps}
-                                className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg transition-colors no-underline whitespace-nowrap"
-                              >
-                                {getLabel(child.name, child.url)}
-                              </ChildComp>
-                            </Fragment>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                  <NavDropdown
+                    key={item.url || item.name}
+                    label={label}
+                    active={childActive}
+                    items={childItems(item.children)}
+                    align="right"
+                    panelClassName="min-w-[160px]"
+                    {...submenuLabels(label)}
+                  />
                 );
               }
 
@@ -248,7 +205,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                     active ? 'text-accent' : 'text-foreground/80 hover:text-heading'
                   }`}
                 >
-                  {getLabel(item.name, item.url)}
+                  {label}
                   {isExternal && (
                     <svg
                       width="12"
@@ -273,7 +230,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
           <button
             className="md:hidden p-3 -mr-3 text-foreground/80 hover:text-heading transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={isMenuOpen ? t('nav_close_menu') : t('nav_open_menu')}
             aria-expanded={isMenuOpen}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -311,147 +268,57 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
               {navItems.map((item) => {
                 const isExternal = !!('external' in item && item.external);
                 const active = isActive(item.url);
+                const label = getLabel(item.name, item.url);
 
-                // Series accordion for mobile
                 if (item.url === '/series' && seriesList.length > 0) {
-                  const isOpen = openDropdown === '/series';
                   return (
-                    <div key={item.url}>
-                      <div className={`flex items-center rounded-lg transition-colors ${active ? 'text-accent' : 'text-foreground/80'}`}>
-                        <Link
-                          href={item.url}
-                          className="flex-1 px-3 py-3 text-base font-sans font-medium no-underline hover:text-accent transition-colors"
-                          onClick={() => closeMenu()}
-                        >
-                          {getLabel(item.name, item.url)}
-                        </Link>
-                        <button
-                          className="px-3 py-3 text-foreground/60 hover:text-accent transition-colors"
-                          onClick={() => setOpenDropdown(isOpen ? null : '/series')}
-                          aria-label={isOpen ? 'Collapse series list' : 'Expand series list'}
-                          aria-expanded={isOpen}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                            <path d="M6 9l6 6 6-6"/>
-                          </svg>
-                        </button>
-                      </div>
-                      {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-line flex flex-col gap-1 mb-1">
-                          {seriesList.map(s => (
-                            <Link
-                              key={s.slug}
-                              href={`/series/${s.slug}`}
-                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors"
-                              onClick={() => closeMenu()}
-                            >
-                              {s.name}
-                            </Link>
-                          ))}
-                          <Link
-                            href="/series"
-                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors"
-                            onClick={() => closeMenu()}
-                          >
-                            {t('all_series')} →
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                    <NavAccordion
+                      key={item.url}
+                      label={label}
+                      href={item.url}
+                      active={active}
+                      items={seriesItems}
+                      footer={{ href: '/series', label: `${t('all_series')} →` }}
+                      isOpen={openDropdown === '/series'}
+                      onToggle={() => setOpenDropdown(openDropdown === '/series' ? null : '/series')}
+                      onNavigate={closeMenu}
+                      {...submenuLabels(label)}
+                    />
                   );
                 }
 
-                // Books accordion for mobile
                 if (item.url === '/books' && booksList.length > 0) {
-                  const isOpen = openDropdown === '/books';
                   return (
-                    <div key={item.url}>
-                      <div className={`flex items-center rounded-lg transition-colors ${active ? 'text-accent' : 'text-foreground/80'}`}>
-                        <Link
-                          href={item.url}
-                          className="flex-1 px-3 py-3 text-base font-sans font-medium no-underline hover:text-accent transition-colors"
-                          onClick={() => closeMenu()}
-                        >
-                          {getLabel(item.name, item.url)}
-                        </Link>
-                        <button
-                          className="px-3 py-3 text-foreground/60 hover:text-accent transition-colors"
-                          onClick={() => setOpenDropdown(isOpen ? null : '/books')}
-                          aria-label={isOpen ? 'Collapse books list' : 'Expand books list'}
-                          aria-expanded={isOpen}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                            <path d="M6 9l6 6 6-6"/>
-                          </svg>
-                        </button>
-                      </div>
-                      {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-line flex flex-col gap-1 mb-1">
-                          {booksList.map(b => (
-                            <Link
-                              key={b.slug}
-                              href={`/books/${b.slug}`}
-                              className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors"
-                              onClick={() => closeMenu()}
-                            >
-                              {b.name}
-                            </Link>
-                          ))}
-                          <Link
-                            href="/books"
-                            className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors"
-                            onClick={() => closeMenu()}
-                          >
-                            {t('all_books')} →
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                    <NavAccordion
+                      key={item.url}
+                      label={label}
+                      href={item.url}
+                      active={active}
+                      items={booksItems}
+                      footer={{ href: '/books', label: `${t('all_books')} →` }}
+                      isOpen={openDropdown === '/books'}
+                      onToggle={() => setOpenDropdown(openDropdown === '/books' ? null : '/books')}
+                      onNavigate={closeMenu}
+                      {...submenuLabels(label)}
+                    />
                   );
                 }
 
                 // Static children accordion for mobile (e.g., "More")
                 if (item.children && item.children.length > 0) {
                   const dropdownKey = item.url || item.name;
-                  const isOpen = openDropdown === dropdownKey;
                   const childActive = item.children.some(c => isActive(c.url));
                   return (
-                    <div key={dropdownKey}>
-                      <button
-                        type="button"
-                        className={`w-full flex items-center justify-between px-3 py-3 text-base font-sans font-medium rounded-lg transition-colors ${
-                          childActive ? 'text-accent' : 'text-foreground/80 hover:text-accent hover:bg-surface-soft'
-                        }`}
-                        onClick={() => setOpenDropdown(isOpen ? null : dropdownKey)}
-                        aria-expanded={isOpen}
-                      >
-                        {getLabel(item.name, item.url)}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                          <path d="M6 9l6 6 6-6"/>
-                        </svg>
-                      </button>
-                      {isOpen && (
-                        <div className="ml-4 pl-3 border-l-2 border-line flex flex-col gap-1 mb-1">
-                          {item.children.map((child: NavChildItem, childIdx: number) => {
-                            const ChildComp = child.external ? 'a' : Link;
-                            const childProps = child.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-                            return (
-                              <Fragment key={child.url}>
-                                {child.dividerBefore && childIdx > 0 && <div className="h-px bg-surface-soft my-1" />}
-                                <ChildComp
-                                  href={child.url}
-                                  {...childProps}
-                                  className="block px-3 py-2 text-sm text-foreground/80 hover:text-accent hover:bg-surface-soft rounded-lg no-underline transition-colors"
-                                  onClick={() => closeMenu()}
-                                >
-                                  {getLabel(child.name, child.url)}
-                                </ChildComp>
-                              </Fragment>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                    <NavAccordion
+                      key={dropdownKey}
+                      label={label}
+                      active={childActive}
+                      items={childItems(item.children)}
+                      isOpen={openDropdown === dropdownKey}
+                      onToggle={() => setOpenDropdown(openDropdown === dropdownKey ? null : dropdownKey)}
+                      onNavigate={closeMenu}
+                      {...submenuLabels(label)}
+                    />
                   );
                 }
 
@@ -468,7 +335,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
                     }`}
                     onClick={() => closeMenu()}
                   >
-                    {getLabel(item.name, item.url)}
+                    {label}
                     {isExternal && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                         <path d="M7 17l9.2-9.2M17 17V7H7" />
