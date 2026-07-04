@@ -42,7 +42,12 @@ bun run new "Photography" --folder
 
 # Create post in a series
 bun run new "Getting Started" --series my-series
+
+# Create from a named template
+bun run new "My Review" --template default
 ```
+
+Post scaffolds come from the `templates/` directory: `--template <name>` picks `templates/<name>.mdx` (or `templates/<name>.md` with `--md`, falling back to the `.mdx` variant). Without the flag, `templates/default.mdx` is used. Add your own `templates/<name>.mdx` to create reusable frontmatter/body scaffolds; if no template file exists, the script falls back to a minimal built-in one.
 
 ### Creating Flows (Daily Notes)
 
