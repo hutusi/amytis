@@ -60,7 +60,7 @@ export default function KnowledgeGraph() {
   useEffect(() => {
     fetch('/knowledge-graph.json')
       .then(res => {
-        if (!res.ok) throw new Error('Graph data not found. Run `bun run build:graph` to generate it.');
+        if (!res.ok) throw new Error('Graph data not found.');
         return res.json();
       })
       .then((data: GraphData) => {
@@ -273,7 +273,13 @@ export default function KnowledgeGraph() {
     return (
       <div className="rounded-lg border border-line bg-surface-faint p-8 text-center text-sm text-muted">
         <p className="mb-2">{error}</p>
-        <code className="text-xs bg-surface-soft px-1.5 py-0.5 rounded">bun run build:graph</code>
+        {process.env.NODE_ENV === 'development' && (
+          <p>
+            Run{' '}
+            <code className="text-xs bg-surface-soft px-1.5 py-0.5 rounded">bun run build:graph</code>{' '}
+            to generate it.
+          </p>
+        )}
       </div>
     );
   }

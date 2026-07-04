@@ -445,17 +445,19 @@ export default function Search() {
                 <div className="p-8 text-center text-muted text-sm">{t('no_results')}</div>
               )}
 
-              {/* Pagefind not yet built (dev without running build:dev) */}
+              {/* Pagefind index missing (usually dev without running build:dev) */}
               {isUnavailable && !query && (
                 <div className="p-8 text-center text-muted text-sm space-y-1">
-                  <p>Search index not found.</p>
-                  <p>
-                    Run{' '}
-                    <code className="text-xs bg-surface-soft px-1 py-0.5 rounded">
-                      bun run build:dev
-                    </code>{' '}
-                    to generate it.
-                  </p>
+                  <p>{t('search_unavailable')}</p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <p>
+                      Run{' '}
+                      <code className="text-xs bg-surface-soft px-1 py-0.5 rounded">
+                        bun run build:dev
+                      </code>{' '}
+                      to generate the local index.
+                    </p>
+                  )}
                 </div>
               )}
 
