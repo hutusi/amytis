@@ -184,11 +184,11 @@ function attachContentLocales(page: PostData, slug: string): PostData {
  * build (strict-build invariant); a broken page must not silently 404.
  */
 export function getPageBySlug(slug: string): PostData | null {
-  let fullPath = path.join(pagesDirectory, `${slug}.mdx`);
-  if (!fs.existsSync(fullPath)) {
-    fullPath = path.join(pagesDirectory, `${slug}.md`);
+  let fullPath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.mdx`);
+  if (!fs.existsSync(/* turbopackIgnore: true */ fullPath)) {
+    fullPath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.md`);
   }
-  if (!fs.existsSync(fullPath)) return null;
+  if (!fs.existsSync(/* turbopackIgnore: true */ fullPath)) return null;
   return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
 }
 

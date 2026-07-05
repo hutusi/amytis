@@ -77,6 +77,11 @@ interface ArticleMetadataOptions {
   authors?: string[];
   /** Absolute OpenGraph url, when the route advertises one. */
   url?: string;
+  /**
+   * Absolute self-referencing canonical (trailing-slash form). Without it the
+   * served page emits no canonical link while its bare-path variant circulates.
+   */
+  canonicalUrl?: string;
   /** Absolute OG image (resolve via resolveImageUrl). Omit to emit no images. */
   ogImage?: string;
   /** 'none' omits the twitter block entirely (notes). */
@@ -97,6 +102,7 @@ export function buildArticleMetadata({
   publishedTime,
   authors,
   url,
+  canonicalUrl,
   ogImage,
   twitterCard = ogImage ? 'summary_large_image' : 'summary',
 }: ArticleMetadataOptions): Metadata {
@@ -105,6 +111,7 @@ export function buildArticleMetadata({
   const metadata: Metadata = {
     title: `${title}${titleSuffix} | ${siteTitle}`,
     description,
+    ...(canonicalUrl ? { alternates: { canonical: canonicalUrl } } : {}),
     openGraph: {
       title,
       description,

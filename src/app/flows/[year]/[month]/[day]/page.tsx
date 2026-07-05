@@ -13,6 +13,7 @@ import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
 import { buildArticleMetadata } from '@/lib/metadata';
+import { withTrailingSlash } from '@/lib/urls';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -31,11 +32,14 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   const { year, month, day } = await params;
   const flow = getFlowBySlug(`${year}/${month}/${day}`);
   if (!flow) return { title: 'Not Found' };
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = withTrailingSlash(`${siteUrl}/flows/${year}/${month}/${day}`);
   return buildArticleMetadata({
     title: flow.title,
     description: flow.excerpt,
     publishedTime: flow.date,
-    url: `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`,
+    url: canonicalUrl,
+    canonicalUrl,
     twitterCard: 'summary',
   });
 }

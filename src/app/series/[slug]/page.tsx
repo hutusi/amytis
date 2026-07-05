@@ -52,12 +52,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const ogImage = resolveImageUrl(seriesData.coverImage, siteConfig.ogImage, siteUrl);
   const defaultOgImage = resolveImageUrl(undefined, siteConfig.ogImage, siteUrl);
 
+  const canonicalUrl = withTrailingSlash(`${siteUrl}${getSeriesUrl(slug)}`);
   return buildArticleMetadata({
     title: seriesData.title,
     titleSuffix: ` - ${t('series')}`,
     description: seriesData.excerpt,
     type: 'website',
-    url: `${siteConfig.baseUrl}${getSeriesUrl(slug)}`,
+    url: canonicalUrl,
+    canonicalUrl,
     ogImage,
     twitterCard: ogImage !== defaultOgImage ? 'summary_large_image' : 'summary',
   });

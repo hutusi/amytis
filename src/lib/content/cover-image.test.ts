@@ -14,6 +14,11 @@ describe('content/cover-image', () => {
       .toBe('http://example.com/cover.jpg');
   });
 
+  test('a relative filename merely starting with "http" still gets prefixed', () => {
+    expect(normalizeCoverImage('httpFooter.png', '/posts/my-post'))
+      .toBe('/posts/my-post/httpFooter.png');
+  });
+
   test('leaves site-absolute paths untouched', () => {
     expect(normalizeCoverImage('/images/cover.jpg', '/posts/my-post'))
       .toBe('/images/cover.jpg');

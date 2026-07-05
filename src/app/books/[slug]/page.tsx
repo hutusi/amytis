@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
 import { buildBookJsonLd, serializeJsonLd, resolveImageUrl } from '@/lib/json-ld';
 import { buildArticleMetadata } from '@/lib/metadata';
-import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { getBookUrl, getBookChapterUrl, withTrailingSlash } from '@/lib/urls';
 import { safeDecodeParam } from '@/lib/route-params';
 
 // Visual depth limit for nested-section headings. After the first two levels
@@ -76,11 +76,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const ogImage = resolveImageUrl(book.coverImage, siteConfig.ogImage, siteUrl);
   const defaultOgImage = resolveImageUrl(undefined, siteConfig.ogImage, siteUrl);
 
+  const canonicalUrl = withTrailingSlash(`${siteUrl}${getBookUrl(book.slug)}`);
   return buildArticleMetadata({
     title: book.title,
     description: book.excerpt,
     type: 'website',
-    url: `${siteConfig.baseUrl}${getBookUrl(book.slug)}`,
+    url: canonicalUrl,
+    canonicalUrl,
     ogImage,
     twitterCard: ogImage !== defaultOgImage ? 'summary_large_image' : 'summary',
   });

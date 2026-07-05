@@ -83,6 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: post.excerpt,
     publishedTime: post.date,
     authors: post.authors,
+    canonicalUrl: withTrailingSlash(`${siteUrl}${canonicalUrl}`),
     ogImage: resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl),
     twitterCard: 'summary_large_image',
   });

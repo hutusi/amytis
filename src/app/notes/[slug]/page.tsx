@@ -1,5 +1,6 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
 import { safeDecodeParam } from '@/lib/route-params';
+import { getNoteUrl, withTrailingSlash } from '@/lib/urls';
 import { isFeatureEnabled } from '@/lib/features';
 import { getAllNotes, getNoteBySlug, getAdjacentNotes } from '@/lib/content/notes';
 import { notFound } from 'next/navigation';
@@ -37,10 +38,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug: rawSlug } = await params;
   const note = getNoteBySlug(safeDecodeParam(rawSlug)) ?? getNoteBySlug(rawSlug);
   if (!note) return { title: 'Not Found' };
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   return buildArticleMetadata({
     title: note.title,
     description: note.excerpt,
     publishedTime: note.date,
+    canonicalUrl: withTrailingSlash(`${siteUrl}${getNoteUrl(note.slug)}`),
     twitterCard: 'none',
   });
 }

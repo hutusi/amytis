@@ -89,6 +89,16 @@ describe("patchSiteConfig", () => {
     expect(result).toContain(`"Ada's \\"Blog\\""`);
   });
 
+  test("inserts $-patterns literally instead of as replace() directives", () => {
+    const dir = setup();
+    // `$&` re-inserts the matched block and `$$` collapses to `$` under
+    // String.replace string semantics — the function replacer must keep both.
+    patchSiteConfig(dir, "Cash $$ & $& Money", "Costs $$5");
+    const result = fs.readFileSync(path.join(dir, "site.config.ts"), "utf8");
+    expect(result).toContain(`title: { en: "Cash $$ & $& Money", zh: "Cash $$ & $& Money" }`);
+    expect(result).toContain(`description: { en: "Costs $$5", zh: "Costs $$5" }`);
+  });
+
   test("preserves unrelated config fields", () => {
     const dir = setup();
     patchSiteConfig(dir, "My Blog", "My description");

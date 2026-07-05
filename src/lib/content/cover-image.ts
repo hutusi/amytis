@@ -24,7 +24,9 @@ export function normalizeCoverImage(
 ): string | undefined {
   if (!coverImage) return coverImage;
   if (
-    coverImage.startsWith('http') ||
+    // Scheme check, not startsWith('http') — a relative file named
+    // "httpFoo.png" must still get the public-path prefix.
+    /^https?:\/\//.test(coverImage) ||
     coverImage.startsWith('/') ||
     coverImage.startsWith('text:')
   ) {

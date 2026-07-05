@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
-import { withTrailingSlash } from '@/lib/urls';
+import { getPostUrl, withTrailingSlash } from '@/lib/urls';
 import { buildArticleMetadata } from '@/lib/metadata';
 import RedirectPage from '@/components/RedirectPage';
 import RenderPostPage from '@/components/RenderPostPage';
@@ -42,6 +42,7 @@ export async function generateMetadata({
     description: post.excerpt,
     publishedTime: post.date,
     authors: post.authors,
+    canonicalUrl: withTrailingSlash(`${siteUrl}${getPostUrl(post)}`),
     ogImage: resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl),
     twitterCard: 'summary_large_image',
   });

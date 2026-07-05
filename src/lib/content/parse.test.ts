@@ -153,26 +153,31 @@ describe("content/parse", () => {
   test("inherits authors from the series index when the post has none", () => {
     const seriesSlug = "__test-author-series__";
     const seriesDir = path.join(process.cwd(), "content", "series", seriesSlug);
-    fs.mkdirSync(seriesDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(seriesDir, "index.md"),
-      ["---", 'title: "Author Series Fixture"', "authors:", "  - Series Author Fixture", "---", "", "Body", ""].join("\n"),
-      "utf8",
-    );
+    let tempDir: string | undefined;
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-authors-"));
-    const filePath = path.join(tempDir, "child.mdx");
-    fs.writeFileSync(
-      filePath,
-      ["---", 'title: "Series Child"', "---", "", "Body", ""].join("\n"),
-      "utf8",
-    );
-
+    // All fixture creation happens inside the try: the series fixture lives
+    // in the REAL content/series tree, so a throw during setup must still
+    // reach the finally cleanup rather than stranding it there.
     try {
+      fs.mkdirSync(seriesDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(seriesDir, "index.md"),
+        ["---", 'title: "Author Series Fixture"', "authors:", "  - Series Author Fixture", "---", "", "Body", ""].join("\n"),
+        "utf8",
+      );
+
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-authors-"));
+      const filePath = path.join(tempDir, "child.mdx");
+      fs.writeFileSync(
+        filePath,
+        ["---", 'title: "Series Child"', "---", "", "Body", ""].join("\n"),
+        "utf8",
+      );
+
       const post = parseMarkdownFileForTests(filePath, "child", undefined, seriesSlug);
       expect(post.authors).toEqual(["Series Author Fixture"]);
     } finally {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+      if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
       fs.rmSync(seriesDir, { recursive: true, force: true });
     }
   });

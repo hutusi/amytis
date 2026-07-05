@@ -170,7 +170,10 @@ function mustReplace(src: string, pattern: RegExp, replacement: string, field: s
       `and please report this at https://github.com/hutusi/amytis/issues`
     );
   }
-  return src.replace(pattern, replacement);
+  // Function replacer: a plain-string replacement would give `$&`/`$$`/`` $` ``
+  // in user-supplied titles special String.replace semantics and corrupt the
+  // generated config.
+  return src.replace(pattern, () => replacement);
 }
 
 export function patchSiteConfig(projectDir: string, title: string, description: string): void {
