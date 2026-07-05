@@ -123,8 +123,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build static export
-        run: bun run build:dev
+      - name: Build static export (full production build)
+        # Must be the FULL build: build:dev skips next-image-export-optimizer,
+        # so the optimized image paths in the exported HTML would 404 and every
+        # image-dependent mobile assertion fails (naturalWidth 0, collapsed
+        # click targets). Off the PR loop, the extra ~2 min doesn't matter.
+        run: bun run build
 
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium webkit
