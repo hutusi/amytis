@@ -1,23 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 'react';
 import { isFeatureEnabled } from '@/lib/features';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
-import { type ContentType, getResultType, getDateFromUrl, cleanTitle } from '@/lib/search-utils';
+import type { ContentType } from '@/lib/search-utils';
 import type { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
 import { resolveLocaleValue } from '@/lib/i18n';
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface DisplayResult {
-  url: string;
-  title: string;
-  excerpt: string; // contains <mark> tags from Pagefind
-  date: string;
-  type: Exclude<ContentType, 'All'>;
-}
+import { usePagefind } from '@/hooks/usePagefind';
+import SearchResults from '@/components/SearchResults';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,21 +30,12 @@ const CONTENT_TYPE_FEATURE: Record<Exclude<ContentType, 'All'>, keyof typeof sit
 const RECENT_KEY = 'amytis-recent-searches';
 const MAX_RECENT = 5;
 const MAX_RESULTS = 8;
-const FETCH_RESULTS = 24; // fetch more so type filter always has enough
-const DEBOUNCE_MS = 150;
 
 const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
   Post: 'search_type_post',
   Flow: 'search_type_flow',
   Book: 'search_type_book',
   Note: 'search_type_note',
-};
-
-const TYPE_STYLES: Record<string, string> = {
-  Flow: 'border-accent/30 text-accent',
-  Book: 'border-foreground/30 text-foreground/60',
-  Post: 'border-line-strong text-muted',
-  Note: 'border-emerald-400/30 text-emerald-600 dark:text-emerald-400',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -68,55 +51,15 @@ function persistRecentSearch(query: string, current: string[]): string[] {
   return updated;
 }
 
-// ─── Pagefind loader ──────────────────────────────────────────────────────────
-//
-// We use `new Function` to create a runtime-only dynamic import so that
-// neither webpack nor Turbopack tries to bundle /pagefind/pagefind.js at
-// compile time (the file only exists after `pagefind --site out` runs).
-
-interface PagefindFragment {
-  url: string;
-  excerpt: string; // contains <mark> tags
-  meta: { title?: string; image?: string; date?: string; [key: string]: string | undefined };
-  word_count: number;
-}
-
-interface PagefindAPI {
-  init: () => Promise<void>;
-  search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
-}
-
-let pagefindCache: PagefindAPI | null = null;
-let pagefindUnavailable = false;
-
-async function loadPagefind(): Promise<PagefindAPI | null> {
-  if (pagefindCache) return pagefindCache;
-  if (pagefindUnavailable) return null;
-  try {
-    const load = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
-    const pf = await load('/pagefind/pagefind.js');
-    await pf.init();
-    pagefindCache = pf;
-    return pf;
-  } catch {
-    pagefindUnavailable = true;
-    return null;
-  }
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Search() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [allResults, setAllResults] = useState<DisplayResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeType, setActiveType] = useState<ContentType>('All');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [isFetching, setIsFetching] = useState(false);
-  const [isUnavailable, setIsUnavailable] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -126,6 +69,17 @@ export default function Search() {
   const wasOpenRef = useRef(false);
   const baseId = useId();
   const { t, tWith, language } = useLanguage();
+
+  // Reset the keyboard highlight and type tab whenever usePagefind replaces
+  // the result set. Stable identity (setState functions never change) so the
+  // hook's search effect doesn't re-run on every render.
+  const resetResultSelection = useCallback(() => {
+    setActiveIndex(-1);
+    setActiveType('All');
+  }, []);
+
+  const { allResults, isFetching, isUnavailable, isTyping, debouncedQuery } =
+    usePagefind(query, isOpen, resetResultSelection);
 
   const listboxId = `${baseId}-listbox`;
   const optionId = (index: number) => `${baseId}-option-${index}`;
@@ -138,9 +92,6 @@ export default function Search() {
     return t(TYPE_LABEL_KEYS[type]);
   };
 
-  // True while debounce is pending — suppress "no results" flash
-  const isTyping = query.length > 0 && query !== debouncedQuery;
-
   // Load recent searches on mount. localStorage is unavailable during SSR,
   // so this can't be hoisted into useState's initializer without breaking
   // hydration — the mount-only effect is the documented React pattern.
@@ -148,65 +99,6 @@ export default function Search() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecentSearches(loadRecentSearches());
   }, []);
-
-  // Pre-load Pagefind when the modal first opens
-  useEffect(() => {
-    if (isOpen) {
-      loadPagefind().then((pf) => { if (!pf) setIsUnavailable(true); });
-    }
-  }, [isOpen]);
-
-  // Debounce query. The sync reset when `query` is empty is intentional:
-  // skipping it would leave stale results visible for DEBOUNCE_MS after the
-  // user clears the input.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!query) { setDebouncedQuery(''); return; }
-    const timer = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  // Run Pagefind search on debounced query. Synchronous resets when the
-  // query becomes empty are the simplest way to clear results state without
-  // threading conditional renders through every consumer of allResults.
-  useEffect(() => {
-    if (!debouncedQuery) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAllResults([]);
-      setActiveIndex(-1);
-      setActiveType('All');
-      return;
-    }
-
-    let cancelled = false;
-    setIsFetching(true);
-
-    loadPagefind().then(async (pf) => {
-      if (!pf || cancelled) { setIsFetching(false); return; }
-      try {
-        const search = await pf.search(debouncedQuery);
-        const fragments = await Promise.all(
-          search.results.slice(0, FETCH_RESULTS).map((r) => r.data())
-        );
-        if (cancelled) return;
-        setAllResults(
-          fragments.map((f: PagefindFragment) => ({
-            url: f.url,
-            title: cleanTitle(f.meta.title ?? ''),
-            excerpt: f.excerpt,
-            date: f.meta.date ?? getDateFromUrl(f.url),
-            type: getResultType(f.url),
-          }))
-        );
-        setActiveIndex(-1);
-        setActiveType('All');
-      } finally {
-        if (!cancelled) setIsFetching(false);
-      }
-    });
-
-    return () => { cancelled = true; };
-  }, [debouncedQuery]);
 
   // Filtered results for the active type tab
   const { displayedResults, totalFilteredCount } = useMemo(() => {
@@ -234,10 +126,10 @@ export default function Search() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Focus on open; full reset on close. The 6 resets are batched into a
-  // single React render — the rule's "cascading renders" warning doesn't
-  // apply when state changes are batched as siblings, only when one update
-  // triggers the next.
+  // Focus on open; reset local state on close (usePagefind resets its own
+  // search state). All the resets are batched into a single React render —
+  // the rule's "cascading renders" warning doesn't apply when state changes
+  // are batched as siblings, only when one update triggers the next.
   useEffect(() => {
     if (isOpen) {
       wasOpenRef.current = true;
@@ -251,11 +143,8 @@ export default function Search() {
       }
       /* eslint-disable react-hooks/set-state-in-effect */
       setQuery('');
-      setDebouncedQuery('');
-      setAllResults([]);
       setActiveIndex(-1);
       setActiveType('All');
-      setIsFetching(false);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isOpen]);
@@ -345,7 +234,7 @@ export default function Search() {
     try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
   }
 
-  const showNoResults = !isTyping && !isFetching && debouncedQuery && displayedResults.length === 0;
+  const showNoResults = !isTyping && !isFetching && debouncedQuery.length > 0 && displayedResults.length === 0;
 
   return (
     <>
@@ -455,59 +344,19 @@ export default function Search() {
               aria-labelledby={allResults.length > 0 ? tabId(activeType) : undefined}
             >
 
-              {/* Results — listbox owned by the combobox input via
-                  aria-controls/aria-activedescendant */}
-              {displayedResults.length > 0 && (
-                <ul className="py-2" id={listboxId} role="listbox" aria-label={t('search_label')}>
-                  {displayedResults.map((result, index) => (
-                    <li
-                      key={result.url}
-                      id={optionId(index)}
-                      role="option"
-                      aria-selected={index === activeIndex}
-                    >
-                      <Link
-                        href={result.url}
-                        onClick={() => handleNavigate(query)}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        tabIndex={-1}
-                        className={`block px-4 py-3 transition-colors ${index === activeIndex ? 'bg-surface-soft' : 'hover:bg-surface-soft'}`}
-                      >
-                        <div className="flex items-baseline justify-between gap-2">
-                          <div className="text-sm font-serif font-bold text-heading truncate">
-                            {result.title}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {result.date && (
-                              <span className="text-[10px] font-mono text-muted/60">{result.date}</span>
-                            )}
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[result.type]}`}>
-                              {getTypeLabel(result.type)}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Pagefind excerpts already include <mark> highlight tags */}
-                        <div
-                          className="text-xs text-muted mt-1 line-clamp-2 [&_mark]:bg-transparent [&_mark]:text-accent [&_mark]:font-semibold [&_mark]:not-italic"
-                          dangerouslySetInnerHTML={{ __html: result.excerpt }}
-                        />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {/* Result count when capped */}
-              {displayedResults.length > 0 && totalFilteredCount > MAX_RESULTS && (
-                <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-line text-center">
-                  {tWith('search_showing', { shown: displayedResults.length, total: totalFilteredCount })}
-                </div>
-              )}
-
-              {/* No results */}
-              {showNoResults && (
-                <div className="p-8 text-center text-muted text-sm">{t('no_results')}</div>
-              )}
+              {/* Results listbox + capped-count footer + no-results block */}
+              <SearchResults
+                displayedResults={displayedResults}
+                totalFilteredCount={totalFilteredCount}
+                maxResults={MAX_RESULTS}
+                activeIndex={activeIndex}
+                listboxId={listboxId}
+                optionId={optionId}
+                showNoResults={showNoResults}
+                getTypeLabel={getTypeLabel}
+                onResultClick={() => handleNavigate(query)}
+                onResultHover={setActiveIndex}
+              />
 
               {/* Pagefind index missing (usually dev without running build:dev) */}
               {isUnavailable && !query && (
