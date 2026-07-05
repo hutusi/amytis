@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import sitemap from '@/app/sitemap';
 import { getAllPosts } from '@/lib/content/posts';
-import { getPostUrl } from '@/lib/urls';
+import { getPostUrl, withTrailingSlash } from '@/lib/urls';
 import { siteConfig } from '../../site.config';
 
 // The sitemap reads real content, so these tests assert invariants that must
@@ -49,14 +49,15 @@ describe('Integration: sitemap', () => {
 
   test('includes the unconditional listing pages', () => {
     for (const path of ['/archive', '/tags', '/books', '/flows']) {
-      expect(urls).toContain(`${baseUrl}${path}`);
+      // Canonical form under trailingSlash: true — see withTrailingSlash.
+      expect(urls).toContain(`${baseUrl}${path}/`);
     }
   });
 
   test('includes every post at its canonical URL', () => {
     const urlSet = new Set(urls);
     for (const post of getAllPosts()) {
-      expect(urlSet.has(`${baseUrl}${getPostUrl(post)}`)).toBe(true);
+      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getPostUrl(post)}`))).toBe(true);
     }
   });
 

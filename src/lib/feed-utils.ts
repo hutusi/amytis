@@ -7,7 +7,7 @@ import rehypeStringify from 'rehype-stringify';
 import { getAllPosts } from './content/posts';
 import { getAllFlows } from './content/flows';
 import { siteConfig } from '../../site.config';
-import { getPostUrl, getFlowUrl } from './urls';
+import { getPostUrl, getFlowUrl, withTrailingSlash } from './urls';
 import { resolveLocale } from './i18n';
 
 export interface FeedItem {
@@ -49,7 +49,7 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
 
   const getPostItems = () => getAllPosts().map((post) => ({
     title: post.title,
-    url: `${baseUrl}${getPostUrl(post)}`,
+    url: withTrailingSlash(`${baseUrl}${getPostUrl(post)}`),
     date: new Date(post.date),
     excerpt: post.excerpt,
     content: includeFullContent ? markdownToHtml(post.content) : '',
@@ -59,7 +59,7 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
 
   const getFlowItems = () => getAllFlows().map((flow) => ({
     title: flow.title,
-    url: `${baseUrl}${getFlowUrl(flow.slug)}`,
+    url: withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`),
     date: new Date(flow.date),
     excerpt: flow.excerpt,
     content: includeFullContent ? markdownToHtml(flow.content) : '',
