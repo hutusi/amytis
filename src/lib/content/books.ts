@@ -8,7 +8,8 @@ import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
-import { dateField, draftField } from './schema';
+import { normalizeCoverImage } from './cover-image';
+import { dateField, draftField, invalidFrontmatterError } from './schema';
 
 /**
  * Books: long-form content with an explicit TOC in the book index's
@@ -221,9 +222,7 @@ export function getBookData(slug: string): BookData | null {
   if (!parsed.success) {
     // Invalid frontmatter is a build-time error, not a silent skip — consistent
     // with the missing-chapter throw below (strict-build invariant).
-    throw new Error(
-      `[amytis] Invalid book frontmatter in ${fullPath}: ${JSON.stringify(parsed.error.format())}`
-    );
+    throw invalidFrontmatterError('book frontmatter', fullPath, parsed.error);
   }
   const data = parsed.data;
 
@@ -244,11 +243,7 @@ export function getBookData(slug: string): BookData | null {
     );
   }
 
-  let coverImage = data.coverImage;
-  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
-    const cleanPath = coverImage.replace(/^\.\//, '');
-    coverImage = `/books/${slug}/${cleanPath}`;
-  }
+  const coverImage = normalizeCoverImage(data.coverImage, `/books/${slug}`);
 
   let authors = data.authors;
   if (authors.length === 0) {
@@ -290,9 +285,7 @@ export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapt
   if (!parsed.success) {
     // A chapter listed in the TOC with broken frontmatter must fail the build,
     // not silently 404 (strict-build invariant; matches getBookData above).
-    throw new Error(
-      `[amytis] Invalid chapter frontmatter in ${fullPath}: ${JSON.stringify(parsed.error.format())}`
-    );
+    throw invalidFrontmatterError('chapter frontmatter', fullPath, parsed.error);
   }
   const data = parsed.data;
 

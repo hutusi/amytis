@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { z } from 'zod';
-import { dateField, draftField, tagsField } from './schema';
+import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
 
 describe('content/schema', () => {
   test('dateField normalizes strings and Dates to YYYY-MM-DD', () => {
@@ -21,5 +21,18 @@ describe('content/schema', () => {
   test('draftField and tagsField apply their defaults', () => {
     const S = z.object({ draft: draftField, tags: tagsField });
     expect(S.parse({})).toEqual({ draft: false, tags: [] });
+  });
+
+  test('invalidFrontmatterError embeds file path AND field details in the message', () => {
+    const S = z.object({ title: z.string() });
+    const parsed = S.safeParse({});
+    expect(parsed.success).toBe(false);
+    if (parsed.success) throw new Error('unreachable');
+
+    const err = invalidFrontmatterError('note frontmatter', '/content/notes/x.md', parsed.error);
+    // The details must live in the thrown message itself — CI logs that
+    // capture only the exception would otherwise lose the offending fields.
+    expect(err.message).toContain('[amytis] Invalid note frontmatter in /content/notes/x.md:');
+    expect(err.message).toContain('title');
   });
 });

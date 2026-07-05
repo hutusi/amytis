@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
+import { siteConfig } from "../../../site.config";
 import { RstParseError } from "../rst";
 import {
   getPythonRstRendererAvailabilityForTests,
@@ -103,6 +104,107 @@ describe("content/parse", () => {
     expect(post.content).toContain("Overview\n--------");
     expect(post.content).toContain(".. code-block:: ts");
     expect(getPythonRstRendererAvailabilityForTests()).toBe(false);
+  });
+
+  test("resolves authors via explicit list, single author, then site default", () => {
+    const withTempMarkdownPost = (
+      frontmatterLines: string[],
+      fn: (filePath: string) => void,
+    ) => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-authors-"));
+      const filePath = path.join(tempDir, "post.mdx");
+      fs.writeFileSync(
+        filePath,
+        ["---", 'title: "Author Chain"', ...frontmatterLines, "---", "", "Body", ""].join("\n"),
+        "utf8",
+      );
+      try {
+        fn(filePath);
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    };
+
+    // 1. Explicit `authors` array wins.
+    withTempMarkdownPost(["authors:", "  - Ada Lovelace", "  - Alan Turing"], (filePath) => {
+      expect(parseMarkdownFileForTests(filePath, "author-chain").authors)
+        .toEqual(["Ada Lovelace", "Alan Turing"]);
+    });
+
+    // 2. Single `author` string is wrapped.
+    withTempMarkdownPost(['author: "Grace Hopper"'], (filePath) => {
+      expect(parseMarkdownFileForTests(filePath, "author-chain").authors)
+        .toEqual(["Grace Hopper"]);
+    });
+
+    // 3. No author fields at all → site-wide default.
+    withTempMarkdownPost([], (filePath) => {
+      expect(parseMarkdownFileForTests(filePath, "author-chain").authors)
+        .toEqual(siteConfig.posts?.authors?.default ?? []);
+    });
+
+    // 4. Markdown semantics: an explicitly-empty `authors: []` means
+    //    "no byline" — it does NOT fall through to series/site defaults.
+    withTempMarkdownPost(["authors: []"], (filePath) => {
+      expect(parseMarkdownFileForTests(filePath, "author-chain").authors).toEqual([]);
+    });
+  });
+
+  test("inherits authors from the series index when the post has none", () => {
+    const seriesSlug = "__test-author-series__";
+    const seriesDir = path.join(process.cwd(), "content", "series", seriesSlug);
+    fs.mkdirSync(seriesDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(seriesDir, "index.md"),
+      ["---", 'title: "Author Series Fixture"', "authors:", "  - Series Author Fixture", "---", "", "Body", ""].join("\n"),
+      "utf8",
+    );
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-authors-"));
+    const filePath = path.join(tempDir, "child.mdx");
+    fs.writeFileSync(
+      filePath,
+      ["---", 'title: "Series Child"', "---", "", "Body", ""].join("\n"),
+      "utf8",
+    );
+
+    try {
+      const post = parseMarkdownFileForTests(filePath, "child", undefined, seriesSlug);
+      expect(post.authors).toEqual(["Series Author Fixture"]);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      fs.rmSync(seriesDir, { recursive: true, force: true });
+    }
+  });
+
+  test("rst: an empty :Authors: field falls back to the default author chain", () => {
+    process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-rst-"));
+    const filePath = path.join(tempDir, "no-authors.rst");
+    fs.writeFileSync(
+      filePath,
+      [
+        ":Authors:",
+        "",
+        "No Authors Here",
+        "***************",
+        "",
+        "Body",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    try {
+      const post = parseRstFileForTests(filePath, "no-authors");
+      // rST semantics: a present-but-empty authors field means "not
+      // specified", so the site default applies (unlike Markdown's
+      // explicit `authors: []`).
+      expect(post.authors).toEqual(siteConfig.posts?.authors?.default ?? []);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   test("uses rst file mtime when metadata date and slug date are missing", () => {

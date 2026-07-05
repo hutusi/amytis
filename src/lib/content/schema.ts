@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Frontmatter fields shared across the content domains (posts, notes, flows,
- * books). This is a leaf module that imports only zod, so reusing these in the
+ * Frontmatter fields and validation-error helpers shared across the content
+ * domains (posts, notes, flows, books).
+ * This is a leaf module that imports only zod, so reusing these in the
  * domain schemas introduces no dependency cycle — the content dependency-graph
  * guard tracks sibling (`./`) imports, and this module has none.
  *
@@ -31,3 +32,20 @@ export const draftField = z.boolean().optional().default(false);
 
 /** Optional tag list; defaults to []. */
 export const tagsField = z.array(z.string()).optional().default([]);
+
+/**
+ * Build the error thrown when frontmatter fails Zod validation. The
+ * field-level details are embedded in the message itself — not just
+ * `console.error`'d — so CI logs that capture only the exception still name
+ * the offending fields. `what` names the content kind, e.g. `'frontmatter'`
+ * (posts), `'note frontmatter'`, `'book frontmatter'`.
+ */
+export function invalidFrontmatterError(
+  what: string,
+  fullPath: string,
+  error: z.ZodError,
+): Error {
+  return new Error(
+    `[amytis] Invalid ${what} in ${fullPath}: ${JSON.stringify(error.format())}`
+  );
+}

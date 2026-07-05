@@ -8,7 +8,7 @@ import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { flowsDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
-import { dateField, draftField, tagsField } from './schema';
+import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
 
 /**
  * Flows: daily notes stored as content/flows/YYYY/MM/DD.{md,mdx}
@@ -52,8 +52,7 @@ function parseFlowFile(fullPath: string, slug: string): FlowData {
 
   const parsed = FlowSchema.safeParse(rawData);
   if (!parsed.success) {
-    console.error(`Invalid flow frontmatter in ${fullPath}:`, parsed.error.format());
-    throw new Error(`Invalid flow frontmatter in ${fullPath}`);
+    throw invalidFrontmatterError('flow frontmatter', fullPath, parsed.error);
   }
   const data = parsed.data;
 
