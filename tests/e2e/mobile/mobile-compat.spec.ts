@@ -292,6 +292,16 @@ test.describe('Mobile Compatibility', () => {
       // The kitchen-sink post has async content (Mermaid, KaTeX, syntax highlighting)
       // that can delay image layout settlement beyond networkidle.
       await page.locator('article').first().waitFor({ state: 'visible' });
+      // Most in-article images are loading="lazy" and never load while below
+      // the fold of a small viewport — sweep the page so each enters the
+      // viewport, otherwise the all-images-complete wait below hangs forever.
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
+          window.scrollTo(0, y);
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        window.scrollTo(0, 0);
+      });
       await page.waitForFunction(() =>
         Array.from(document.querySelectorAll('img')).every(
           (img) => img.complete && img.naturalWidth > 0,
@@ -425,14 +435,20 @@ test.describe('Mobile Compatibility', () => {
       if (!href) { test.skip(); return; }
 
       await imageLink.click();
-      await page.waitForLoadState('domcontentloaded');
+      // Next <Link> navigates client-side — the document never reloads, so
+      // waitForLoadState resolves immediately and a one-shot URL assertion
+      // races the SPA transition. waitForURL retries until it lands.
+      await page.waitForURL(`**${href}`);
       expect(page.url()).toContain(href);
     });
 
     test('cover image in series catalog is wrapped in a link', async ({ page }) => {
       await page.goto('/series');
       await page.waitForLoadState('load');
-      const seriesLink = page.locator('a[href^="/series/"]').first();
+      // Scope to the page body: the navbar's Series trigger renders as
+      // href="/series/" (trailingSlash normalization) and would otherwise be
+      // the first match, sending the test back to the series index.
+      const seriesLink = page.locator('main a[href^="/series/"]').first();
       const seriesHref = await seriesLink.getAttribute('href');
       if (!seriesHref) { test.skip(); return; }
 
@@ -446,7 +462,8 @@ test.describe('Mobile Compatibility', () => {
     test('clicking series catalog cover image navigates to post page', async ({ page }) => {
       await page.goto('/series');
       await page.waitForLoadState('load');
-      const seriesLink = page.locator('a[href^="/series/"]').first();
+      // Scoped to main for the same navbar-trigger reason as above.
+      const seriesLink = page.locator('main a[href^="/series/"]').first();
       const seriesHref = await seriesLink.getAttribute('href');
       if (!seriesHref) { test.skip(); return; }
 
@@ -458,7 +475,8 @@ test.describe('Mobile Compatibility', () => {
       if (!href) { test.skip(); return; }
 
       await imageLink.click();
-      await page.waitForLoadState('domcontentloaded');
+      // Client-side navigation — see the post-list click test above.
+      await page.waitForURL(`**${href}`);
       expect(page.url()).toContain(href);
     });
   });
