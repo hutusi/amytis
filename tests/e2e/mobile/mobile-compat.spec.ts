@@ -293,20 +293,20 @@ test.describe('Mobile Compatibility', () => {
       // that can delay image layout settlement beyond networkidle.
       await page.locator('article').first().waitFor({ state: 'visible' });
       // Most in-article images are loading="lazy" and never load while below
-      // the fold of a small viewport — sweep the page so each enters the
-      // viewport, otherwise the all-images-complete wait below hangs forever.
-      await page.evaluate(async () => {
-        for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
-          window.scrollTo(0, y);
-          await new Promise((resolve) => setTimeout(resolve, 50));
+      // the fold of a small viewport, so waiting for them would hang forever.
+      // Scroll-sweeping is racy on slow CI runners (the sweep can run before
+      // the long page finishes layout, so nothing ever intersects); instead
+      // force eager loading inside the poll itself — re-applied every frame,
+      // so it also survives hydration resetting the attribute.
+      await page.waitForFunction(() => {
+        const imgs = Array.from(document.querySelectorAll('img')).filter(
+          (img) => img.getClientRects().length > 0,
+        );
+        for (const img of imgs) {
+          if (!img.complete && img.loading === 'lazy') img.loading = 'eager';
         }
-        window.scrollTo(0, 0);
+        return imgs.every((img) => img.complete && img.naturalWidth > 0);
       });
-      await page.waitForFunction(() =>
-        Array.from(document.querySelectorAll('img')).every(
-          (img) => img.complete && img.naturalWidth > 0,
-        ),
-      );
 
       const overflows = await page.evaluate(() => {
         const imgs = Array.from(document.querySelectorAll('img'));

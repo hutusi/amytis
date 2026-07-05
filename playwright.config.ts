@@ -193,7 +193,10 @@ export default defineConfig({
   webServer: {
     // In CI, serve the built static export — production-faithful and free of
     // per-route dev compiles. Locally, reuse (or start) the dev server.
-    command: process.env.CI ? 'bunx serve@14 out -l 3000' : 'bun dev',
+    // scripts/serve-static.ts, not `serve`: under parallel browser workers
+    // fetching image-heavy pages, WebKit navigations against `serve` stall
+    // until the test timeout.
+    command: process.env.CI ? 'bun scripts/serve-static.ts out 3000' : 'bun dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
