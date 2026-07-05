@@ -30,3 +30,36 @@ export function resolveFromParam<T>(raw: string, lookup: (candidate: string) => 
   }
   return null;
 }
+
+/**
+ * Dev-only: expand static params with percent-encoded variants of every
+ * segment (all combinations), deduplicated against what's already present.
+ * Works around Next dev static-param checks for Unicode slugs under
+ * `output: "export"` — the dev server may receive encoded forms of any
+ * segment. Production export keeps raw segment values only.
+ */
+export function withDevEncodedVariants<T extends Record<string, string>>(params: T[]): T[] {
+  if (process.env.NODE_ENV === 'production') return params;
+  const keyOf = (param: Record<string, string>) =>
+    Object.keys(param)
+      .sort()
+      .map((k) => `${k}=${param[k]}`)
+      .join('&');
+  const out = [...params];
+  const seen = new Set(out.map(keyOf));
+  for (const param of params) {
+    const keys = Object.keys(param);
+    for (let mask = 1; mask < 1 << keys.length; mask++) {
+      const variant: Record<string, string> = { ...param };
+      keys.forEach((k, i) => {
+        if (mask & (1 << i)) variant[k] = encodeURIComponent(param[k]);
+      });
+      const key = keyOf(variant);
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push(variant as T);
+      }
+    }
+  }
+  return out;
+}
