@@ -96,7 +96,8 @@ src/app/
 
 Layout & navigation:
 
-- `Navbar`, `Footer`, `Hero` (configurable homepage hero with collapsible intro)
+- `Navbar` with `NavDropdown` / `NavAccordion` — the desktop dropdowns and mobile accordions follow the WAI-ARIA disclosure pattern (click-to-toggle with `aria-expanded`/`aria-controls`, Escape restores focus; hover stays as a mouse convenience)
+- `Footer`, `Hero` (configurable homepage hero) — server components; their language-reactive strings render through the `T` / `TLocale` / `TLabel` client leaves in `src/components/T.tsx`. Use those leaves instead of adding `'use client'` to a presentational component just for translations.
 - `LanguageSwitch` (i18n language selector), `ThemeToggle` (light/dark mode)
 
 Content renderers:
@@ -107,6 +108,7 @@ Content renderers:
 
 Post & series surfaces:
 
+- `RenderPostPage` — shared body for the two canonical-post routes (`/posts/[slug]` and prefixed `[slug]/[postSlug]`): owns the JSON-LD script, the simple-layout branch, and the related/adjacent/backlinks assembly. Detail-route metadata goes through `buildArticleMetadata` in `src/lib/metadata.ts`.
 - `PostLayout` / `SimpleLayout` — post page layouts with TOC, series sidebar, external links, comments
 - `PostList` — card-based post listing with thumbnails, metadata, excerpts, tags
 - `PostCard`, `PostSidebar`, `RelatedPosts`, `ShareBar`
@@ -126,8 +128,8 @@ Notes & flows:
 
 Search & discovery:
 
-- `Search` — full-text search (Cmd/Ctrl+K) powered by Pagefind; type filter tabs (All/Post/Flow/Book), recent searches, keyboard navigation, debounced input, focus trap, ARIA, search syntax (`"phrase"`, `-exclude`)
-- `Pagination`, `KnowledgeGraph`
+- `Search` — full-text search modal (Cmd/Ctrl+K): combobox ARIA, focus trap/restore, roving-tabindex type tabs, recent searches. The Pagefind loader/debounce/search machinery lives in the `usePagefind` hook; the results listbox in `SearchResults`.
+- `Pagination`, `KnowledgeGraph` (loaded via `KnowledgeGraphLazy` — `next/dynamic` with `ssr: false` keeps d3 out of the `/graph` initial chunk; reduced-motion and mobile users get the searchable list view)
 
 Integrations:
 
@@ -147,6 +149,8 @@ types → io/cache → series-metadata → parse → posts → series → {relat
 - `io.ts` — content directory constants, filename conventions, and `readUtf8File` (the ONLY `fs.readFileSync` in the layer; carries the `turbopackIgnore` annotation, enforced by a guard test in `io.test.ts`).
 - `cache.ts` — `createMemo` / `createKeyedMemo` (env-keyed, cache in dev too) and `createProdMemo` (prod-only; dev recomputes for HMR freshness). The two flavors are deliberate — do not merge them.
 - `series-metadata.ts` — series index discovery (`resolveSeriesIndexInfo`, `getSeriesContentEntries` with the mixed-format/duplicate-slug throws) plus `getSeriesTitle` / `getSeriesAuthors`, read directly from index files. This is what keeps parse↔series acyclic: nothing here imports `parse.ts`.
+- `schema.ts` — shared frontmatter fields (`dateField`, `draftField`, `tagsField`) and `invalidFrontmatterError` (all invalid-frontmatter throws embed the Zod field details in the Error message, not just stdout).
+- `cover-image.ts` — `normalizeCoverImage`, the single relative-cover-image → public-path normalization used by `parse.ts` and `books.ts` (leaf module, keeps the graph acyclic).
 - `parse.ts` — `PostSchema` and the Markdown/rST file parsers, including the Python-renderer availability singleton and its test hooks (they must stay co-located).
 - `posts.ts` — `getAllPosts`, `getListingPosts`, `getPostBySlug`, pages (`getAllPages`, `getPageBySlug` with locale variants), `getFeaturedPosts`, `getPostsByTag`.
 - `authors.ts` — `getAuthorSlug`, `getAllAuthors`, `getPostsByAuthor`, `resolveAuthorParam`.
