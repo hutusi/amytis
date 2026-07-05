@@ -23,6 +23,9 @@
 - [ ] **Content Porter**: Tool to import/export notes from Obsidian or Notion.
 - [ ] **Optimization**: Automatically compress and resize co-located images during build.
 - [ ] **Build Performance**: Profile `build:dev`, clean stale export/search outputs before indexing, and consider a lighter local build path that skips expensive full-site indexing when not needed.
+- [ ] **Test Fixture Decoupling**: 18 of 30 integration tests read the live `content/` directory. Migrating them to `tests/fixtures/content/` needs a content-root override seam in `content/io.ts` plus a memo-cache reset design — deferred (2026-07) as a dedicated change.
+- [ ] **Stricter Type Gates**: `noUncheckedIndexedAccess` (386 errors today) and type-aware ESLint (`recommendedTypeChecked`) — deferred (2026-07); both are churn-heavy sweeps best landed alone.
+- [ ] **globals.css Split**: move the ~113 generated code-group icon lines to an imported partial (requires updating `scripts/generate-code-group-icons.ts`'s output target).
 
 ## 🤔 Under Consideration
 - [ ] **Per-locale static routes** (`/en/…`, `/zh/…`): would let SSR emit the correct language, eliminating the flash of default-locale text and the `suppressHydrationWarning` workarounds that client-side i18n requires. Deferred (2026-07): changes public URLs (needs redirects) and roughly doubles the static page count; the incremental path chosen instead keeps URLs and shrinks the client-component surface.
