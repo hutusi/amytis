@@ -3,7 +3,7 @@ import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { t, resolveLocale } from '@/lib/i18n';
 import { siteConfig } from '../../../site.config';
-import KnowledgeGraph from '@/components/KnowledgeGraph';
+import KnowledgeGraph from '@/components/KnowledgeGraphLazy';
 import PageHeader from '@/components/PageHeader';
 
 export const metadata: Metadata = {

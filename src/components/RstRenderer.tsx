@@ -1,10 +1,13 @@
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { PROSE_CLASSES } from '@/lib/prose-classes';
-import KatexStyles from '@/components/KatexStyles';
+import dynamic from 'next/dynamic';
 import type { SlugRegistryEntry } from '@/lib/content/discovery';
 import { rstToMarkdown } from '@/lib/rst';
 import { applyShikiToRstHtml } from '@/lib/shiki-rst';
 import sanitizeHtml from 'sanitize-html';
+
+// Dynamic so katex.min.css gets its own chunk — see KatexStyles.tsx.
+const KatexStyles = dynamic(() => import('@/components/KatexStyles'));
 
 interface RstRendererProps {
   content: string;

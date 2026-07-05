@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 1200, 1920],
   },
   transpilePackages: ["next-image-export-optimizer"],
+  experimental: {
+    // Rewrites barrel-file imports (e.g. react-icons/fa6) to direct module
+    // imports at build time, hardening tree-shaking for icon/d3 imports.
+    optimizePackageImports: ["react-icons", "d3"],
+  },
   env: {
     nextImageExportOptimizer_imageFolderPath: "public",
     nextImageExportOptimizer_exportFolderPath: "out",

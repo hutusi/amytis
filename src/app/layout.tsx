@@ -30,27 +30,29 @@ const inter = localFont({
     },
   ],
   variable: "--font-inter",
+  display: "swap",
 });
 
 const baskerville = localFont({
   src: [
     {
-      path: "../fonts/LibreBaskerville-Regular.ttf",
+      path: "../fonts/LibreBaskerville-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../fonts/LibreBaskerville-Bold.ttf",
+      path: "../fonts/LibreBaskerville-Bold.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../fonts/LibreBaskerville-Italic.ttf",
+      path: "../fonts/LibreBaskerville-Italic.woff2",
       weight: "400",
       style: "italic",
     },
   ],
   variable: "--font-baskerville",
+  display: "swap",
 });
 
 const siteTwitterHandle = (() => {
