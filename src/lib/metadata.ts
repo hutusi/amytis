@@ -60,3 +60,73 @@ export function createListingMetadata({
 
   return resolvedDescription !== undefined ? { title, description: resolvedDescription } : { title };
 }
+
+/** Standard OpenGraph image dimensions, shared by every article route. */
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
+
+interface ArticleMetadataOptions {
+  /** Article title. The page <title> becomes `${title}${titleSuffix} | ${siteTitle}`. */
+  title: string;
+  /** Extra segment between title and site name, e.g. ` - ${t('series')}`. */
+  titleSuffix?: string;
+  description?: string;
+  /** OpenGraph type; posts/notes/flows are 'article', series/books 'website'. */
+  type?: 'article' | 'website';
+  publishedTime?: string;
+  authors?: string[];
+  /** Absolute OpenGraph url, when the route advertises one. */
+  url?: string;
+  /** Absolute OG image (resolve via resolveImageUrl). Omit to emit no images. */
+  ogImage?: string;
+  /** 'none' omits the twitter block entirely (notes). */
+  twitterCard?: 'summary' | 'summary_large_image' | 'none';
+}
+
+/**
+ * Build the detail-page Metadata shared by post/series/book/note/flow routes.
+ * Centralizes the ~30-line openGraph+twitter block that was copy-pasted into
+ * six routes; option flags preserve each route's shape (og type, url, image
+ * presence, twitter card) rather than forcing them identical.
+ */
+export function buildArticleMetadata({
+  title,
+  titleSuffix = '',
+  description,
+  type = 'article',
+  publishedTime,
+  authors,
+  url,
+  ogImage,
+  twitterCard = ogImage ? 'summary_large_image' : 'summary',
+}: ArticleMetadataOptions): Metadata {
+  const siteTitle = resolveLocale(siteConfig.title);
+
+  const metadata: Metadata = {
+    title: `${title}${titleSuffix} | ${siteTitle}`,
+    description,
+    openGraph: {
+      title,
+      description,
+      type,
+      ...(publishedTime ? { publishedTime } : {}),
+      ...(authors ? { authors } : {}),
+      ...(url ? { url } : {}),
+      ...(ogImage
+        ? { images: [{ url: ogImage, width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT, alt: title }] }
+        : {}),
+      siteName: siteTitle,
+    },
+  };
+
+  if (twitterCard !== 'none') {
+    metadata.twitter = {
+      card: twitterCard,
+      title,
+      description,
+      ...(ogImage ? { images: [ogImage] } : {}),
+    };
+  }
+
+  return metadata;
+}

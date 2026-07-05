@@ -1,27 +1,16 @@
-import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
-import { safeDecodeParam } from '@/lib/route-params';
-import { getRelatedPosts, getAdjacentPosts } from '@/lib/content/related';
-import { getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
+import { resolveFromParam, safeDecodeParam, withDevEncodedVariants } from '@/lib/route-params';
 import { getPostBySlug, getAllPosts } from '@/lib/content/posts';
-import type { PostData } from '@/lib/content/types';
 import { notFound } from 'next/navigation';
-import PostLayout from '@/layouts/PostLayout';
-import SimpleLayout from '@/layouts/SimpleLayout';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
-import { resolveLocale } from '@/lib/i18n';
-import { getPostsBasePath, getPostUrl } from '@/lib/urls';
-import { buildPostJsonLd, serializeJsonLd, resolveImageUrl } from '@/lib/json-ld';
+import { getPostsBasePath, getPostUrl, withTrailingSlash } from '@/lib/urls';
+import { resolveImageUrl } from '@/lib/json-ld';
+import { buildArticleMetadata } from '@/lib/metadata';
 import RedirectPage from '@/components/RedirectPage';
+import RenderPostPage from '@/components/RenderPostPage';
 
 function resolvePostFromParam(rawSlug: string) {
-  const decoded = safeDecodeParam(rawSlug);
-  return (
-    getPostBySlug(decoded) ||
-    getPostBySlug(rawSlug) ||
-    getPostBySlug(decoded.normalize('NFC')) ||
-    getPostBySlug(decoded.normalize('NFD'))
-  );
+  return resolveFromParam(rawSlug, (candidate) => getPostBySlug(candidate));
 }
 
 /**
@@ -45,9 +34,6 @@ export async function generateStaticParams() {
   const slugs = new Set<string>();
   for (const post of filtered) {
     slugs.add(post.slug);
-    if (process.env.NODE_ENV !== 'production') {
-      slugs.add(encodeURIComponent(post.slug));
-    }
   }
 
   // Also include redirectFrom slugs at this basePath (e.g. /posts/old-name → /posts/new-name).
@@ -56,16 +42,12 @@ export async function generateStaticParams() {
       const segments = from.split('/').filter(Boolean);
       if (segments.length !== 2 || segments[0] !== basePath) continue;
       if (from === getPostUrl(post)) continue;
-      const fromSlug = segments[1];
-      slugs.add(fromSlug);
-      if (process.env.NODE_ENV !== 'production') {
-        slugs.add(encodeURIComponent(fromSlug));
-      }
+      slugs.add(segments[1]);
     }
   }
 
-  if (slugs.size === 0) return [{ slug: '_' }];
-  return Array.from(slugs).map((slug) => ({ slug }));
+  const params = withDevEncodedVariants(Array.from(slugs).map((slug) => ({ slug })));
+  return params.length > 0 ? params : [{ slug: '_' }];
 }
 
 export const dynamicParams = false;
@@ -92,38 +74,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (canonicalUrl !== currentPath) {
     return {
       title: post.title,
-      alternates: { canonical: `${siteUrl}${canonicalUrl}` },
+      alternates: { canonical: withTrailingSlash(`${siteUrl}${canonicalUrl}`) },
     };
   }
 
-  const ogImage = resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl);
-
-  return {
-    title: `${post.title} | ${resolveLocale(siteConfig.title)}`,
+  return buildArticleMetadata({
+    title: post.title,
     description: post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      type: 'article',
-      publishedTime: post.date,
-      authors: post.authors,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      siteName: resolveLocale(siteConfig.title),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt,
-      images: [ogImage],
-    },
-  };
+    publishedTime: post.date,
+    authors: post.authors,
+    ogImage: resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl),
+    twitterCard: 'summary_large_image',
+  });
 }
 
 export default async function PostPage({
@@ -150,41 +112,5 @@ export default async function PostPage({
     return <RedirectPage to={canonicalUrl} />;
   }
 
-  // Determine layout based on frontmatter
-  const layout = post.layout || 'post';
-
-  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-  const jsonLd = buildPostJsonLd({
-    post,
-    postUrl: `${siteUrl}${getPostUrl(post)}`,
-    siteTitle: resolveLocale(siteConfig.title),
-    siteUrl,
-    defaultOgImage: siteConfig.ogImage,
-  });
-  const jsonLdScript = <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />;
-
-  if (layout === 'simple') {
-    return <>{jsonLdScript}<SimpleLayout post={post} /></>;
-  }
-
-  const relatedPosts = getRelatedPosts(slug);
-  const { prev, next } = getAdjacentPosts(slug);
-  const slugRegistry = buildSlugRegistry();
-  const backlinks = getBacklinks(slug);
-  const collectionContexts = getCollectionsForPost(slug);
-  let seriesPosts: PostData[] = [];
-  let seriesTitle: string | undefined;
-
-  if (post.series) {
-    seriesPosts = getSeriesPosts(post.series);
-    const seriesData = getSeriesData(post.series);
-    seriesTitle = seriesData?.title;
-  }
-
-  return (
-    <>
-      {jsonLdScript}
-      <PostLayout post={post} relatedPosts={relatedPosts} seriesPosts={seriesPosts} seriesTitle={seriesTitle} collectionContexts={collectionContexts} prevPost={prev} nextPost={next} backlinks={backlinks} slugRegistry={slugRegistry} />
-    </>
-  );
+  return <RenderPostPage post={post} />;
 }

@@ -7,7 +7,8 @@ import CoverImage from '@/components/CoverImage';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
-import { buildBookJsonLd, serializeJsonLd } from '@/lib/json-ld';
+import { buildBookJsonLd, serializeJsonLd, resolveImageUrl } from '@/lib/json-ld';
+import { buildArticleMetadata } from '@/lib/metadata';
 import { getBookUrl, getBookChapterUrl } from '@/lib/urls';
 import { safeDecodeParam } from '@/lib/route-params';
 
@@ -71,28 +72,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Book Not Found' };
   }
 
-  const ogImage = book.coverImage && !book.coverImage.startsWith('text:') && !book.coverImage.startsWith('./')
-    ? book.coverImage
-    : siteConfig.ogImage;
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const ogImage = resolveImageUrl(book.coverImage, siteConfig.ogImage, siteUrl);
+  const defaultOgImage = resolveImageUrl(undefined, siteConfig.ogImage, siteUrl);
 
-  return {
-    title: `${book.title} | ${resolveLocale(siteConfig.title)}`,
+  return buildArticleMetadata({
+    title: book.title,
     description: book.excerpt,
-    openGraph: {
-      title: book.title,
-      description: book.excerpt,
-      type: 'website',
-      url: `${siteConfig.baseUrl}${getBookUrl(book.slug)}`,
-      siteName: resolveLocale(siteConfig.title),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: book.title }],
-    },
-    twitter: {
-      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
-      title: book.title,
-      description: book.excerpt,
-      images: [ogImage],
-    },
-  };
+    type: 'website',
+    url: `${siteConfig.baseUrl}${getBookUrl(book.slug)}`,
+    ogImage,
+    twitterCard: ogImage !== defaultOgImage ? 'summary_large_image' : 'summary',
+  });
 }
 
 export default async function BookLandingPage({ params }: { params: Promise<{ slug: string }> }) {
