@@ -1,105 +1,12 @@
-# Amytis Project Context
+# Amytis — Gemini Context
 
-## Project Overview
-**Amytis** (@hutusi/amytis) is a high-performance, elegant digital garden and blog engine built with **Next.js 16 (App Router)**, **React 19**, and **Tailwind CSS v4**. It is designed for cultivating thoughts and sharing knowledge with a focus on typography, readability, and flexible content organization.
+**Amytis** (`@hutusi/amytis`) is a high-performance digital garden and blog engine: Next.js 16 (App Router), React 19, Tailwind CSS v4, fully static export (`output: "export"`). Content lives in local MDX/Markdown (primary) and rST (legacy) files with Zod-validated frontmatter; everything resolves at build time. Package manager and runtime: [Bun](https://bun.sh/).
 
-The package is officially published to both **npm** and **GitHub Packages** with automated **Trusted Publishing** (OIDC).
+All repository guidelines — project structure, build/test/dev commands, coding style, static-export routing rules, testing, and commit/PR conventions — live in **[AGENTS.md](AGENTS.md)**. Follow that file; this one intentionally duplicates none of it.
 
-### Main Technologies
-- **Framework**: Next.js 16 (App Router)
-- **Runtime/Package Manager**: [Bun](https://bun.sh/)
-- **Styling**: Tailwind CSS v4 with CSS-variable based themes and `@tailwindcss/typography`.
-- **Content**: Local MDX/Markdown files with Zod-validated frontmatter.
-- **Search**: Static full-text search using `Pagefind`.
-- **Diagrams**: Native support for `Mermaid` diagrams.
-- **Math**: LaTeX support via `rehype-katex`.
+Deeper references:
 
-## Building and Running
-
-### Development
-```bash
-bun dev
-```
-
-### Production Build (Static Export)
-```bash
-bun run build
-```
-Generates a fully optimized static site in the `out/` directory with Pagefind search index.
-
-### Linting & Testing
-```bash
-bun run lint
-bun test
-```
-
-## Project Structure
-- `src/app/`: Next.js App Router pages and global styles.
-  - `page.tsx`: Homepage with horizontal scrolling featured sections and latest timeline.
-  - `posts/`: Paginated post listing and individual post routes.
-  - `flows/`: Stream-style daily notes or micro-blogging (`[year]/[month]/[day]`).
-  - `series/`: Series overview and individual series catalog pages with pagination support.
-  - `books/`: Books overview and individual book/chapter pages (`[slug]/[...chapter]`).
-  - `notes/`: Evergreen notes index and individual note pages with backlinks.
-  - `archive/`: Timeline-based chronological archive grouped by year and month.
-  - `tags/`: Popularity-sorted tag cloud and filtered listings.
-  - `authors/`: Posts filtered by individual authors.
-  - `graph/`: Interactive knowledge graph visualization of all connected content.
-  - `subscribe/`: Subscription options (RSS, Newsletter, Social).
-  - `search.json/`: Static search index generator (supplementary).
-- `src/lib/`: Core logic and utilities.
-  - `content/`: Data layer — parsing, posts/series/books/flows/notes queries, discovery.
-  - `search-utils.ts`: Content cleaning and search result processing.
-  - `shuffle.ts`: Deterministic and random array shuffling.
-  - `urls.ts`: Centralized URL routing and link generation logic.
-- `src/components/`: Modular UI blocks (Hero, HorizontalScroll, Search, CoverImage, ShareBar, etc.).
-- `content/`: Source Markdown/MDX content.
-- `scripts/`: CLI tools for content management and asset processing.
-
-## Key Features & Configuration
-
-### Advanced Content Management
-- **Posts**: Supports both flat files (`.mdx`) and nested folders (`/index.mdx`) with co-located assets.
-- **Flows**: Daily notes or micro-posts organized by date (`YYYY/MM/DD`). Designed for quick thoughts and stream-of-consciousness updates. Supports optional titles via frontmatter or H1 headings.
-- **Series**: 
-  - Robust grouping with folder-based or file-based entries.
-  - Configurable sorting: `date-asc`, `date-desc`, or `manual` (explicit list of slugs).
-  - **Collections**: Specialized series (`type: collection`) that allow manual curation of posts and other series.
-  - **Namespaced Referencing**: Collection items support `folder/slug` syntax (e.g., `posts/my-post`, `web-dev/intro`) to explicitly resolve posts and prevent collisions across different content directories.
-  - Cross-referencing: Series can include posts from the general pool or other folders.
-  - Metadata inheritance: Posts can inherit attributes (like authors) from series index files.
-- **Featured Content**: Mark posts or series as `featured` to display them in prominent homepage sections with horizontal scrolling.
-- **Cover Images**: Support for local paths, external URLs, and dynamic desaturated gradients (`text:Label`).
-- **External Links**: Posts can include a list of curated external resources in frontmatter.
-
-### Digital Garden Features
-- **Notes**: Atomic, evergreen notes for personal knowledge management (`content/notes/`).
-- **Wiki-links**: Bidirectional linking using `[[Slug]]` syntax across all content types.
-- **Backlinks**: Automatic display of "Linked References" with context snippets.
-- **Knowledge Graph**: Interactive visualization of content relationships at `/graph`.
-
-### Refined UX & Design
-- **Homepage**: Elegant layout with "Curated Series" and "Featured Stories" sections using horizontal scroll triggers.
-- **Navigation**: Command+K fuzzy search, sticky TOC with progress tracking, and Series Catalog sidebars.
-- **Theming**: Four built-in palettes (`default`, `blue`, `rose`, `amber`) with high-contrast Dark Mode support.
-- **i18n**: Multi-language infrastructure (en, zh) with footer language switcher. `site.config.ts` supports localized strings.
-
-### Build Pipeline
-- **Asset Mapping**: `scripts/copy-assets.ts` mirrors content assets to the public folder, handling relative path resolution for both flat and nested structures.
-- **Image Optimization**: Fully integrated with `next-image-export-optimizer` for optimized WebP delivery in static exports.
-- **Search Indexing**: `Pagefind` runs after build to generate a static search index from the output directory.
-
-## Recent Updates
-- Added **Flows** feature: a stream for daily notes and micro-blogging.
-- Upgraded to Next.js 16.1.1 and React 19.
-- Implemented robust series sorting and manual selection logic.
-- Refined homepage layout with horizontal scrolling and distinct card styles for Series, Featured, and Latest sections.
-- Added comprehensive CLI tools for PDF and Image-to-post conversions.
-- Unified simple page layouts (About, Tags, Archive) for visual consistency.
-- Resolved text-rendering cover image display issues using stable utility classes.
-- Added pagination to the main posts list and individual series pages.
-- Implemented sophisticated reading time calculation for mixed Latin and CJK text.
-- Enhanced author management with metadata inheritance and slug-based routing.
-- Implemented **Namespaced Collections**: manually curated series now support `folder/slug` references to prevent post collisions and ensure explicit content resolution.
-- Added **Type-Specific Feeds**: dedicated RSS/Atom endpoints for `/posts`, `/flows`, and a global `/all` firehose.
-- Improved **Copy-Paste UX**: wrapped article content in background-stable containers and added `select-none` to UI navigation to ensure clean, high-fidelity content selection.
+- `docs/ARCHITECTURE.md` — route map, content model, components, data layer, configuration reference
+- `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
+- `docs/TROUBLESHOOTING.md` — known issues and their root causes
+- `site.config.ts` — live site configuration (read it directly)

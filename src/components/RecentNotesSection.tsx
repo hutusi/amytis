@@ -1,8 +1,6 @@
-'use client';
-
 import Link from 'next/link';
 import SectionHeading from './ui/SectionHeading';
-import { useLanguage } from './LanguageProvider';
+import { T } from './T';
 
 export interface RecentNoteItem {
   slug: string;
@@ -16,19 +14,17 @@ interface RecentNotesSectionProps {
 }
 
 export default function RecentNotesSection({ notes }: RecentNotesSectionProps) {
-  const { t } = useLanguage();
-
   if (notes.length === 0) return null;
 
   return (
     <section id="recent-flows">
       <div className="flex items-center justify-between mb-8">
-        <SectionHeading>{t('recent_notes')}</SectionHeading>
+        <SectionHeading><T k="recent_notes" /></SectionHeading>
         <Link
           href="/flows"
           className="text-sm text-muted hover:text-accent transition-colors no-underline"
         >
-          {t('all_flows')} →
+          <T k="all_flows" /> →
         </Link>
       </div>
 

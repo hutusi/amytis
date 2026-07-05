@@ -1,7 +1,5 @@
-'use client';
-
 import Link from 'next/link';
-import { useLanguage } from './LanguageProvider';
+import { T } from './T';
 
 interface TagPageHeaderProps {
   tag: string;
@@ -9,13 +7,27 @@ interface TagPageHeaderProps {
   flowCount?: number;
 }
 
+// Server component: count logic is pure; translated strings render via <T>.
 export default function TagPageHeader({ tag, postCount = 0, flowCount = 0 }: TagPageHeaderProps) {
-  const { t, tWith } = useLanguage();
-
-  const parts: string[] = [];
-  if (postCount > 0) parts.push(tWith(postCount === 1 ? 'tag_post_count_one' : 'tag_post_count', { count: postCount }));
-  if (flowCount > 0) parts.push(tWith(flowCount === 1 ? 'tag_flow_count_one' : 'tag_flow_count', { count: flowCount }));
-  const subtitle = parts.join(' · ');
+  const parts: React.ReactNode[] = [];
+  if (postCount > 0) {
+    parts.push(
+      <T
+        key="posts"
+        k={postCount === 1 ? 'tag_post_count_one' : 'tag_post_count'}
+        params={{ count: postCount }}
+      />
+    );
+  }
+  if (flowCount > 0) {
+    parts.push(
+      <T
+        key="flows"
+        k={flowCount === 1 ? 'tag_flow_count_one' : 'tag_flow_count'}
+        params={{ count: flowCount }}
+      />
+    );
+  }
 
   return (
     <>
@@ -25,7 +37,7 @@ export default function TagPageHeader({ tag, postCount = 0, flowCount = 0 }: Tag
           href="/tags"
           className="text-xs font-bold uppercase tracking-widest text-muted hover:text-accent transition-colors no-underline"
         >
-          &larr; {t('tags')}
+          &larr; <T k="tags" />
         </Link>
       </nav>
 
@@ -33,8 +45,15 @@ export default function TagPageHeader({ tag, postCount = 0, flowCount = 0 }: Tag
         <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading">
           <span className="text-accent/50 mr-1">#</span>{tag}
         </h1>
-        {subtitle && (
-          <p className="mt-2 text-sm text-muted">{subtitle}</p>
+        {parts.length > 0 && (
+          <p className="mt-2 text-sm text-muted">
+            {parts.map((node, index) => (
+              <span key={index}>
+                {index > 0 && ' · '}
+                {node}
+              </span>
+            ))}
+          </p>
         )}
       </header>
     </>

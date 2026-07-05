@@ -8,9 +8,11 @@ import { siteConfig } from '../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale } from '@/lib/i18n';
-import { getPostUrl, getPostUrlInCollection, getSeriesUrl } from '@/lib/urls';
+import { getPostUrl, getPostUrlInCollection, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesSlugParams, resolveSeriesParam } from '@/lib/route-aliases';
+import { resolveImageUrl } from '@/lib/json-ld';
+import { buildArticleMetadata } from '@/lib/metadata';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
       title: resolution.data.title,
-      alternates: { canonical: `${siteUrl}${getSeriesUrl(resolution.canonicalSlug)}` },
+      alternates: { canonical: withTrailingSlash(`${siteUrl}${getSeriesUrl(resolution.canonicalSlug)}`) },
     };
   }
   const slug = resolution.slug;
@@ -46,28 +48,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Series Not Found' };
   }
 
-  const ogImage = seriesData.coverImage && !seriesData.coverImage.startsWith('text:') && !seriesData.coverImage.startsWith('./')
-    ? seriesData.coverImage
-    : siteConfig.ogImage;
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const ogImage = resolveImageUrl(seriesData.coverImage, siteConfig.ogImage, siteUrl);
+  const defaultOgImage = resolveImageUrl(undefined, siteConfig.ogImage, siteUrl);
 
-  return {
-    title: `${seriesData.title} - ${t('series')} | ${resolveLocale(siteConfig.title)}`,
+  const canonicalUrl = withTrailingSlash(`${siteUrl}${getSeriesUrl(slug)}`);
+  return buildArticleMetadata({
+    title: seriesData.title,
+    titleSuffix: ` - ${t('series')}`,
     description: seriesData.excerpt,
-    openGraph: {
-      title: seriesData.title,
-      description: seriesData.excerpt,
-      type: 'website',
-      url: `${siteConfig.baseUrl}${getSeriesUrl(slug)}`,
-      siteName: resolveLocale(siteConfig.title),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: seriesData.title }],
-    },
-    twitter: {
-      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
-      title: seriesData.title,
-      description: seriesData.excerpt,
-      images: [ogImage],
-    },
-  };
+    type: 'website',
+    url: canonicalUrl,
+    canonicalUrl,
+    ogImage,
+    twitterCard: ogImage !== defaultOgImage ? 'summary_large_image' : 'summary',
+  });
 }
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {

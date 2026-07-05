@@ -137,7 +137,10 @@ export function getFeaturedPosts(): PostData[] {
 
 /**
  * Load the content and frontmatter of a locale variant file, e.g. about.zh.mdx.
- * Returns null when the file does not exist or cannot be parsed.
+ * Contract: returns null only when no variant file exists (locale variants are
+ * optional). A variant that exists but cannot be read or parsed throws — a
+ * malformed translation must fail the build, not silently drop the locale
+ * (strict-build invariant).
  */
 function loadLocaleContent(slug: string, locale: string): { content: string; title?: string; excerpt?: string; headings?: Heading[] } | null {
   for (const ext of ['.mdx', '.md']) {
@@ -147,18 +150,14 @@ function loadLocaleContent(slug: string, locale: string): { content: string; tit
     // whole project (also surfaces as the next.config.ts NFT warning). See CLAUDE.md.
     const filePath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.${locale}${ext}`);
     if (fs.existsSync(/* turbopackIgnore: true */ filePath)) {
-      try {
-        const { data, content } = matter(readUtf8File(filePath));
-        const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();
-        return {
-          content: body,
-          title: typeof data.title === 'string' ? data.title : undefined,
-          excerpt: typeof data.excerpt === 'string' ? data.excerpt : undefined,
-          headings: getHeadings(body),
-        };
-      } catch {
-        return null;
-      }
+      const { data, content } = matter(readUtf8File(filePath));
+      const body = content.replace(/^\s*#\s+[^\n]+/, '').trim();
+      return {
+        content: body,
+        title: typeof data.title === 'string' ? data.title : undefined,
+        excerpt: typeof data.excerpt === 'string' ? data.excerpt : undefined,
+        headings: getHeadings(body),
+      };
     }
   }
   return null;
@@ -178,17 +177,19 @@ function attachContentLocales(page: PostData, slug: string): PostData {
   return Object.keys(contentLocales).length > 0 ? { ...page, contentLocales } : page;
 }
 
+/**
+ * Contract: returns null only when the page file does not exist (static pages
+ * are optional — an absent about.md is fine). Any error past the existence
+ * check — malformed frontmatter, unreadable file — propagates and fails the
+ * build (strict-build invariant); a broken page must not silently 404.
+ */
 export function getPageBySlug(slug: string): PostData | null {
-  try {
-    let fullPath = path.join(pagesDirectory, `${slug}.mdx`);
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(pagesDirectory, `${slug}.md`);
-    }
-    if (!fs.existsSync(fullPath)) return null;
-    return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
-  } catch {
-    return null;
+  let fullPath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.mdx`);
+  if (!fs.existsSync(/* turbopackIgnore: true */ fullPath)) {
+    fullPath = path.join(/* turbopackIgnore: true */ pagesDirectory, `${slug}.md`);
   }
+  if (!fs.existsSync(/* turbopackIgnore: true */ fullPath)) return null;
+  return attachContentLocales(parseMarkdownFile(fullPath, slug), slug);
 }
 
 const allPagesMemo = createMemo<PostData[]>();

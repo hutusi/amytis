@@ -1,17 +1,19 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
 import { safeDecodeParam } from '@/lib/route-params';
+import { getNoteUrl, withTrailingSlash } from '@/lib/urls';
 import { isFeatureEnabled } from '@/lib/features';
 import { getAllNotes, getNoteBySlug, getAdjacentNotes } from '@/lib/content/notes';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
-import { t, resolveLocale } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import NoteSidebar from '@/components/NoteSidebar';
 import Tag from '@/components/Tag';
 import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
+import { buildArticleMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -36,17 +38,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug: rawSlug } = await params;
   const note = getNoteBySlug(safeDecodeParam(rawSlug)) ?? getNoteBySlug(rawSlug);
   if (!note) return { title: 'Not Found' };
-  return {
-    title: `${note.title} | ${resolveLocale(siteConfig.title)}`,
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  return buildArticleMetadata({
+    title: note.title,
     description: note.excerpt,
-    openGraph: {
-      title: note.title,
-      description: note.excerpt,
-      type: 'article',
-      publishedTime: note.date,
-      siteName: resolveLocale(siteConfig.title),
-    },
-  };
+    publishedTime: note.date,
+    canonicalUrl: withTrailingSlash(`${siteUrl}${getNoteUrl(note.slug)}`),
+    twitterCard: 'none',
+  });
 }
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string }> }) {

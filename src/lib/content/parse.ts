@@ -9,7 +9,8 @@ import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from '..
 import type { PostData, CollectionItem, Heading } from './types';
 import { contentDirectory, readUtf8File } from './io';
 import { getSeriesAuthors, getSeriesTitle } from './series-metadata';
-import { dateField, draftField, tagsField } from './schema';
+import { normalizeCoverImage } from './cover-image';
+import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
 
 /**
  * Frontmatter validation and file→PostData parsing for Markdown and rST
@@ -75,6 +76,28 @@ export const PostSchema = z.object({
     });
   }
 });
+
+/**
+ * Shared author-resolution chain for posts: an explicit `authors` array wins
+ * (including an explicitly-empty one — `authors: []` means "no byline"),
+ * then a single `author` string, then the series' authors when the post
+ * belongs to one, then the site-wide default
+ * (`siteConfig.posts.authors.default`). Callers whose source format treats a
+ * present-but-empty authors list as "not specified" (rST) must normalize it
+ * to `undefined` before calling.
+ */
+function resolveContentAuthors(
+  frontmatter: { authors?: string[]; author?: string },
+  seriesSlug: string | undefined,
+): string[] {
+  if (frontmatter.authors) return frontmatter.authors;
+  if (frontmatter.author) return [frontmatter.author];
+  if (seriesSlug) {
+    const seriesAuthors = getSeriesAuthors(seriesSlug);
+    if (seriesAuthors) return seriesAuthors;
+  }
+  return siteConfig.posts?.authors?.default ?? [];
+}
 
 let pythonRstRendererAvailable: boolean | null = null;
 
@@ -177,8 +200,7 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
 
   const parsed = PostSchema.safeParse(rawData);
   if (!parsed.success) {
-    console.error(`Invalid frontmatter in ${fullPath}:`, parsed.error.format());
-    throw new Error(`Invalid frontmatter in ${fullPath}`);
+    throw invalidFrontmatterError('frontmatter', fullPath, parsed.error);
   }
   const data = parsed.data;
 
@@ -186,26 +208,7 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
     extractContentMetrics(content);
 
   const effectiveSeriesSlug = data.series || seriesName;
-  let authors: string[] = [];
-  if (data.authors && Array.isArray(data.authors)) {
-    authors = data.authors;
-  } else if (data.author) {
-    authors = [data.author];
-  } else {
-    // Inherit from series if this post belongs to one
-    if (effectiveSeriesSlug) {
-      const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
-      if (seriesAuthors) {
-        authors = seriesAuthors;
-      }
-    }
-    if (authors.length === 0) {
-      const defaultAuthors = siteConfig.posts?.authors?.default;
-      if (defaultAuthors && defaultAuthors.length > 0) {
-        authors = defaultAuthors;
-      }
-    }
-  }
+  const authors = resolveContentAuthors(data, effectiveSeriesSlug);
 
   const excerpt = data.excerpt || derivedExcerpt;
 
@@ -213,11 +216,7 @@ export function parseMarkdownFile(fullPath: string, slug: string, dateFromFileNa
   if (!date && dateFromFileName) date = dateFromFileName;
   if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
-  let coverImage = data.coverImage;
-  if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
-    const cleanPath = coverImage.replace(/^\.\//, '');
-    coverImage = `/${imageBaseSlug}/${cleanPath}`;
-  }
+  const coverImage = normalizeCoverImage(data.coverImage, `/${imageBaseSlug}`);
 
   return {
     slug,
@@ -327,33 +326,22 @@ export function parseRstFile(
     }
 
     const effectiveSeriesSlug = data.series || seriesName;
-    let authors: string[] = [];
-    if (data.authors && data.authors.length > 0) {
-      authors = data.authors;
-    } else if (data.author) {
-      authors = [data.author];
-    } else {
-      if (effectiveSeriesSlug) {
-        const seriesAuthors = getSeriesAuthors(effectiveSeriesSlug);
-        if (seriesAuthors) authors = seriesAuthors;
-      }
-      if (authors.length === 0) {
-        const defaultAuthors = siteConfig.posts?.authors?.default;
-        if (defaultAuthors && defaultAuthors.length > 0) {
-          authors = defaultAuthors;
-        }
-      }
-    }
+    // rST can surface an empty `:authors:` field as []; historically that
+    // means "not specified" here (unlike Markdown), so normalize it away
+    // before resolving.
+    const authors = resolveContentAuthors(
+      {
+        authors: data.authors && data.authors.length > 0 ? data.authors : undefined,
+        author: data.author,
+      },
+      effectiveSeriesSlug,
+    );
 
     let date = data.date;
     if (!date && dateFromFileName) date = dateFromFileName;
     if (!date) date = fs.statSync(fullPath).mtime.toISOString().split('T')[0];
 
-    let coverImage = data.coverImage;
-    if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('/') && !coverImage.startsWith('text:')) {
-      const cleanPath = coverImage.replace(/^\.\//, '');
-      coverImage = `/${imageBaseSlug}/${cleanPath}`;
-    }
+    const coverImage = normalizeCoverImage(data.coverImage, `/${imageBaseSlug}`);
     const toctreePosts = isSeriesIndexRst(fullPath, slug, seriesName)
       ? extractRstToctreePosts(fileContents)
       : [];

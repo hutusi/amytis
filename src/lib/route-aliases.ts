@@ -12,7 +12,7 @@ import {
   getSeriesListUrl,
   RESERVED_ROUTE_SEGMENTS,
 } from './urls';
-import { safeDecodeParam, resolveFromParam } from './route-params';
+import { safeDecodeParam, resolveFromParam, withDevEncodedVariants } from './route-params';
 
 /**
  * The dynamic alias surface — the single owner of how `[slug]`,
@@ -223,24 +223,11 @@ export function prefixedPageParams(): { slug: string; page: string }[] {
     }
   }
 
-  // Work around Next dev static-param checks for percent-encoded Unicode slugs
-  // under `output: "export"` — dev server may receive encoded forms of the
-  // prefix segment for paginated listings.
-  if (process.env.NODE_ENV !== 'production') {
-    const existing = new Set(params.map(p => `${p.slug}/${p.page}`));
-    for (const p of [...params]) {
-      const encodedSlug = encodeURIComponent(p.slug);
-      const key = `${encodedSlug}/${p.page}`;
-      if (!existing.has(key)) {
-        existing.add(key);
-        params.push({ slug: encodedSlug, page: p.page });
-      }
-    }
-  }
+  const expanded = withDevEncodedVariants(params);
 
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
   // dynamicParams = false ensures any unrecognised slug/page combo returns 404.
-  return params.length > 0 ? params : [{ slug: '_', page: '2' }];
+  return expanded.length > 0 ? expanded : [{ slug: '_', page: '2' }];
 }
 
 /** `[slug]/[postSlug]`: posts under custom basePath / series paths + 2-segment redirectFrom. */
@@ -284,33 +271,11 @@ export function prefixedPostParams(): { slug: string; postSlug: string }[] {
     }
   }
 
-  // Work around Next dev static-param checks for percent-encoded Unicode slugs
-  // under `output: "export"` — dev server may receive encoded forms of either segment.
-  // Include encoded variants in development only; production export keeps raw segment values.
-  if (process.env.NODE_ENV !== 'production') {
-    const existing = new Set(params.map(p => `${p.slug}/${p.postSlug}`));
-    for (const p of [...params]) {
-      const encodedSlug = encodeURIComponent(p.slug);
-      const encodedPostSlug = encodeURIComponent(p.postSlug);
-      const variants = [
-        { slug: p.slug, postSlug: encodedPostSlug },
-        { slug: encodedSlug, postSlug: p.postSlug },
-        { slug: encodedSlug, postSlug: encodedPostSlug },
-      ];
-
-      for (const variant of variants) {
-        const key = `${variant.slug}/${variant.postSlug}`;
-        if (!existing.has(key)) {
-          existing.add(key);
-          params.push(variant);
-        }
-      }
-    }
-  }
+  const expanded = withDevEncodedVariants(params);
 
   // Placeholder keeps Next.js happy with output: export when no custom paths configured.
   // dynamicParams = false ensures any unrecognised slug/postSlug combo returns 404.
-  return params.length > 0 ? params : [{ slug: '_', postSlug: '_' }];
+  return expanded.length > 0 ? expanded : [{ slug: '_', postSlug: '_' }];
 }
 
 /** `series/[slug]`: canonical series slugs + redirectFrom aliases (+ dev-encoded variants). */
@@ -329,16 +294,8 @@ export function seriesSlugParams(): { slug: string }[] {
     }
   }
 
-  // Work around Next dev static-param checks for percent-encoded Unicode paths
-  // under `output: "export"` — dev server may receive encoded forms of Unicode slugs.
-  if (process.env.NODE_ENV !== 'production') {
-    for (const slug of [...slugs]) {
-      slugs.add(encodeURIComponent(slug));
-    }
-  }
-
-  if (slugs.size === 0) return [{ slug: '_' }];
-  return Array.from(slugs).map((slug) => ({ slug }));
+  const params = withDevEncodedVariants(Array.from(slugs).map((slug) => ({ slug })));
+  return params.length > 0 ? params : [{ slug: '_' }];
 }
 
 /** `series/[slug]/page/[page]`: pagination (page 2+) for series and their aliases. */
@@ -371,21 +328,9 @@ export function seriesPageParams(): { slug: string; page: string }[] {
     }
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    const encodedParams = params
-      .filter(param => encodeURIComponent(param.slug) !== param.slug)
-      .map(param => ({ ...param, slug: encodeURIComponent(param.slug) }))
-      .filter(param => {
-        const key = `${param.slug}:${param.page}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    params.push(...encodedParams);
-  }
-
-  if (params.length === 0) return [{ slug: '_', page: '2' }];
-  return params;
+  const expanded = withDevEncodedVariants(params);
+  if (expanded.length === 0) return [{ slug: '_', page: '2' }];
+  return expanded;
 }
 
 // ─── request-time resolution ─────────────────────────────────────────────────

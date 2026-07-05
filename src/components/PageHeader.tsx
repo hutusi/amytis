@@ -1,6 +1,4 @@
-'use client';
-
-import { useLanguage } from './LanguageProvider';
+import { T } from './T';
 import { TranslationKey } from '@/i18n/translations';
 
 interface PageHeaderProps {
@@ -13,6 +11,8 @@ interface PageHeaderProps {
   className?: string;
 }
 
+// Server component: key selection is pure logic; the language-reactive
+// rendering lives in the <T> client leaves.
 export default function PageHeader({
   titleKey,
   titleParams,
@@ -22,18 +22,12 @@ export default function PageHeader({
   count,
   className,
 }: PageHeaderProps) {
-  const { t, tWith } = useLanguage();
-
-  const title = titleParams ? tWith(titleKey, titleParams) : t(titleKey);
-  const effectiveKey = subtitleOneKey && count === 1 ? subtitleOneKey : subtitleKey;
-  const subtitle = subtitleParams
-    ? tWith(effectiveKey, subtitleParams)
-    : t(effectiveKey);
+  const effectiveSubtitleKey = subtitleOneKey && count === 1 ? subtitleOneKey : subtitleKey;
 
   return (
     <header className={`page-header ${className || ''}`}>
-      <h1 className="page-title">{title}</h1>
-      <p className="page-subtitle">{subtitle}</p>
+      <h1 className="page-title"><T k={titleKey} params={titleParams} /></h1>
+      <p className="page-subtitle"><T k={effectiveSubtitleKey} params={subtitleParams} /></p>
     </header>
   );
 }

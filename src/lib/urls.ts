@@ -52,6 +52,17 @@ export function validateSeriesAutoPaths(seriesSlugs: string[], extraReserved: st
 }
 
 /** Returns the canonical URL path for a post, respecting series auto-paths, custom paths, and posts basePath. */
+/**
+ * Canonical form of a page URL under `trailingSlash: true`: the static export
+ * serves `/path/index.html`, so `/path/` is the page and `/path` is a
+ * redirecting variant. Use for URLs advertised to crawlers and feed readers
+ * (sitemap entries, feed item links/ids, canonical/alternates, JSON-LD).
+ * Only for page URLs — never for real files like /feed.xml.
+ */
+export function withTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`;
+}
+
 export function getPostUrl(post: { slug: string; series?: string }): string {
   if (post.series) {
     const customPath = getSeriesCustomPaths()[post.series];

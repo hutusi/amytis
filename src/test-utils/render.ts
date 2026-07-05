@@ -1,5 +1,6 @@
-import type { ReactElement } from 'react';
+import { createElement, type ReactElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
+import { LanguageProvider } from '@/components/LanguageProvider';
 
 /**
  * Renders a React tree (including async server components) to a full HTML string.
@@ -13,7 +14,12 @@ import { renderToReadableStream } from 'react-dom/server';
 export async function renderAsync(
   element: ReactElement | Promise<ReactElement>,
 ): Promise<string> {
-  const stream = await renderToReadableStream(element);
+  // Mirror production wiring: the root layout always mounts LanguageProvider,
+  // so components may call useLanguage() anywhere in the tree. The provider
+  // renders children directly — it adds no markup to the output.
+  const stream = await renderToReadableStream(
+    createElement(LanguageProvider, null, element),
+  );
   await stream.allReady;
   const reader = stream.getReader();
   const decoder = new TextDecoder();

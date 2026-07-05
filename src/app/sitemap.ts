@@ -3,7 +3,7 @@ import { getAllPosts, getAllPages } from '@/lib/content/posts';
 import { getAllFlows } from '@/lib/content/flows';
 import { getAllBooks } from '@/lib/content/books';
 import { siteConfig } from '../../site.config';
-import { getPostUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { getPostUrl, getBookUrl, getBookChapterUrl, withTrailingSlash } from '@/lib/urls';
 
 export const dynamic = 'force-static';
 
@@ -74,7 +74,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [
+  const entries: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -112,4 +112,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...flowMonthUrls,
     ...flowUrls,
   ];
+
+  // Advertise the canonical trailing-slash form: with trailingSlash: true the
+  // export serves /path/index.html, so the bare /path variant is a redirect
+  // hop for crawlers on most static hosts.
+  return entries.map((entry) => ({ ...entry, url: withTrailingSlash(entry.url) }));
 }

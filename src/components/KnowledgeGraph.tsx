@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as d3 from 'd3';
+import { useLanguage } from '@/components/LanguageProvider';
 
 // Reactive mobile detection via useSyncExternalStore (avoids setState-in-effect lint rule)
 function subscribeToResize(callback: () => void) {
@@ -12,6 +13,19 @@ function subscribeToResize(callback: () => void) {
 }
 function getIsMobile() { return window.innerWidth < 768; }
 function getServerIsMobile() { return false; }
+
+// The force simulation is continuous animation and the SVG is mouse-only, so
+// reduced-motion users get the searchable list view instead — it carries the
+// same content and is keyboard/AT-accessible.
+function subscribeToMotionPref(callback: () => void) {
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  mq.addEventListener('change', callback);
+  return () => mq.removeEventListener('change', callback);
+}
+function getPrefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function getServerPrefersReducedMotion() { return false; }
 
 interface GraphNode extends d3.SimulationNodeDatum {
   id: string;
@@ -54,13 +68,20 @@ export default function KnowledgeGraph() {
   const [error, setError] = useState<string | null>(null);
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(TYPE_FILTERS));
   const isMobile = useSyncExternalStore(subscribeToResize, getIsMobile, getServerIsMobile);
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeToMotionPref,
+    getPrefersReducedMotion,
+    getServerPrefersReducedMotion
+  );
+  const useListView = isMobile || prefersReducedMotion;
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { t, tWith } = useLanguage();
 
   useEffect(() => {
     fetch('/knowledge-graph.json')
       .then(res => {
-        if (!res.ok) throw new Error('Graph data not found. Run `bun run build:graph` to generate it.');
+        if (!res.ok) throw new Error('Graph data not found.');
         return res.json();
       })
       .then((data: GraphData) => {
@@ -74,7 +95,7 @@ export default function KnowledgeGraph() {
   }, []);
 
   useEffect(() => {
-    if (!graphData || !svgRef.current || isMobile) return;
+    if (!graphData || !svgRef.current || useListView) return;
 
     const svg = svgRef.current;
     const width = svg.clientWidth || 800;
@@ -247,7 +268,7 @@ export default function KnowledgeGraph() {
       simulation.stop();
       tooltip.remove();
     };
-  }, [graphData, activeTypes, isMobile]);
+  }, [graphData, activeTypes, useListView]);
 
   function toggleType(type: string) {
     setActiveTypes(prev => {
@@ -264,7 +285,7 @@ export default function KnowledgeGraph() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-muted text-sm">
-        Loading graph…
+        {t('graph_loading')}
       </div>
     );
   }
@@ -272,14 +293,20 @@ export default function KnowledgeGraph() {
   if (error) {
     return (
       <div className="rounded-lg border border-line bg-surface-faint p-8 text-center text-sm text-muted">
-        <p className="mb-2">{error}</p>
-        <code className="text-xs bg-surface-soft px-1.5 py-0.5 rounded">bun run build:graph</code>
+        <p className="mb-2">{t('graph_unavailable')}</p>
+        {process.env.NODE_ENV === 'development' && (
+          <p>
+            Run{' '}
+            <code className="text-xs bg-surface-soft px-1.5 py-0.5 rounded">bun run build:graph</code>{' '}
+            to generate it.
+          </p>
+        )}
       </div>
     );
   }
 
-  // Mobile: render searchable list
-  if (isMobile && graphData) {
+  // Mobile and reduced-motion: render the searchable list view
+  if (useListView && graphData) {
     const filtered = graphData.nodes
       .filter(n => activeTypes.has(n.type))
       .filter(n => !searchQuery || n.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -288,7 +315,8 @@ export default function KnowledgeGraph() {
       <div className="space-y-4">
         <input
           type="text"
-          placeholder="Search nodes…"
+          placeholder={t('graph_search_placeholder')}
+          aria-label={t('graph_search_placeholder')}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-transparent outline-none focus:border-accent"
@@ -334,14 +362,19 @@ export default function KnowledgeGraph() {
         ))}
         {graphData && (
           <span className="text-xs text-muted ml-auto">
-            {graphData.nodes.filter(n => activeTypes.has(n.type)).length} nodes
+            {tWith('graph_nodes_count', {
+              count: graphData.nodes.filter(n => activeTypes.has(n.type)).length,
+            })}
           </span>
         )}
       </div>
 
-      {/* Graph SVG */}
+      {/* Graph SVG — mouse-driven; keyboard/AT and reduced-motion users get
+          the list view above instead. */}
       <svg
         ref={svgRef}
+        role="img"
+        aria-label={t('graph_aria_label')}
         className="w-full rounded-lg border border-line bg-surface-faint"
         style={{ height: '600px' }}
       />

@@ -1,15 +1,11 @@
-'use client';
-
 import Link from 'next/link';
 import { siteConfig } from '../../site.config';
-import { useLanguage } from '@/components/LanguageProvider';
-import { resolveLocaleValue } from '@/lib/i18n';
-import { TranslationKey } from '@/i18n/translations';
+import { T, TLabel, TLocale } from '@/components/T';
 import LanguageSwitch from './LanguageSwitch';
 
+// Server component: all language-reactive strings render via the T/TLabel/
+// TLocale client leaves; LanguageSwitch is its own client island.
 export default function Footer() {
-  const { t, language } = useLanguage();
-  
   return (
     <footer data-site-footer className="bg-surface-faint border-t border-line mt-auto select-none">
       <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16">
@@ -32,51 +28,43 @@ export default function Footer() {
                 <path d="M11.5 18 H 20.5" />
                 <path d="M20.5 18 Q 26 14 26 8 Q 23 12 20.5 18" fill="currentColor" stroke="none" />
               </svg>
-              <span className="font-serif font-bold text-lg text-heading">{resolveLocaleValue(siteConfig.title, language)}</span>
+              <span className="font-serif font-bold text-lg text-heading"><TLocale value={siteConfig.title} /></span>
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm mx-auto text-center lg:mx-0 lg:text-left">
-              {resolveLocaleValue(siteConfig.description, language)}
+              <TLocale value={siteConfig.description} />
             </p>
           </div>
-          
+
           {/* Navigation */}
           <div className="text-center lg:text-left">
-            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('explore')}</h4>
+            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6"><T k="explore" /></h4>
             <ul className="space-y-3 text-sm">
-              {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
-                const key = item.name.toLowerCase() as TranslationKey;
-                const translated = t(key);
-                const label = translated !== key ? translated : item.name;
-                return (
-                  <li key={item.url}>
-                    <Link href={item.url} className="text-foreground/80 hover:text-accent transition-colors no-underline">
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
+              {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => (
+                <li key={item.url}>
+                  <Link href={item.url} className="text-foreground/80 hover:text-accent transition-colors no-underline">
+                    <TLabel name={item.name} />
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Connect */}
           <div className="text-center lg:text-left">
-            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6">{t('connect')}</h4>
+            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6"><T k="connect" /></h4>
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
                 const isExternal = item.external || item.url.startsWith('http');
-                const key = item.name.toLowerCase() as TranslationKey;
-                const translated = t(key);
-                const label = translated !== key ? translated : item.name;
                 const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center justify-center lg:justify-start gap-2";
                 return (
                   <li key={item.url}>
                     {isExternal ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
-                        {label}
+                        <TLabel name={item.name} />
                       </a>
                     ) : (
                       <Link href={item.url} className={className}>
-                        {label}
+                        <TLabel name={item.name} />
                       </Link>
                     )}
                   </li>
@@ -85,10 +73,10 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        
+
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-line flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
-          <span>{resolveLocaleValue(siteConfig.footerText, language)}</span>
+          <span><TLocale value={siteConfig.footerText} /></span>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
              {siteConfig.i18n.enabled !== false && siteConfig.i18n.locales.length >= 2 && (
                <>
@@ -96,12 +84,12 @@ export default function Footer() {
                  <span className="opacity-20">|</span>
                </>
              )}
-             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline">{t('privacy')}</Link>
+             <Link href="/privacy" className="hover:text-foreground transition-colors no-underline"><T k="privacy" /></Link>
              {siteConfig.footer?.bottomLinks?.map((item, index) => {
-               const label = resolveLocaleValue(item.text, language);
+               const label = <TLocale value={item.text} />;
                const isInternal = item.url?.startsWith('/');
                return (
-                 <span key={`${index}:${item.url ?? label}`} className="flex items-center gap-x-6">
+                 <span key={`${index}:${item.url ?? 'text'}`} className="flex items-center gap-x-6">
                    <span className="opacity-20">|</span>
                    {item.url ? (
                      isInternal ? (
@@ -117,12 +105,11 @@ export default function Footer() {
              })}
              {siteConfig.footer?.builtWith?.show && (() => {
                const cfg = siteConfig.footer.builtWith;
-               const label = cfg.text ? resolveLocaleValue(cfg.text, language) : t('built_with');
                return (
                  <>
                    <span className="opacity-20">|</span>
                    <a href={cfg.url ?? 'https://github.com/hutusi/amytis'} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors no-underline">
-                     {label}
+                     {cfg.text ? <TLocale value={cfg.text} /> : <T k="built_with" />}
                    </a>
                  </>
                );

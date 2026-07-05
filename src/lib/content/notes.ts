@@ -7,7 +7,7 @@ import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { notesDirectory, readUtf8File } from './io';
 import { createProdMemo } from './cache';
-import { dateField, draftField, tagsField } from './schema';
+import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
 
 /**
  * Notes: flat knowledge-base entries in content/notes/. Notes support
@@ -48,8 +48,7 @@ function parseNoteFile(fullPath: string, slug: string): NoteData {
 
   const parsed = NoteSchema.safeParse(rawData);
   if (!parsed.success) {
-    console.error(`Invalid note frontmatter in ${fullPath}:`, parsed.error.format());
-    throw new Error(`Invalid note frontmatter in ${fullPath}`);
+    throw invalidFrontmatterError('note frontmatter', fullPath, parsed.error);
   }
   const data = parsed.data;
 

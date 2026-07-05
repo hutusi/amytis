@@ -22,7 +22,11 @@ describe("Integration: Notes (strict-build)", () => {
     );
 
     try {
-      expect(() => getAllNotes()).toThrow(/Invalid note frontmatter/);
+      // The thrown message must carry the file path AND the Zod field details
+      // — CI logs that capture only the exception must still name the fields.
+      expect(() => getAllNotes()).toThrow(
+        /Invalid note frontmatter in .*__test-bad-frontmatter__\.md: .*title/,
+      );
     } finally {
       fs.rmSync(notePath, { force: true });
     }

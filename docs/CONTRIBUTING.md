@@ -42,7 +42,12 @@ bun run new "Photography" --folder
 
 # Create post in a series
 bun run new "Getting Started" --series my-series
+
+# Create from a named template
+bun run new "My Review" --template default
 ```
+
+Post scaffolds come from the `templates/` directory: `--template <name>` picks `templates/<name>.mdx` (or `templates/<name>.md` with `--md`, falling back to the `.mdx` variant). Without the flag, `templates/default.mdx` is used. Add your own `templates/<name>.mdx` to create reusable frontmatter/body scaffolds; if no template file exists, the script falls back to a minimal built-in one.
 
 ### Creating Flows (Daily Notes)
 
@@ -131,9 +136,10 @@ bun run test               # Run all tests (NOT bare `bun test` — that sweeps 
 bun run typecheck          # Type-check the repo with tsc --noEmit
 bun run test:unit          # Run unit tests
 bun run test:int           # Run integration tests
+bun run test:dom           # Run DOM behavior tests (happy-dom + React Testing Library, tests/dom/)
 bun run test:e2e           # Run end-to-end specs (need the site served at http://localhost:3000)
 bun run test:mobile        # Run Playwright mobile compatibility tests
-bun run validate           # Lint + test + build:dev
+bun run validate           # Lint + typecheck + test + build:dev
 ```
 
 The `test:e2e` specs fetch `http://localhost:3000` and skip when nothing
@@ -142,6 +148,13 @@ in one terminal, then `bun run test:e2e` in another. CI (`.github/workflows/ci.y
 does this automatically after the build, and fails if the server doesn't come up.
 CI also runs `bun run typecheck`; the full production build (`bun run build`) is a
 manual `workflow_dispatch` job.
+
+`tests/dom/` holds client-behavior tests (state, events, keyboard interaction).
+They run with happy-dom registered via `--preload ./tests/dom/setup.ts` — only
+through `bun run test:dom`, so the DOM globals never leak into the SSR-oriented
+suites. Off the PR loop, CI also runs a Windows production build (npm-install
+path) and the Playwright mobile matrix on main pushes, manual dispatch, and a
+weekly schedule.
 
 ### Mobile Compatibility Tests
 

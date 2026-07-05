@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Branded 404 and Error Pages**: localized `not-found` / client error boundary replace Next's default unbranded pages.
+- **DOM Behavior Tests**: happy-dom + React Testing Library behind `bun run test:dom`, with first tests for the theme toggle, language provider, scroll/heading hooks, immersive-reading provider, nav dropdowns, and the search modal.
+- **CI**: Windows production build and the Playwright mobile matrix now run on main pushes, manual dispatch, and a weekly schedule; `typecheck` joined `bun run validate`.
+
+### Accessibility
+- **Keyboard-Accessible Nav Menus**: the desktop Books/Series/More dropdowns were hover-only; they now follow the ARIA disclosure pattern (toggle with `aria-expanded`, Escape restores focus). The search modal gained the full combobox pattern (`aria-activedescendant`, roving-tabindex tabs, focus restore on close), screen-reader labels are localized instead of hardcoded English, and reduced-motion users get the knowledge graph's list view instead of the force animation.
+
+### Performance
+- **Smaller Client Bundles**: Footer/Hero/PageHeader and the homepage sections became Server Components via new `T`/`TLocale`/`TLabel` translation leaves; d3 is deferred out of the `/graph` initial chunk; KaTeX CSS no longer ships with math-free articles; the serif font ships as WOFF2 (~209 KB saved).
+
+### Fixed
+- **Canonical URLs for Crawlers**: sitemap entries, RSS/Atom item links/guids, JSON-LD, and canonical alternates now use the trailing-slash form the static export actually serves (feed guids change once as a result).
+- **OpenGraph Images on Prefixed Post Routes**: were emitted site-relative (rejected by OG consumers); now absolute.
+- **Strict Build for Static Pages**: malformed frontmatter in an optional page (e.g. `content/about.md`) now fails the build instead of silently 404ing; invalid-frontmatter errors embed the field details in the thrown message.
+- **Scaffolder Sync**: `create-amytis` config patches fail loudly on shape drift and are tested against the real `site.config.ts`/`package.json`; a structural key-parity test keeps `site.config.example.ts` mirrored.
+- **Flow Card Feed**: The flow index now renders as a full-content card feed with a month timeline rail (month/year anchors linking to flow archives), scroll-driven card reveal, and flow archive pages aligned with the homepage feed. Notes and Graph moved into a navbar "More" menu.
+- **Ink Design System**: A shared "ink" token system (card surfaces, hairlines, an `ink-alpha` opacity scale) unifies posts, series, notes, tags, books, search, and reader surfaces, replacing per-component ad-hoc colors.
+- **Design-System Primitives**: `cn()` class-composition helper, shared class constants, an extracted `ContentCard`, a unified `Tag` pill, and centralized listing-route metadata via `createListingMetadata` — with a guard test that prevents re-inlining the centralized classes.
+
+### Changed
+- **Content Architecture**: The monolithic `markdown.ts` was split into domain modules under `src/lib/content/` (`posts`, `series`, `books`, `flows`, `notes`, `authors`, `related`, `discovery`) with an acyclic dependency graph enforced by a test.
+- **Build Performance**: `getAllBooks`, `getAllFlows`, and `resolveSeriesIndexInfo` are memoized; the rST disk cache auto-invalidates when `render-rst.py` changes; Mermaid loads on demand instead of on every post page.
+- **Immersive Reader**: Width options widened and re-spaced for widescreen displays.
+- **CI**: typecheck and e2e gates added to the pipeline.
+- **Dependencies**: routine refresh across Next.js, ESLint, and type packages.
+
+### Fixed
+- **Windows Builds**: `bun run build` works on Windows — the stale `.next/dev/types` validator is excluded from the build type-check, and an npm-install workflow is documented for the bun symlink-layout issue.
+- **Vercel Deploys**: served as a true static export instead of a Next.js server build (`framework: null`).
+- **Strict-Build Semantics**: content-layer misconfiguration consistently fails the build instead of warning.
+- **Accessibility/Motion**: `prefers-reduced-motion` is respected for animations and scrolling.
+- **Rendering**: over-wide centered KaTeX formulas scroll instead of clipping; no-space VuePress container openers with titles are normalized; author route params resolve through the shared param helpers.
+- **Source Hygiene**: a guard test rejects NUL bytes / non-UTF-8 in tracked source (a literal NUL had made a `.tsx` file invisible to grep).
+
 ## [1.17.0] - 2026-06-11
 
 ### Added

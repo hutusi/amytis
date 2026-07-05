@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { getFeedItems } from "../../src/lib/feed-utils";
 import { getAllPosts } from '../../src/lib/content/posts';
 import { getAllFlows } from '../../src/lib/content/flows';
-import { getPostUrl, getFlowUrl } from "../../src/lib/urls";
+import { getPostUrl, getFlowUrl, withTrailingSlash } from "../../src/lib/urls";
 import { siteConfig } from "../../site.config";
 
 describe("Integration: Feed Utils", () => {
@@ -167,7 +167,7 @@ describe("Integration: Feed Utils", () => {
       const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
       expect(items.length).toBe(allPosts.length);
       expect(items.map((item) => item.url).sort()).toEqual(
-        allPosts.map((post) => `${baseUrl}${getPostUrl(post)}`).sort()
+        allPosts.map((post) => withTrailingSlash(`${baseUrl}${getPostUrl(post)}`)).sort()
       );
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
@@ -183,7 +183,7 @@ describe("Integration: Feed Utils", () => {
       const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
       expect(items.length).toBe(allFlows.length);
       expect(items.map((item) => item.url).sort()).toEqual(
-        allFlows.map((flow) => `${baseUrl}${getFlowUrl(flow.slug)}`).sort()
+        allFlows.map((flow) => withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`)).sort()
       );
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
@@ -200,8 +200,8 @@ describe("Integration: Feed Utils", () => {
       const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
       expect(items.map((item) => item.url).sort()).toEqual(
         [
-          ...allPosts.map((post) => `${baseUrl}${getPostUrl(post)}`),
-          ...allFlows.map((flow) => `${baseUrl}${getFlowUrl(flow.slug)}`),
+          ...allPosts.map((post) => withTrailingSlash(`${baseUrl}${getPostUrl(post)}`)),
+          ...allFlows.map((flow) => withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`)),
         ].sort()
       );
     } finally {

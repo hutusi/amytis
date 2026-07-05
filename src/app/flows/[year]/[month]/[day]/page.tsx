@@ -4,7 +4,7 @@ import { getAllFlows, getFlowBySlug, getAdjacentFlows } from '@/lib/content/flow
 import { siteConfig } from '../../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { t, resolveLocale } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 import FlowCalendarSidebar from '@/components/FlowCalendarSidebar';
 import Tag from '@/components/Tag';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -12,6 +12,8 @@ import Backlinks from '@/components/Backlinks';
 import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
+import { buildArticleMetadata } from '@/lib/metadata';
+import { withTrailingSlash } from '@/lib/urls';
 import Link from 'next/link';
 
 export function generateStaticParams() {
@@ -30,23 +32,16 @@ export async function generateMetadata({ params }: { params: Promise<{ year: str
   const { year, month, day } = await params;
   const flow = getFlowBySlug(`${year}/${month}/${day}`);
   if (!flow) return { title: 'Not Found' };
-  return {
-    title: `${flow.title} | ${resolveLocale(siteConfig.title)}`,
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = withTrailingSlash(`${siteUrl}/flows/${year}/${month}/${day}`);
+  return buildArticleMetadata({
+    title: flow.title,
     description: flow.excerpt,
-    openGraph: {
-      title: flow.title,
-      description: flow.excerpt,
-      type: 'article',
-      publishedTime: flow.date,
-      url: `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`,
-      siteName: resolveLocale(siteConfig.title),
-    },
-    twitter: {
-      card: 'summary',
-      title: flow.title,
-      description: flow.excerpt,
-    },
-  };
+    publishedTime: flow.date,
+    url: canonicalUrl,
+    canonicalUrl,
+    twitterCard: 'summary',
+  });
 }
 
 export default async function FlowPage({ params }: { params: Promise<{ year: string; month: string; day: string }> }) {

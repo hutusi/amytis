@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useLanguage } from './LanguageProvider';
 
 interface HorizontalScrollProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ export default function HorizontalScroll({
   children,
   className = ''
 }: HorizontalScrollProps) {
+  const { t } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -67,7 +69,7 @@ export default function HorizontalScroll({
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="region"
-      aria-label="Scrollable content"
+      aria-label={t('scrollable_content')}
     >
       {/* Left Arrow */}
       <button
@@ -78,7 +80,7 @@ export default function HorizontalScroll({
             : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollLeft}
-        aria-label="Scroll left"
+        aria-label={t('scroll_left')}
         tabIndex={canScrollLeft ? 0 : -1}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollLeft ? 'group-hover/scroll:-translate-x-0.5 transition-transform' : ''}>
@@ -104,7 +106,7 @@ export default function HorizontalScroll({
             : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollRight}
-        aria-label="Scroll right"
+        aria-label={t('scroll_right')}
         tabIndex={canScrollRight ? 0 : -1}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={canScrollRight ? 'group-hover/scroll:translate-x-0.5 transition-transform' : ''}>

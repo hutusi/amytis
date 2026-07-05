@@ -1,8 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
 import { getRelatedPosts } from '../../src/lib/content/related';
 import { getSeriesPosts } from '../../src/lib/content/series';
-import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
+import { getAllPosts, getPageBySlug, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Posts", () => {
   test("should load all posts from content directory", () => {
@@ -56,6 +58,33 @@ describe("Integration: Posts", () => {
     
     // If we want to test real series, we need to mock data or have a post with series.
     // For now, empty array is a valid result if no series exists.
+  });
+});
+
+describe("Integration: Pages (strict-build)", () => {
+  test("getPageBySlug returns null for a page that does not exist", () => {
+    expect(getPageBySlug("__test-no-such-page__")).toBeNull();
+  });
+
+  test("getPageBySlug throws on invalid frontmatter instead of silently 404ing", () => {
+    // Strict-build invariant: null is reserved for a legitimately absent
+    // optional page; a page that exists with malformed frontmatter must fail
+    // the build, not silently disappear from the site.
+    const pagePath = path.join(process.cwd(), "content", "__test-bad-frontmatter-page__.md");
+    fs.writeFileSync(
+      pagePath,
+      // `title` is required by PostSchema; omitting it must throw.
+      ["---", "category: Page", "---", "", "Body without a title.", ""].join("\n"),
+      "utf8",
+    );
+
+    try {
+      expect(() => getPageBySlug("__test-bad-frontmatter-page__")).toThrow(
+        /Invalid frontmatter in .*__test-bad-frontmatter-page__\.md: .*title/,
+      );
+    } finally {
+      fs.rmSync(pagePath, { force: true });
+    }
   });
 });
 

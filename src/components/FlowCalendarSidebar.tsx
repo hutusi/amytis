@@ -87,7 +87,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
           <button
             onClick={prevMonth}
             className="p-1 text-muted hover:text-accent transition-colors"
-            aria-label="Previous month"
+            aria-label={t('prev_month')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
@@ -95,7 +95,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
           <button
             onClick={nextMonth}
             className="p-1 text-muted hover:text-accent transition-colors"
-            aria-label="Next month"
+            aria-label={t('next_month')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
           </button>

@@ -6,10 +6,14 @@ import Mermaid from '@/components/Mermaid';
 import CodeBlock from '@/components/CodeBlock';
 import CodeGroup from '@/components/CodeGroup';
 import GithubAlert from '@/components/GithubAlert';
-import KatexStyles from '@/components/KatexStyles';
+import dynamic from 'next/dynamic';
 import ExternalLinkIcon from '@/components/ExternalLinkIcon';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
+
+// Dynamic so katex.min.css gets its own chunk — a static import would pull
+// the stylesheet into every article bundle even for math-free posts.
+const KatexStyles = dynamic(() => import('@/components/KatexStyles'));
 import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
 import remarkGithubAlerts from '@/lib/remark-github-alerts';
