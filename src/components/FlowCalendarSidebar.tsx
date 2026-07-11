@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
 import { padNumber } from '@/lib/format-utils';
@@ -17,25 +17,55 @@ interface FlowCalendarSidebarProps {
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// "Today" can't be known at build time, so it's read as an external store:
+// null on the server/hydration pass, the viewer's local date after (the ring
+// appears post-hydration instead of mismatching). Local date parts, not
+// toISOString() — that was UTC and rang the wrong day for off-UTC viewers.
+function subscribeNever() {
+  return () => {};
+}
+function getLocalTodayStr(): string | null {
+  const now = new Date();
+  return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
+}
+function getServerTodayStr(): string | null {
+  return null;
+}
+
 export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect, breadcrumb }: FlowCalendarSidebarProps) {
   const { t } = useLanguage();
-  const initialDate = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
-  const [viewYear, setViewYear] = useState(initialDate.getFullYear());
-  const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
-  const [showBrowse, setShowBrowse] = useState(false);
+  const todayStr = useSyncExternalStore(subscribeNever, getLocalTodayStr, getServerTodayStr);
 
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  // Initial month must be derived from content (currentDate, else the latest
+  // entry) so server HTML and client hydration agree — `new Date()` here
+  // baked the build-time month into the prerender and mismatched once the
+  // viewer's month drifted from it. Only a site with no flows at all falls
+  // through to the viewer's month, which is null during SSR (empty grid,
+  // nothing to mismatch).
+  const latestEntry = entryDates.length > 0 ? entryDates.reduce((a, b) => (a > b ? a : b)) : null;
+  const monthSource = currentDate ?? latestEntry;
+  const [view, setView] = useState<{ year: number; month: number } | null>(() => {
+    if (!monthSource) return null;
+    const d = new Date(monthSource + 'T00:00:00');
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+  const effectiveView = view
+    ?? (todayStr ? { year: Number(todayStr.slice(0, 4)), month: Number(todayStr.slice(5, 7)) - 1 } : null);
+  const [showBrowse, setShowBrowse] = useState(false);
 
   const entrySet = useMemo(() => new Set(entryDates), [entryDates]);
 
+  const { year: viewYear, month: viewMonth } = effectiveView ?? { year: 0, month: 0 };
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  // daysInMonth 0 while the view is unresolved → empty day grid.
+  const daysInMonth = effectiveView ? new Date(viewYear, viewMonth + 1, 0).getDate() : 0;
 
-  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const monthLabel = effectiveView
+    ? new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
 
   // Build year/month tree from entryDates for browse panel
   const yearMonthTree = useMemo(() => {
@@ -54,21 +84,17 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   );
 
   function prevMonth() {
-    if (viewMonth === 0) {
-      setViewYear(viewYear - 1);
-      setViewMonth(11);
-    } else {
-      setViewMonth(viewMonth - 1);
-    }
+    if (!effectiveView) return;
+    setView(effectiveView.month === 0
+      ? { year: effectiveView.year - 1, month: 11 }
+      : { year: effectiveView.year, month: effectiveView.month - 1 });
   }
 
   function nextMonth() {
-    if (viewMonth === 11) {
-      setViewYear(viewYear + 1);
-      setViewMonth(0);
-    } else {
-      setViewMonth(viewMonth + 1);
-    }
+    if (!effectiveView) return;
+    setView(effectiveView.month === 11
+      ? { year: effectiveView.year + 1, month: 0 }
+      : { year: effectiveView.year, month: effectiveView.month + 1 });
   }
 
   const days = useMemo(() => {
