@@ -32,6 +32,38 @@ function markdownToHtml(markdown: string): string {
   return String(result);
 }
 
+/**
+ * Feed readers resolve nothing relative: rewrite relative and site-relative
+ * src/href against the item's absolute page URL (which ends in '/', so
+ * `images/x.png` resolves exactly as it does on the trailing-slash page).
+ */
+function absolutizeHtmlUrls(html: string, pageUrl: string): string {
+  return html.replace(/(src|href)="([^"]*)"/g, (match, attr: string, url: string) => {
+    if (url === '' || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) return match;
+    try {
+      return `${attr}="${new URL(url, pageUrl).toString()}"`;
+    } catch {
+      return match;
+    }
+  });
+}
+
+/**
+ * Item HTML for content:encoded / Atom <content>. rST posts carry their real
+ * HTML in renderedHtml — running the rST source through a Markdown parser
+ * mangles directives into literal text — and Markdown posts go through the
+ * plain GFM pipeline.
+ */
+function itemContentHtml(
+  post: { content: string; renderedHtml?: string; sourceFormat?: 'markdown' | 'rst' },
+  pageUrl: string,
+): string {
+  const html = post.sourceFormat === 'rst' && post.renderedHtml
+    ? post.renderedHtml
+    : markdownToHtml(post.content);
+  return absolutizeHtmlUrls(html, pageUrl);
+}
+
 export type FeedType = 'main' | 'posts' | 'flows' | 'all';
 
 /**
@@ -47,24 +79,30 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
 
   let items: FeedItem[] = [];
 
-  const getPostItems = () => getAllPosts().map((post) => ({
-    title: post.title,
-    url: withTrailingSlash(`${baseUrl}${getPostUrl(post)}`),
-    date: new Date(post.date),
-    excerpt: post.excerpt,
-    content: includeFullContent ? markdownToHtml(post.content) : '',
-    tags: post.tags || [],
-    authors: post.authors,
-  }));
+  const getPostItems = () => getAllPosts().map((post) => {
+    const url = withTrailingSlash(`${baseUrl}${getPostUrl(post)}`);
+    return {
+      title: post.title,
+      url,
+      date: new Date(post.date),
+      excerpt: post.excerpt,
+      content: includeFullContent ? itemContentHtml(post, url) : '',
+      tags: post.tags || [],
+      authors: post.authors,
+    };
+  });
 
-  const getFlowItems = () => getAllFlows().map((flow) => ({
-    title: flow.title,
-    url: withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`),
-    date: new Date(flow.date),
-    excerpt: flow.excerpt,
-    content: includeFullContent ? markdownToHtml(flow.content) : '',
-    tags: flow.tags || [],
-  }));
+  const getFlowItems = () => getAllFlows().map((flow) => {
+    const url = withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`);
+    return {
+      title: flow.title,
+      url,
+      date: new Date(flow.date),
+      excerpt: flow.excerpt,
+      content: includeFullContent ? itemContentHtml(flow, url) : '',
+      tags: flow.tags || [],
+    };
+  });
 
   if (feedType === 'posts') {
     items = getPostItems();

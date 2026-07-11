@@ -148,6 +148,31 @@ describe("Integration: Feed Utils", () => {
     });
   });
 
+  test("full-content items carry no relative src/href (feed readers resolve nothing)", () => {
+    const items = getFeedItems("all", true);
+    items.forEach((item) => {
+      for (const [, , url] of item.content.matchAll(/(src|href)="([^"]*)"/g)) {
+        if (url === "" || url.startsWith("#")) continue;
+        expect(url).toMatch(/^[a-z][a-z0-9+.-]*:|^\/\//i);
+      }
+    });
+  });
+
+  // renderedHtml exists only when the Python docutils renderer ran; the JS
+  // fallback leaves it unset (same environment gate as the rst-parity tests).
+  const rstPostWithHtml = getAllPosts().find((p) => p.sourceFormat === "rst" && p.renderedHtml);
+  const rstFeedTest = rstPostWithHtml ? test : test.skip;
+
+  rstFeedTest("rST posts use their rendered HTML in full-content feeds", () => {
+    // Running rST source through the Markdown pipeline mangles directives
+    // into literal text; renderedHtml is the real document.
+    const url = withTrailingSlash(siteConfig.baseUrl.replace(/\/+$/, "") + getPostUrl(rstPostWithHtml!));
+    const item = getFeedItems("posts", true).find((i) => i.url === url);
+    expect(item).toBeDefined();
+    expect(item!.content).not.toContain(".. code-block::");
+    expect(item!.content).not.toMatch(/^\.\. /m);
+  });
+
   test("feed items with authors have a non-empty authors array", () => {
     const items = getFeedItems();
     items.forEach((item) => {
