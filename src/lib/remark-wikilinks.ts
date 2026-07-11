@@ -6,6 +6,17 @@ interface WikilinksOptions {
   slugRegistry: Map<string, SlugRegistryEntry>;
 }
 
+// The nodes below are emitted as raw `html` and pass through rehypeRaw
+// unescaped, so author-controlled text (slug, display) must be entity-escaped
+// or `[[x|<img onerror=…>]]` injects markup into the rendered page.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export default function remarkWikilinks({ slugRegistry }: WikilinksOptions) {
   return (tree: Root) => {
     visit(tree, 'text', (node: Text, index: number | undefined, parent: Parent | undefined) => {
@@ -33,12 +44,12 @@ export default function remarkWikilinks({ slugRegistry }: WikilinksOptions) {
         if (entry) {
           newNodes.push({
             type: 'html',
-            value: `<a href="${entry.url}" class="wikilink wikilink--resolved wikilink--${entry.type}">${display}</a>`,
+            value: `<a href="${escapeHtml(entry.url)}" class="wikilink wikilink--resolved wikilink--${entry.type}">${escapeHtml(display)}</a>`,
           });
         } else {
           newNodes.push({
             type: 'html',
-            value: `<span class="wikilink wikilink--broken" title="[[${slug}]] not found">${display}</span>`,
+            value: `<span class="wikilink wikilink--broken" title="[[${escapeHtml(slug)}]] not found">${escapeHtml(display)}</span>`,
           });
         }
 
