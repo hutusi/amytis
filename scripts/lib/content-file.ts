@@ -22,6 +22,15 @@ export function extPair(useMd: boolean): { ext: '.md' | '.mdx'; altExt: '.md' | 
   return useMd ? { ext: '.md', altExt: '.mdx' } : { ext: '.mdx', altExt: '.md' };
 }
 
+/**
+ * Escape a string for interpolation inside a double-quoted YAML scalar
+ * (`title: "<here>"`). Backslashes first, then quotes — otherwise a title
+ * containing either writes frontmatter that fails to parse at build time.
+ */
+export function yamlDoubleQuoted(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 /** mkdir -p, skipped when the directory already exists. */
 export function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {

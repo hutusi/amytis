@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pdf } from 'pdf-to-img';
+import { yamlDoubleQuoted } from './lib/content-file';
 
 const args = process.argv.slice(2);
 
@@ -81,7 +82,7 @@ const imageMarkdown = images
   .join('\n\n');
 
 const content = `---
-title: "${postTitle}"
+title: "${yamlDoubleQuoted(postTitle)}"
 date: "${date}"
 excerpt: "Content extracted from PDF document."
 category: "Document"

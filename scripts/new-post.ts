@@ -1,11 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 import { slugifyAscii } from './lib/slug';
-import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile } from './lib/content-file';
+import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile, yamlDoubleQuoted } from './lib/content-file';
 
 const args = process.argv.slice(2);
 const valuedFlags = ['--template', '--prefix', '--series'];
-const title = args.filter(arg => !arg.startsWith('--') && !valuedFlags.includes(args[args.indexOf(arg) - 1]))[0];
+// First positional arg wins; walk the list and skip each valued flag together
+// with its value. (An indexOf-based lookback misfired whenever the title
+// string equaled a flag's value — `bun run new-weekly weekly` rejected the
+// title because indexOf found the `--prefix weekly` occurrence first.)
+let title = '';
+for (let i = 0; i < args.length; i++) {
+  if (args[i].startsWith('--')) {
+    if (valuedFlags.includes(args[i])) i++;
+    continue;
+  }
+  title = args[i];
+  break;
+}
 const templateArgIndex = args.indexOf('--template');
 const templateName = templateArgIndex > -1 ? args[templateArgIndex + 1] : 'default';
 const prefixArgIndex = args.indexOf('--prefix');
@@ -82,7 +94,12 @@ Write your content here...
 `;
 }
 
-content = content.replace(/{{title}}/g, title).replace(/{{date}}/g, date);
+// Function replacer: with a plain string, $-patterns in the title ($&, $',
+// $1…) are interpreted as replace() back-references and corrupt the output.
+// Templates wrap {{title}} in a double-quoted YAML scalar, so escape for
+// that context (create-amytis guards the same footgun).
+const safeTitle = yamlDoubleQuoted(title);
+content = content.replace(/{{title}}/g, () => safeTitle).replace(/{{date}}/g, date);
 
 exitIfExists(targetPath, 'post');
 
