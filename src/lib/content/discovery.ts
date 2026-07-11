@@ -72,13 +72,38 @@ export function buildSlugRegistry(): Map<string, SlugRegistryEntry> {
   return slugRegistryMemo.get(() => {
     const map = new Map<string, SlugRegistryEntry>();
 
-    getAllPosts().forEach(p =>
-      map.set(p.slug, { url: getPostUrl(p), type: 'post', title: p.title })
-    );
+    // Posts throw on canonical-URL collisions, not bare-slug ones: a
+    // duplicate slug is legal when series prefixes (autoPaths/customPaths)
+    // give the posts distinct URLs — the rST toctree fixtures rely on this.
+    // Two posts resolving to the SAME URL is a bug under every config
+    // (e.g. duplicate slugs with series prefixes disabled). Bare-slug
+    // wikilink targets stay last-wins for same-slug series children — a
+    // known ambiguity, [[slug]] has no qualified form to prefer.
+    const postUrlOwners = new Map<string, string>();
+    getAllPosts().forEach(p => {
+      const url = getPostUrl(p);
+      if (postUrlOwners.has(url)) {
+        throw new Error(
+          `[amytis] Two posts resolve to the same URL "${url}". Rename one of them, ` +
+          `or adjust series.autoPaths/customPaths so every post has a unique canonical URL.`
+        );
+      }
+      postUrlOwners.set(url, p.slug);
+      map.set(p.slug, { url, type: 'post', title: p.title });
+    });
 
-    getAllFlows().forEach(f =>
-      map.set(f.slug, { url: getFlowUrl(f.slug), type: 'flow', title: f.title })
-    );
+    getAllFlows().forEach(f => {
+      const existing = map.get(f.slug);
+      if (existing) {
+        // Reachable via a day with both DD.md and DD/index.md — the walk
+        // yields two flows with the same date slug.
+        throw new Error(
+          `[amytis] Flow slug "${f.slug}" collides with an existing ${existing.type} of the same slug. ` +
+          `Slugs must be unique across posts, flows, notes, and series so wikilinks resolve unambiguously.`
+        );
+      }
+      map.set(f.slug, { url: getFlowUrl(f.slug), type: 'flow', title: f.title });
+    });
 
     getAllNotes().forEach(n => {
       // Slugs and aliases must be unique across all content so a wikilink

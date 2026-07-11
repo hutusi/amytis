@@ -5,7 +5,7 @@ import { seriesDirectory } from './io';
 import { createMemo, createKeyedMemo } from './cache';
 import { resolveSeriesIndexInfo, getSeriesAuthors } from './series-metadata';
 import { parseMarkdownFile, parseRstFile } from './parse';
-import { getAllPosts, getPostBySlug } from './posts';
+import { getAllPosts, getAllPostsIncludingUnpublished, getPostBySlug } from './posts';
 
 /**
  * Series and collection queries. Collections live here, not in their own
@@ -35,10 +35,20 @@ export function getSeriesPosts(seriesName: string): PostData[] {
     const seriesData = getSeriesData(seriesName);
 
     if (seriesData?.posts && seriesData.posts.length > 0) {
-      // Manual Selection: fetch by slug
-      return seriesData.posts
-        .map(slug => getPostBySlug(slug))
-        .filter((p): p is PostData => p !== null);
+      // Manual Selection: fetch by slug. A slug that matches nothing in the
+      // content tree is a build error (strict-build invariant — books throw
+      // on missing chapters the same way); a post that exists but is
+      // unpublished here (draft in production, future-dated) is skipped
+      // silently like everywhere else.
+      return seriesData.posts.flatMap(slug => {
+        const post = getPostBySlug(slug);
+        if (post) return [post];
+        if (getAllPostsIncludingUnpublished().some(p => p.slug === slug)) return [];
+        throw new Error(
+          `[amytis] Series "${seriesName}" lists post "${slug}" in its manual order, ` +
+          `but no post with that slug exists. Fix or remove the slug in the series index frontmatter.`
+        );
+      });
     }
 
     // Automatic: posts with series field matching this series
@@ -169,8 +179,18 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
         const post = item.post.includes('/')
           ? postIndex.get(item.post)
           : getPostBySlug(item.post);
+        if (post) return [post];
 
-        return post ? [post] : [];
+        // Same contract as manual series order above: unknown reference →
+        // build error; existing-but-unpublished → silent skip.
+        const existsUnpublished = getAllPostsIncludingUnpublished().some(p =>
+          item.post.includes('/') ? getCollectionKey(p) === item.post : p.slug === item.post
+        );
+        if (existsUnpublished) return [];
+        throw new Error(
+          `[amytis] Collection "${collectionSlug}" lists item "${item.post}", ` +
+          `but no post matches it. Fix or remove the item in the collection index frontmatter.`
+        );
       })
       .filter(post => {
         const key = getCollectionKey(post);

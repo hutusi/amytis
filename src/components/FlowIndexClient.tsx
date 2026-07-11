@@ -27,10 +27,14 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed, brea
   const { t } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const filteredFlows = useMemo(
-    () => (selectedTag ? allFlows.filter(f => f.tags.includes(selectedTag)) : allFlows),
-    [allFlows, selectedTag],
-  );
+  // Sidebar tag keys are lowercased by getFlowTags() while flow items carry
+  // raw-case tags, so the match must be case-insensitive (same semantics as
+  // getFlowsByTag).
+  const filteredFlows = useMemo(() => {
+    if (!selectedTag) return allFlows;
+    const wanted = selectedTag.toLowerCase();
+    return allFlows.filter(f => f.tags.some(t => t.toLowerCase() === wanted));
+  }, [allFlows, selectedTag]);
 
   function handleTagSelect(tag: string) {
     setSelectedTag(prev => (prev === tag ? null : tag));

@@ -24,13 +24,18 @@ const HAN_CHAR_RE = /[㐀-䶿一-鿿豈-﫿]/g;
 // Latin word: alphanumeric runs allowing apostrophes/hyphens between runs.
 const LATIN_WORD_RE = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
 
+// Fenced code blocks in BOTH CommonMark fence styles (``` and ~~~). A fence's
+// body is not prose: it must not count as words, leak into excerpts, or
+// contribute TOC headings. Only used with .replace(), which resets lastIndex.
+const FENCED_CODE_BLOCK_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
+
 // Shared text-stripping + tokenization used by both `calculateReadingMinutes`
 // and `calculateWordCount`. Both metrics need the same view of "what counts
 // as a word," so funnel them through a single source of truth.
 function countContentTokens(content: string): { latinWords: number; hanChars: number } {
   const text = content
     .replace(/<\/?[^>]+(>|$)/g, "")
-    .replace(/```[\s\S]*?```/g, "")
+    .replace(FENCED_CODE_BLOCK_RE, "")
     .replace(/`[^`]*`/g, "")
     .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -90,10 +95,10 @@ export function calculateWordCountFromText(text: string): number {
 
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
-  plain = plain.replace(/```[\s\S]*?```/g, '');
+  plain = plain.replace(FENCED_CODE_BLOCK_RE, '');
   plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
+  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  plain = plain.replace(/(\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`([^`]+)`/g, '$1');
   plain = plain.replace(/^>\s+/gm, '');
   plain = plain.replace(/\s+/g, ' ').trim();
@@ -110,7 +115,13 @@ export function getHeadings(content: string): Heading[] {
   const slugger = new GithubSlugger();
   let match;
 
-  while ((match = regex.exec(content)) !== null) {
+  // Strip fenced code blocks first: a `## foo` line inside a fence is not a
+  // heading in the rendered HTML, so harvesting it would emit a dead TOC
+  // anchor AND burn the slugger's dedup slot, desyncing every later
+  // duplicate-text heading id from the one rehype-slug assigns.
+  const withoutFences = content.replace(FENCED_CODE_BLOCK_RE, '');
+
+  while ((match = regex.exec(withoutFences)) !== null) {
     const level = match[1].length;
     const text = match[2].trim();
     const id = slugger.slug(text);

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { resolveLocale } from '@/lib/i18n';
+import { safeDecodeParam, resolveFromParam, withDevEncodedVariants } from '@/lib/route-params';
 import TagPageHeader from '@/components/TagPageHeader';
 import TagSidebar from '@/components/TagSidebar';
 import TagContentTabs from '@/components/TagContentTabs';
@@ -15,24 +16,33 @@ export async function generateStaticParams() {
   if (tagKeys.length === 0) return [{ tag: '_' }];
   // Keys are display-cased; normalize to lowercase for URL slugs and deduplicate.
   const seen = new Set<string>();
-  return tagKeys
-    .map(t => t.toLowerCase())
-    .filter(t => !seen.has(t) && seen.add(t))
-    .map(tag => ({ tag }));
+  return withDevEncodedVariants(
+    tagKeys
+      .map(t => t.toLowerCase())
+      .filter(t => !seen.has(t) && seen.add(t))
+      .map(tag => ({ tag }))
+  );
 }
 
 export const dynamicParams = false;
 
+function resolveTagParam(rawTag: string) {
+  return resolveFromParam(rawTag, (candidate) => {
+    const posts = getPostsByTag(candidate);
+    const flows = getFlowsByTag(candidate);
+    return posts.length + flows.length > 0 ? { tag: candidate, posts, flows } : null;
+  });
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;
-  const decodedTag = decodeURIComponent(tag);
-  const posts = getPostsByTag(decodedTag);
-  const flows = getFlowsByTag(decodedTag);
-  const total = posts.length + flows.length;
+  const resolved = resolveTagParam(tag);
+  const displayTag = resolved?.tag ?? safeDecodeParam(tag);
+  const total = resolved ? resolved.posts.length + resolved.flows.length : 0;
 
   return {
-    title: `#${decodedTag} | ${resolveLocale(siteConfig.title)}`,
-    description: `${total} posts tagged with "${decodedTag}".`,
+    title: `#${displayTag} | ${resolveLocale(siteConfig.title)}`,
+    description: `${total} posts tagged with "${displayTag}".`,
   };
 }
 
@@ -42,14 +52,13 @@ export default async function TagPage({
   params: Promise<{ tag: string }>;
 }) {
   const { tag } = await params;
-  const decodedTag = decodeURIComponent(tag);
-  const posts = getPostsByTag(decodedTag);
-  const flows = getFlowsByTag(decodedTag);
+  const resolved = resolveTagParam(tag);
   const allTags = getAllTags();
 
-  if (posts.length === 0 && flows.length === 0) {
+  if (!resolved) {
     notFound();
   }
+  const { tag: decodedTag, posts, flows } = resolved;
 
   return (
     <div className="layout-container">

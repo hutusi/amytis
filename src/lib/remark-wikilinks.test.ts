@@ -83,4 +83,22 @@ describe('remarkWikilinks', () => {
     expect((node as { type: string; value: string }).value).toContain('wikilink--post');
     expect((node as { type: string; value: string }).value).toContain('>Another Post</a>');
   });
+
+  test('escapes HTML in display labels (raw html node, rehypeRaw downstream)', () => {
+    const tree = makeTree('[[my-note|<img src=x onerror=alert(1)>]]');
+    remarkWikilinks({ slugRegistry: registry })(tree);
+    const [node] = getChildren(tree);
+    const value = (node as { type: string; value: string }).value;
+    expect(value).not.toContain('<img');
+    expect(value).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+
+  test('escapes quotes in broken-link slug so the title attribute cannot be escaped', () => {
+    const tree = makeTree('[[bad" onmouseover="alert(1)]]');
+    remarkWikilinks({ slugRegistry: registry })(tree);
+    const [node] = getChildren(tree);
+    const value = (node as { type: string; value: string }).value;
+    expect(value).not.toContain('onmouseover="alert');
+    expect(value).toContain('&quot;');
+  });
 });

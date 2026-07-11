@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { slugifyGithub } from './lib/slug';
-import { isoDateStamp } from './lib/content-file';
+import { isoDateStamp, yamlDoubleQuoted } from './lib/content-file';
 
 const args = process.argv.slice(2);
 const title = args[0];
@@ -26,8 +26,8 @@ fs.mkdirSync(path.join(seriesDir, 'images'));
 const date = isoDateStamp();
 
 const content = `---
-title: "${title}"
-excerpt: "A description for ${title}."
+title: "${yamlDoubleQuoted(title)}"
+excerpt: "A description for ${yamlDoubleQuoted(title)}."
 date: "${date}"
 coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
 ---

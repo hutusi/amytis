@@ -1,6 +1,6 @@
 import path from 'path';
 import { slugifyCjk } from './lib/slug';
-import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile } from './lib/content-file';
+import { ensureDir, exitIfExists, extPair, isoDateStamp, writeContentFile, yamlDoubleQuoted } from './lib/content-file';
 
 const args = process.argv.slice(2);
 const titleArg = args.filter(arg => !arg.startsWith('--'))[0];
@@ -26,7 +26,7 @@ exitIfExists(altPath, 'note');
 ensureDir(notesDir);
 
 const content = `---
-title: "${titleArg}"
+title: "${yamlDoubleQuoted(titleArg)}"
 date: "${dateStr}"
 tags: []
 aliases: []

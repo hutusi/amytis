@@ -8,7 +8,7 @@ import { siteConfig } from '../../../../../../site.config';
 import CoverImage from '@/components/CoverImage';
 import Link from 'next/link';
 import { t, resolveLocale, tWith } from '@/lib/i18n';
-import { getSeriesListUrl } from '@/lib/urls';
+import { getSeriesListUrl, withTrailingSlash } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesPageParams, resolveSeriesParam } from '@/lib/route-aliases';
 import { paginate } from '@/lib/pagination';
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
     return {
       title: resolution.data.title,
-      alternates: { canonical: `${siteUrl}${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}` },
+      alternates: { canonical: withTrailingSlash(`${siteUrl}${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}`) },
     };
   }
   const slug = resolution.slug;

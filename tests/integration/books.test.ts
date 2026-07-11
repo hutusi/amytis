@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "bun:test";
-import { getAllBooks, getBookData, getFeaturedBooks } from '../../src/lib/content/books';
+import { getAllBooks, getBookData, getBookChapter, getFeaturedBooks } from '../../src/lib/content/books';
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
 
 describe("Integration: Books", () => {
@@ -108,6 +108,60 @@ describe("Integration: Books", () => {
     try {
       expect(() => getBookData(slug)).toThrow(/Invalid book frontmatter/);
     } finally {
+      fs.rmSync(bookDir, { recursive: true, force: true });
+    }
+  });
+
+  test("draft chapters are dropped from chapters/toc/prev-next in production", () => {
+    // getBookChapter 404s a draft chapter in production, so the book's
+    // chapter list and TOC must not advertise it — published neighbors would
+    // otherwise render dead prev/next and sidebar links.
+    const slug = "__test-draft-chapter__";
+    const bookDir = path.join(process.cwd(), "content", "books", slug);
+    fs.mkdirSync(bookDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(bookDir, "index.mdx"),
+      [
+        "---",
+        'title: "Draft Chapter Book"',
+        "date: 2026-01-01",
+        "chapters:",
+        '  - title: "One"',
+        "    id: ch1",
+        '  - title: "Two (draft)"',
+        "    id: ch2",
+        '  - title: "Three"',
+        "    id: ch3",
+        "---",
+        "",
+        "Intro",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const chapterBody = (draft: boolean) =>
+      ["---", `draft: ${draft}`, "---", "", "Body.", ""].join("\n");
+    fs.writeFileSync(path.join(bookDir, "ch1.md"), chapterBody(false), "utf8");
+    fs.writeFileSync(path.join(bookDir, "ch2.md"), chapterBody(true), "utf8");
+    fs.writeFileSync(path.join(bookDir, "ch3.md"), chapterBody(false), "utf8");
+
+    const prev = process.env.NODE_ENV;
+    try {
+      // Dev: drafts stay visible (same policy as posts/flows).
+      const devBook = getBookData(slug);
+      expect(devBook!.chapters.map((c) => c.id)).toEqual(["ch1", "ch2", "ch3"]);
+
+      setEnvVar("NODE_ENV", "production");
+      const prodBook = getBookData(slug);
+      expect(prodBook!.chapters.map((c) => c.id)).toEqual(["ch1", "ch3"]);
+      expect(JSON.stringify(prodBook!.toc)).not.toContain("ch2");
+
+      const ch3 = getBookChapter(slug, "ch3");
+      expect(ch3!.prevChapter!.id).toBe("ch1");
+      const ch1 = getBookChapter(slug, "ch1");
+      expect(ch1!.nextChapter!.id).toBe("ch3");
+    } finally {
+      restoreEnvVar("NODE_ENV", prev);
       fs.rmSync(bookDir, { recursive: true, force: true });
     }
   });

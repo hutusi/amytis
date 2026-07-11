@@ -22,10 +22,18 @@ import { parseMarkdownFile, parseRstPostEntries, type RstPostEntry } from './par
  * top-level files in content/ with optional locale variants.
  */
 
+const allPostsUnfilteredMemo = createMemo<PostData[]>();
 const allPostsMemo = createMemo<PostData[]>();
 
-export function getAllPosts(): PostData[] {
-  return allPostsMemo.get(() => {
+/**
+ * Every post parsed from the content tree, including drafts, future-dated
+ * posts, and static pages — the pre-publication-filter view. Content-layer
+ * internal: it lets validation distinguish "slug doesn't exist at all" (a
+ * build error) from "slug exists but is unpublished here" (a silent skip).
+ * Routes and components must keep using getAllPosts().
+ */
+export function getAllPostsIncludingUnpublished(): PostData[] {
+  return allPostsUnfilteredMemo.get(() => {
     const allPostsData: PostData[] = [];
     const pendingRstPosts: RstPostEntry[] = [];
 
@@ -88,7 +96,13 @@ export function getAllPosts(): PostData[] {
 
     allPostsData.push(...parseRstPostEntries(pendingRstPosts));
 
-    return allPostsData
+    return allPostsData;
+  });
+}
+
+export function getAllPosts(): PostData[] {
+  return allPostsMemo.get(() => {
+    return getAllPostsIncludingUnpublished()
       .filter(post => {
         if (post.category === 'Page') return false;
 

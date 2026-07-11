@@ -2,6 +2,8 @@ import { describe, test, expect, afterAll } from "bun:test";
 import { spawnSync } from "bun";
 import fs from "fs";
 import path from "path";
+import matter from "gray-matter";
+import { slugifyAscii } from "../../scripts/lib/slug";
 
 const SCRIPT_PATH = "scripts/new-post.ts";
 const CONTENT_DIR = "content/posts";
@@ -67,6 +69,46 @@ describe("Tooling: New Post Script", () => {
     const second = spawnSync(["bun", SCRIPT_PATH, title]);
     expect(second.exitCode).toBe(1);
     expect(second.stderr.toString()).toContain("Error: Post already exists at");
+  });
+
+  test("accepts a title equal to a valued flag's value", () => {
+    // Regression: indexOf-based flag lookback rejected any title that
+    // string-equaled a --prefix/--series/--template value.
+    const result = spawnSync(["bun", SCRIPT_PATH, "--prefix", "weekly", "weekly"]);
+    expect(result.exitCode).toBe(0);
+
+    const date = new Date().toISOString().split("T")[0];
+    const filePath = path.join(CONTENT_DIR, `${date}-weekly-weekly.mdx`);
+    expect(fs.existsSync(filePath)).toBe(true);
+    createdFiles.push(filePath);
+  });
+
+  test("keeps $-patterns in titles literal", () => {
+    // Regression: a string replace() treated $& / $' in the title as
+    // back-references and corrupted the frontmatter.
+    const title = "Cash $& Money";
+    const result = spawnSync(["bun", SCRIPT_PATH, title]);
+    expect(result.exitCode).toBe(0);
+
+    const date = new Date().toISOString().split("T")[0];
+    const filePath = path.join(CONTENT_DIR, `${date}-${slugifyAscii(title)}.mdx`);
+    expect(fs.existsSync(filePath)).toBe(true);
+    createdFiles.push(filePath);
+
+    expect(matter(fs.readFileSync(filePath, "utf-8")).data.title).toBe(title);
+  });
+
+  test("escapes double quotes in titles so the frontmatter stays valid YAML", () => {
+    const title = 'The "Best" Post';
+    const result = spawnSync(["bun", SCRIPT_PATH, title]);
+    expect(result.exitCode).toBe(0);
+
+    const date = new Date().toISOString().split("T")[0];
+    const filePath = path.join(CONTENT_DIR, `${date}-${slugifyAscii(title)}.mdx`);
+    expect(fs.existsSync(filePath)).toBe(true);
+    createdFiles.push(filePath);
+
+    expect(matter(fs.readFileSync(filePath, "utf-8")).data.title).toBe(title);
   });
 
   test("should create a folder post", () => {

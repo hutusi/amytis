@@ -35,10 +35,14 @@ describe("text metrics", () => {
 
     test("should strip links but keep text", () => {
       const text = "Check [this link](https://example.com)";
-      // generateExcerpt strips bold/italic markers and backticks but
-      // does not fully strip markdown link syntax
+      expect(generateExcerpt(text)).toBe("Check this link");
+    });
+
+    test("should not leak URLs into the excerpt", () => {
+      const text = "See [the docs](https://example.com/very/long/path) for details";
       const result = generateExcerpt(text);
-      expect(result).toContain("this link");
+      expect(result).toBe("See the docs for details");
+      expect(result).not.toContain("https://");
     });
   });
 
@@ -184,6 +188,28 @@ describe("text metrics", () => {
       const content = "Just plain text with no headings at all.";
       const headings = getHeadings(content);
       expect(headings).toEqual([]);
+    });
+
+    test("ignores heading-like lines inside fenced code blocks", () => {
+      const content = ["## Real", "", "```bash", "## not a heading", "```", "", "## Also Real"].join("\n");
+      const headings = getHeadings(content);
+      expect(headings.map((h) => h.text)).toEqual(["Real", "Also Real"]);
+    });
+
+    test("ignores heading-like lines inside tilde fences too", () => {
+      const content = ["~~~bash", "## not a heading", "~~~", "", "## Setup"].join("\n");
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(1);
+      expect(headings[0]).toEqual({ id: "setup", text: "Setup", level: 2 });
+    });
+
+    test("fenced duplicates do not burn slug dedup slots", () => {
+      // A `## Setup` inside a fence must not claim the "setup" slug — the
+      // rendered HTML gives the real heading id="setup", and the TOC must match.
+      const content = ["```md", "## Setup", "```", "", "## Setup"].join("\n");
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(1);
+      expect(headings[0].id).toBe("setup");
     });
   });
 

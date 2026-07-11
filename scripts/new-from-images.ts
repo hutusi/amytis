@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { yamlDoubleQuoted } from './lib/content-file';
 
 const args = process.argv.slice(2);
 
@@ -117,7 +118,7 @@ const imageMarkdown = images
   .join('\n\n');
 
 const content = `---
-title: "${postTitle}"
+title: "${yamlDoubleQuoted(postTitle)}"
 date: "${date}"
 excerpt: "A collection of ${images.length} images."
 category: "Gallery"
