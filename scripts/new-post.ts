@@ -97,7 +97,9 @@ Write your content here...
 // Function replacer: with a plain string, $-patterns in the title ($&, $',
 // $1…) are interpreted as replace() back-references and corrupt the output.
 // Templates wrap {{title}} in a double-quoted YAML scalar, so escape for
-// that context (create-amytis guards the same footgun).
+// that context (create-amytis guards the same footgun). NOTE: custom
+// templates must also keep {{title}} inside a double-quoted scalar —
+// yamlDoubleQuoted's backslash escapes are only valid in "…" YAML.
 const safeTitle = yamlDoubleQuoted(title);
 content = content.replace(/{{title}}/g, () => safeTitle).replace(/{{date}}/g, date);
 

@@ -196,6 +196,13 @@ describe("text metrics", () => {
       expect(headings.map((h) => h.text)).toEqual(["Real", "Also Real"]);
     });
 
+    test("ignores heading-like lines inside tilde fences too", () => {
+      const content = ["~~~bash", "## not a heading", "~~~", "", "## Setup"].join("\n");
+      const headings = getHeadings(content);
+      expect(headings).toHaveLength(1);
+      expect(headings[0]).toEqual({ id: "setup", text: "Setup", level: 2 });
+    });
+
     test("fenced duplicates do not burn slug dedup slots", () => {
       // A `## Setup` inside a fence must not claim the "setup" slug — the
       // rendered HTML gives the real heading id="setup", and the TOC must match.
