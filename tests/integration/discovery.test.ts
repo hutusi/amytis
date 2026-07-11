@@ -88,6 +88,25 @@ describe('Integration: discovery (slug registry, backlinks, tags)', () => {
         fs.rmSync(noteB, { force: true });
       }
     });
+
+    test('throws on a duplicate flow slug (DD.md next to DD/index.md)', () => {
+      // Both forms of the same day resolve to one YYYY/MM/DD slug; the walk
+      // yields two flows and the registry must refuse the ambiguity instead
+      // of silently keeping the last one.
+      const dayDir = path.join(process.cwd(), 'content', 'flows', '1999', '01');
+      fs.mkdirSync(path.join(dayDir, '01'), { recursive: true });
+      const flowFile = path.join(dayDir, '01.md');
+      const flowIndex = path.join(dayDir, '01', 'index.md');
+      const body = ['---', 'title: Dup Flow', '---', '', 'x', ''].join('\n');
+      fs.writeFileSync(flowFile, body, 'utf8');
+      fs.writeFileSync(flowIndex, body, 'utf8');
+
+      try {
+        expect(() => buildSlugRegistry()).toThrow(/Flow slug "1999\/01\/01" collides/);
+      } finally {
+        fs.rmSync(path.join(process.cwd(), 'content', 'flows', '1999'), { recursive: true, force: true });
+      }
+    });
   });
 
   describe('getBacklinks', () => {
