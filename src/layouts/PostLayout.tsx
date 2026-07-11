@@ -43,9 +43,13 @@ export default function PostLayout({ post, relatedPosts, seriesPosts, seriesTitl
   const hasCollections = !!(collectionContexts && collectionContexts.length > 0);
   const showSidebar = showToc || hasSeries || hasCollections;
   const isStaticPage = commentCategory === 'staticPages';
+  // Strip baseUrl's trailing slash in both branches — helpers return
+  // slash-prefixed paths, and a doubled '//' here splits giscus/disqus
+  // comment threads across the two URL forms.
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const postUrl = isStaticPage
-    ? `${siteConfig.baseUrl.replace(/\/+$/, '')}${getStaticPageUrl(post.slug)}`
-    : `${siteConfig.baseUrl}${getPostUrl(post)}`;
+    ? `${siteUrl}${getStaticPageUrl(post.slug)}`
+    : `${siteUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
   const bodyRenderer = post.sourceFormat === 'rst'
     ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
