@@ -103,7 +103,7 @@ function ensureSpawnOutputString(output: string | NodeJS.ArrayBufferView | null 
 }
 
 function getRstRendererSourceHash(filePath: string): string {
-  return createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
+  return createHash('sha1').update(fs.readFileSync(/* turbopackIgnore: true */ filePath)).digest('hex');
 }
 
 // Hash of the renderer SCRIPT itself. Changing scripts/render-rst.py changes the
@@ -172,7 +172,7 @@ function loadRenderedRstDocumentFromDiskCache(filePath: string, imageBaseSlug: s
   if (!fs.existsSync(cachePath)) return null;
 
   try {
-    const raw = fs.readFileSync(cachePath, 'utf8');
+    const raw = fs.readFileSync(/* turbopackIgnore: true */ cachePath, 'utf8');
     const parsed = JSON.parse(raw) as Partial<RstRendererDiskCacheEntry>;
     if (
       parsed.version !== RST_RENDERER_DISK_CACHE_VERSION ||
