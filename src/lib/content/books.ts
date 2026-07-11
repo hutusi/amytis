@@ -252,6 +252,22 @@ export function getBookData(slug: string): BookData | null {
     authors = siteConfig.posts?.authors?.default ?? [];
   }
 
+  // In production, drop draft chapters from both the flattened list and the
+  // nested TOC. getBookChapter returns null for them (→ 404), so leaving
+  // them in produced dead prev/next and sidebar links from their published
+  // neighbors. Dev keeps drafts visible, same policy as posts/flows.
+  let toc = data.chapters;
+  let visibleChapters = chapters;
+  if (process.env.NODE_ENV === 'production') {
+    const draftIds = new Set(
+      chapters.filter(ch => isChapterDraft(bookDir, ch.id)).map(ch => ch.id)
+    );
+    if (draftIds.size > 0) {
+      visibleChapters = chapters.filter(ch => !draftIds.has(ch.id));
+      toc = filterTocDrafts(data.chapters, draftIds);
+    }
+  }
+
   return {
     title: data.title,
     slug,
@@ -264,9 +280,47 @@ export function getBookData(slug: string): BookData | null {
     latex: data.latex,
     showChapterExcerpt: data.showChapterExcerpt,
     content: content.trim(),
-    toc: data.chapters,
-    chapters,
+    toc,
+    chapters: visibleChapters,
   };
+}
+
+/**
+ * Light draft probe for TOC filtering: reads only the frontmatter's `draft`
+ * flag. Full schema validation still happens in getBookChapter, so a chapter
+ * with otherwise-broken frontmatter is NOT treated as draft here — it stays
+ * listed and fails the build loudly when rendered (strict-build invariant).
+ */
+function isChapterDraft(bookDir: string, chapterId: string): boolean {
+  const resolved = resolveChapterFilePath(bookDir, chapterId);
+  if (!resolved) return false; // Existence is validated separately above.
+  const { data } = matter(readUtf8File(resolved.path));
+  return data.draft === true;
+}
+
+/** Remove draft chapter refs from the nested TOC; prune emptied parts/sections. */
+function filterTocDrafts(toc: BookTocItem[], draftIds: Set<string>): BookTocItem[] {
+  const filterSectionItems = (
+    items: Array<BookTocSection | BookChapterRef>,
+  ): Array<BookTocSection | BookChapterRef> =>
+    items.flatMap((item): Array<BookTocSection | BookChapterRef> => {
+      if ('section' in item) {
+        const kept = filterSectionItems(item.items);
+        return kept.length > 0 ? [{ ...item, items: kept }] : [];
+      }
+      return draftIds.has(item.id) ? [] : [item];
+    });
+
+  return toc.flatMap((item): BookTocItem[] => {
+    if ('part' in item) {
+      const kept = item.chapters.filter(ch => !draftIds.has(ch.id));
+      return kept.length > 0 ? [{ ...item, chapters: kept }] : [];
+    }
+    if ('section' in item) {
+      return filterSectionItems([item]);
+    }
+    return draftIds.has(item.id) ? [] : [item];
+  });
 }
 
 export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapterData | null {
