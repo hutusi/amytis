@@ -92,8 +92,8 @@ export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(/```[\s\S]*?```/g, '');
   plain = plain.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  plain = plain.replace(/\*\[([^\]]+)\*\]\([^)]+\)/g, '$1');
-  plain = plain.replace(/(\$\*\*|__|\*|_)/g, '');
+  plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  plain = plain.replace(/(\*\*|__|\*|_)/g, '');
   plain = plain.replace(/`([^`]+)`/g, '$1');
   plain = plain.replace(/^>\s+/gm, '');
   plain = plain.replace(/\s+/g, ' ').trim();
@@ -110,7 +110,13 @@ export function getHeadings(content: string): Heading[] {
   const slugger = new GithubSlugger();
   let match;
 
-  while ((match = regex.exec(content)) !== null) {
+  // Strip fenced code blocks first: a `## foo` line inside a fence is not a
+  // heading in the rendered HTML, so harvesting it would emit a dead TOC
+  // anchor AND burn the slugger's dedup slot, desyncing every later
+  // duplicate-text heading id from the one rehype-slug assigns.
+  const withoutFences = content.replace(/```[\s\S]*?```/g, '');
+
+  while ((match = regex.exec(withoutFences)) !== null) {
     const level = match[1].length;
     const text = match[2].trim();
     const id = slugger.slug(text);
