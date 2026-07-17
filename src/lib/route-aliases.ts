@@ -391,27 +391,41 @@ export type PrefixedPostResolution =
   | null;
 
 /**
- * Resolve a `[slug]/[postSlug]` request: find the post (by slug through
- * the decoded/raw/NFC/NFD ladder, else by a redirectFrom match on the full
- * path), validate the prefix is a known surface (custom basePath, series
- * custom/auto path, or a legacy redirect declared on the post), then
- * classify canonical vs redirect.
+ * Resolve a `[slug]/[postSlug]` request: find the post, validate the prefix
+ * is a known surface (custom basePath, series custom/auto path, or a legacy
+ * redirect declared on the post), then classify canonical vs redirect.
+ *
+ * When the prefix names a series, the post is looked up *within that series*
+ * first: bare slugs are unique per canonical URL but may legally repeat across
+ * series (see the carve-out in content/discovery.ts), so a global first-match
+ * would send one series' child to the other. Only non-series surfaces
+ * (basePath, legacy redirects) fall back to the global bare-slug lookup.
  */
 export function resolvePrefixedPost(rawPrefix: string, rawPostSlug: string): PrefixedPostResolution {
   const decodedPrefix = safeDecodeParam(rawPrefix);
   const currentPath = `/${decodedPrefix}/${safeDecodeParam(rawPostSlug)}`;
-
-  const post =
-    resolveFromParam(rawPostSlug, getPostBySlug) ??
-    getAllPosts().find(candidate => candidate.redirectFrom?.includes(currentPath)) ??
-    null;
-  if (!post) return null;
 
   const basePath = getPostsBasePath();
   const customPaths = getSeriesCustomPaths();
   const isValidBasePath = decodedPrefix === basePath && basePath !== 'posts';
   const matchedSeriesSlug = Object.entries(customPaths).find(([, path]) => path === decodedPrefix)?.[0];
   const isAutoSeriesPath = getSeriesAutoPaths() && !Object.hasOwn(customPaths, decodedPrefix) && getSeriesData(decodedPrefix) !== null;
+
+  // A custom-path prefix maps to its series slug; an auto-path prefix IS the
+  // series slug. Scope the lookup to that series so same-slug children of a
+  // different series can't win the match.
+  const owningSeries = matchedSeriesSlug ?? (isAutoSeriesPath ? decodedPrefix : undefined);
+  const seriesScopedPost = owningSeries
+    ? resolveFromParam(rawPostSlug, slug => getSeriesPosts(owningSeries).find(p => p.slug === slug) ?? null)
+    : null;
+
+  const post =
+    seriesScopedPost ??
+    resolveFromParam(rawPostSlug, getPostBySlug) ??
+    getAllPosts().find(candidate => candidate.redirectFrom?.includes(currentPath)) ??
+    null;
+  if (!post) return null;
+
   const isLegacyRedirect = post.redirectFrom?.includes(currentPath) ?? false;
 
   if (!isValidBasePath && !matchedSeriesSlug && !isAutoSeriesPath && !isLegacyRedirect) {

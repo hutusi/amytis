@@ -40,8 +40,16 @@ export function getSeriesPosts(seriesName: string): PostData[] {
       // on missing chapters the same way); a post that exists but is
       // unpublished here (draft in production, future-dated) is skipped
       // silently like everywhere else.
+      //
+      // Prefer a post that already belongs to this series before the global
+      // bare-slug lookup: duplicate slugs are legal across series, so a global
+      // first-match would pull in another series' same-slug child. The global
+      // fallback is what lets collections (type: collection) reference posts
+      // that live outside the folder.
       return seriesData.posts.flatMap(slug => {
-        const post = getPostBySlug(slug);
+        const post =
+          getAllPosts().find(p => p.series === seriesName && p.slug === slug) ??
+          getPostBySlug(slug);
         if (post) return [post];
         if (getAllPostsIncludingUnpublished().some(p => p.slug === slug)) return [];
         throw new Error(

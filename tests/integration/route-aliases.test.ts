@@ -199,6 +199,20 @@ describe('Integration: route aliases', () => {
     test('an unknown post resolves to null', () => {
       expect(resolvePrefixedPost('markdown-showcase', 'no-such-post')).toBeNull();
     });
+
+    test('duplicate slug across series resolves within the requested series', () => {
+      // `first-post`/`second-post` exist in both rst-toctree and
+      // rst-toctree-precedence. A global bare-slug lookup would send one
+      // series' child to the other; the prefix must scope the lookup.
+      for (const slug of ['first-post', 'second-post']) {
+        for (const series of ['rst-toctree', 'rst-toctree-precedence']) {
+          expect(resolvePrefixedPost(series, slug)).toMatchObject({
+            kind: 'canonical',
+            post: { slug, series },
+          });
+        }
+      }
+    });
   });
 
   describe('resolveSeriesParam', () => {
