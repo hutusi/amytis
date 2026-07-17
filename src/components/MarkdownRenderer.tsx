@@ -230,6 +230,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       return (
         <div className="relative w-full my-6 rounded-lg overflow-hidden aspect-video">
           <iframe
+            // Lazy by default so embeds (YouTube, Vimeo, …) don't block load;
+            // `rest` spreads after so an author's explicit loading= still wins.
+            loading="lazy"
             {...rest}
             className="absolute inset-0 w-full h-full border-0"
           />
@@ -264,6 +267,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
             width={width}
             height={height}
             style={style}
+            loading="lazy"
+            decoding="async"
             {...rest}
             fetchPriority="low"
           />
@@ -288,7 +293,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
         );
       }
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={imageSrc} alt={alt || ''} {...rest} fetchPriority="low" className="max-w-full h-auto rounded-lg my-4" />;
+      return <img src={imageSrc} alt={alt || ''} loading="lazy" decoding="async" {...rest} fetchPriority="low" className="max-w-full h-auto rounded-lg my-4" />;
     },
   };
 

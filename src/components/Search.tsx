@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 
 import { isFeatureEnabled } from '@/lib/features';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/LanguageProvider';
-import type { ContentType } from '@/lib/search-utils';
+import { type ContentType, parseRecentSearches } from '@/lib/search-utils';
 import type { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
 import { resolveLocaleValue } from '@/lib/i18n';
@@ -41,8 +41,11 @@ const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function loadRecentSearches(): string[] {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
-  catch { return []; }
+  try {
+    return parseRecentSearches(localStorage.getItem(RECENT_KEY), MAX_RECENT);
+  } catch {
+    return []; // localStorage.getItem itself threw (storage disabled)
+  }
 }
 
 function persistRecentSearch(query: string, current: string[]): string[] {
@@ -78,7 +81,7 @@ export default function Search() {
     setActiveType('All');
   }, []);
 
-  const { allResults, isFetching, isUnavailable, isTyping, debouncedQuery } =
+  const { allResults, isFetching, isUnavailable, isError, isTyping, debouncedQuery } =
     usePagefind(query, isOpen, resetResultSelection);
 
   const listboxId = `${baseId}-listbox`;
@@ -234,7 +237,7 @@ export default function Search() {
     try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
   }
 
-  const showNoResults = !isTyping && !isFetching && debouncedQuery.length > 0 && displayedResults.length === 0;
+  const showNoResults = !isTyping && !isFetching && !isError && debouncedQuery.length > 0 && displayedResults.length === 0;
 
   return (
     <>
@@ -371,6 +374,13 @@ export default function Search() {
                       to generate the local index.
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* A search rejected at runtime (recoverable — retry by editing the query) */}
+              {isError && !isFetching && query && (
+                <div className="p-8 text-center text-muted text-sm">
+                  <p>{t('search_error')}</p>
                 </div>
               )}
 
