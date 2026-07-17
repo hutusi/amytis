@@ -5,13 +5,13 @@ import { useImmersiveReading } from '@/components/ImmersiveReadingProvider';
 import ImmersiveReader from '@/components/ImmersiveReader';
 import ImmersiveSeriesSidebar from '@/components/ImmersiveSeriesSidebar';
 import { getSeriesUrl } from '@/lib/urls';
-import type { CollectionContext, Heading, PostData } from '@/lib/content/types';
+import type { CollectionContext, Heading, PostNavItem } from '@/lib/content/types';
 
 interface PostReadingShellProps {
   post: { slug: string; title: string; series?: string; headings?: Heading[] };
   seriesSlug?: string;
   seriesTitle?: string;
-  seriesPosts?: PostData[];
+  seriesPosts?: PostNavItem[];
   collectionContexts?: CollectionContext[];
   /** Slim article subtree to render inside the overlay (header + body + nav).
    *  Pre-built in PostLayout so the heavy MarkdownRenderer/RstRenderer is the

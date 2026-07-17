@@ -16,10 +16,23 @@ export type CollectionItem =
   | { series: string; exclude?: string[]; label?: string }
   | { post: string; label?: string };
 
+/**
+ * The minimal post fields the series/collection navigation UIs need — enough
+ * to build links (getPostUrl reads slug + series) and render labels. Series and
+ * collection lists cross the server→client boundary for every post in a series;
+ * projecting to this keeps sibling article bodies out of the RSC payload.
+ */
+export interface PostNavItem {
+  slug: string;
+  title: string;
+  date: string;
+  series?: string;
+}
+
 export interface CollectionContext {
   slug: string;
   title: string;
-  posts: PostData[];
+  posts: PostNavItem[];
 }
 
 export interface PostData {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { byDateAsc, byDateDesc } from '../sort';
-import type { PostData, CollectionContext } from './types';
+import type { PostData, CollectionContext, PostNavItem } from './types';
 import { seriesDirectory } from './io';
 import { createMemo, createKeyedMemo } from './cache';
 import { resolveSeriesIndexInfo, getSeriesAuthors } from './series-metadata';
@@ -209,6 +209,15 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   });
 }
 
+/**
+ * Project posts to the minimal fields the series/collection navigation needs,
+ * so sibling article bodies never cross the server→client boundary. Mirrors
+ * toFlowIndexItems for the flow archive.
+ */
+export function toPostNavItems(posts: PostData[]): PostNavItem[] {
+  return posts.map(p => ({ slug: p.slug, title: p.title, date: p.date, series: p.series }));
+}
+
 const collectionsForPostMemo = createKeyedMemo<string, CollectionContext[]>();
 
 export function getCollectionsForPost(postSlug: string): CollectionContext[] {
@@ -224,7 +233,7 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
       if (process.env.NODE_ENV === 'production' && data.draft) continue;
       const posts = getCollectionPosts(folder.name);
       if (posts.some(p => p.slug === postSlug)) {
-        results.push({ slug: folder.name, title: data.title, posts });
+        results.push({ slug: folder.name, title: data.title, posts: toPostNavItems(posts) });
       }
     }
 

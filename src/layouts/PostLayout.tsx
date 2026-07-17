@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import type { BacklinkSource, SlugRegistryEntry } from '@/lib/content/discovery';
 import { getAuthorSlug } from '@/lib/content/authors';
-import type { PostData, CollectionContext } from '@/lib/content/types';
+import type { PostData, CollectionContext, PostNavItem } from '@/lib/content/types';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import RelatedPosts from '@/components/RelatedPosts';
@@ -27,7 +27,7 @@ import { getPostUrl, getStaticPageUrl } from '@/lib/urls';
 interface PostLayoutProps {
   post: PostData;
   relatedPosts?: PostData[];
-  seriesPosts?: PostData[];
+  seriesPosts?: PostNavItem[];
   seriesTitle?: string;
   collectionContexts?: CollectionContext[];
   prevPost?: PostData | null;

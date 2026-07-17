@@ -4,10 +4,27 @@ import { describe, expect, test } from "bun:test";
 import { getSeriesContentEntries } from "../../src/lib/content/series-metadata";
 import { parseRstDocument, RstParseError } from "../../src/lib/rst";
 import { getAdjacentPosts } from '../../src/lib/content/related';
-import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries } from '../../src/lib/content/series';
+import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries, toPostNavItems } from '../../src/lib/content/series';
 import { getFeaturedPosts } from '../../src/lib/content/posts';
 
 describe("Integration: Series", () => {
+  test("toPostNavItems projects nav fields only — no article bodies cross to the client", () => {
+    const withPosts = Object.values(getAllSeries()).find(posts => posts.length > 0);
+    expect(withPosts).toBeDefined();
+    const nav = toPostNavItems(withPosts!);
+    expect(nav.length).toBe(withPosts!.length);
+    for (let i = 0; i < nav.length; i++) {
+      const item = nav[i];
+      expect(new Set(Object.keys(item))).toEqual(new Set(['slug', 'title', 'date', 'series']));
+      expect(item.slug).toBe(withPosts![i].slug);
+      // The heavy fields that inflate the RSC payload must be absent.
+      expect('content' in item).toBe(false);
+      expect('renderedHtml' in item).toBe(false);
+      expect('plainText' in item).toBe(false);
+      expect('headings' in item).toBe(false);
+    }
+  });
+
   test("getAllSeries returns non-empty record with known slugs", () => {
     const series = getAllSeries();
     expect(Object.keys(series).length).toBeGreaterThan(0);

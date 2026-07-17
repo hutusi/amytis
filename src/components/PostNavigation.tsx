@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext } from '@/lib/content/types';
+import type { PostData, CollectionContext, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import MetaLabel from './ui/MetaLabel';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
@@ -22,8 +22,10 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
     ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
     : null;
 
-  let effectivePrev = prev;
-  let effectiveNext = next;
+  // PostData satisfies PostNavItem, so prev/next widen cleanly; collection
+  // entries are already PostNavItem.
+  let effectivePrev: PostNavItem | null = prev;
+  let effectiveNext: PostNavItem | null = next;
 
   if (activeCollection && currentSlug) {
     const posts = activeCollection.posts;
@@ -32,7 +34,7 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
     effectiveNext = idx < posts.length - 1 ? posts[idx + 1] : null;
   }
 
-  const postHref = (post: PostData) =>
+  const postHref = (post: PostNavItem) =>
     activeCollection ? getPostUrlInCollection(post, activeCollection.slug) : getPostUrl(post);
 
   if (!effectivePrev && !effectiveNext) return null;

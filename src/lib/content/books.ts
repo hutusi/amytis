@@ -7,7 +7,7 @@ import { byDateDesc } from '../sort';
 import { extractContentMetrics } from '../text-metrics';
 import type { Heading } from './types';
 import { booksDirectory, readUtf8File } from './io';
-import { createProdMemo } from './cache';
+import { createProdMemo, createProdKeyedMemo } from './cache';
 import { normalizeCoverImage } from './cover-image';
 import { dateField, draftField, invalidFrontmatterError } from './schema';
 
@@ -203,7 +203,20 @@ function resolveChapterFilePath(
   return null;
 }
 
+const bookDataMemo = createProdKeyedMemo<string, BookData | null>();
+
+/**
+ * Book data by slug, memoized in production. Static generation asks for the
+ * same book once per chapter (params, metadata, page body) and again from the
+ * search-index route; without the memo each call re-read and re-parsed the
+ * index plus every chapter's frontmatter (isChapterDraft), an O(N^2) reparse
+ * per book. Dev recomputes so HMR sees edited content.
+ */
 export function getBookData(slug: string): BookData | null {
+  return bookDataMemo.get(slug, () => computeBookData(slug));
+}
+
+function computeBookData(slug: string): BookData | null {
   if (!fs.existsSync(booksDirectory)) return null;
   const bookDir = path.join(booksDirectory, slug);
   if (!fs.existsSync(bookDir)) return null;

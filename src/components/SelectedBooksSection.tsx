@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import HorizontalScroll from './HorizontalScroll';
 import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
-import { shuffle } from '@/lib/shuffle';
+import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
 import { cn } from '@/lib/cn';
@@ -31,26 +31,20 @@ interface SelectedBooksSectionProps {
   order?: BookOrder;
 }
 
-function canonicalOrder(books: BookItem[], order: BookOrder): BookItem[] {
+// For 'shuffle', a seeded permutation keyed off the content so server and client
+// render the same order — no post-hydration swap. The user re-rolls to a fresh
+// random order via the shuffle control.
+function initialOrder(books: BookItem[], order: BookOrder): BookItem[] {
   if (order === 'date-desc') return [...books].sort(byDateDesc);
   if (order === 'date-asc')  return [...books].sort(byDateAsc);
-  // For 'shuffle': SSR-stable canonical order (input is already date-desc from getAllBooks).
-  // The post-mount useEffect swaps to a random permutation on the client.
-  return books;
+  return shuffleSeeded(books, seedFromKeys(books.map(b => b.slug)));
 }
 
 export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle' }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
-  const [displayed, setDisplayed] = useState(() => canonicalOrder(books, order).slice(0, maxItems));
-
-  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
-  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
-  useEffect(() => {
-    if (order === 'shuffle') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayed(shuffle(books).slice(0, maxItems));
-    }
-  }, [books, maxItems, order]);
+  // Seeded shuffle is stable across the SSR/hydration boundary, so the initial
+  // order is computed once and never swapped after mount.
+  const [displayed, setDisplayed] = useState(() => initialOrder(books, order).slice(0, maxItems));
 
   const handleShuffle = useCallback(() => {
     setDisplayed(shuffle(books).slice(0, maxItems));

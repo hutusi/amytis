@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, Heading, CollectionContext } from '@/lib/content/types';
+import type { Heading, CollectionContext, PostNavItem } from '@/lib/content/types';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { useLanguage } from './LanguageProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
@@ -16,7 +16,7 @@ import { siteConfig } from '../../site.config';
 interface PostSidebarProps {
   seriesSlug?: string;
   seriesTitle?: string;
-  posts?: PostData[];
+  posts?: PostNavItem[];
   collectionContexts?: CollectionContext[];
   currentSlug: string;
   headings: Heading[];
@@ -51,7 +51,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
   const effectivePosts = activeCollection?.posts ?? posts;
   const isCollectionContext = !!activeCollection;
 
-  const postHref = (post: PostData) =>
+  const postHref = (post: PostNavItem) =>
     isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
 
   const activeHeadings = localeHeadings?.[language] ?? headings;
