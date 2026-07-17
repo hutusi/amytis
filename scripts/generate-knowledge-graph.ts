@@ -13,6 +13,7 @@ import { getSeriesData } from '../src/lib/content/series';
 import { getAllPosts } from '../src/lib/content/posts';
 import { getAllNotes } from '../src/lib/content/notes';
 import { getAllFlows } from '../src/lib/content/flows';
+import { getPostUrl } from '../src/lib/urls';
 
 interface GraphNode {
   id: string;
@@ -44,52 +45,60 @@ async function main() {
   const posts = getAllPosts();
   const notes = getAllNotes();
   const flows = getAllFlows();
-  const flowMap = new Map(flows.map(flow => [flow.slug, flow] as const));
 
-  // Build id→node map
+  // Nodes are keyed by canonical URL, not bare slug: posts carry the URL from
+  // getPostUrl (series prefixes, custom basePath), and duplicate slugs across
+  // series stay distinct nodes instead of overwriting each other.
   const nodeMap = new Map<string, GraphNode>();
   const edges: GraphEdge[] = [];
 
-  // Add all posts and notes
-  for (const post of posts) {
-    nodeMap.set(post.slug, { id: post.slug, title: post.title, type: 'post', url: `/posts/${post.slug}`, connections: 0 });
+  // Docs carry their unique node id (the canonical URL) up front, so the wikilink
+  // scan and node creation agree on identity.
+  const postDocs = posts.map(p => ({ slug: p.slug, title: p.title, type: 'post' as const, content: p.content, url: getPostUrl(p) }));
+  const noteDocs = notes.map(n => ({ slug: n.slug, aliases: n.aliases ?? [], title: n.title, type: 'note' as const, content: n.content, url: `/notes/${n.slug}` }));
+  const flowDocs = flows.map(f => ({ slug: f.slug, title: f.title, type: 'flow' as const, content: f.content, url: `/flows/${f.slug}` }));
+
+  // Wikilink targets are bare slugs; map each to a node id. Duplicate post slugs
+  // are legal, so last-wins here matches the app's wikilink registry.
+  const slugToId = new Map<string, string>();
+  const flowDocById = new Map(flowDocs.map(d => [d.url, d] as const));
+
+  for (const doc of postDocs) {
+    nodeMap.set(doc.url, { id: doc.url, title: doc.title, type: 'post', url: doc.url, connections: 0 });
+    slugToId.set(doc.slug, doc.url);
   }
-  for (const note of notes) {
-    nodeMap.set(note.slug, { id: note.slug, title: note.title, type: 'note', url: `/notes/${note.slug}`, connections: 0 });
+  for (const doc of noteDocs) {
+    nodeMap.set(doc.url, { id: doc.url, title: doc.title, type: 'note', url: doc.url, connections: 0 });
+    slugToId.set(doc.slug, doc.url);
+    for (const alias of doc.aliases) slugToId.set(alias, doc.url);
+  }
+  for (const doc of flowDocs) {
+    slugToId.set(doc.slug, doc.url); // flow nodes are added only when linked (below)
   }
 
-  // Track which flows appear in wikilinks (to avoid including ALL flows)
-  const linkedFlowSlugs = new Set<string>();
-
-  // Scan all content for wikilinks
-  const allContent: Array<{ slug: string; title: string; type: 'post' | 'note' | 'flow'; content: string; url: string }> = [
-    ...posts.map(p => ({ slug: p.slug, title: p.title, type: 'post' as const, content: p.content, url: `/posts/${p.slug}` })),
-    ...notes.map(n => ({ slug: n.slug, title: n.title, type: 'note' as const, content: n.content, url: `/notes/${n.slug}` })),
-    ...flows.map(f => ({ slug: f.slug, title: f.title, type: 'flow' as const, content: f.content, url: `/flows/${f.slug}` })),
-  ];
+  const allContent = [...postDocs, ...noteDocs, ...flowDocs];
 
   // Build wikilink edges (deduplicate per source document)
   for (const item of allContent) {
     const targets = extractWikilinks(item.content);
     const seenTargets = new Set<string>();
-    for (const target of targets) {
-      if (target === item.slug) continue; // skip self
-      if (seenTargets.has(target)) continue; // skip duplicate within this doc
-      seenTargets.add(target);
-      edges.push({ source: item.slug, target, type: 'wikilink' });
+    for (const rawTarget of targets) {
+      if (rawTarget === item.slug) continue; // skip self by slug
+      if (seenTargets.has(rawTarget)) continue; // skip duplicate within this doc
+      seenTargets.add(rawTarget);
 
-      // Ensure source exists in nodeMap
-      if (!nodeMap.has(item.slug)) {
-        nodeMap.set(item.slug, { id: item.slug, title: item.title, type: item.type, url: item.url, connections: 0 });
-        if (item.type === 'flow') linkedFlowSlugs.add(item.slug);
+      const targetId = slugToId.get(rawTarget);
+      if (!targetId || targetId === item.url) continue; // unresolved, or self via alias/url
+      edges.push({ source: item.url, target: targetId, type: 'wikilink' });
+
+      // Ensure source exists in nodeMap (flows are absent until they participate)
+      if (!nodeMap.has(item.url)) {
+        nodeMap.set(item.url, { id: item.url, title: item.title, type: item.type, url: item.url, connections: 0 });
       }
-      // Track referenced flows
-      const targetFlow = flowMap.get(target);
-      if (targetFlow) {
-        linkedFlowSlugs.add(target);
-        if (!nodeMap.has(target)) {
-          nodeMap.set(target, { id: target, title: targetFlow.title, type: 'flow', url: `/flows/${target}`, connections: 0 });
-        }
+      // Add a node for a referenced flow the first time it's linked
+      if (!nodeMap.has(targetId) && flowDocById.has(targetId)) {
+        const flowDoc = flowDocById.get(targetId)!;
+        nodeMap.set(targetId, { id: targetId, title: flowDoc.title, type: 'flow', url: flowDoc.url, connections: 0 });
       }
     }
   }
@@ -110,10 +119,10 @@ async function main() {
       url: `/series/${seriesSlug}`,
       connections: 0,
     });
-    // Add edges from series to each post
+    // Add edges from series to each post (target by canonical-URL node id)
     for (const post of posts) {
       if (post.series === seriesSlug) {
-        edges.push({ source: seriesId, target: post.slug, type: 'series' });
+        edges.push({ source: seriesId, target: getPostUrl(post), type: 'series' });
       }
     }
   }

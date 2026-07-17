@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import sitemap from '@/app/sitemap';
 import { getAllPosts } from '@/lib/content/posts';
-import { getPostUrl, withTrailingSlash } from '@/lib/urls';
+import { getAllNotes } from '@/lib/content/notes';
+import { getAllSeries } from '@/lib/content/series';
+import { getAllAuthors, getAuthorSlug } from '@/lib/content/authors';
+import { getAllTags } from '@/lib/content/discovery';
+import { getPostUrl, getNoteUrl, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
 import { siteConfig } from '../../site.config';
 
 // The sitemap reads real content, so these tests assert invariants that must
@@ -58,6 +62,38 @@ describe('Integration: sitemap', () => {
     const urlSet = new Set(urls);
     for (const post of getAllPosts()) {
       expect(urlSet.has(withTrailingSlash(`${baseUrl}${getPostUrl(post)}`))).toBe(true);
+    }
+  });
+
+  test('includes the notes and series listing pages (features enabled)', () => {
+    for (const path of ['/notes', '/series']) {
+      expect(urls).toContain(`${baseUrl}${path}/`);
+    }
+  });
+
+  test('includes every note, series, author-slug, and tag exactly once', () => {
+    const urlSet = new Set(urls);
+    for (const note of getAllNotes()) {
+      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getNoteUrl(note.slug)}`))).toBe(true);
+    }
+    for (const slug of Object.keys(getAllSeries())) {
+      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getSeriesUrl(slug)}`))).toBe(true);
+    }
+    for (const name of Object.keys(getAllAuthors())) {
+      expect(urlSet.has(withTrailingSlash(`${baseUrl}/authors/${getAuthorSlug(name)}`))).toBe(true);
+    }
+    for (const tag of Object.keys(getAllTags())) {
+      expect(urlSet.has(withTrailingSlash(`${baseUrl}/tags/${encodeURIComponent(tag.toLowerCase())}`))).toBe(true);
+    }
+  });
+
+  test('advertises authors only by canonical slug, never the legacy name form', () => {
+    const authorUrls = urls.filter((u) => u.startsWith(`${baseUrl}/authors/`));
+    // One entry per author — no duplicate name-form URL alongside the slug.
+    expect(authorUrls.length).toBe(Object.keys(getAllAuthors()).length);
+    for (const url of authorUrls) {
+      const segment = new URL(url).pathname.replace(/^\/authors\//, '').replace(/\/$/, '');
+      expect(segment).not.toMatch(/[A-Z\s]/); // slugs are lowercase and space-free
     }
   });
 
