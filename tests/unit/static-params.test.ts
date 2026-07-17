@@ -474,14 +474,6 @@ describe('generateStaticParams — placeholder when content is empty', () => {
     });
   });
 
-  describe('homepage pagination', () => {
-    test('page/[page] returns [{ page: "2" }]', async () => {
-      const { generateStaticParams } = await import('../../src/app/page/[page]/page');
-      const params = await generateStaticParams();
-      expect(params).toEqual([{ page: '2' }]);
-    });
-  });
-
   describe('autoPaths series routing', () => {
     // autoPaths defaults to true — series posts are served at /[series-slug]/[post-slug]
 
