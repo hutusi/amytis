@@ -69,3 +69,81 @@ describe('ThemeToggle', () => {
     expect(button.getAttribute('aria-label')).toBe('Toggle theme');
   });
 });
+
+/**
+ * System-theme resolution: the toggle must act on the *resolved* theme, not the
+ * literal "system" value. Otherwise a system-dark visitor's first click is a
+ * no-op (setTheme('dark') on an already-dark page) and the icon is wrong.
+ */
+describe('ThemeToggle under system preference', () => {
+  function mockPrefersColorScheme(dark: boolean) {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('dark') ? dark : !dark,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    return () => { window.matchMedia = original; };
+  }
+
+  function renderSystemToggle() {
+    return render(
+      <LanguageProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeToggle />
+        </ThemeProvider>
+      </LanguageProvider>,
+    );
+  }
+
+  test('system-dark: shows the sun icon and first click flips to light', async () => {
+    const restore = mockPrefersColorScheme(true);
+    try {
+      renderSystemToggle();
+      const button = await findMountedToggle();
+
+      // System resolves to dark, so the page is dark and the icon is the sun
+      // (rendered with a <circle>; the moon is a lone <path>).
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+      });
+      expect(button.querySelector('circle')).not.toBeNull();
+
+      // The regression: one click must produce a visible change (dark -> light),
+      // not setTheme('dark') on an already-dark page.
+      fireEvent.click(button);
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+      });
+      expect(localStorage.getItem('theme')).toBe('light');
+    } finally {
+      restore();
+    }
+  });
+
+  test('system-light: shows the moon icon and first click flips to dark', async () => {
+    const restore = mockPrefersColorScheme(false);
+    try {
+      renderSystemToggle();
+      const button = await findMountedToggle();
+
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+      });
+      expect(button.querySelector('circle')).toBeNull(); // moon icon
+
+      fireEvent.click(button);
+      await waitFor(() => {
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+      });
+      expect(localStorage.getItem('theme')).toBe('dark');
+    } finally {
+      restore();
+    }
+  });
+});

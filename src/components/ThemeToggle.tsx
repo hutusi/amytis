@@ -8,7 +8,7 @@ import { useLanguage } from "./LanguageProvider";
  * Toggles between light and dark themes using next-themes.
  */
 export default function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
@@ -31,11 +31,11 @@ export default function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       className="w-8 h-8 flex items-center justify-center text-foreground/80 hover:text-heading transition-colors duration-200"
       aria-label={t('toggle_theme')}
     >
-      {theme === "dark" ? (
+      {resolvedTheme === "dark" ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"

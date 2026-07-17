@@ -57,14 +57,11 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
   const activeHeadings = localeHeadings?.[language] ?? headings;
   const hasSeries = !!(effectiveSlug && effectivePosts && effectivePosts.length > 0);
   const currentIndex = hasSeries ? effectivePosts!.findIndex(p => p.slug === currentSlug) : -1;
-  // Chronological sort (ascending date) — used for progress counter and isPast styling in series mode.
-  // In collection mode, use the collection's defined order directly.
-  const sortedPosts = hasSeries && !isCollectionContext
-    ? [...effectivePosts!].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    : null;
-  const progressIndex = hasSeries
-    ? (sortedPosts ? sortedPosts.findIndex(p => p.slug === currentSlug) : currentIndex)
-    : -1;
+  // Progress, the "X / N" counter, and "past" styling all key off the rendered
+  // order (effectivePosts) so the badge number, counter, and completed styling
+  // always agree. The series' own sort config (date-desc default, date-asc, or
+  // manual/collection order) decides that order — the sidebar just reflects it.
+  const progressIndex = currentIndex;
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [seriesCollapsed, setSeriesCollapsed] = useState(false);
@@ -135,8 +132,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
                     }
                     const post = effectivePosts![item];
                     const isCurrent = post.slug === currentSlug;
-                    const chronoIndex = sortedPosts ? sortedPosts.findIndex(p => p.slug === post.slug) : item;
-                    const isPast = chronoIndex < progressIndex;
+                    const isPast = item < progressIndex;
 
                     return (
                       <li key={post.slug} ref={isCurrent ? currentItemRef : undefined} className="relative">
