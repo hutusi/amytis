@@ -25,8 +25,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isI18nEnabled) return;
-    // Only access localStorage and browser language after component is mounted (client-side)
-    const savedLang = localStorage.getItem('amytis-language') as Language;
+    // Only access localStorage after mount (client-side). Reads can throw in
+    // Safari private mode / when storage is disabled — a failure must fall back
+    // to the default locale, never propagate and blank the tree.
+    let savedLang: Language | null = null;
+    try {
+      savedLang = localStorage.getItem('amytis-language') as Language | null;
+    } catch {
+      savedLang = null;
+    }
 
     // Use requestAnimationFrame to avoid cascading render lint error
     const rafId = requestAnimationFrame(() => {
@@ -41,10 +48,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = (lang: Language) => {
     if (!isI18nEnabled) return;
     setLanguageState(lang);
-    localStorage.setItem('amytis-language', lang);
+    try {
+      localStorage.setItem('amytis-language', lang);
+    } catch {
+      // Preference won't persist across reloads, but the in-memory switch works.
+    }
   };
 
   const activeLang = (isHydrated ? language : siteConfig.i18n.defaultLocale) as Language;
+
+  // Keep <html lang> in sync with the active language for screen readers and
+  // translation UAs. The layout renders defaultLocale at SSR and carries
+  // suppressHydrationWarning, so updating it on the client is safe.
+  useEffect(() => {
+    document.documentElement.lang = activeLang;
+  }, [activeLang]);
 
   // Recompute only when the active language changes; siteConfig is static
   const featureOverrides = useMemo(

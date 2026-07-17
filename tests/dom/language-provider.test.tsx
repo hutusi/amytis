@@ -100,4 +100,54 @@ describe('LanguageProvider / useLanguage', () => {
   test('useLanguage outside a LanguageProvider throws', () => {
     expect(() => render(<Probe />)).toThrow('useLanguage must be used within a LanguageProvider');
   });
+
+  test('syncs <html lang> to the active language', async () => {
+    renderProbe();
+    await waitFor(() => {
+      expect(screen.getByTestId('hydrated').textContent).toBe('true');
+    });
+    // The mount effect applies the default locale to <html lang>.
+    await waitFor(() => expect(document.documentElement.lang).toBe('en'));
+
+    fireEvent.click(screen.getByText('to-zh'));
+    await waitFor(() => expect(document.documentElement.lang).toBe('zh'));
+
+    fireEvent.click(screen.getByText('to-en'));
+    await waitFor(() => expect(document.documentElement.lang).toBe('en'));
+  });
+
+  test('a throwing localStorage.getItem does not crash; falls back to default', async () => {
+    const original = localStorage.getItem;
+    // Simulate Safari private mode / storage disabled.
+    localStorage.getItem = () => { throw new Error('storage blocked'); };
+    try {
+      renderProbe();
+      await waitFor(() => {
+        expect(screen.getByTestId('hydrated').textContent).toBe('true');
+      });
+      expect(screen.getByTestId('language').textContent).toBe('en');
+      expect(screen.getByTestId('home').textContent).toBe(translations.en.home);
+    } finally {
+      localStorage.getItem = original;
+    }
+  });
+
+  test('a throwing localStorage.setItem does not crash; in-memory switch still works', async () => {
+    renderProbe();
+    await waitFor(() => {
+      expect(screen.getByTestId('hydrated').textContent).toBe('true');
+    });
+
+    const original = localStorage.setItem;
+    localStorage.setItem = () => { throw new Error('quota exceeded'); };
+    try {
+      fireEvent.click(screen.getByText('to-zh'));
+      await waitFor(() => {
+        expect(screen.getByTestId('home').textContent).toBe(translations.zh.home);
+      });
+      expect(screen.getByTestId('language').textContent).toBe('zh');
+    } finally {
+      localStorage.setItem = original;
+    }
+  });
 });

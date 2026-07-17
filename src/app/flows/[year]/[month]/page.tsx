@@ -1,7 +1,7 @@
 import { getAllFlows, getFlowsByMonth } from '@/lib/content/flows';
 import { buildSlugRegistry } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
-import { toFlowIndexItems } from '@/lib/flow-stream';
+import { toFlowIndexItems, flowStreamLocaleTag } from '@/lib/flow-stream';
 import { siteConfig } from '../../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -29,7 +29,7 @@ export const dynamicParams = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ year: string; month: string }> }): Promise<Metadata> {
   const { year, month } = await params;
-  const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(flowStreamLocaleTag(), { month: 'long', year: 'numeric' });
   return {
     title: `${tWith('flows_in_month', { month: monthLabel })} | ${resolveLocale(siteConfig.title)}`,
   };
@@ -43,7 +43,7 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
 
   const allFlows = getAllFlows();
   const slugRegistry = buildSlugRegistry();
-  const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(flowStreamLocaleTag(), { month: 'long', year: 'numeric' });
 
   // Tag counts scoped to this month, so the sidebar filter matches the feed.
   const tags: Record<string, number> = {};
