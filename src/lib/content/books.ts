@@ -336,7 +336,19 @@ function filterTocDrafts(toc: BookTocItem[], draftIds: Set<string>): BookTocItem
   });
 }
 
+const bookChapterMemo = createProdKeyedMemo<string, BookChapterData | null>();
+
+/**
+ * Chapter data by book + chapter, memoized in production. Static generation
+ * asks for the same chapter three times (generateStaticParams, generateMetadata,
+ * page body); without the memo each re-read + re-parsed the chapter file and
+ * recomputed its metrics. Dev recomputes so HMR sees edited content.
+ */
 export function getBookChapter(bookSlug: string, chapterSlug: string): BookChapterData | null {
+  return bookChapterMemo.get(`${bookSlug}::${chapterSlug}`, () => computeBookChapter(bookSlug, chapterSlug));
+}
+
+function computeBookChapter(bookSlug: string, chapterSlug: string): BookChapterData | null {
   const book = getBookData(bookSlug);
   if (!book) return null;
 
