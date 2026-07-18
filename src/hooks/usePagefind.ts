@@ -116,6 +116,10 @@ export function usePagefind(
       /* eslint-disable react-hooks/set-state-in-effect */
       setAllResults([]);
       setIsError(false);
+      // Clearing the input mid-search cancels the in-flight request, whose
+      // finally skips its own reset (cancelled), so reset here too — otherwise
+      // isFetching stays true and the spinner never stops.
+      setIsFetching(false);
       /* eslint-enable react-hooks/set-state-in-effect */
       onResultsReset();
       return;

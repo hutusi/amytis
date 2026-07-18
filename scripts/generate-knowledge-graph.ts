@@ -78,17 +78,16 @@ async function main() {
 
   const allContent = [...postDocs, ...noteDocs, ...flowDocs];
 
-  // Build wikilink edges (deduplicate per source document)
+  // Build wikilink edges (deduplicate per source document by resolved id, so a
+  // slug and an alias pointing at the same note don't create duplicate edges,
+  // and a self-link via any alias/url form is caught).
   for (const item of allContent) {
     const targets = extractWikilinks(item.content);
-    const seenTargets = new Set<string>();
+    const seenTargetIds = new Set<string>();
     for (const rawTarget of targets) {
-      if (rawTarget === item.slug) continue; // skip self by slug
-      if (seenTargets.has(rawTarget)) continue; // skip duplicate within this doc
-      seenTargets.add(rawTarget);
-
       const targetId = slugToId.get(rawTarget);
-      if (!targetId || targetId === item.url) continue; // unresolved, or self via alias/url
+      if (!targetId || targetId === item.url || seenTargetIds.has(targetId)) continue;
+      seenTargetIds.add(targetId);
       edges.push({ source: item.url, target: targetId, type: 'wikilink' });
 
       // Ensure source exists in nodeMap (flows are absent until they participate)

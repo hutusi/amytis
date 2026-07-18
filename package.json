@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "bun scripts/run-with-rst-python.ts next dev",
     "build": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && next-image-export-optimizer && bun run build:search",
+    "build:webpack": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build --webpack && next-image-export-optimizer && bun run build:search",
     "build:dev": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && bun run build:search:dev",
     "build:graph": "NODE_ENV=production bun scripts/generate-knowledge-graph.ts",
     "build:search": "bun scripts/build-pagefind.ts --site out --output-path out/pagefind",

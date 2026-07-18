@@ -51,10 +51,13 @@ function claimAssetDir(destPostDir: string, sourceLabel: string, hasAssets: bool
   }
 }
 
-/** True when a folder-based post contributes any non-markdown asset. */
+/** True when a folder-based post contributes any non-markdown asset. Recurses
+ *  so a markdown-only or empty subdirectory doesn't count as an asset. */
 function folderHasAssets(dir: string): boolean {
   return fs.readdirSync(dir, { withFileTypes: true }).some((entry) =>
-    entry.isDirectory() ? true : !shouldSkipSourceFile(entry.name)
+    entry.isDirectory()
+      ? folderHasAssets(path.join(dir, entry.name))
+      : !shouldSkipSourceFile(entry.name)
   );
 }
 

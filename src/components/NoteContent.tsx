@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import Link from 'next/link';
+import { getNoteUrl } from '@/lib/urls';
 import Tag from '@/components/Tag';
 import Pagination from '@/components/Pagination';
 import { metaLabel } from '@/lib/ui-classes';
@@ -92,7 +93,7 @@ export default function NoteContent({ notes, tags, pagination }: NoteContentProp
                 <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent" />
                 <time className="text-xs font-mono text-accent">{note.date}</time>
                 <h3 className="mt-1 mb-2 font-serif text-xl font-bold text-heading">
-                  <Link href={`/notes/${note.slug}`} className="no-underline hover:text-accent transition-colors">
+                  <Link href={getNoteUrl(note.slug)} className="no-underline hover:text-accent transition-colors">
                     {note.title}
                   </Link>
                 </h3>

@@ -3,7 +3,7 @@ import { getAllPosts, getAllPages } from '@/lib/content/posts';
 import { getAllFlows } from '@/lib/content/flows';
 import { getAllNotes } from '@/lib/content/notes';
 import { getAllBooks } from '@/lib/content/books';
-import { getAllSeries } from '@/lib/content/series';
+import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import { getAllAuthors, getAuthorSlug } from '@/lib/content/authors';
 import { getAllTags } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
@@ -51,7 +51,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const seriesUrls = seriesEnabled
     ? Object.entries(seriesEntry).map(([slug, seriesPosts]) => ({
         url: `${baseUrl}${getSeriesUrl(slug)}`,
-        lastModified: seriesPosts.reduce((latest, p) => (p.date > latest ? p.date : latest), ''),
+        // getAllSeries can include empty series dirs; reduce would then yield ''
+        // (an invalid date). Fall back to the series index date, else omit.
+        lastModified:
+          seriesPosts.reduce((latest, p) => (p.date > latest ? p.date : latest), '') ||
+          getSeriesData(slug)?.date ||
+          undefined,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
       }))

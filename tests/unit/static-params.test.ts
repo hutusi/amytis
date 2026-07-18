@@ -333,6 +333,16 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       expect(await generateStaticParams()).toEqual([{ slug: '_' }]);
     });
 
+    test('books/[slug]/[...chapter] ignores real books when the books feature is disabled', async () => {
+      mock.module('@/lib/features', () => ({ ...snapshotFeatures, isFeatureEnabled: (k: string) => k !== 'books' }));
+      mock.module('@/lib/content/books', () => ({
+        ...snapshotBooks,
+        getAllBooks: () => [{ slug: 'real-book', chapters: [{ id: 'intro', title: 'Intro' }] }],
+      }));
+      const { generateStaticParams } = await import('../../src/app/books/[slug]/[...chapter]/page');
+      expect(await generateStaticParams()).toEqual([{ slug: '_', chapter: ['_'] }]);
+    });
+
     test('series/[slug] returns the placeholder when the series feature is disabled', async () => {
       mock.module('@/lib/features', () => ({ ...snapshotFeatures, isFeatureEnabled: (k: string) => k !== 'series' }));
       const { generateStaticParams } = await import('../../src/app/series/[slug]/page');

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { getPostUrl, getFlowUrl, getNoteUrl, getSeriesUrl } from '../urls';
+import { isFeatureEnabled } from '../features';
 import { seriesDirectory } from './io';
 import { createMemo, createProdMemo } from './cache';
 import { getAllPosts } from './posts';
@@ -44,8 +45,12 @@ export function getAllTags(): Record<string, number> {
     };
 
     allPosts.forEach((post) => { addTags(post.tags); });
-    allFlows.forEach((flow) => { addTags(flow.tags); });
-    allNotes.forEach((note) => { addTags(note.tags); });
+    // Notes and flows belong to the `flow` feature. When it's disabled their
+    // routes 404, so their tags must not seed tag pages/sitemap entries either.
+    if (isFeatureEnabled('flow')) {
+      allFlows.forEach((flow) => { addTags(flow.tags); });
+      allNotes.forEach((note) => { addTags(note.tags); });
+    }
 
     // Return with original-casing display form as key so consumers can show it correctly.
     // Callers that use the key as a URL slug must call key.toLowerCase().

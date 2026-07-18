@@ -1,8 +1,12 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test, mock } from 'bun:test';
 import sitemap from '@/app/sitemap';
 import { getAllPosts } from '@/lib/content/posts';
 import { getAllNotes } from '@/lib/content/notes';
+import * as realSeriesNs from '@/lib/content/series';
 import { getAllSeries } from '@/lib/content/series';
+
+// Shallow snapshot taken before any mock.module so restore puts back the real exports.
+const realSeriesModule = { ...realSeriesNs };
 import { getAllAuthors, getAuthorSlug } from '@/lib/content/authors';
 import { getAllTags } from '@/lib/content/discovery';
 import { getPostUrl, getNoteUrl, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
@@ -114,6 +118,28 @@ describe('Integration: sitemap', () => {
       if (entry.priority == null) continue;
       expect(entry.priority).toBeGreaterThanOrEqual(0);
       expect(entry.priority).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+describe('Integration: sitemap — empty series', () => {
+  test('a series with no posts omits lastModified instead of emitting an empty date', () => {
+    // getAllSeries can include empty series directories; reduce would then yield
+    // '' — an invalid <lastmod>. Verify the entry omits the date instead.
+    mock.module('@/lib/content/series', () => ({
+      ...realSeriesModule,
+      getAllSeries: () => ({ '__empty-series__': [] }),
+      getSeriesData: () => null,
+    }));
+    try {
+      const entries = sitemap();
+      const emptyEntry = entries.find((e) => e.url.includes('__empty-series__'));
+      expect(emptyEntry).toBeDefined();
+      expect(emptyEntry!.lastModified).toBeUndefined();
+      // No entry should ever carry an empty-string date.
+      for (const e of entries) expect(e.lastModified).not.toBe('');
+    } finally {
+      mock.module('@/lib/content/series', () => realSeriesModule);
     }
   });
 });

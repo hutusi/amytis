@@ -65,14 +65,15 @@ If a machine still has a stale `.next/`, clear it once with `bun run clean`, the
 
 `bun run build` / `bun run build:dev` run `next build`, which on Next 16 uses **Turbopack** by default.
 If the build hangs at *"Creating an optimized production build …"* and never progresses, fall back to the
-Webpack builder:
+Webpack builder via the dedicated script:
 
 ```bash
-# one-off
-next build --webpack
-# or, if it reproduces reliably in your environment, edit the build / build:dev
-# scripts in package.json to append --webpack until Turbopack is unblocked.
+bun run build:webpack
 ```
+
+`build:webpack` mirrors `build` exactly — the same asset-copy, knowledge-graph, image-optimizer, and Pagefind
+steps — and only swaps `next build` for `next build --webpack`. Prefer it over a bare `next build --webpack`,
+which skips the surrounding pipeline and produces an incomplete/stale export.
 
 **Status** — this is **not reproducible on all machines**: on the maintainer's setup the default Turbopack
 build completes the full static export (~380 pages) in well under a minute, cold. A stall has been observed

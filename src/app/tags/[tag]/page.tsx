@@ -2,10 +2,11 @@ import { getAllTags } from '@/lib/content/discovery';
 import { getPostsByTag } from '@/lib/content/posts';
 import { getFlowsByTag } from '@/lib/content/flows';
 import { getNotesByTag } from '@/lib/content/notes';
+import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
-import { resolveLocale } from '@/lib/i18n';
+import { resolveLocale, tWith } from '@/lib/i18n';
 import { safeDecodeParam, resolveFromParam, withDevEncodedVariants } from '@/lib/route-params';
 import TagPageHeader from '@/components/TagPageHeader';
 import TagSidebar from '@/components/TagSidebar';
@@ -28,10 +29,13 @@ export async function generateStaticParams() {
 export const dynamicParams = false;
 
 function resolveTagParam(rawTag: string) {
+  // Notes and flows are part of the `flow` feature; skip them when it's
+  // disabled so a note/flow-only tag doesn't render links to 404'd routes.
+  const flowEnabled = isFeatureEnabled('flow');
   return resolveFromParam(rawTag, (candidate) => {
     const posts = getPostsByTag(candidate);
-    const flows = getFlowsByTag(candidate);
-    const notes = getNotesByTag(candidate);
+    const flows = flowEnabled ? getFlowsByTag(candidate) : [];
+    const notes = flowEnabled ? getNotesByTag(candidate) : [];
     return posts.length + flows.length + notes.length > 0
       ? { tag: candidate, posts, flows, notes }
       : null;
@@ -46,7 +50,8 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
 
   return {
     title: `#${displayTag} | ${resolveLocale(siteConfig.title)}`,
-    description: `${total} posts tagged with "${displayTag}".`,
+    // Content-neutral: total spans posts, flows, and notes — not just posts.
+    description: tWith('tag_meta_description', { count: total, tag: displayTag }),
   };
 }
 
