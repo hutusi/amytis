@@ -139,7 +139,7 @@ bun run clean
 bun run deploy                 # Deploy to Linux/nginx server (requires .env.local)
 
 ## Test
-bun test
+bun run test
 bun run test:unit
 bun run test:int
 bun run test:e2e

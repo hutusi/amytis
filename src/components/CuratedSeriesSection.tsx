@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import HorizontalScroll from './HorizontalScroll';
 import CoverImage from './CoverImage';
 import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
-import { shuffle } from '@/lib/shuffle';
+import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
 import { cn } from '@/lib/cn';
@@ -31,27 +31,20 @@ interface CuratedSeriesSectionProps {
   order?: SeriesOrder;
 }
 
-function canonicalOrder(series: SeriesItem[], order: SeriesOrder): SeriesItem[] {
+// For 'shuffle', a seeded permutation keyed off the content so server and client
+// render the same order — no post-hydration swap. The user can still re-roll to
+// a fresh random order via the shuffle control.
+function initialOrder(series: SeriesItem[], order: SeriesOrder): SeriesItem[] {
   if (order === 'date-desc') return [...series].sort(byDateDesc);
   if (order === 'date-asc')  return [...series].sort(byDateAsc);
-  return series;
+  return shuffleSeeded(series, seedFromKeys(series.map(s => s.name)));
 }
 
 export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shuffle' }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
-  // SSR renders the canonical input order so server and client agree on first paint.
-  // For 'shuffle', the post-mount useEffect swaps to a fresh random permutation,
-  // so every reload re-rolls without any hydration mismatch.
-  const [displayed, setDisplayed] = useState(() => canonicalOrder(allSeries, order).slice(0, maxItems));
-
-  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
-  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
-  useEffect(() => {
-    if (order === 'shuffle') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayed(shuffle(allSeries).slice(0, maxItems));
-    }
-  }, [allSeries, maxItems, order]);
+  // Seeded shuffle is stable across the SSR/hydration boundary, so the initial
+  // order is computed once and never swapped after mount.
+  const [displayed, setDisplayed] = useState(() => initialOrder(allSeries, order).slice(0, maxItems));
 
   const handleShuffle = useCallback(() => {
     setDisplayed(shuffle(allSeries).slice(0, maxItems));

@@ -269,7 +269,7 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
       </div>
 
       {/* TOC */}
-      <nav aria-label="Book navigation">
+      <nav aria-label={t('book_navigation')}>
         <ul className="space-y-1">
           {toc.map((item, tocIdx) => {
             if ('section' in item) {

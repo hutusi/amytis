@@ -1,10 +1,12 @@
 import { getAllTags } from '@/lib/content/discovery';
 import { getPostsByTag } from '@/lib/content/posts';
 import { getFlowsByTag } from '@/lib/content/flows';
+import { getNotesByTag } from '@/lib/content/notes';
+import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
-import { resolveLocale } from '@/lib/i18n';
+import { resolveLocale, tWith } from '@/lib/i18n';
 import { safeDecodeParam, resolveFromParam, withDevEncodedVariants } from '@/lib/route-params';
 import TagPageHeader from '@/components/TagPageHeader';
 import TagSidebar from '@/components/TagSidebar';
@@ -27,10 +29,16 @@ export async function generateStaticParams() {
 export const dynamicParams = false;
 
 function resolveTagParam(rawTag: string) {
+  // Notes and flows are part of the `flow` feature; skip them when it's
+  // disabled so a note/flow-only tag doesn't render links to 404'd routes.
+  const flowEnabled = isFeatureEnabled('flow');
   return resolveFromParam(rawTag, (candidate) => {
     const posts = getPostsByTag(candidate);
-    const flows = getFlowsByTag(candidate);
-    return posts.length + flows.length > 0 ? { tag: candidate, posts, flows } : null;
+    const flows = flowEnabled ? getFlowsByTag(candidate) : [];
+    const notes = flowEnabled ? getNotesByTag(candidate) : [];
+    return posts.length + flows.length + notes.length > 0
+      ? { tag: candidate, posts, flows, notes }
+      : null;
   });
 }
 
@@ -38,11 +46,12 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
   const { tag } = await params;
   const resolved = resolveTagParam(tag);
   const displayTag = resolved?.tag ?? safeDecodeParam(tag);
-  const total = resolved ? resolved.posts.length + resolved.flows.length : 0;
+  const total = resolved ? resolved.posts.length + resolved.flows.length + resolved.notes.length : 0;
 
   return {
     title: `#${displayTag} | ${resolveLocale(siteConfig.title)}`,
-    description: `${total} posts tagged with "${displayTag}".`,
+    // Content-neutral: total spans posts, flows, and notes — not just posts.
+    description: tWith('tag_meta_description', { count: total, tag: displayTag }),
   };
 }
 
@@ -58,7 +67,7 @@ export default async function TagPage({
   if (!resolved) {
     notFound();
   }
-  const { tag: decodedTag, posts, flows } = resolved;
+  const { tag: decodedTag, posts, flows, notes } = resolved;
 
   return (
     <div className="layout-container">
@@ -66,8 +75,8 @@ export default async function TagPage({
         <TagSidebar key={decodedTag} tags={allTags} activeTag={decodedTag} />
 
         <div className="flex-1 min-w-0">
-          <TagPageHeader tag={decodedTag} postCount={posts.length} flowCount={flows.length} />
-          <TagContentTabs posts={posts} flows={flows} />
+          <TagPageHeader tag={decodedTag} postCount={posts.length} flowCount={flows.length} noteCount={notes.length} />
+          <TagContentTabs posts={posts} flows={flows} notes={notes} />
         </div>
       </div>
     </div>

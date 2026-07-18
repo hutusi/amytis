@@ -1,11 +1,12 @@
 import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
 import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
-import { resolveFromParam } from '@/lib/route-params';
+import { resolveFromParam, safeDecodeParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
 import ContentCard from '@/components/ContentCard';
-import { getBookUrl, getSeriesUrl } from '@/lib/urls';
+import RedirectPage from '@/components/RedirectPage';
+import { getBookUrl, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
@@ -41,9 +42,14 @@ export async function generateMetadata({ params }: { params: Promise<{ author: s
   }
 
   const posts = getPostsByAuthor(resolvedAuthor);
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = withTrailingSlash(`${siteUrl}/authors/${getAuthorSlug(resolvedAuthor)}`);
   return {
     title: `${resolvedAuthor} | ${resolveLocale(siteConfig.title)}`,
     description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${resolvedAuthor}.`,
+    // Legacy name-form URLs (/authors/Amytis%20Team) and the canonical slug URL
+    // both render; point both at the slug URL so crawlers don't see duplicates.
+    alternates: { canonical: canonicalUrl },
   };
 }
 
@@ -57,6 +63,14 @@ export default async function AuthorPage({
 
   if (!resolvedAuthor) {
     notFound();
+  }
+
+  // The route generates both the canonical slug param and a legacy name param
+  // for each author. Redirect the name form to the slug URL so only one URL
+  // serves the content (the other would be duplicate content).
+  const canonicalSlug = getAuthorSlug(resolvedAuthor);
+  if (safeDecodeParam(rawAuthor) !== canonicalSlug) {
+    return <RedirectPage to={`/authors/${canonicalSlug}`} />;
   }
 
   const posts = getPostsByAuthor(resolvedAuthor);

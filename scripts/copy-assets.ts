@@ -25,6 +25,53 @@ function markGeneratedDestination(destPath: string) {
   generatedAssetDestinations.add(path.resolve(destPath));
 }
 
+// Duplicate post slugs across series are legal for routing (series prefixes give
+// distinct canonical URLs), but every post's assets land in the same bare-slug
+// directory public/posts/<slug>. If two such posts both carry assets, the second
+// silently overwrites/prunes the first. Fail the build loudly instead. Keyed on
+// "a prior distinct source already wrote assets here", so the asset-less
+// duplicate-slug fixtures (rst-toctree*) never trip it.
+const assetDestClaims = new Map<string, { source: string; hasAssets: boolean }>();
+
+function claimAssetDir(destPostDir: string, sourceLabel: string, hasAssets: boolean) {
+  const key = path.resolve(destPostDir);
+  const existing = assetDestClaims.get(key);
+  if (existing && existing.source !== sourceLabel && existing.hasAssets) {
+    throw new Error(
+      `[copy-assets] Asset directory collision: "${sourceLabel}" and "${existing.source}" ` +
+      `both resolve to ${path.relative(process.cwd(), destPostDir)}. Duplicate post slugs ` +
+      `across series are allowed for routing, but their co-located assets share one ` +
+      `bare-slug directory and would overwrite each other. Rename one post's slug or file.`
+    );
+  }
+  if (!existing || existing.source !== sourceLabel) {
+    assetDestClaims.set(key, { source: sourceLabel, hasAssets });
+  } else if (hasAssets && !existing.hasAssets) {
+    assetDestClaims.set(key, { source: sourceLabel, hasAssets: true });
+  }
+}
+
+/** True when a folder-based post contributes any non-markdown asset. Recurses
+ *  so a markdown-only or empty subdirectory doesn't count as an asset. */
+function folderHasAssets(dir: string): boolean {
+  return fs.readdirSync(dir, { withFileTypes: true }).some((entry) =>
+    entry.isDirectory()
+      ? folderHasAssets(path.join(dir, entry.name))
+      : !shouldSkipSourceFile(entry.name)
+  );
+}
+
+/** True when a file-based post references a real, copyable (non-markdown) asset. */
+function fileReferencesRealAsset(sourceFile: string, rootDir: string): boolean {
+  return extractReferencedAssetPaths(sourceFile).some((reference) => {
+    const absolutePath = path.resolve(path.dirname(sourceFile), reference);
+    const relativeToRoot = path.relative(rootDir, absolutePath);
+    if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot) || !fs.existsSync(absolutePath)) return false;
+    if (fs.statSync(absolutePath).isDirectory()) return false;
+    return !shouldSkipSourceFile(path.basename(absolutePath));
+  });
+}
+
 function shouldPreserveOptimizerDir(optimizerPath: string): boolean {
   const optimizerParentPath = path.resolve(path.dirname(optimizerPath));
   return [...generatedAssetDestinations].some((generatedDestination) =>
@@ -57,6 +104,7 @@ function pruneOrphanedOptimizerDirs(rootDir: string) {
 
 function resetGeneratedAssetDirs() {
   generatedAssetDestinations.clear();
+  assetDestClaims.clear();
   fs.mkdirSync(destDir, { recursive: true });
   fs.mkdirSync(booksDestDir, { recursive: true });
   fs.mkdirSync(flowsDestDir, { recursive: true });
@@ -255,6 +303,7 @@ function processPosts() {
         const destPostDir = path.join(destDir, targetName);
 
         console.log(`Processing Post: ${entry.name} -> ${targetName}`);
+        claimAssetDir(destPostDir, `content/posts/${entry.name}`, folderHasAssets(srcPostDir));
         markGeneratedDestination(destPostDir);
         syncRecursive(srcPostDir, destPostDir);
       } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx') || entry.name.endsWith('.rst'))) {
@@ -263,6 +312,7 @@ function processPosts() {
         const destPostDir = path.join(destDir, targetName);
 
         console.log(`Processing Flat Post: ${entry.name} -> ${targetName}`);
+        claimAssetDir(destPostDir, `content/posts/${entry.name}`, fileReferencesRealAsset(sourceFile, srcDir));
         markGeneratedDestination(destPostDir);
         if (!fs.existsSync(destPostDir)) {
           fs.mkdirSync(destPostDir, { recursive: true });
@@ -300,6 +350,9 @@ function processSeries() {
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series File: ${item.name} -> ${targetSlug}`);
+          if (!isSeriesIndex) {
+            claimAssetDir(destPostDir, `content/series/${seriesEntry.name}/${item.name}`, fileReferencesRealAsset(sourceFile, seriesPath));
+          }
           markGeneratedDestination(destPostDir);
 
           if (!fs.existsSync(destPostDir)) {
@@ -315,6 +368,7 @@ function processSeries() {
           const destPostDir = path.join(destDir, targetSlug);
 
           console.log(`Processing Series Post Folder: ${item.name} -> ${targetSlug}`);
+          claimAssetDir(destPostDir, `content/series/${seriesEntry.name}/${item.name}`, folderHasAssets(itemSrcPath));
           markGeneratedDestination(destPostDir);
 
           // Copy everything from the post folder EXCEPT markdown files
@@ -389,13 +443,24 @@ function processFlows() {
   }
 }
 
-console.log('Copying assets...');
-resetGeneratedAssetDirs();
-processPosts();
-processSeries();
-processBooks();
-processFlows();
-pruneOrphanedOptimizerDirs(destDir);
-pruneOrphanedOptimizerDirs(booksDestDir);
-pruneOrphanedOptimizerDirs(flowsDestDir);
-console.log('Assets copied successfully.');
+// Exported for unit tests (the collision guard is pure). Clears the claim map
+// so tests start from a known state.
+export function resetAssetClaims() {
+  assetDestClaims.clear();
+}
+export { claimAssetDir };
+
+// Only run the copy when invoked as a script — importing the module (e.g. from
+// a test) must not touch the filesystem.
+if (import.meta.main) {
+  console.log('Copying assets...');
+  resetGeneratedAssetDirs();
+  processPosts();
+  processSeries();
+  processBooks();
+  processFlows();
+  pruneOrphanedOptimizerDirs(destDir);
+  pruneOrphanedOptimizerDirs(booksDestDir);
+  pruneOrphanedOptimizerDirs(flowsDestDir);
+  console.log('Assets copied successfully.');
+}

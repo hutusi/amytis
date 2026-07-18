@@ -58,9 +58,12 @@ function toLabelSegments(parts: Intl.DateTimeFormatPart[]): FlowMonthLabelSegmen
   return segments;
 }
 
-/** BCP-47 tag for build-time date formatting, derived from the site's default locale. */
-export function flowStreamLocaleTag(): string {
-  return siteConfig.i18n.defaultLocale === 'zh' ? 'zh-CN' : 'en-US';
+/**
+ * BCP-47 tag for date formatting. Defaults to the site's default locale (for
+ * build-time formatting); pass the client-active language for reactive UI.
+ */
+export function flowStreamLocaleTag(language: string = siteConfig.i18n.defaultLocale): string {
+  return language === 'zh' ? 'zh-CN' : 'en-US';
 }
 
 /**

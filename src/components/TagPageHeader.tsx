@@ -5,10 +5,11 @@ interface TagPageHeaderProps {
   tag: string;
   postCount?: number;
   flowCount?: number;
+  noteCount?: number;
 }
 
 // Server component: count logic is pure; translated strings render via <T>.
-export default function TagPageHeader({ tag, postCount = 0, flowCount = 0 }: TagPageHeaderProps) {
+export default function TagPageHeader({ tag, postCount = 0, flowCount = 0, noteCount = 0 }: TagPageHeaderProps) {
   const parts: React.ReactNode[] = [];
   if (postCount > 0) {
     parts.push(
@@ -25,6 +26,15 @@ export default function TagPageHeader({ tag, postCount = 0, flowCount = 0 }: Tag
         key="flows"
         k={flowCount === 1 ? 'tag_flow_count_one' : 'tag_flow_count'}
         params={{ count: flowCount }}
+      />
+    );
+  }
+  if (noteCount > 0) {
+    parts.push(
+      <T
+        key="notes"
+        k={noteCount === 1 ? 'tag_note_count_one' : 'tag_note_count'}
+        params={{ count: noteCount }}
       />
     );
   }

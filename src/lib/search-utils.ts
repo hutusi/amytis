@@ -20,6 +20,21 @@ export function cleanTitle(raw: string): string {
   return i >= 0 ? raw.slice(0, i) : raw;
 }
 
+/**
+ * Parse and validate the persisted recent-searches list. Malformed or tampered
+ * storage (e.g. '[{}]', '{"a":1}') can still JSON.parse successfully but would
+ * render objects as list children; keep only strings and cap the length.
+ */
+export function parseRecentSearches(raw: string | null, max: number): string[] {
+  try {
+    const parsed = JSON.parse(raw || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is string => typeof s === 'string').slice(0, max);
+  } catch {
+    return [];
+  }
+}
+
 /** Strip markdown/MDX syntax to plain text for full-content indexing. */
 export function stripMarkdown(text: string): string {
   return text

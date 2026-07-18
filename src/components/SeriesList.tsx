@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext } from '@/lib/content/types';
+import type { CollectionContext, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import PrevNextNav from './PrevNextNav';
@@ -13,7 +13,7 @@ import { padNumber } from '@/lib/format-utils';
 interface SeriesListProps {
   seriesSlug?: string;
   seriesTitle?: string;
-  posts?: PostData[];
+  posts?: PostNavItem[];
   collectionContexts?: CollectionContext[];
   currentSlug: string;
 }
@@ -31,7 +31,7 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
   const effectivePosts = activeCollection?.posts ?? posts;
   const isCollectionContext = !!activeCollection;
 
-  const postHref = (post: PostData) =>
+  const postHref = (post: PostNavItem) =>
     isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
 
   const [isExpanded, setIsExpanded] = useState(false);

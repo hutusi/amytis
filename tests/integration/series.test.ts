@@ -4,10 +4,27 @@ import { describe, expect, test } from "bun:test";
 import { getSeriesContentEntries } from "../../src/lib/content/series-metadata";
 import { parseRstDocument, RstParseError } from "../../src/lib/rst";
 import { getAdjacentPosts } from '../../src/lib/content/related';
-import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries } from '../../src/lib/content/series';
-import { getFeaturedPosts } from '../../src/lib/content/posts';
+import { getAllSeries, getSeriesData, getSeriesLatestPostDate, getSeriesPosts, getFeaturedSeries, toPostNavItems } from '../../src/lib/content/series';
+import { getFeaturedPosts, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Series", () => {
+  test("toPostNavItems projects nav fields only — no article bodies cross to the client", () => {
+    const withPosts = Object.values(getAllSeries()).find(posts => posts.length > 0);
+    expect(withPosts).toBeDefined();
+    const nav = toPostNavItems(withPosts!);
+    expect(nav.length).toBe(withPosts!.length);
+    for (let i = 0; i < nav.length; i++) {
+      const item = nav[i];
+      expect(new Set(Object.keys(item))).toEqual(new Set(['slug', 'title', 'date', 'series']));
+      expect(item.slug).toBe(withPosts![i].slug);
+      // The heavy fields that inflate the RSC payload must be absent.
+      expect('content' in item).toBe(false);
+      expect('renderedHtml' in item).toBe(false);
+      expect('plainText' in item).toBe(false);
+      expect('headings' in item).toBe(false);
+    }
+  });
+
   test("getAllSeries returns non-empty record with known slugs", () => {
     const series = getAllSeries();
     expect(Object.keys(series).length).toBeGreaterThan(0);
@@ -134,13 +151,29 @@ describe("Integration: Series", () => {
   });
 
   test("getAdjacentPosts follows rST series order instead of global post date order", () => {
-    const first = getAdjacentPosts("getting-started");
+    const first = getAdjacentPosts(getPostBySlug("getting-started")!);
     expect(first.prev?.slug ?? null).toBeNull();
     expect(first.next?.slug).toBe("deeper-notes");
 
-    const second = getAdjacentPosts("deeper-notes");
+    const second = getAdjacentPosts(getPostBySlug("deeper-notes")!);
     expect(second.prev?.slug).toBe("getting-started");
     expect(second.next?.slug ?? null).toBeNull();
+  });
+
+  test("getAdjacentPosts resolves neighbours within the correct series for a duplicate slug", () => {
+    // first-post exists in both rst-toctree and rst-toctree-precedence. Passing
+    // the resolved post (not a bare slug) must keep neighbours inside its own
+    // series — a global bare-slug lookup would cross into the other series.
+    const toctreeFirst = getSeriesPosts("rst-toctree").find(p => p.slug === "first-post")!;
+    const adj = getAdjacentPosts(toctreeFirst);
+    for (const neighbour of [adj.prev, adj.next]) {
+      if (neighbour) expect(neighbour.series).toBe("rst-toctree");
+    }
+    // rst-toctree lists second-post then first-post, so first-post's prev is
+    // the rst-toctree second-post and it has no next.
+    expect(adj.prev?.slug).toBe("second-post");
+    expect(adj.prev?.series).toBe("rst-toctree");
+    expect(adj.next).toBeNull();
   });
 
   test("explicit rST posts metadata takes precedence over toctree order", () => {

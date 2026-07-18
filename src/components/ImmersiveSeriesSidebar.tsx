@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext, Heading } from '@/lib/content/types';
+import type { CollectionContext, Heading, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useImmersiveReading } from './ImmersiveReadingProvider';
 import { useSidebarAutoScroll } from '@/hooks/useSidebarAutoScroll';
@@ -20,7 +20,7 @@ import { getPostUrl, getPostUrlInCollection, getSeriesListUrl, getSeriesUrl } fr
 interface ImmersiveSeriesSidebarProps {
   seriesSlug: string;
   seriesTitle: string;
-  posts: PostData[];
+  posts: PostNavItem[];
   /** When the post is in a collection, the sidebar can render in that
    *  collection's scope by appending `?collection=<slug>` to the URL. Same
    *  resolution logic as SeriesList. */
@@ -57,7 +57,7 @@ export default function ImmersiveSeriesSidebar({
   // ImmersiveReadingProvider remounts with `enabled=false` and the overlay
   // closes. Appending `?immersive=1` lets the destination layout's
   // ImmersiveReadingFlagHandler re-enter the reader and strip the flag.
-  const postHref = (post: PostData) => {
+  const postHref = (post: PostNavItem) => {
     const base = activeCollection
       ? getPostUrlInCollection(post, activeCollection.slug)
       : getPostUrl(post);

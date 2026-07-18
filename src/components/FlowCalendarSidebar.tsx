@@ -4,6 +4,7 @@ import { useState, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
 import { padNumber } from '@/lib/format-utils';
+import { flowStreamLocaleTag } from '@/lib/flow-stream';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
@@ -13,9 +14,6 @@ interface FlowCalendarSidebarProps {
   onTagSelect?: (tag: string) => void;
   breadcrumb?: ReactNode;
 }
-
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // "Today" can't be known at build time, so it's read as an external store:
 // null on the server/hydration pass, the viewer's local date after (the ring
@@ -33,8 +31,21 @@ function getServerTodayStr(): string | null {
 }
 
 export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect, breadcrumb }: FlowCalendarSidebarProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const todayStr = useSyncExternalStore(subscribeNever, getLocalTodayStr, getServerTodayStr);
+
+  // Locale-aware weekday and short-month labels, derived from the active
+  // language via Intl so they follow the language switch (no hardcoded English).
+  const localeTag = flowStreamLocaleTag(language);
+  const { weekdays, shortMonths } = useMemo(() => {
+    const weekdayFmt = new Intl.DateTimeFormat(localeTag, { weekday: 'short' });
+    const monthFmt = new Intl.DateTimeFormat(localeTag, { month: 'short' });
+    return {
+      // 2023-01-01 was a Sunday, matching the getDay()-based column order.
+      weekdays: Array.from({ length: 7 }, (_, i) => weekdayFmt.format(new Date(2023, 0, 1 + i))),
+      shortMonths: Array.from({ length: 12 }, (_, m) => monthFmt.format(new Date(2023, m, 1))),
+    };
+  }, [localeTag]);
 
   // Initial month must be derived from content (currentDate, else the latest
   // entry) so server HTML and client hydration agree — `new Date()` here
@@ -61,7 +72,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
   const daysInMonth = effectiveView ? new Date(viewYear, viewMonth + 1, 0).getDate() : 0;
 
   const monthLabel = effectiveView
-    ? new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
+    ? new Date(viewYear, viewMonth).toLocaleDateString(localeTag, {
         month: 'long',
         year: 'numeric',
       })
@@ -129,8 +140,8 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
 
         {/* Weekday headers */}
         <div className="grid grid-cols-7 gap-0 mb-1">
-          {WEEKDAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-medium text-muted py-1">{d}</div>
+          {weekdays.map((d, i) => (
+            <div key={i} className="text-center text-[10px] font-medium text-muted py-1">{d}</div>
           ))}
         </div>
 
@@ -236,7 +247,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                                 isCurrentMonth ? 'text-accent font-medium' : 'text-muted'
                               }`}
                             >
-                              <span>{MONTH_NAMES[m - 1]}</span>
+                              <span>{shortMonths[m - 1]}</span>
                               <span className="text-[10px]">{months[m]}</span>
                             </Link>
                           );

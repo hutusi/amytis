@@ -1,7 +1,7 @@
 import { buildSlugRegistry, getBacklinks } from '@/lib/content/discovery';
 import { getRelatedPosts, getAdjacentPosts } from '@/lib/content/related';
-import { getSeriesPosts, getSeriesData, getCollectionsForPost } from '@/lib/content/series';
-import type { PostData } from '@/lib/content/types';
+import { getSeriesPosts, getSeriesData, getCollectionsForPost, toPostNavItems } from '@/lib/content/series';
+import type { PostData, PostNavItem } from '@/lib/content/types';
 import PostLayout from '@/layouts/PostLayout';
 import SimpleLayout from '@/layouts/SimpleLayout';
 import { siteConfig } from '../../site.config';
@@ -35,16 +35,17 @@ export default function RenderPostPage({ post }: { post: PostData }) {
     return <>{jsonLdScript}<SimpleLayout post={post} /></>;
   }
 
-  const relatedPosts = getRelatedPosts(post.slug);
-  const { prev, next } = getAdjacentPosts(post.slug);
+  const relatedPosts = getRelatedPosts(post);
+  const { prev, next } = getAdjacentPosts(post);
   const slugRegistry = buildSlugRegistry();
   const backlinks = getBacklinks(post.slug);
   const collectionContexts = getCollectionsForPost(post.slug);
-  let seriesPosts: PostData[] = [];
+  let seriesPosts: PostNavItem[] = [];
   let seriesTitle: string | undefined;
 
   if (post.series) {
-    seriesPosts = getSeriesPosts(post.series);
+    // Project to nav items so sibling article bodies stay out of the client payload.
+    seriesPosts = toPostNavItems(getSeriesPosts(post.series));
     const seriesData = getSeriesData(post.series);
     seriesTitle = seriesData?.title;
   }

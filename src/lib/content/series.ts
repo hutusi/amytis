@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { byDateAsc, byDateDesc } from '../sort';
-import type { PostData, CollectionContext } from './types';
+import type { PostData, CollectionContext, PostNavItem } from './types';
 import { seriesDirectory } from './io';
 import { createMemo, createKeyedMemo } from './cache';
 import { resolveSeriesIndexInfo, getSeriesAuthors } from './series-metadata';
@@ -40,8 +40,16 @@ export function getSeriesPosts(seriesName: string): PostData[] {
       // on missing chapters the same way); a post that exists but is
       // unpublished here (draft in production, future-dated) is skipped
       // silently like everywhere else.
+      //
+      // Prefer a post that already belongs to this series before the global
+      // bare-slug lookup: duplicate slugs are legal across series, so a global
+      // first-match would pull in another series' same-slug child. The global
+      // fallback is what lets collections (type: collection) reference posts
+      // that live outside the folder.
       return seriesData.posts.flatMap(slug => {
-        const post = getPostBySlug(slug);
+        const post =
+          getAllPosts().find(p => p.series === seriesName && p.slug === slug) ??
+          getPostBySlug(slug);
         if (post) return [post];
         if (getAllPostsIncludingUnpublished().some(p => p.slug === slug)) return [];
         throw new Error(
@@ -201,6 +209,15 @@ export function getCollectionPosts(collectionSlug: string): PostData[] {
   });
 }
 
+/**
+ * Project posts to the minimal fields the series/collection navigation needs,
+ * so sibling article bodies never cross the server→client boundary. Mirrors
+ * toFlowIndexItems for the flow archive.
+ */
+export function toPostNavItems(posts: PostData[]): PostNavItem[] {
+  return posts.map(p => ({ slug: p.slug, title: p.title, date: p.date, series: p.series }));
+}
+
 const collectionsForPostMemo = createKeyedMemo<string, CollectionContext[]>();
 
 export function getCollectionsForPost(postSlug: string): CollectionContext[] {
@@ -216,7 +233,7 @@ export function getCollectionsForPost(postSlug: string): CollectionContext[] {
       if (process.env.NODE_ENV === 'production' && data.draft) continue;
       const posts = getCollectionPosts(folder.name);
       if (posts.some(p => p.slug === postSlug)) {
-        results.push({ slug: folder.name, title: data.title, posts });
+        results.push({ slug: folder.name, title: data.title, posts: toPostNavItems(posts) });
       }
     }
 

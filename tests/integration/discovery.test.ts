@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { getAllTags, buildSlugRegistry, getBacklinks } from '../../src/lib/content/discovery';
-import { getAllPosts } from '../../src/lib/content/posts';
-import { getAllNotes } from '../../src/lib/content/notes';
-import { getAllFlows } from '../../src/lib/content/flows';
+import { getAllPosts, getPostsByTag } from '../../src/lib/content/posts';
+import { getAllNotes, getNotesByTag } from '../../src/lib/content/notes';
+import { getAllFlows, getFlowsByTag } from '../../src/lib/content/flows';
 import { getPostUrl } from '../../src/lib/urls';
 
 describe('Integration: discovery (slug registry, backlinks, tags)', () => {
@@ -164,6 +164,30 @@ describe('Integration: discovery (slug registry, backlinks, tags)', () => {
         for (const tag of sourceTags) {
           expect(lower.has(tag.toLowerCase())).toBe(true);
         }
+      }
+    });
+
+    test('every generated tag resolves to content across posts, flows, and notes', () => {
+      // The tag route generates a static param for every getAllTags() key with
+      // dynamicParams=false, so any tag whose resolver finds nothing exports as
+      // a 404. Note-only tags used to fail this because resolution ignored notes.
+      for (const tag of Object.keys(getAllTags())) {
+        const total =
+          getPostsByTag(tag).length + getFlowsByTag(tag).length + getNotesByTag(tag).length;
+        expect(total).toBeGreaterThan(0);
+      }
+    });
+
+    test('note-only tags resolve via notes, not posts or flows', () => {
+      // These four tags exist solely on notes in the fixture content; before the
+      // fix they returned zero posts+flows and 404'd.
+      const noteOnlyTags = ['knowledge-management', 'zettelkasten', 'computer-science', 'fundamentals'];
+      const present = noteOnlyTags.filter(
+        tag => getPostsByTag(tag).length === 0 && getFlowsByTag(tag).length === 0,
+      );
+      expect(present.length).toBeGreaterThan(0); // guard against the fixtures drifting away
+      for (const tag of present) {
+        expect(getNotesByTag(tag).length).toBeGreaterThan(0);
       }
     });
   });

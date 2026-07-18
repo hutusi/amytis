@@ -12,7 +12,12 @@ export interface DisplayResult {
   type: Exclude<ContentType, 'All'>;
 }
 
-const FETCH_RESULTS = 24; // fetch more so type filter always has enough
+// Load the full match set (bounded) so per-type counts and tabs reflect every
+// result, not just the first page — a 24-hit cap could hide a whole content
+// type when one type dominates the ranking. Display is capped separately by the
+// consumer. The bound guards a pathological match count on large indexes; a
+// personal-blog query never approaches it, so counts are exact in practice.
+const MAX_INDEXED_RESULTS = 100;
 const DEBOUNCE_MS = 150;
 
 // ─── Pagefind loader ──────────────────────────────────────────────────────────
@@ -72,6 +77,7 @@ export function usePagefind(
   allResults: DisplayResult[];
   isFetching: boolean;
   isUnavailable: boolean;
+  isError: boolean;
   isTyping: boolean;
   debouncedQuery: string;
 } {
@@ -79,6 +85,8 @@ export function usePagefind(
   const [allResults, setAllResults] = useState<DisplayResult[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
+  // Recoverable: a rejected search (vs. a missing index) — the user can retry.
+  const [isError, setIsError] = useState(false);
 
   // True while debounce is pending — suppress "no results" flash
   const isTyping = query.length > 0 && query !== debouncedQuery;
@@ -105,21 +113,28 @@ export function usePagefind(
   // threading conditional renders through every consumer of allResults.
   useEffect(() => {
     if (!debouncedQuery) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      /* eslint-disable react-hooks/set-state-in-effect */
       setAllResults([]);
+      setIsError(false);
+      // Clearing the input mid-search cancels the in-flight request, whose
+      // finally skips its own reset (cancelled), so reset here too — otherwise
+      // isFetching stays true and the spinner never stops.
+      setIsFetching(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
       onResultsReset();
       return;
     }
 
     let cancelled = false;
     setIsFetching(true);
+    setIsError(false);
 
     loadPagefind().then(async (pf) => {
       if (!pf || cancelled) { setIsFetching(false); return; }
       try {
         const search = await pf.search(debouncedQuery);
         const fragments = await Promise.all(
-          search.results.slice(0, FETCH_RESULTS).map((r) => r.data())
+          search.results.slice(0, MAX_INDEXED_RESULTS).map((r) => r.data())
         );
         if (cancelled) return;
         setAllResults(
@@ -131,6 +146,14 @@ export function usePagefind(
             type: getResultType(f.url),
           }))
         );
+        setIsError(false);
+        onResultsReset();
+      } catch {
+        // A rejected search (Pagefind runtime error) previously went unhandled
+        // and silently showed "no results". Surface a recoverable error instead.
+        if (cancelled) return;
+        setAllResults([]);
+        setIsError(true);
         onResultsReset();
       } finally {
         if (!cancelled) setIsFetching(false);
@@ -152,8 +175,9 @@ export function usePagefind(
     setDebouncedQuery('');
     setAllResults([]);
     setIsFetching(false);
+    setIsError(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [isOpen]);
 
-  return { allResults, isFetching, isUnavailable, isTyping, debouncedQuery };
+  return { allResults, isFetching, isUnavailable, isError, isTyping, debouncedQuery };
 }

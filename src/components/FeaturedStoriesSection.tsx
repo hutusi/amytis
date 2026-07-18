@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import CoverImage from './CoverImage';
 import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
-import { shuffle } from '@/lib/shuffle';
+import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
 import { cn } from '@/lib/cn';
@@ -32,10 +32,13 @@ interface FeaturedStoriesSectionProps {
   order?: PostOrder;
 }
 
-function canonicalOrder(posts: FeaturedPost[], order: PostOrder): FeaturedPost[] {
+// For 'shuffle', a seeded permutation keyed off the content so server and client
+// render the same order — no post-hydration swap. The user re-rolls to a fresh
+// random order via the shuffle control.
+function initialOrder(posts: FeaturedPost[], order: PostOrder): FeaturedPost[] {
   if (order === 'date-desc') return [...posts].sort(byDateDesc);
   if (order === 'date-asc')  return [...posts].sort(byDateAsc);
-  return posts;
+  return shuffleSeeded(posts, seedFromKeys(posts.map(p => p.slug)));
 }
 
 function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, orderedNonPinned: FeaturedPost[]): FeaturedPost[] {
@@ -61,20 +64,9 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
 
   const nonPinned = allFeatured.filter(p => !p.pinned);
 
-  // SSR renders the canonical input order so server and client agree on first paint.
-  // For 'shuffle', the post-mount useEffect swaps to a fresh random permutation,
-  // so every reload re-rolls without any hydration mismatch.
-  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => canonicalOrder(nonPinned, order));
-
-  // Shuffle on mount so every reload re-rolls. SSR's canonical render is stable; the
-  // post-hydration swap is the intentional client-only behaviour, not a sync issue.
-  useEffect(() => {
-    if (order === 'shuffle') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOrderedNonPinned(shuffle(nonPinned));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allFeatured, order]);
+  // Seeded shuffle is stable across the SSR/hydration boundary, so the initial
+  // order is computed once and never swapped after mount.
+  const [orderedNonPinned, setOrderedNonPinned] = useState<FeaturedPost[]>(() => initialOrder(nonPinned, order));
 
   const handleShuffle = useCallback(() => {
     setOrderedNonPinned(shuffle(nonPinned));

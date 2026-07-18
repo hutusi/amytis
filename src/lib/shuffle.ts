@@ -23,6 +23,22 @@ function mixSeed(z: number): number {
 }
 
 /**
+ * Stable 32-bit FNV-1a seed from a list of identifiers. Lets a seeded shuffle
+ * derive its seed from the content itself, so server and client agree without
+ * threading a seed prop — the same content set always yields the same seed.
+ */
+export function seedFromKeys(keys: string[]): number {
+  let h = 2166136261;
+  for (const key of keys) {
+    for (let i = 0; i < key.length; i++) {
+      h ^= key.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+  }
+  return h >>> 0;
+}
+
+/**
  * Deterministic Fisher-Yates shuffle using a seeded xorshift32 PRNG.
  * Produces the same order for the same seed on both server and client,
  * preventing hydration mismatches when the initial shuffle must be stable.
