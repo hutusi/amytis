@@ -61,6 +61,26 @@ to `include`, never to `exclude`):
 
 If a machine still has a stale `.next/`, clear it once with `bun run clean`, then `bun run build`.
 
+## Production build stalls at "Creating an optimized production build"
+
+`bun run build` / `bun run build:dev` run `next build`, which on Next 16 uses **Turbopack** by default.
+If the build hangs at *"Creating an optimized production build …"* and never progresses, fall back to the
+Webpack builder:
+
+```bash
+# one-off
+next build --webpack
+# or, if it reproduces reliably in your environment, edit the build / build:dev
+# scripts in package.json to append --webpack until Turbopack is unblocked.
+```
+
+**Status** — this is **not reproducible on all machines**: on the maintainer's setup the default Turbopack
+build completes the full static export (~380 pages) in well under a minute, cold. A stall has been observed
+in other environments (CI / different Node or bun versions), so it appears environment-specific or
+intermittent rather than a repo misconfiguration — hence the scripts are left on the Turbopack default. The
+Webpack builder produces an equivalent export, so `--webpack` is a safe unblock if you hit it. The
+image-optimizer and Pagefind steps run *after* `next build`, so a stall there is a separate issue.
+
 ## Windows: use `npm install` (bun's installer is unreliable on Windows)
 
 On Windows, `bun install` does not produce a working `node_modules` for this project — but the **bun
