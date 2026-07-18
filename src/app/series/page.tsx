@@ -1,5 +1,7 @@
 import { getAllSeries, getSeriesData, getSeriesLatestPostDate, resolveSeriesAuthors } from '@/lib/content/series';
 import { getSeriesUrl } from '@/lib/urls';
+import { isFeatureEnabled } from '@/lib/features';
+import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ContentCard from '@/components/ContentCard';
 import { t } from '@/lib/i18n';
@@ -12,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function SeriesIndexPage() {
+  if (!isFeatureEnabled('series')) notFound();
   const allSeries = getAllSeries();
 
   // Sort by most recent post date (active series first)

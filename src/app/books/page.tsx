@@ -1,5 +1,7 @@
 import { getAllBooks } from '@/lib/content/books';
 import { getBookUrl } from '@/lib/urls';
+import { isFeatureEnabled } from '@/lib/features';
+import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ContentCard from '@/components/ContentCard';
 import { t } from '@/lib/i18n';
@@ -17,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function BooksPage() {
+  if (!isFeatureEnabled('books')) notFound();
   const books = getAllBooks();
 
   return (

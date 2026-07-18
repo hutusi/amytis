@@ -11,12 +11,14 @@ import { t, resolveLocale } from '@/lib/i18n';
 import { getPostUrl, getPostUrlInCollection, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesSlugParams, resolveSeriesParam } from '@/lib/route-aliases';
+import { isFeatureEnabled } from '@/lib/features';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { buildArticleMetadata } from '@/lib/metadata';
 
 const PAGE_SIZE = siteConfig.pagination.series;
 
 export async function generateStaticParams() {
+  if (!isFeatureEnabled('series')) return [{ slug: '_' }];
   return seriesSlugParams();
 }
 
@@ -66,6 +68,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function SeriesPage({ params }: { params: Promise<{ slug: string }> }) {
+  if (!isFeatureEnabled('series')) notFound();
   const { slug: rawSlug } = await params;
   const resolution = resolveSeriesParam(rawSlug);
   if (resolution.kind === 'alias') {

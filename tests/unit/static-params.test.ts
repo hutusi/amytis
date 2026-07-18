@@ -36,6 +36,7 @@ import * as realAuthors from '../../src/lib/content/authors';
 import * as realSeries from '../../src/lib/content/series';
 import * as realSeriesMetadata from '../../src/lib/content/series-metadata';
 import * as realUrls from '../../src/lib/urls';
+import * as realFeatures from '../../src/lib/features';
 
 // `import * as ns` creates a live namespace — its properties update when
 // mock.module() patches the registry.  Spread into a plain object here
@@ -53,6 +54,7 @@ const snapshotSeries = { ...realSeries };
 const snapshotRelated = { ...realRelated };
 const snapshotDiscovery = { ...realDiscovery };
 const snapshotSeriesMetadata = { ...realSeriesMetadata };
+const snapshotFeatures = { ...realFeatures };
 
 // Mock-post shape: only `slug` is required; the named fields are the ones
 // production code paths read. Extra fields (full Post shape) are allowed via
@@ -310,6 +312,31 @@ describe('generateStaticParams — placeholder when content is empty', () => {
       const { generateStaticParams } = await import('../../src/app/books/[slug]/[...chapter]/page');
       const params = await generateStaticParams();
       expect(params).toEqual([{ slug: '_', chapter: ['_'] }]);
+    });
+  });
+
+  describe('feature-disabled detail routes emit only the placeholder', () => {
+    afterEach(() => {
+      mock.module('@/lib/features', () => snapshotFeatures);
+      mock.module('@/lib/content/books', () => ({
+        ...snapshotBooks, getAllBooks: () => [], getBookData: () => null,
+        getBookChapter: () => null, getBooksByAuthor: () => [],
+      }));
+    });
+
+    // Non-empty content + disabled flag: only the flag can produce the
+    // placeholder here, so this proves the route is gated (not just empty).
+    test('books/[slug] ignores real books when the books feature is disabled', async () => {
+      mock.module('@/lib/features', () => ({ ...snapshotFeatures, isFeatureEnabled: (k: string) => k !== 'books' }));
+      mock.module('@/lib/content/books', () => ({ ...snapshotBooks, getAllBooks: () => [{ slug: 'real-book', chapters: [] }] }));
+      const { generateStaticParams } = await import('../../src/app/books/[slug]/page');
+      expect(await generateStaticParams()).toEqual([{ slug: '_' }]);
+    });
+
+    test('series/[slug] returns the placeholder when the series feature is disabled', async () => {
+      mock.module('@/lib/features', () => ({ ...snapshotFeatures, isFeatureEnabled: (k: string) => k !== 'series' }));
+      const { generateStaticParams } = await import('../../src/app/series/[slug]/page');
+      expect(await generateStaticParams()).toEqual([{ slug: '_' }]);
     });
   });
 

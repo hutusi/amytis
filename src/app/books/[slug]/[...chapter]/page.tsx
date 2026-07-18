@@ -1,4 +1,5 @@
 import { getBookData, getBookChapter, getAllBooks } from '@/lib/content/books';
+import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../../site.config';
@@ -28,6 +29,7 @@ function chapterIdToParamSegments(chapterId: string): string[] {
 }
 
 export async function generateStaticParams() {
+  if (!isFeatureEnabled('books')) return [{ slug: '_', chapter: ['_'] }];
   const books = getAllBooks();
   if (books.length === 0) return [{ slug: '_', chapter: ['_'] }];
   const params: { slug: string; chapter: string[] }[] = [];
@@ -89,6 +91,7 @@ export async function generateMetadata({ params }: { params: ChapterPageParams }
 }
 
 export default async function BookChapterPage({ params }: { params: ChapterPageParams }) {
+  if (!isFeatureEnabled('books')) notFound();
   const { slug: rawSlug, chapter: rawChapter } = await params;
   const slug = safeDecodeParam(rawSlug);
   const chapterSlug = chapterIdFromParams(rawChapter);

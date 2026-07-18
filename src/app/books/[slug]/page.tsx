@@ -1,5 +1,6 @@
 import { getAuthorSlug } from '@/lib/content/authors';
 import { getBookData, getAllBooks, type BookTocSection, type BookChapterRef } from '@/lib/content/books';
+import { isFeatureEnabled } from '@/lib/features';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
@@ -57,6 +58,7 @@ function renderTocSection(section: BookTocSection, slug: string, keyPrefix: stri
 }
 
 export async function generateStaticParams() {
+  if (!isFeatureEnabled('books')) return [{ slug: '_' }];
   const books = getAllBooks();
   if (books.length === 0) return [{ slug: '_' }];
   return books.map(book => ({ slug: book.slug }));
@@ -89,6 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function BookLandingPage({ params }: { params: Promise<{ slug: string }> }) {
+  if (!isFeatureEnabled('books')) notFound();
   const { slug: rawSlug } = await params;
   const slug = safeDecodeParam(rawSlug);
   const book = getBookData(slug);
