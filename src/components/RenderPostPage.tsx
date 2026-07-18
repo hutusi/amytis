@@ -35,8 +35,8 @@ export default function RenderPostPage({ post }: { post: PostData }) {
     return <>{jsonLdScript}<SimpleLayout post={post} /></>;
   }
 
-  const relatedPosts = getRelatedPosts(post.slug);
-  const { prev, next } = getAdjacentPosts(post.slug);
+  const relatedPosts = getRelatedPosts(post);
+  const { prev, next } = getAdjacentPosts(post);
   const slugRegistry = buildSlugRegistry();
   const backlinks = getBacklinks(post.slug);
   const collectionContexts = getCollectionsForPost(post.slug);

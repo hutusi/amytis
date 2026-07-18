@@ -2,14 +2,14 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { PostData, CollectionContext, PostNavItem } from '@/lib/content/types';
+import type { CollectionContext, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import MetaLabel from './ui/MetaLabel';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 
 interface PostNavigationProps {
-  prev: PostData | null;
-  next: PostData | null;
+  prev: PostNavItem | null;
+  next: PostNavItem | null;
   currentSlug?: string;
   collectionContexts?: CollectionContext[];
 }

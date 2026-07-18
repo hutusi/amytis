@@ -38,7 +38,7 @@ describe("Integration: Posts", () => {
     const posts = getAllPosts();
     if (posts.length > 1) {
        const firstPost = posts[0];
-       const related = getRelatedPosts(firstPost.slug, 2);
+       const related = getRelatedPosts(firstPost, 2);
        
        expect(Array.isArray(related)).toBe(true);
        expect(related.length).toBeLessThanOrEqual(2);

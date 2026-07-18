@@ -30,8 +30,8 @@ interface PostLayoutProps {
   seriesPosts?: PostNavItem[];
   seriesTitle?: string;
   collectionContexts?: CollectionContext[];
-  prevPost?: PostData | null;
-  nextPost?: PostData | null;
+  prevPost?: PostNavItem | null;
+  nextPost?: PostNavItem | null;
   backlinks?: BacklinkSource[];
   slugRegistry?: Map<string, SlugRegistryEntry>;
   commentCategory?: 'posts' | 'staticPages';
