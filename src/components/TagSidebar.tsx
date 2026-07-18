@@ -78,7 +78,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             <button
               onClick={() => setFilter('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/40 hover:text-muted transition-colors p-0.5 rounded"
-              aria-label="Clear filter"
+              aria-label={t('clear_filter')}
             >
               <LuX className="w-3 h-3" />
             </button>

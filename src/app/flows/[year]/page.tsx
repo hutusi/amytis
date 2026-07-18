@@ -1,7 +1,7 @@
 import { getAllFlows, getFlowsByYear } from '@/lib/content/flows';
 import { buildSlugRegistry } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
-import { toFlowIndexItems } from '@/lib/flow-stream';
+import { toFlowIndexItems, flowStreamLocaleTag } from '@/lib/flow-stream';
 import { siteConfig } from '../../../../site.config';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -51,10 +51,9 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
   }
   const sortedMonths = Object.keys(monthCounts).sort();
 
-  const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
+  // Localized short month names, matching the month detail page.
+  const monthFmt = new Intl.DateTimeFormat(flowStreamLocaleTag(), { month: 'short' });
+  const monthLabel = (m: string) => monthFmt.format(new Date(2000, parseInt(m, 10) - 1, 1));
 
   const breadcrumb = (
     <div className="space-y-2">
@@ -72,7 +71,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
             href={`/flows/${year}/${m}`}
             className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full border border-line-strong text-foreground hover:border-accent hover:text-accent no-underline transition-colors"
           >
-            {monthNames[parseInt(m, 10) - 1]}
+            {monthLabel(m)}
             <span className="text-muted text-[10px]">({monthCounts[m]})</span>
           </Link>
         ))}

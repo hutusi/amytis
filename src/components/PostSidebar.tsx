@@ -105,7 +105,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
               <button
                 onClick={() => setSeriesCollapsed(prev => !prev)}
                 className="flex-shrink-0 mt-0.5 text-muted hover:text-foreground transition-colors"
-                aria-label={seriesCollapsed ? 'Expand series' : 'Collapse series'}
+                aria-label={seriesCollapsed ? t('expand_series') : t('collapse_series')}
               >
                 <svg
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${seriesCollapsed ? '' : 'rotate-180'}`}
@@ -120,7 +120,7 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
           {/* Collapsible: post list + footer link */}
           {!seriesCollapsed && (
             <>
-              <nav aria-label="Series navigation" className="mb-4 animate-slide-down">
+              <nav aria-label={t('series_navigation')} className="mb-4 animate-slide-down">
                 <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-surface-soft">
                   {getVisibleIndices(effectivePosts!.length, currentIndex).map((item, i) => {
                     if (item === 'ellipsis') {

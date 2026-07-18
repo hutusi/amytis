@@ -3,6 +3,7 @@
 import Giscus from '@giscus/react';
 import { siteConfig } from '../../site.config';
 import { useTheme } from 'next-themes';
+import { useLanguage } from '@/components/LanguageProvider';
 import { getPostsBasePath } from '@/lib/urls';
 
 // Maps site locale codes to Giscus-supported language codes.
@@ -23,9 +24,11 @@ const GISCUS_LANG: Record<string, string> = {
 export default function Comments({ slug, postUrl }: { slug: string; postUrl?: string }) {
   const { provider, giscus, disqus } = siteConfig.comments;
   const { theme, systemTheme } = useTheme();
+  const { language } = useLanguage();
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
-  const giscusLang = GISCUS_LANG[siteConfig.i18n.defaultLocale] ?? siteConfig.i18n.defaultLocale;
+  // Follow the active language, not just the build-time default locale.
+  const giscusLang = GISCUS_LANG[language] ?? GISCUS_LANG[siteConfig.i18n.defaultLocale] ?? siteConfig.i18n.defaultLocale;
 
   if (provider === 'giscus' && giscus.repo) {
     return (
