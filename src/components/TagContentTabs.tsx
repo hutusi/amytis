@@ -142,7 +142,7 @@ export default function TagContentTabs({ posts, locale, flows, notes }: TagConte
                 <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent" />
                 <time className="text-xs font-mono text-accent">{note.date}</time>
                 <h3 className="mt-1 mb-2 font-serif text-xl font-bold text-heading">
-                  <Link href={localizeUrl(getNoteUrl(note.slug), note.locale)} className="no-underline hover:text-accent transition-colors">
+                  <Link prefetch={false} href={localizeUrl(getNoteUrl(note.slug), note.locale)} className="no-underline hover:text-accent transition-colors">
                     {note.title}
                   </Link>
                 </h3>

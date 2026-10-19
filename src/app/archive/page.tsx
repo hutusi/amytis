@@ -132,6 +132,7 @@ export default function ArchivePage() {
                             return (
                               <li key={post.slug} className="group">
                                 <Link
+                                  prefetch={false}
                                   href={getPostUrl(post)}
                                   className="block no-underline rounded-lg px-2 -mx-2 py-1 -my-1 hover:bg-surface-faint transition-colors"
                                 >

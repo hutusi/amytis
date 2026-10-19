@@ -95,6 +95,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
               <div key={tag}>
                 {showSeparator && <div className="my-1.5 h-px bg-surface-soft" />}
                 <Link
+                  prefetch={false}
                   href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
                   className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm no-underline transition-colors ${
                     isActive
