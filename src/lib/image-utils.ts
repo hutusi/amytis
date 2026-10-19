@@ -22,6 +22,8 @@ export function shouldBypassImageOptimization(src: string): boolean {
   return /\.(avif|webp)$/i.test(pathWithoutQuery);
 }
 
+const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
+
 /**
  * Collapse `.` / `..` / empty segments of a site path. Returns null when the
  * path climbs above the site root (`/../x`). Dependency-free (no node:path)
@@ -56,10 +58,17 @@ function normalizeSitePath(sitePath: string): string | null {
  * resolves to the same file on both surfaces.
  */
 export function resolveContentImagePath(src: string, slug?: string): string | null {
-  if (!src || src.startsWith('http') || src.startsWith('//')) return null;
-  if (src.startsWith('/')) return normalizeSitePath(src);
-  if (!slug || src.startsWith('data:') || src.startsWith('#')) return null;
-  const relative = src.startsWith('./') ? src.substring(2) : src;
+  if (!src) return null;
+  // A browser's URL parser treats `\` as `/`, so the containment check must
+  // too (`..\other-post\a.png` would otherwise pass it and still escape).
+  const path = src.replace(/\\/g, '/');
+  // Any URL scheme (case-insensitive: `HTTPS://…`, `data:`, `mailto:`) or a
+  // protocol-relative URL is not a local asset. A filename that merely starts
+  // with "http" (`http-flow.png`) is.
+  if (URL_SCHEME_RE.test(path) || path.startsWith('//') || path.startsWith('#')) return null;
+  if (path.startsWith('/')) return normalizeSitePath(path);
+  if (!slug) return null;
+  const relative = path.startsWith('./') ? path.substring(2) : path;
   const base = normalizeSitePath(`/${slug}`);
   const resolved = normalizeSitePath(`/${slug}/${relative}`);
   if (!base || !resolved || !resolved.startsWith(`${base}/`)) return null;

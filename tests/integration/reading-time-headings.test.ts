@@ -144,9 +144,15 @@ describe("Integration: TOC ids match rendered heading ids", () => {
     expect(withRegistry).toEqual(["about-my-note", "see-other-note"]);
   });
 
-  test("raw-HTML headings still get ids from rehype-slug", async () => {
-    const html = await renderAsync(MarkdownRenderer({ content: "## Markdown\n\n<h2>Raw heading</h2>" }));
-    expect(renderedHeadingIds(html)).toEqual(["markdown", "raw-heading"]);
+  test("raw-HTML headings get ids that never collide with Markdown heading ids", async () => {
+    const html = await renderAsync(
+      MarkdownRenderer({ content: "## Setup\n\n<h2>Setup</h2>\n\n## Setup\n\n<h3>Raw only</h3>" }),
+    );
+    const ids = renderedHeadingIds(html);
+    // Markdown headings keep the TOC's ids; raw ones take the next free slug.
+    expect(ids).toEqual(["setup", "setup-2", "setup-1", "raw-only"]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(extractContentMetrics("## Setup\n\n<h2>Setup</h2>\n\n## Setup").headings.map((h) => h.id)).toEqual(["setup", "setup-1"]);
   });
 
   test("the flow stream's heading id prefix applies to Markdown headings", async () => {

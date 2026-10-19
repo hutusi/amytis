@@ -236,7 +236,7 @@ describe("text metrics", () => {
       expect(headings[0].id).toBe("setup");
     });
 
-    // The cases below pin the ids rehype-slug assigns to the RENDERED text:
+    // The cases below pin heading ids to the RENDERED text:
     // the TOC anchor must equal the heading's id or the link goes nowhere.
     test("slugs the rendered text of inline markup, not the raw source", () => {
       expect(getHeadings("## [Link](http://x.com) text")[0]).toEqual({ id: "link-text", text: "Link text", level: 2 });
@@ -263,7 +263,7 @@ describe("text metrics", () => {
     });
 
     test("H1 and H4+ headings claim slug slots like they do in the rendered page", () => {
-      // rehype-slug dedups across ALL levels: the h4 takes "foo", so the h2 is "foo-1".
+      // Ids dedup across ALL levels: the h4 takes "foo", so the h2 is "foo-1".
       const headings = getHeadings("#### Foo\n\n## Foo\n\n# Bar\n\n### Bar");
       expect(headings.map((h) => h.id)).toEqual(["foo-1", "bar-1"]);
     });

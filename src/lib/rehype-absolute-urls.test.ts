@@ -35,6 +35,10 @@ describe('rehypeAbsoluteUrls', () => {
       .toBe('<video poster="https://site.test/series-x/my-post/p.jpg" src="https://site.test/series-x/my-post/v.mp4"></video>');
   });
 
+  test('keeps external image URLs whatever the scheme case', () => {
+    expect(run('<img src="HTTPS://example.test/a.png">')).toBe('<img src="HTTPS://example.test/a.png">');
+  });
+
   test('leaves absolute, protocol-relative, scheme and fragment URLs alone', () => {
     const html = '<a href="https://x.test/">a</a><a href="mailto:a@b.test">b</a><a href="#top">c</a><img src="//cdn.test/a.png">';
     expect(run(html)).toBe(html);

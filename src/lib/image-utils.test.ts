@@ -30,7 +30,7 @@ describe('resolveContentImagePath', () => {
   });
 
   test('returns null for non-local sources', () => {
-    for (const src of ['https://x.test/a.png', '//cdn.test/a.png', 'data:image/png;base64,AA', '#frag', '../escape.png', './../../../../private.png', 'images/../../other-post/a.png', '/../etc/passwd', '']) {
+    for (const src of ['https://x.test/a.png', '//cdn.test/a.png', 'data:image/png;base64,AA', '#frag', '../escape.png', './../../../../private.png', 'images/../../other-post/a.png', '/../etc/passwd', '..\\other-post\\a.png', '.\\..\\x.png', 'HTTPS://example.test/a.png', 'Data:image/png;base64,AA', '']) {
       expect(resolveContentImagePath(src, 'posts/x')).toBeNull();
     }
     // Relative paths need an asset base to resolve against.
@@ -41,5 +41,10 @@ describe('resolveContentImagePath', () => {
   test('normalizes dot segments that stay inside their root', () => {
     expect(resolveContentImagePath('./images/../a.png', 'posts/x')).toBe('/posts/x/a.png');
     expect(resolveContentImagePath('/images/./a.png', 'posts/x')).toBe('/images/a.png');
+  });
+
+  test('treats backslashes as separators and keeps http-prefixed local filenames', () => {
+    expect(resolveContentImagePath('images\\a.png', 'posts/x')).toBe('/posts/x/images/a.png');
+    expect(resolveContentImagePath('http-flow.png', 'posts/x')).toBe('/posts/x/http-flow.png');
   });
 });

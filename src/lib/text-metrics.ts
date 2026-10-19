@@ -153,7 +153,7 @@ function headingText(node: Nodes): string {
 
 /**
  * Every heading of an mdast tree with its id, in document order. All depths
- * go through one slugger (matching rehype-slug's dedup across levels), and
+ * go through one slugger (dedup across levels, as GitHub does), and
  * wikilink syntax is reduced to its display text first, so the id is the
  * same whether or not a surface resolves wikilinks.
  *
@@ -189,8 +189,8 @@ export function getHeadings(content: string): Heading[] {
 /**
  * Remark plugin for MarkdownRenderer: give every Markdown heading the id
  * getHeadings computed for it. Must run before any transformer that changes
- * heading text (wikilinks, alerts, containers). rehype-slug then only fills
- * in raw-HTML headings, which it does for elements without an id.
+ * heading text (wikilinks, alerts, containers). rehypeRawHeadingIds then
+ * fills in raw-HTML headings, unique against these ids.
  */
 export function remarkHeadingIds(options: { prefix?: string } = {}) {
   const prefix = options.prefix ?? '';
@@ -232,7 +232,7 @@ export function extractContentMetrics(
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
   const excerpt = generateExcerpt(contentWithoutH1);
   // Headings come from the body that is actually rendered: the stripped H1
-  // never reaches rehype-slug, so it must not claim a slug dedup slot either.
+  // is never rendered, so it must not claim a slug dedup slot either.
   const headings = getHeadings(contentWithoutH1);
 
   if (opts.withCounts === false) {
