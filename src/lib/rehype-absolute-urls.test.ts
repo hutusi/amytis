@@ -40,9 +40,11 @@ describe('rehypeAbsoluteUrls', () => {
     expect(run(html)).toBe(html);
   });
 
-  test('rewrites srcset candidates and keeps their descriptors', () => {
-    expect(run('<img srcset="a.png 1x, /b.png 2x">'))
-      .toBe('<img srcset="https://site.test/series-x/my-post/a.png 1x, https://site.test/b.png 2x">');
+  test('image srcset candidates resolve against the asset base, keeping descriptors', () => {
+    expect(run('<img src="a.png" srcset="a.png 1x, /b.png 2x">'))
+      .toBe('<img src="https://site.test/posts/my-post/a.png" srcset="https://site.test/posts/my-post/a.png 1x, https://site.test/b.png 2x">');
+    expect(run('<picture><source srcset="./a.webp 1x"></picture>'))
+      .toBe('<picture><source srcset="https://site.test/posts/my-post/a.webp 1x"></picture>');
   });
 
   test('never touches text that only looks like an attribute', () => {

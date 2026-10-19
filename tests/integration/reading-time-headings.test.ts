@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { renderAsync } from '@/test-utils/render';
 import { extractContentMetrics } from '@/lib/text-metrics';
+import type { SlugRegistryEntry } from '@/lib/content/discovery';
 import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Reading Time & Headings", () => {
@@ -124,6 +125,33 @@ describe("Integration: TOC ids match rendered heading ids", () => {
     const pageIds = renderedHeadingIds(html);
     expect(headings.length).toBe(6);
     expectSubsequence(headings.map((h) => h.id), pageIds);
+  });
+
+  test("wikilink headings get the TOC id with and without a wikilink registry", async () => {
+    // Static pages and book chapters render without a registry (wikilinks
+    // stay literal text); posts and notes resolve them. The id must not
+    // depend on which surface renders the heading.
+    const content = "## About [[some-note|My Note]]\n\nBody\n\n## See [[other-note]]";
+    const { headings } = extractContentMetrics(content);
+    const registry = new Map<string, SlugRegistryEntry>([
+      ["some-note", { url: "/notes/some-note", title: "Some Note", type: "note" }],
+      ["other-note", { url: "/notes/other-note", title: "Other Note Title", type: "note" }],
+    ]);
+    const withoutRegistry = renderedHeadingIds(await renderAsync(MarkdownRenderer({ content })));
+    const withRegistry = renderedHeadingIds(await renderAsync(MarkdownRenderer({ content, slugRegistry: registry })));
+    expect(headings.map((h) => h.id)).toEqual(["about-my-note", "see-other-note"]);
+    expect(withoutRegistry).toEqual(["about-my-note", "see-other-note"]);
+    expect(withRegistry).toEqual(["about-my-note", "see-other-note"]);
+  });
+
+  test("raw-HTML headings still get ids from rehype-slug", async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: "## Markdown\n\n<h2>Raw heading</h2>" }));
+    expect(renderedHeadingIds(html)).toEqual(["markdown", "raw-heading"]);
+  });
+
+  test("the flow stream's heading id prefix applies to Markdown headings", async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: "## Setup", headingIdPrefix: "2026-01-15-" }));
+    expect(renderedHeadingIds(html)).toEqual(["2026-01-15-setup"]);
   });
 
   test("every Markdown post's TOC ids exist in its rendered body", async () => {

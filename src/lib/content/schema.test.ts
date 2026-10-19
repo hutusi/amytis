@@ -37,6 +37,12 @@ describe('content/schema', () => {
     expect(S.safeParse({ date: '2024-01-05Tgarbage' }).success).toBe(false);
   });
 
+  test('dateField accepts years 0000-0099 (Date.UTC would remap them to 19xx)', () => {
+    const S = z.object({ date: dateField });
+    expect(S.parse({ date: '0099-12-31' }).date).toBe('0099-12-31');
+    expect(S.parse({ date: '0001-1-1' }).date).toBe('0001-01-01');
+  });
+
   test('dateField rejects an invalid date as a CAUGHT validation error (not a thrown RangeError)', () => {
     const S = z.object({ date: dateField });
     // Must not throw — safeParse returns { success: false } so the content

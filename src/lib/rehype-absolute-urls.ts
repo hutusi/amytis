@@ -33,28 +33,31 @@ function absolutize(url: string, base: string): string {
  * Feed readers resolve nothing relative, so rewrite every URL-bearing
  * attribute to an absolute URL. Works on the HAST tree, not on serialized
  * HTML, so text that merely looks like `src="…"` (code samples) is never
- * touched. `<img src>` goes through the same resolver as the on-page image
- * pipeline (plus the CDN prefix); every other URL resolves against the page
- * URL, which ends in '/' so `images/x.png` resolves as it does in a browser.
+ * touched. `<img src>` and `<img>`/`<source>` srcset candidates go through
+ * the same resolver as the on-page image pipeline (plus the CDN prefix);
+ * every other URL resolves against the page URL, which ends in '/' so
+ * `images/x.png` resolves as it does in a browser.
  */
 export default function rehypeAbsoluteUrls(options: AbsoluteUrlsOptions) {
   const { pageUrl, siteUrl, imageBaseSlug, cdnBaseUrl = '' } = options;
+
+  /** An image URL resolved the way the on-page pipeline would, else null. */
+  const resolveImage = (url: string): string | null => {
+    const publicPath = resolveContentImagePath(url, imageBaseSlug);
+    if (!publicPath) return null;
+    const resolved = getCdnImageUrl(publicPath, cdnBaseUrl);
+    return resolved.startsWith('/') ? `${siteUrl}${resolved}` : resolved;
+  };
+
   return (tree: Root) => {
     visit(tree, 'element', (node: Element) => {
       const props = node.properties;
       if (!props) return;
+      const isImage = node.tagName === 'img' || node.tagName === 'source';
       for (const attr of URL_ATTRS) {
         const value = props[attr];
         if (typeof value !== 'string') continue;
-        if (node.tagName === 'img' && attr === 'src') {
-          const publicPath = resolveContentImagePath(value, imageBaseSlug);
-          if (publicPath) {
-            const resolved = getCdnImageUrl(publicPath, cdnBaseUrl);
-            props[attr] = resolved.startsWith('/') ? `${siteUrl}${resolved}` : resolved;
-            continue;
-          }
-        }
-        props[attr] = absolutize(value, pageUrl);
+        props[attr] = (node.tagName === 'img' && attr === 'src' && resolveImage(value)) || absolutize(value, pageUrl);
       }
       const srcSet = props.srcSet;
       if (typeof srcSet === 'string' || Array.isArray(srcSet)) {
@@ -62,7 +65,10 @@ export default function rehypeAbsoluteUrls(options: AbsoluteUrlsOptions) {
         props.srcSet = candidates
           .map((candidate) => {
             const [url, ...descriptor] = candidate.trim().split(/\s+/);
-            return [absolutize(url, pageUrl), ...descriptor].join(' ');
+            // Image candidates resolve against the asset base like <img src>
+            // (for series posts that differs from the page URL).
+            const resolved = (isImage && resolveImage(url)) || absolutize(url, pageUrl);
+            return [resolved, ...descriptor].join(' ');
           })
           .join(', ');
       }

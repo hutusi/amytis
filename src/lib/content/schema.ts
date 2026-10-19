@@ -36,9 +36,11 @@ function normalizeDate(val: string | Date): string | null {
       const year = Number(y);
       const month = Number(m);
       const day = Number(d);
-      const utc = new Date(Date.UTC(year, month - 1, day));
-      // Date.UTC rolls over (Feb 30 → Mar 2), so a mismatch means the
-      // calendar date does not exist.
+      // setUTCFullYear, not Date.UTC: Date.UTC maps years 0–99 to 1900–1999.
+      // Either rolls over (Feb 30 → Mar 2), so a mismatch means the calendar
+      // date does not exist.
+      const utc = new Date(0);
+      utc.setUTCFullYear(year, month - 1, day);
       if (utc.getUTCFullYear() !== year || utc.getUTCMonth() !== month - 1 || utc.getUTCDate() !== day) {
         return null;
       }

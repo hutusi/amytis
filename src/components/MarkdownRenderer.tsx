@@ -28,6 +28,7 @@ import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
+import { remarkHeadingIds } from '@/lib/text-metrics';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/content/discovery';
@@ -76,6 +77,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
   // — they touch disjoint node types.
   const remarkPlugins: PluggableList = [
+    // First transformer: heading ids come from the same function as the TOC
+    // (getHeadings), before wikilinks/containers change heading text.
+    headingIdPrefix ? [remarkHeadingIds, { prefix: headingIdPrefix }] : remarkHeadingIds,
     remarkGfm,
     remarkGithubAlerts,
     remarkDirective,
@@ -92,6 +96,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   const rehypePlugins: PluggableList = [
     rehypeFenceMeta,
     rehypeRaw,
+    // Markdown headings already carry ids (remarkHeadingIds); rehype-slug only
+    // fills in headings that arrive as raw HTML.
     headingIdPrefix ? [rehypeSlug, { prefix: headingIdPrefix }] : rehypeSlug,
     [rehypeImageMetadata, { slug, cdnBaseUrl }],
   ];

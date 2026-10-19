@@ -23,9 +23,31 @@ export function shouldBypassImageOptimization(src: string): boolean {
 }
 
 /**
+ * Collapse `.` / `..` / empty segments of a site path. Returns null when the
+ * path climbs above the site root (`/../x`). Dependency-free (no node:path)
+ * because components share this module.
+ */
+function normalizeSitePath(sitePath: string): string | null {
+  const segments: string[] = [];
+  for (const segment of sitePath.split('/')) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') {
+      if (segments.length === 0) return null;
+      segments.pop();
+      continue;
+    }
+    segments.push(segment);
+  }
+  return `/${segments.join('/')}`;
+}
+
+/**
  * Public site path ('/posts/my-post/images/x.png') for an image src as
  * authored in content, or null when the src is not a local asset (external
- * URL, data: URI, fragment, or a `../` path that escapes the content root).
+ * URL, data: URI, fragment) or escapes its allowed root: a relative path must
+ * stay inside the content's asset base, a site-absolute one inside the site.
+ * The on-page pipeline resolves the result against public/ and reads the
+ * file, so an escaping path would read outside public/.
  *
  * `slug` is the content's public-relative asset base (e.g. `posts/my-post`,
  * `books/my-book`, `flows/2026/01/15`): `./x.png` and bare `x.png` resolve
@@ -35,8 +57,11 @@ export function shouldBypassImageOptimization(src: string): boolean {
  */
 export function resolveContentImagePath(src: string, slug?: string): string | null {
   if (!src || src.startsWith('http') || src.startsWith('//')) return null;
-  if (src.startsWith('./')) return slug ? `/${slug}/${src.substring(2)}` : null;
-  if (src.startsWith('/')) return src;
-  if (!slug || src.startsWith('../') || src.startsWith('data:') || src.startsWith('#')) return null;
-  return `/${slug}/${src}`;
+  if (src.startsWith('/')) return normalizeSitePath(src);
+  if (!slug || src.startsWith('data:') || src.startsWith('#')) return null;
+  const relative = src.startsWith('./') ? src.substring(2) : src;
+  const base = normalizeSitePath(`/${slug}`);
+  const resolved = normalizeSitePath(`/${slug}/${relative}`);
+  if (!base || !resolved || !resolved.startsWith(`${base}/`)) return null;
+  return resolved;
 }

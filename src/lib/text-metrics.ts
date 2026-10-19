@@ -3,7 +3,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
-import type { Nodes } from 'mdast';
+import type { Heading as MdastHeading, Nodes, Root } from 'mdast';
 import { normalizeVuepressContainerSyntax } from './remark-vuepress-containers';
 
 /**
@@ -140,9 +140,9 @@ export function generateExcerpt(content: string): string {
 const headingParser = unified().use(remarkParse).use(remarkGfm).use(remarkDirective);
 
 /**
- * Rendered text of a heading, mirroring what rehype-slug sees: inline markup
- * (`**bold**`, links, inline code) contributes its text, raw HTML/JSX tags
- * contribute nothing, and image alt text is not part of the text content.
+ * Text of a heading as it is slugged: inline markup (`**bold**`, links,
+ * inline code) contributes its text, raw HTML/JSX tags contribute nothing,
+ * and image alt text is not part of the text content.
  */
 function headingText(node: Nodes): string {
   if (node.type === 'html' || node.type === 'image' || node.type === 'imageReference') return '';
@@ -152,27 +152,22 @@ function headingText(node: Nodes): string {
 }
 
 /**
- * H2/H3 headings for the TOC, with ids that match the ones rehype-slug assigns
- * in the rendered page. rehype-slug slugs the rendered text of EVERY heading
- * level through one shared slugger, so every depth is slugged here too (in
- * document order) and only H2/H3 are returned — skipping H1/H4+ would leave
- * their dedup slots unclaimed and desync later duplicate-text ids.
+ * Every heading of an mdast tree with its id, in document order. All depths
+ * go through one slugger (matching rehype-slug's dedup across levels), and
+ * wikilink syntax is reduced to its display text first, so the id is the
+ * same whether or not a surface resolves wikilinks.
  *
- * Known limit: raw HTML heading blocks (`<h2>…</h2>`) also claim a slot in
- * the rendered page but are opaque here.
+ * This is the single source of heading ids: getHeadings derives the TOC
+ * from it, and remarkHeadingIds stamps the same ids onto the rendered
+ * headings, so TOC links and page ids match by construction.
  */
-export function getHeadings(content: string): Heading[] {
-  const tree = headingParser.parse(normalizeVuepressContainerSyntax(content));
+function slugHeadingNodes(tree: Root): Array<{ node: MdastHeading; id: string; text: string }> {
   const slugger = new GithubSlugger();
-  const headings: Heading[] = [];
-
+  const result: Array<{ node: MdastHeading; id: string; text: string }> = [];
   const walk = (node: Nodes) => {
     if (node.type === 'heading') {
       const text = stripWikilinkSyntax(headingText(node)).trim();
-      const id = slugger.slug(text);
-      if (node.depth === 2 || node.depth === 3) {
-        headings.push({ id, text, level: node.depth });
-      }
+      result.push({ node, id: slugger.slug(text), text });
       return;
     }
     if ('children' in node) {
@@ -180,7 +175,30 @@ export function getHeadings(content: string): Heading[] {
     }
   };
   walk(tree);
-  return headings;
+  return result;
+}
+
+/** H2/H3 headings for the TOC (ids from slugHeadingNodes). */
+export function getHeadings(content: string): Heading[] {
+  const tree = headingParser.parse(normalizeVuepressContainerSyntax(content));
+  return slugHeadingNodes(tree)
+    .filter(({ node }) => node.depth === 2 || node.depth === 3)
+    .map(({ node, id, text }) => ({ id, text, level: node.depth }));
+}
+
+/**
+ * Remark plugin for MarkdownRenderer: give every Markdown heading the id
+ * getHeadings computed for it. Must run before any transformer that changes
+ * heading text (wikilinks, alerts, containers). rehype-slug then only fills
+ * in raw-HTML headings, which it does for elements without an id.
+ */
+export function remarkHeadingIds(options: { prefix?: string } = {}) {
+  const prefix = options.prefix ?? '';
+  return (tree: Root) => {
+    for (const { node, id } of slugHeadingNodes(tree)) {
+      node.data = { ...node.data, hProperties: { ...node.data?.hProperties, id: `${prefix}${id}` } };
+    }
+  };
 }
 
 interface ContentMetrics {
