@@ -2,10 +2,16 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
+import { openSearch } from '@/lib/search-events';
+
+const ACTION_CLASS =
+  'inline-flex items-center rounded-lg border border-line px-4 py-2 text-sm text-muted no-underline transition-colors hover:border-accent/40 hover:text-accent';
 
 // Static export writes this as out/404.html — the page the host serves for
-// any unknown URL, so it must stand on its own (branded, localized, a way
-// back home) rather than the default unbranded Next.js 404.
+// any unknown URL, so it must stand on its own (branded, localized, ways
+// forward) rather than the default unbranded Next.js 404. A dead end with
+// only "home" loses readers who followed a stale link; search and the
+// archive usually get them to what they were after.
 export default function NotFound() {
   const { t } = useLanguage();
 
@@ -17,12 +23,20 @@ export default function NotFound() {
         </p>
         <h1 className="page-title mt-6">{t('not_found_title')}</h1>
         <p className="page-subtitle mt-2">{t('not_found_message')}</p>
-        <Link
-          href="/"
-          className="mt-8 inline-flex items-center rounded-lg border border-line px-4 py-2 text-sm text-muted no-underline transition-colors hover:border-accent/40 hover:text-accent"
-        >
-          {t('back_to_home')}
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <button type="button" onClick={openSearch} className={ACTION_CLASS}>
+            {t('search_the_site')}
+          </button>
+          <Link href="/archive" className={ACTION_CLASS}>
+            {t('archive')}
+          </Link>
+          <Link href="/tags" className={ACTION_CLASS}>
+            {t('tags')}
+          </Link>
+          <Link href="/" className={ACTION_CLASS}>
+            {t('back_to_home')}
+          </Link>
+        </div>
       </div>
     </div>
   );

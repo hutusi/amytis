@@ -1,11 +1,12 @@
 import { describe, test, expect, mock, afterEach } from 'bun:test';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import {
   AppRouterContext,
   type AppRouterInstance,
 } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { LanguageProvider } from '@/components/LanguageProvider';
 import Search from '@/components/Search';
+import { openSearch } from '@/lib/search-events';
 import { __resetPagefindForTests } from '@/hooks/usePagefind';
 
 // Modal focus lifecycle. Pagefind itself is absent in this environment (the
@@ -99,6 +100,13 @@ describe('Search modal', () => {
     } finally {
       field.remove();
     }
+  });
+
+  test('other components can open it through openSearch() (e.g. the 404 page)', async () => {
+    renderSearch();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    act(() => openSearch());
+    expect(await screen.findByRole('dialog', { name: 'Search' })).toBeTruthy();
   });
 
   test('Escape works immediately after opening (focus moves in synchronously)', () => {

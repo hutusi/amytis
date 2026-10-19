@@ -10,6 +10,7 @@ import { siteConfig } from '../../site.config';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { usePagefind } from '@/hooks/usePagefind';
 import SearchResults from '@/components/SearchResults';
+import { OPEN_SEARCH_EVENT } from '@/lib/search-events';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -149,8 +150,13 @@ export default function Search() {
         }
       }
     };
+    const handleOpenRequest = () => setIsOpen(true);
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener(OPEN_SEARCH_EVENT, handleOpenRequest);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener(OPEN_SEARCH_EVENT, handleOpenRequest);
+    };
   }, []);
 
   // Focus on open; reset local state on close (usePagefind resets its own
