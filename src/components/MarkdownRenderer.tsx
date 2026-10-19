@@ -134,15 +134,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   }
 
   const components: Components = {
-    // Use 'p' by default, but fallback to 'div' only if children contain block elements
-    // to avoid invalid HTML nesting warnings while preserving semantics.
-    p: ({ children }) => {
-      // Check if any child is a block-level element (like Mermaid or CodeBlock)
-      // Since children is a ReactNode, we can only do a shallow check here.
-      // Simple heuristic: if any child is not a string/number, it *might* be a block.
-      // However, react-markdown usually nests blocks at the top level.
-      return <p className="mb-4 leading-relaxed text-foreground">{children}</p>;
-    },
+    // No `p` override: paragraphs take PROSE_CLASSES' styling exactly like
+    // RstRenderer's sanitized HTML, so Markdown and rST posts set paragraphs
+    // identically (line-height via prose-p:leading-loose, prose-lg margins).
     // Explicitly style lists to ensure contrast
     li: ({ children }) => <li className="text-foreground">{children}</li>,
     // Explicitly style blockquotes
