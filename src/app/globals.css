@@ -439,8 +439,18 @@ html.dark .shiki .line.warning {
   background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
-.code-group > input[type="radio"]:focus-visible ~ .cg-tablist .cg-tab,
-.code-group .cg-tab:focus-visible {
+/* Keyboard focus sits on the (visually hidden) radio: outline only that
+ * radio's label, not every tab in the group. */
+.code-group > input[data-idx="0"]:focus-visible ~ .cg-tablist .cg-tab[for$="-0"],
+.code-group > input[data-idx="1"]:focus-visible ~ .cg-tablist .cg-tab[for$="-1"],
+.code-group > input[data-idx="2"]:focus-visible ~ .cg-tablist .cg-tab[for$="-2"],
+.code-group > input[data-idx="3"]:focus-visible ~ .cg-tablist .cg-tab[for$="-3"],
+.code-group > input[data-idx="4"]:focus-visible ~ .cg-tablist .cg-tab[for$="-4"],
+.code-group > input[data-idx="5"]:focus-visible ~ .cg-tablist .cg-tab[for$="-5"],
+.code-group > input[data-idx="6"]:focus-visible ~ .cg-tablist .cg-tab[for$="-6"],
+.code-group > input[data-idx="7"]:focus-visible ~ .cg-tablist .cg-tab[for$="-7"],
+.code-group > input[data-idx="8"]:focus-visible ~ .cg-tablist .cg-tab[for$="-8"],
+.code-group > input[data-idx="9"]:focus-visible ~ .cg-tablist .cg-tab[for$="-9"] {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }

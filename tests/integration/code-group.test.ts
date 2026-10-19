@@ -5,6 +5,16 @@ import { renderAsync } from '@/test-utils/render';
 
 describe('Integration: Code Group Tabs', () => {
   describe('Markdown / MDX :::code-group', () => {
+    test('uses native radio-group semantics, not fake tab roles', async () => {
+      const content = [':::code-group', '```bash [npm]', 'npm i', '```', '```bash [bun]', 'bun add', '```', ':::'].join('\n');
+      const html = await renderAsync(MarkdownRenderer({ content }));
+      // Same-name radios: browser-managed roving focus and arrow keys.
+      const names = [...html.matchAll(/type="radio"[^>]*name="([^"]+)"|name="([^"]+)"[^>]*type="radio"/g)].map((m) => m[1] ?? m[2]);
+      expect(new Set(names).size).toBe(1);
+      expect(html).not.toMatch(/role="tab(list|panel)?"/);
+      expect(html).not.toMatch(/<input[^>]*tabindex/i);
+    });
+
     test('three-tab npm/yarn/bun group renders the radio + label + panel structure', async () => {
       const content = [
         ':::code-group',

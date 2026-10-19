@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
@@ -33,6 +33,7 @@ export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionConte
     isCollectionContext ? getPostUrlInCollection(post, activeCollection!.slug) : getPostUrl(post);
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const listId = useId();
 
   if (!effectivePosts || effectivePosts.length === 0) return null;
 
@@ -79,7 +80,10 @@ export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionConte
 
       {/* Toggle to expand full list */}
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+        aria-controls={listId}
         className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
       >
         <span className="divider-hairline" />
@@ -97,7 +101,7 @@ export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionConte
 
       {/* Collapsible posts list */}
       {isExpanded && (
-        <ol className="space-y-2 mt-3 animate-slide-down">
+        <ol id={listId} className="space-y-2 mt-3 animate-slide-down">
           {effectivePosts.map((post, index) => {
             const isCurrent = post.slug === currentSlug;
             const isPast = index < currentIndex;
@@ -105,7 +109,7 @@ export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionConte
             return (
               <li key={post.slug}>
                 {isCurrent ? (
-                  <div className="flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg bg-accent/5">
+                  <div aria-current="page" className="flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg bg-accent/5">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent text-accent-contrast text-[10px] font-mono font-bold flex items-center justify-center">
                       {padNumber(index + 1)}
                     </span>

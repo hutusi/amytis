@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useActiveHeading } from '@/hooks/useActiveHeading';
@@ -16,6 +16,7 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
   const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const activeHeadingId = useActiveHeading(headings);
+  const listId = useId();
 
   if (headings.length === 0) return null;
 
@@ -30,6 +31,7 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
           onClick={() => setCollapsed(prev => !prev)}
           className="text-muted hover:text-foreground transition-colors"
           aria-expanded={!collapsed}
+          aria-controls={listId}
           aria-label={collapsed ? t('toc_expand') : t('toc_collapse')}
         >
           <svg
@@ -41,7 +43,7 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
         </button>
       </div>
       {!collapsed && (
-        <ul className="space-y-0.5 border-l border-line animate-slide-down">
+        <ul id={listId} className="space-y-0.5 border-l border-line animate-slide-down">
           {headings.map(h => {
             const isActive = h.id === activeHeadingId;
             return (
@@ -49,6 +51,7 @@ export default function TocPanel({ headings, className = '' }: TocPanelProps) {
                 <a
                   href={`#${h.id}`}
                   onClick={e => scrollToHeading(e, h.id)}
+                  aria-current={isActive ? 'location' : undefined}
                   className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
                     isActive
                       ? 'text-accent font-medium border-l-2 border-accent -ml-px'

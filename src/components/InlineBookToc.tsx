@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { Heading } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
 import { useActiveHeading } from '@/hooks/useActiveHeading';
@@ -10,13 +10,17 @@ export default function InlineBookToc({ headings }: { headings: Heading[] }) {
   const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const activeHeadingId = useActiveHeading(headings);
+  const listId = useId();
 
   if (headings.length === 0) return null;
 
   return (
     <div className="mt-1.5 mb-1 ml-3">
       <button
+        type="button"
         onClick={() => setCollapsed(prev => !prev)}
+        aria-expanded={!collapsed}
+        aria-controls={listId}
         className="flex items-center gap-1.5 text-[11px] font-sans font-medium uppercase tracking-wider text-muted hover:text-foreground transition-colors mb-1.5 pl-3"
       >
         <svg
@@ -28,7 +32,7 @@ export default function InlineBookToc({ headings }: { headings: Heading[] }) {
         {t('on_this_page')}
       </button>
       {!collapsed && (
-        <ul className="space-y-0.5 border-l border-line animate-slide-down">
+        <ul id={listId} className="space-y-0.5 border-l border-line animate-slide-down">
           {headings.map(h => {
             const isActive = h.id === activeHeadingId;
             return (
@@ -36,6 +40,7 @@ export default function InlineBookToc({ headings }: { headings: Heading[] }) {
                 <a
                   href={`#${h.id}`}
                   onClick={e => scrollToHeading(e, h.id)}
+                  aria-current={isActive ? 'location' : undefined}
                   className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-200 ${
                     h.level === 3 ? 'pl-6' : 'pl-3'
                   } ${
