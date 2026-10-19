@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -31,8 +31,19 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   const { t, tWith, language, twinnedPaths } = useLanguage();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // Close the menu on any route change (link click, browser back/forward).
+  // Adjusting state during render on a changed input is the React-sanctioned
+  // alternative to a set-state-in-effect.
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (pathname !== menuPathname) {
+    setMenuPathname(pathname);
+    if (isMenuOpen) setIsMenuOpen(false);
+    if (openDropdown !== null) setOpenDropdown(null);
+  }
 
   const navItems = visibleNavItems(siteConfig.nav);
 
@@ -83,15 +94,28 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
     setOpenDropdown(null);
   }
 
-  // Prevent body scroll when menu is open
+  // While the menu is open it behaves like a modal panel: body scroll is
+  // locked, the page behind it is inert (Tab can't wander behind the
+  // backdrop), focus moves into the panel, and Escape closes it and returns
+  // focus to the toggle.
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!isMenuOpen) return;
+    document.body.style.overflow = 'hidden';
+    const background = [document.getElementById('main-content'), document.querySelector('[data-site-footer]')];
+    background.forEach((el) => el?.setAttribute('inert', ''));
+    menuPanelRef.current?.querySelector<HTMLElement>('a[href], button')?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setIsMenuOpen(false);
+      setOpenDropdown(null);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = '';
+      background.forEach((el) => el?.removeAttribute('inert'));
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, [isMenuOpen]);
 
@@ -247,10 +271,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
           <div className="w-px h-4 bg-surface-raised mx-1 hidden md:block"></div>
           {/* Hamburger button - mobile only */}
           <button
+            ref={menuButtonRef}
             className="md:hidden p-3 -mr-3 text-foreground/80 hover:text-heading transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={isMenuOpen ? t('nav_close_menu') : t('nav_open_menu')}
             aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav-panel"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isMenuOpen ? (
@@ -282,7 +308,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
             onClick={() => closeMenu()}
           />
           {/* Menu */}
-          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-line shadow-lg animate-slide-down" data-testid="mobile-nav-panel">
+          <div
+            ref={menuPanelRef}
+            id="mobile-nav-panel"
+            className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-line shadow-lg animate-slide-down"
+            data-testid="mobile-nav-panel"
+          >
             <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
               {navItems.map((item) => {
                 const isExternal = !!('external' in item && item.external);
