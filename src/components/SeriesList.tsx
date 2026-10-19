@@ -106,7 +106,7 @@ export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionConte
               <li key={post.slug}>
                 {isCurrent ? (
                   <div className="flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg bg-accent/5">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent text-white text-[10px] font-mono font-bold flex items-center justify-center">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent text-accent-contrast text-[10px] font-mono font-bold flex items-center justify-center">
                       {padNumber(index + 1)}
                     </span>
                     <span className="text-sm font-semibold text-accent truncate">

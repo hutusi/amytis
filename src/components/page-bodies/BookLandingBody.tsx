@@ -132,7 +132,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
             <div data-pagefind-ignore className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={localizeUrl(getBookChapterUrl(book.slug, firstChapter.id), locale)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-contrast rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
               >
                 {t('start_reading')}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -163,7 +163,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                   prefetch={false}
                   key={dateStr}
                   href={`/flows/${viewYear}/${padNumber(viewMonth + 1)}/${padNumber(day)}`}
-                  className={`${baseClasses} bg-accent text-white font-bold no-underline`}
+                  className={`${baseClasses} bg-accent text-accent-contrast font-bold no-underline`}
                 >
                   {day}
                 </Link>
@@ -279,7 +279,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                   onClick={() => onTagSelect?.(tag)}
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border transition-colors ${
                     selectedTag === tag
-                      ? 'bg-accent text-white border-accent'
+                      ? 'bg-accent text-accent-contrast border-accent'
                       : 'border-line-strong text-muted hover:border-accent hover:text-accent'
                   }`}
                 >

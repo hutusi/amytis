@@ -12,8 +12,15 @@ html {
   --background: #fafaf9; /* Stone 50 */
   --foreground: #44403c; /* Stone 700 */
   --heading: #1c1917; /* Stone 900 */
-  --accent: #059669; /* Emerald 600 */
-  --accent-hover: #047857; /* Emerald 700 */
+  /* Light-mode accents use the 700 shades: accent is the link, date and
+     active-TOC text color, which needs >= 4.5:1 on the paper background
+     (emerald-600 was 3.6:1). */
+  --accent: #047857; /* Emerald 700 */
+  --accent-hover: #065f46; /* Emerald 800 */
+  /* Text on accent fills (badges, active pagination, primary buttons):
+     white on the dark light-mode accents, ink on the bright dark-mode ones
+     (white on emerald-400 was 1.9:1). */
+  --accent-contrast: #ffffff;
   --muted: #78716c; /* Stone 500 - Improved contrast */
   --code-fg: #1c1917; /* Stone 900 - High contrast neutral */
   /* Warm contrast hue for surfaces & hairlines at ultra-low alpha
@@ -28,6 +35,7 @@ html {
   --heading: #fafaf9; /* Stone 50 */
   --accent: #34d399; /* Emerald 400 */
   --accent-hover: #10b981; /* Emerald 500 */
+  --accent-contrast: #1c1917; /* Stone 900 */
   --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
   --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
   --ink: #fafaf9; /* Stone 50 */
@@ -41,8 +49,8 @@ html {
    palette rule. */
 /* Blue */
 [data-palette="blue"] {
-  --accent: #2563eb; /* Blue 600 */
-  --accent-hover: #1d4ed8;
+  --accent: #1d4ed8; /* Blue 700 */
+  --accent-hover: #1e40af;
 }
 [data-palette="blue"].dark,
 [data-palette="blue"] .dark {
@@ -52,8 +60,8 @@ html {
 
 /* Rose */
 [data-palette="rose"] {
-  --accent: #e11d48; /* Rose 600 */
-  --accent-hover: #be123c;
+  --accent: #be123c; /* Rose 700 */
+  --accent-hover: #9f1239;
 }
 [data-palette="rose"].dark,
 [data-palette="rose"] .dark {
@@ -63,8 +71,8 @@ html {
 
 /* Amber */
 [data-palette="amber"] {
-  --accent: #d97706; /* Amber 600 */
-  --accent-hover: #b45309;
+  --accent: #b45309; /* Amber 700 */
+  --accent-hover: #92400e;
 }
 [data-palette="amber"].dark,
 [data-palette="amber"] .dark {
@@ -659,7 +667,7 @@ html.dark .shiki .line.warning {
 
   /* Button styles */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-white font-medium transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-accent-contrast font-medium transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
   }
 
   .btn-secondary {
@@ -796,6 +804,7 @@ html.dark .shiki .line.warning {
   --color-heading: var(--heading);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
   --color-muted: var(--muted);
   --color-ink: var(--ink);
 

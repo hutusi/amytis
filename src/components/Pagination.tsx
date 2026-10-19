@@ -86,7 +86,7 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
               href={href}
               className={`min-w-[40px] h-10 flex items-center justify-center rounded-lg text-sm font-sans font-medium transition-all no-underline ${
                 isCurrent
-                  ? 'bg-accent text-white shadow-md shadow-accent/20'
+                  ? 'bg-accent text-accent-contrast shadow-md shadow-accent/20'
                   : 'text-muted hover:bg-surface-soft hover:text-accent'
               }`}
               aria-current={isCurrent ? 'page' : undefined}

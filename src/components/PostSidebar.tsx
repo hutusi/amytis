@@ -138,7 +138,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
                         >
                           <div className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-colors ${
                             isCurrent
-                              ? 'bg-accent text-white shadow-sm shadow-accent/30'
+                              ? 'bg-accent text-accent-contrast shadow-sm shadow-accent/30'
                               : isPast
                                 ? 'bg-accent/20 text-accent'
                                 : 'bg-surface-soft text-muted group-hover:bg-surface-raised group-hover:text-foreground'
