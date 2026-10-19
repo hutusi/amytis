@@ -45,7 +45,7 @@ export default function Hero({ tagline, title, subtitle, postCount, seriesCount,
         <span className="h-px w-12 bg-accent/30 ml-4"></span>
       </div>
 
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-heading leading-[1.1] tracking-tight mb-6 text-balance animate-slide-up">
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-heading leading-[1.1] tracking-tight mb-6 text-balance animate-rise">
         <TLocale value={title} />
       </h1>
 

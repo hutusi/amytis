@@ -690,13 +690,15 @@ html.dark .shiki .line.warning {
   }
 }
 
-/* Animations */
+/* Animations
+   Entrance keyframes define only their `from` state: the end state is the
+   element's own computed style, so a utility like `opacity-80` survives the
+   animation. Fill mode `both` holds the `from` state during an
+   animation-delay-* wait, so a delayed element doesn't flash visible, vanish,
+   then fade in. */
 @keyframes fade-in {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 
@@ -705,10 +707,6 @@ html.dark .shiki .line.warning {
     opacity: 0;
     transform: translateY(20px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes slide-down {
@@ -716,23 +714,32 @@ html.dark .shiki .line.warning {
     opacity: 0;
     transform: translateY(-10px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+}
+
+/* Transform-only entrance for LCP text: the element is painted at full
+   opacity from the first frame (an opacity-0 start delays LCP until the
+   fade completes). */
+@keyframes rise {
+  from {
+    transform: translateY(12px);
   }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.5s ease-out both;
   }
 
   .animate-slide-up {
-    animation: slide-up 0.5s ease-out forwards;
+    animation: slide-up 0.5s ease-out both;
   }
 
   .animate-slide-down {
-    animation: slide-down 0.3s ease-out forwards;
+    animation: slide-down 0.3s ease-out both;
+  }
+
+  .animate-rise {
+    animation: rise 0.5s ease-out both;
   }
 
   .animation-delay-100 {
@@ -749,10 +756,6 @@ html.dark .shiki .line.warning {
 
   .animation-delay-400 {
     animation-delay: 400ms;
-  }
-
-  .animation-fill-backwards {
-    animation-fill-mode: backwards;
   }
 }
 
