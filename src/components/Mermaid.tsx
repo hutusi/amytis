@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "./LanguageProvider";
+import ClientErrorBoundary from "./ClientErrorBoundary";
 
 // Mermaid bundles its own KaTeX and invokes it with `{throwOnError: true,
 // displayMode: true, output: 'mathml'}` — no `strict` option, so KaTeX
@@ -53,7 +54,7 @@ function readThemeColors(isDark: boolean) {
  * diagram near the end doesn't pay for it on load. Until then a placeholder
  * reserves space to limit layout shift.
  */
-const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
+const MermaidDiagram: React.FC<MermaidProps> = ({ chart }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const { resolvedTheme } = useTheme();
@@ -173,4 +174,11 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   );
 };
 
-export default Mermaid;
+/** A diagram that throws while rendering degrades to a note, not a blank page. */
+export default function Mermaid(props: MermaidProps) {
+  return (
+    <ClientErrorBoundary label="mermaid">
+      <MermaidDiagram {...props} />
+    </ClientErrorBoundary>
+  );
+}

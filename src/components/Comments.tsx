@@ -5,6 +5,7 @@ import { siteConfig } from '../../site.config';
 import { useTheme } from 'next-themes';
 import { useLanguage } from '@/components/LanguageProvider';
 import { getPostsBasePath } from '@/lib/urls';
+import ClientErrorBoundary from '@/components/ClientErrorBoundary';
 
 // Maps site locale codes to Giscus-supported language codes.
 // Full list: https://github.com/giscus/giscus/tree/main/locales
@@ -21,7 +22,21 @@ const GISCUS_LANG: Record<string, string> = {
   ru: 'ru',
 };
 
-export default function Comments({ slug, postUrl }: { slug: string; postUrl?: string }) {
+interface CommentsProps {
+  slug: string;
+  postUrl?: string;
+}
+
+/** A failing comment embed must not take the article down with it. */
+export default function Comments(props: CommentsProps) {
+  return (
+    <ClientErrorBoundary label="comments">
+      <CommentsEmbed {...props} />
+    </ClientErrorBoundary>
+  );
+}
+
+function CommentsEmbed({ slug, postUrl }: CommentsProps) {
   const { provider, giscus, disqus } = siteConfig.comments;
   const { theme, systemTheme } = useTheme();
   const { language } = useLanguage();

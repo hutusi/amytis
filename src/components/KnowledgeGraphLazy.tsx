@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import ClientErrorBoundary from './ClientErrorBoundary';
 
 /**
  * Client-side-only loader for the knowledge graph. KnowledgeGraph statically
@@ -14,4 +15,11 @@ const KnowledgeGraph = dynamic(() => import('./KnowledgeGraph'), {
   loading: () => <div className="flex items-center justify-center h-64" aria-hidden="true" />,
 });
 
-export default KnowledgeGraph;
+/** A d3/layout exception degrades to a note instead of the route error page. */
+export default function KnowledgeGraphLazy() {
+  return (
+    <ClientErrorBoundary label="knowledge-graph">
+      <KnowledgeGraph />
+    </ClientErrorBoundary>
+  );
+}
