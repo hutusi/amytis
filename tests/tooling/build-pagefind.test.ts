@@ -4,6 +4,7 @@ import os from "os";
 import path from "path";
 import {
   collectHtmlFileHashes,
+  findTruncatedOutputs,
   getPagefindManifestPathForTests,
   shouldSkipPagefindBuild,
 } from "../../scripts/build-pagefind";
@@ -62,5 +63,33 @@ describe("Tooling: build-pagefind", () => {
 
     fs.writeFileSync(path.join(siteDir, "index.html"), "<html><body>Changed</body></html>", "utf8");
     expect(shouldSkipPagefindBuild(siteDir, outputDir, collectHtmlFileHashes(siteDir))).toBe(false);
+  });
+
+  test("findTruncatedOutputs reports empty files anywhere in the output", () => {
+    const outputDir = makeTempDir("amytis-pagefind-out-");
+    fs.mkdirSync(path.join(outputDir, "fragment"));
+    fs.writeFileSync(path.join(outputDir, "pagefind.js"), "export{}", "utf8");
+    fs.writeFileSync(path.join(outputDir, "pagefind-worker.js"), "", "utf8");
+    fs.writeFileSync(path.join(outputDir, "fragment", "a.pf_fragment"), "", "utf8");
+    expect(findTruncatedOutputs(outputDir)).toEqual(["fragment/a.pf_fragment", "pagefind-worker.js"]);
+    expect(findTruncatedOutputs(path.join(outputDir, "missing"))).toEqual([]);
+  });
+
+  test("a truncated output is never skipped as up to date", () => {
+    const siteDir = makeTempDir("amytis-pagefind-site-");
+    const outputDir = makeTempDir("amytis-pagefind-out-");
+    fs.writeFileSync(path.join(siteDir, "index.html"), "<html><body>Home</body></html>", "utf8");
+    fs.writeFileSync(path.join(outputDir, "pagefind.js"), "", "utf8");
+
+    const hashes = collectHtmlFileHashes(siteDir);
+    const manifestPath = getPagefindManifestPathForTests(siteDir, outputDir);
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify({ version: "1", sitePath: path.resolve(siteDir), outputPath: path.resolve(outputDir), files: hashes }),
+      "utf8",
+    );
+
+    expect(shouldSkipPagefindBuild(siteDir, outputDir, hashes)).toBe(false);
   });
 });

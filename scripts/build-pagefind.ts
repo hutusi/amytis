@@ -109,6 +109,28 @@ function writeManifest(sitePath: string, outputPath: string, files: Record<strin
   }
 }
 
+/**
+ * Zero-byte files anywhere in a Pagefind output. A complete index never has
+ * any; empty runtime files (pagefind.js, the worker, the UI bundles) mean a
+ * write was cut short, which leaves a search box whose module import yields
+ * no exports and which silently finds nothing.
+ */
+export function findTruncatedOutputs(outputPath: string): string[] {
+  if (!fs.existsSync(outputPath)) return [];
+  const truncated: string[] = [];
+  const visit = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(fullPath);
+      else if (entry.isFile() && fs.statSync(fullPath).size === 0) {
+        truncated.push(path.relative(outputPath, fullPath).replaceAll(path.sep, '/'));
+      }
+    }
+  };
+  visit(outputPath);
+  return truncated.sort();
+}
+
 export function shouldSkipPagefindBuild(sitePath: string, outputPath: string, currentFiles: Record<string, string>): boolean {
   const manifest = loadManifest(sitePath, outputPath);
   if (!manifest) return false;
@@ -116,6 +138,8 @@ export function shouldSkipPagefindBuild(sitePath: string, outputPath: string, cu
   if (manifest.sitePath !== path.resolve(sitePath)) return false;
   if (manifest.outputPath !== path.resolve(outputPath)) return false;
   if (!fs.existsSync(outputPath)) return false;
+  // Never trust a damaged output just because the HTML is unchanged.
+  if (findTruncatedOutputs(outputPath).length > 0) return false;
 
   const previousEntries = Object.entries(manifest.files).sort(([a], [b]) => a.localeCompare(b));
   const currentEntries = Object.entries(currentFiles).sort(([a], [b]) => a.localeCompare(b));
@@ -135,6 +159,27 @@ async function buildPagefind(sitePath: string, outputPath: string): Promise<void
     return;
   }
 
+  // pagefind.close() kills the backend process outright; an intermittent
+  // race has been observed where files the backend reported as written were
+  // left empty. Verify the output and rebuild once before failing the build
+  // (a broken index must never ship silently or be cached as up to date).
+  const MAX_ATTEMPTS = 2;
+  for (let attempt = 1; ; attempt++) {
+    await writePagefindIndex(sitePath, outputPath);
+    const truncated = findTruncatedOutputs(outputPath);
+    if (truncated.length === 0) break;
+    if (attempt >= MAX_ATTEMPTS) {
+      throw new Error(
+        `Pagefind wrote ${truncated.length} empty file(s) to ${outputPath} after ${attempt} attempts: ${truncated.slice(0, 5).join(', ')}`
+      );
+    }
+    console.warn(`[pagefind] ${truncated.length} empty output file(s) (e.g. ${truncated[0]}); rebuilding the index.`);
+  }
+
+  writeManifest(sitePath, outputPath, currentFiles);
+}
+
+async function writePagefindIndex(sitePath: string, outputPath: string): Promise<void> {
   fs.rmSync(outputPath, { recursive: true, force: true });
 
   const { index, errors } = await pagefind.createIndex();
@@ -155,8 +200,6 @@ async function buildPagefind(sitePath: string, outputPath: string): Promise<void
   } finally {
     await pagefind.close();
   }
-
-  writeManifest(sitePath, outputPath, currentFiles);
 }
 
 async function main() {
