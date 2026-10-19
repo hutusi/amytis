@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TLocale } from '@/components/T';
+import { T, TLocale } from '@/components/T';
 
 type LocaleValue = string | Record<string, string>;
 
@@ -27,14 +27,16 @@ interface StatItem {
 
 // Server component: locale-reactive strings render via the <TLocale> leaf.
 export default function Hero({ tagline, title, subtitle, postCount, seriesCount, bookCount, flowCount, featureNames }: HeroProps) {
-  const label = (key: keyof NonNullable<typeof featureNames>, fallback: string): React.ReactNode =>
-    featureNames?.[key] ? <TLocale value={featureNames[key]!} /> : fallback;
+  // Configured feature names win; otherwise the translated section name
+  // (these were hard-coded English before).
+  const label = (key: keyof NonNullable<typeof featureNames>): React.ReactNode =>
+    featureNames?.[key] ? <TLocale value={featureNames[key]!} /> : <T k={key} />;
 
   const stats = [
-    flowCount   != null ? { href: '#recent-flows',    count: flowCount,   label: label('flow',   'Flow')    } : null,
-    postCount   != null ? { href: '#featured-posts',  count: postCount,   label: label('posts',  'Posts')   } : null,
-    seriesCount != null ? { href: '#featured-series', count: seriesCount, label: label('series', 'Series')  } : null,
-    bookCount   != null ? { href: '#featured-books',  count: bookCount,   label: label('books',  'Books')   } : null,
+    flowCount   != null ? { href: '#recent-flows',    count: flowCount,   label: label('flow')    } : null,
+    postCount   != null ? { href: '#featured-posts',  count: postCount,   label: label('posts')   } : null,
+    seriesCount != null ? { href: '#featured-series', count: seriesCount, label: label('series')  } : null,
+    bookCount   != null ? { href: '#featured-books',  count: bookCount,   label: label('books')   } : null,
   ].filter((s): s is StatItem => s !== null);
 
   return (

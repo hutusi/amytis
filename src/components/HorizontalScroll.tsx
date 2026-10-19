@@ -116,7 +116,7 @@ export default function HorizontalScroll({
       </button>
 
       {/* Keyboard hint - visible on focus */}
-      <div className="sr-only">Use left and right arrow keys to scroll</div>
+      <div className="sr-only">{t('scroll_keyboard_hint')}</div>
     </div>
   );
 }

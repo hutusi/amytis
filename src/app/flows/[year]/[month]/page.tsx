@@ -55,7 +55,7 @@ export default async function FlowsMonthPage({ params }: { params: Promise<{ yea
   }
 
   const breadcrumb = (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
+    <nav aria-label={t('breadcrumb')} className="flex items-center gap-1.5 text-sm text-muted">
       <Link href="/flows" className="hover:text-accent no-underline">
         {t('all_flows')}
       </Link>

@@ -201,6 +201,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
         <section data-pagefind-body className="max-w-2xl mx-auto">
           <MarkdownRenderer
             content={book.content}
+            locale={locale}
             slug={`${locale === siteConfig.i18n.defaultLocale ? '' : `${locale}/`}books/${book.slug}`}
           />
         </section>

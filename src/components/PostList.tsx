@@ -72,8 +72,8 @@ export default function PostList({
                   <span className="shrink-0 hidden sm:inline">·</span>
                   <span className="shrink-0 whitespace-nowrap">{post.date}</span>
                   {post.draft && (
-                    <span className="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded tracking-wider">
-                      DRAFT
+                    <span className="text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded tracking-wider uppercase">
+                      {t('draft_badge')}
                     </span>
                   )}
                 </div>

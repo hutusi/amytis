@@ -74,7 +74,7 @@ export default function ArchivePage() {
         {years.length > 1 && (
           <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16 mb-16">
             <div />
-            <nav aria-label="Jump to year" className="flex flex-wrap items-center gap-2">
+            <nav aria-label={t('jump_to_year')} className="flex flex-wrap items-center gap-2">
               {years.map(year => (
                 <a
                   key={year}

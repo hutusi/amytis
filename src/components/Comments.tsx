@@ -40,7 +40,7 @@ export default function Comments(props: CommentsProps) {
 function CommentsEmbed({ slug, postUrl }: CommentsProps) {
   const { provider, giscus, disqus } = siteConfig.comments;
   const { theme, systemTheme } = useTheme();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
   // Follow the active language, not just the build-time default locale.
@@ -77,7 +77,7 @@ function CommentsEmbed({ slug, postUrl }: CommentsProps) {
           identifier={slug}
         />
         <noscript>
-          Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+          {t('comments_noscript')} <a href="https://disqus.com/?ref_noscript">Disqus</a>
         </noscript>
       </div>
     );

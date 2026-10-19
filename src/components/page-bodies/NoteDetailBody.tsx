@@ -38,7 +38,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
   const noteUrl = `${siteConfig.baseUrl}${localizeUrl(getNoteUrl(note.slug), locale)}`;
 
   const breadcrumb = (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
+    <nav aria-label={t('breadcrumb')} className="flex items-center gap-1.5 text-sm text-muted">
       <Link href={localizeUrl('/notes', locale)} className="hover:text-accent no-underline">
         {t('notes')}
       </Link>
@@ -67,8 +67,8 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           <header data-pagefind-body className="mb-8 border-b border-line pb-8">
             {note.draft && (
               <div className="mb-4">
-                <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
-                  DRAFT
+                <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest uppercase inline-block">
+                  {t('draft_badge')}
                 </span>
               </div>
             )}
@@ -88,7 +88,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           </header>
 
           <div data-pagefind-body>
-            <MarkdownRenderer content={note.content} slug={`notes/${note.slug}`} slugRegistry={slugRegistry} />
+            <MarkdownRenderer content={note.content} slug={`notes/${note.slug}`} slugRegistry={slugRegistry} locale={locale} />
           </div>
 
           <ShareBar url={noteUrl} title={note.title} className="mt-8 mb-2" />
@@ -98,7 +98,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           )}
 
           {/* Prev/Next navigation */}
-          <nav aria-label="Note navigation" className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
+          <nav aria-label={t('note_navigation')} className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
             {prev ? (
               <Link href={localizeUrl(getNoteUrl(prev.slug), locale)} className="group text-left no-underline">
                 <span className="text-xs text-muted">{t('older')}</span>

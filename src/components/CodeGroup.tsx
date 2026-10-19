@@ -1,5 +1,6 @@
 import { Children, type ReactNode } from 'react';
 import { resolveCodeGroupIcon } from '@/lib/code-group-icons';
+import { T } from '@/components/T';
 
 interface CodeGroupProps {
   'data-labels'?: string;
@@ -37,7 +38,8 @@ export default function CodeGroup(props: CodeGroupProps) {
     if (typeof child === 'string') return child.trim().length > 0;
     return true;
   });
-  const tabs = labels.length > 0 ? labels : panels.map((_, i) => `Tab ${i + 1}`);
+  // Unlabeled groups fall back to a translated "Tab N".
+  const tabs: (string | null)[] = labels.length > 0 ? labels : panels.map(() => null);
 
   return (
     <div className="code-group my-6" data-group-id={groupId}>
@@ -54,7 +56,7 @@ export default function CodeGroup(props: CodeGroupProps) {
       ))}
       <div className="cg-tablist">
         {tabs.map((label, i) => {
-          const icon = resolveCodeGroupIcon(label);
+          const icon = label ? resolveCodeGroupIcon(label) : null;
           return (
             <label
               key={`l-${i}`}
@@ -62,7 +64,7 @@ export default function CodeGroup(props: CodeGroupProps) {
               className="cg-tab"
               {...(icon ? { 'data-cg-icon': icon } : {})}
             >
-              {label}
+              {label ?? <T k="code_tab_fallback" params={{ n: i + 1 }} />}
             </label>
           );
         })}
