@@ -71,6 +71,18 @@ export const dateField = z
 /** Optional draft flag; defaults to false. */
 export const draftField = z.boolean().optional().default(false);
 
+/**
+ * Drafts render in dev (so authors can preview them) and are dropped from
+ * production builds. `nodeEnv` is injectable so the rule is testable without
+ * flipping NODE_ENV under the env-keyed content memos.
+ */
+export function isDraftVisible(
+  entry: { draft?: boolean },
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+): boolean {
+  return !(nodeEnv === 'production' && entry.draft);
+}
+
 /** Optional tag list; defaults to []. */
 export const tagsField = z.array(z.string()).optional().default([]);
 

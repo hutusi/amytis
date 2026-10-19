@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { z } from 'zod';
-import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
+import { dateField, draftField, tagsField, invalidFrontmatterError, isDraftVisible } from './schema';
 
 describe('content/schema', () => {
   test('dateField normalizes strings and Dates to YYYY-MM-DD', () => {
@@ -44,6 +44,14 @@ describe('content/schema', () => {
     expect(() => S.safeParse({ date: '2026-99-99' })).not.toThrow();
     expect(S.safeParse({ date: '2026-99-99' }).success).toBe(false);
     expect(S.safeParse({ date: 'not-a-date' }).success).toBe(false);
+  });
+
+  test('isDraftVisible hides drafts only in production builds', () => {
+    expect(isDraftVisible({ draft: true }, 'production')).toBe(false);
+    expect(isDraftVisible({ draft: true }, 'development')).toBe(true);
+    expect(isDraftVisible({ draft: true }, 'test')).toBe(true);
+    expect(isDraftVisible({ draft: false }, 'production')).toBe(true);
+    expect(isDraftVisible({}, 'production')).toBe(true);
   });
 
   test('draftField and tagsField apply their defaults', () => {

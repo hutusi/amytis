@@ -4,7 +4,7 @@ import { describe, expect, test } from "bun:test";
 import { setEnvVar, restoreEnvVar } from "../helpers/env";
 import { getRelatedPosts } from '../../src/lib/content/related';
 import { getSeriesPosts } from '../../src/lib/content/series';
-import { getAllPosts, getPageBySlug, getPostBySlug } from '../../src/lib/content/posts';
+import { getAllPages, getAllPagesIncludingUnpublished, getAllPosts, getPageBySlug, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Posts", () => {
   test("should load all posts from content directory", () => {
@@ -121,5 +121,21 @@ describe("Integration: post visibility filtering", () => {
     const slugs = getAllPosts().map((p) => p.slug);
     expect(slugs).not.toContain("future-post");
     expect(getPostBySlug("future-post")).toBeNull();
+  });
+
+  test("production builds drop draft static pages but keep their slug claims", () => {
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      setEnvVar("NODE_ENV", "production");
+      const all = getAllPagesIncludingUnpublished();
+      const published = getAllPages();
+      expect(published.every((page) => !page.draft)).toBe(true);
+      expect(published.map((p) => p.slug)).toEqual(all.filter((p) => !p.draft).map((p) => p.slug));
+      for (const draft of all.filter((p) => p.draft)) {
+        expect(getPageBySlug(draft.slug)).toBeNull();
+      }
+    } finally {
+      restoreEnvVar("NODE_ENV", originalEnv);
+    }
   });
 });

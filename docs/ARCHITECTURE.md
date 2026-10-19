@@ -19,7 +19,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 - `content/books/<slug>/`: book metadata + chapter files
 - `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
 - `content/notes/`: evergreen notes
-- `content/*.mdx`: static pages (about, links, subscribe, privacy, etc.)
+- `content/*.mdx`: static pages (about, links, subscribe, privacy, etc.). `draft: true` hides a page from production builds (and the sitemap) like a post; draft pages still claim their slug in collision checks, so dev and prod reserve the same URLs.
 
 ## Runtime Data Flow
 
