@@ -52,4 +52,27 @@ describe('mobile navigation menu', () => {
     act(() => rerender(<Page pathname="/posts/" />));
     expect(screen.queryByTestId('mobile-nav-panel')).toBeNull();
   });
+
+  test('crossing the md breakpoint while open closes it and releases the page', () => {
+    // A phone rotated to landscape: the md:hidden panel and toggle vanish.
+    const listeners = new Set<(event: MediaQueryListEvent) => void>();
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: false, media: query, onchange: null,
+      addEventListener: (_: string, cb: (event: MediaQueryListEvent) => void) => listeners.add(cb),
+      removeEventListener: (_: string, cb: (event: MediaQueryListEvent) => void) => listeners.delete(cb),
+      addListener() {}, removeListener() {}, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      render(<Page pathname="/" />);
+      fireEvent.click(toggle());
+      expect(document.getElementById('main-content')!.hasAttribute('inert')).toBe(true);
+      act(() => listeners.forEach((cb) => cb({ matches: true } as MediaQueryListEvent)));
+      expect(screen.queryByTestId('mobile-nav-panel')).toBeNull();
+      expect(document.getElementById('main-content')!.hasAttribute('inert')).toBe(false);
+      expect(document.body.style.overflow).toBe('');
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
 });

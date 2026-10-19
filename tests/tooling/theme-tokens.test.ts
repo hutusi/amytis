@@ -89,3 +89,19 @@ test('no accent fill pairs with hard-coded white text', () => {
   walk('src');
   expect(offenders).toEqual([]);
 });
+
+describe('immersive reader themes keep AA accent text on a dark site', () => {
+  // Light and sepia readers are light surfaces even when the site is dark,
+  // so they must not inherit dark mode's bright accent.
+  test.each(['light', 'sepia'])('%s reader: accent and accent-contrast for every palette', (theme) => {
+    const reader = tokens(`[data-reader-overlay="true"][data-reading-theme="${theme}"]`);
+    const accents = [
+      reader['--accent'],
+      ...PALETTES.map((p) => tokens(`[data-palette="${p}"] [data-reader-overlay="true"][data-reading-theme="${theme}"]`)['--accent']),
+    ];
+    for (const accent of accents) {
+      expect(contrast(accent, reader['--background'])).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(reader['--accent-contrast'], accent)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});

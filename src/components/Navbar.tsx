@@ -112,11 +112,22 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
       setOpenDropdown(null);
       menuButtonRef.current?.focus();
     };
+    // The panel, backdrop and toggle are all md:hidden. If the viewport grows
+    // past md while open (rotating a phone to landscape), close the menu, or
+    // the page would stay inert and scroll-locked with no visible control.
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const onBreakpoint = (event: MediaQueryListEvent) => {
+      if (!event.matches) return;
+      setIsMenuOpen(false);
+      setOpenDropdown(null);
+    };
     document.addEventListener('keydown', onKeyDown);
+    desktop.addEventListener('change', onBreakpoint);
     return () => {
       document.body.style.overflow = '';
       background.forEach((el) => el?.removeAttribute('inert'));
       document.removeEventListener('keydown', onKeyDown);
+      desktop.removeEventListener('change', onBreakpoint);
     };
   }, [isMenuOpen]);
 

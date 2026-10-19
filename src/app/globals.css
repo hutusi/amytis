@@ -1250,6 +1250,11 @@ html.dark .rst-rendered aside.admonition-danger {
   --foreground: #44403c;
   --heading: #1c1917;
   --muted: #78716c;
+  /* Light surfaces need the light-mode accent even on a dark site, which
+     would otherwise leak dark mode's bright 400 accent in (~1.8:1). */
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --accent-contrast: #ffffff;
 }
 [data-reader-overlay="true"][data-reading-theme="dark"] {
   --background: #292524;
@@ -1262,6 +1267,36 @@ html.dark .rst-rendered aside.admonition-danger {
   --foreground: #5b4636;
   --heading: #3b2f24;
   --muted: #8a7a66;
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --accent-contrast: #ffffff;
+}
+/* Palette accents for the light and sepia readers (the dark reader is
+   covered by the palettes' `.dark` descendant rules). Sepia's warmer
+   background needs amber-800 for 4.5:1. */
+[data-palette="blue"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+}
+[data-palette="blue"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+}
+[data-palette="rose"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #be123c;
+  --accent-hover: #9f1239;
+}
+[data-palette="rose"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #be123c;
+  --accent-hover: #9f1239;
+}
+[data-palette="amber"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #b45309;
+  --accent-hover: #92400e;
+}
+[data-palette="amber"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #92400e;
+  --accent-hover: #78350f;
 }
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h1,
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h2,
