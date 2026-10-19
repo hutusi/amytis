@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic';
 import ExternalLinkIcon from '@/components/ExternalLinkIcon';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
+import { toHtml } from 'hast-util-to-html';
 
 // Dynamic so katex.min.css gets its own chunk — a static import would pull
 // the stylesheet into every article bundle even for math-free posts.
@@ -146,6 +147,22 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
           </table>
         </div>
       );
+    },
+    // KaTeX output: render each formula's subtree as ONE pre-serialized HTML
+    // string. Left as React elements, every glyph span (plus the MathML twin)
+    // is serialized into the RSC payload as verbose element JSON and then
+    // hydrated node by node — a math-heavy chapter carried ~1 MB of payload
+    // and ~15k hydrated nodes. The markup is identical; only the transport
+    // changes. `.katex-display` wraps `.katex`, so the outer override
+    // swallows the inner one; KaTeX error spans keep the normal path.
+    span: (props) => {
+      const { node, children, className, ...rest } = props as React.HTMLAttributes<HTMLSpanElement> & ExtraProps;
+      const classes = typeof className === 'string' ? className.split(/\s+/) : [];
+      const isFormula = classes.includes('katex-display') || (classes.includes('katex') && !classes.includes('katex-error'));
+      if (isFormula && node) {
+        return <span {...rest} className={className} dangerouslySetInnerHTML={{ __html: toHtml(node.children) }} />;
+      }
+      return <span {...rest} className={className}>{children}</span>;
     },
     // Render 'pre' as a 'div' to allow block-level children
     pre: ({ children }) => <div className="not-prose w-full min-w-0 max-w-full">{children}</div>,
