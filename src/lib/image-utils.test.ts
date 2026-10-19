@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getCdnImageUrl, shouldBypassImageOptimization } from "./image-utils";
+import { getCdnImageUrl, resolveContentImagePath, shouldBypassImageOptimization } from "./image-utils";
 
 describe("image-utils", () => {
   test("getCdnImageUrl leaves external and special URLs unchanged", () => {
@@ -15,5 +15,26 @@ describe("image-utils", () => {
     expect(shouldBypassImageOptimization("/images/already-optimized.webp?version=1#hero")).toBe(true);
     expect(shouldBypassImageOptimization("/images/photo.jpg")).toBe(false);
     expect(shouldBypassImageOptimization("/images/photo.png#fragment")).toBe(false);
+  });
+});
+
+describe('resolveContentImagePath', () => {
+  test('resolves ./ and bare relative paths against the asset base', () => {
+    expect(resolveContentImagePath('./images/a.png', 'posts/my-post')).toBe('/posts/my-post/images/a.png');
+    expect(resolveContentImagePath('assets/a.png', 'flows/2026/01/15')).toBe('/flows/2026/01/15/assets/a.png');
+  });
+
+  test('keeps site-absolute paths', () => {
+    expect(resolveContentImagePath('/images/a.png', 'posts/x')).toBe('/images/a.png');
+    expect(resolveContentImagePath('/images/a.png')).toBe('/images/a.png');
+  });
+
+  test('returns null for non-local sources', () => {
+    for (const src of ['https://x.test/a.png', '//cdn.test/a.png', 'data:image/png;base64,AA', '#frag', '../escape.png', '']) {
+      expect(resolveContentImagePath(src, 'posts/x')).toBeNull();
+    }
+    // Relative paths need an asset base to resolve against.
+    expect(resolveContentImagePath('./a.png')).toBeNull();
+    expect(resolveContentImagePath('a.png')).toBeNull();
   });
 });

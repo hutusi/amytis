@@ -14,6 +14,7 @@ import remarkCodeGroup from './remark-code-group';
 import remarkVuepressContainers, { normalizeVuepressContainerSyntax } from './remark-vuepress-containers';
 import remarkWikilinks from './remark-wikilinks';
 import { normalizeVuepressBlockMath } from './normalize-vuepress-math';
+import rehypeAbsoluteUrls, { type AbsoluteUrlsOptions } from './rehype-absolute-urls';
 import type { SlugRegistryEntry } from './content/discovery';
 
 export interface MarkdownToHtmlOptions {
@@ -25,6 +26,11 @@ export interface MarkdownToHtmlOptions {
    * ordinary dollar amounts in non-math posts.
    */
   math?: boolean;
+  /**
+   * Rewrite every URL to an absolute one (feed readers resolve nothing
+   * relative). Runs on the HAST, so code samples are never rewritten.
+   */
+  absoluteUrls?: AbsoluteUrlsOptions;
 }
 
 const ALERT_TITLES: Record<string, string> = {
@@ -104,13 +110,15 @@ function rehypePlainComponents() {
  * renders instead of leaking as literal text. Deliberately skipped: Shiki
  * (readers don't load our CSS; plain <pre><code> is correct), rehype-slug
  * (heading anchors are meaningless in a feed), and rehype-image-metadata
- * (dimension probing and CDN rewriting serve the on-page <Image> pipeline).
+ * (dimension probing serves the on-page <Image> pipeline). Image paths still
+ * resolve exactly as on the page when `absoluteUrls` is set: both surfaces
+ * share `resolveContentImagePath`.
  *
  * Math renders through KaTeX with MathML-only output: readers never load the
  * KaTeX stylesheet, and bare MathML renders natively in modern engines.
  */
 export function markdownToHtml(markdown: string, options: MarkdownToHtmlOptions = {}): string {
-  const { slugRegistry, math = false } = options;
+  const { slugRegistry, math = false, absoluteUrls } = options;
 
   const source = math
     ? normalizeVuepressBlockMath(normalizeVuepressContainerSyntax(markdown))
@@ -140,6 +148,9 @@ export function markdownToHtml(markdown: string, options: MarkdownToHtmlOptions 
       // else KaTeX complains about is still worth a warning.
       strict: (code: string) => (code === 'unicodeTextInMathMode' ? 'ignore' : 'warn'),
     });
+  }
+  if (absoluteUrls) {
+    processor.use(rehypeAbsoluteUrls, absoluteUrls);
   }
 
   return String(processor.use(rehypeStringify).processSync(source));
