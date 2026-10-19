@@ -8,9 +8,9 @@ const nextConfig: NextConfig = {
   //   1. Co-located assets: posts can have a slug/images/ directory alongside
   //      slug/index.html. With false, slug.html and slug/ conflict on some
   //      static hosts and cause 403 errors.
-  //   2. Nginx cosmetics: nginx.conf strips the trailing slash via redirect
-  //      (/slug/ → /slug) so the visible URL matches the false convention
-  //      without changing the export format.
+  //   2. Canonical URLs: canonicals, the sitemap and hreflang links all use
+  //      the trailing-slash form, and the deploy configs (vercel.json,
+  //      nginx.conf.example) serve /slug/ and redirect bare /slug to it.
   trailingSlash: true,
   output: "export",
   images: {

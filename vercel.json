@@ -3,5 +3,16 @@
   "framework": null,
   "buildCommand": "bun run build",
   "installCommand": "bun install --frozen-lockfile",
-  "outputDirectory": "out"
+  "outputDirectory": "out",
+  "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/pagefind/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    }
+  ]
 }
