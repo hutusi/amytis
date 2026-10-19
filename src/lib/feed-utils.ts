@@ -8,6 +8,7 @@ import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeStringify from 'rehype-stringify';
 import { markdownToHtml } from './markdown-to-html';
+import { resolveImageUrl } from './json-ld';
 import rehypeAbsoluteUrls, { type AbsoluteUrlsOptions } from './rehype-absolute-urls';
 import { sanitizeRenderedRstHtml } from './rst-sanitize';
 
@@ -193,7 +194,7 @@ export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Respon
   const selfUrl = `${baseUrl}${selfUrlPath}`;
 
   const imageXml = siteConfig.ogImage
-    ? `\n    <image>\n      <url>${escapeXml(baseUrl + siteConfig.ogImage)}</url>\n      <title>${escapeXml(siteTitle)}</title>\n      <link>${escapeXml(baseUrl)}</link>\n    </image>`
+    ? `\n    <image>\n      <url>${escapeXml(resolveImageUrl(undefined, siteConfig.ogImage, baseUrl))}</url>\n      <title>${escapeXml(siteTitle)}</title>\n      <link>${escapeXml(baseUrl)}</link>\n    </image>`
     : '';
 
   const rssItemsXml = items

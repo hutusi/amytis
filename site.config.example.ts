@@ -44,7 +44,7 @@ export const siteConfig = {
   },
   description: "A personal digital garden — notes, articles, and ideas.",
   baseUrl: "https://example.com", // Replace with your actual domain
-  ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
+  ogImage: "/og-image.png", // Default OG/social preview image (1200×630 PNG). A default ships in public/ — replace it with your own; a missing site-relative file fails the build
   footerText: `© ${new Date().getFullYear()} My Garden. All rights reserved.`,
 
   // ── i18n ──────────────────────────────────────────────────────────────────
