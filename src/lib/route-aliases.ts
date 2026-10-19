@@ -1,6 +1,6 @@
 import { siteConfig } from '../../site.config';
 import type { PostData } from './content/types';
-import { getAllPages, getAllPosts, getListingPosts, getPageBySlug, getPostBySlug } from './content/posts';
+import { getAllPages, getAllPagesIncludingUnpublished, getAllPosts, getListingPosts, getPageBySlug, getPostBySlug } from './content/posts';
 import { getAllSeries, getSeriesData, getSeriesPosts } from './content/series';
 import { createKeyedMemo } from './content/cache';
 import {
@@ -167,7 +167,9 @@ export function collectSeriesPageAliases(
 
 /** `[slug]`: pages + custom basePath + series custom/auto paths + 1-segment redirectFrom. */
 export function topLevelSlugParams(): { slug: string }[] {
-  const pages = getAllPages();
+  // Slug claims and collision checks include draft pages so a draft reserves
+  // its slug identically in dev and production; only published pages render.
+  const pages = getAllPagesIncludingUnpublished();
 
   // Locale codes are reserved URL prefixes (/zh/… is the zh content tree) —
   // a static page claiming one would silently shadow that entire surface.
@@ -181,7 +183,7 @@ export function topLevelSlugParams(): { slug: string }[] {
     }
   }
 
-  const params = pages.map((page) => ({ slug: page.slug }));
+  const params = getAllPages().map((page) => ({ slug: page.slug }));
 
   // Add custom posts basePath listing (e.g. /articles)
   const basePath = getPostsBasePath();
@@ -286,7 +288,7 @@ export function prefixedPostParams(): { slug: string; postSlug: string }[] {
   if (getSeriesAutoPaths()) {
     const allSeriesMap = getAllSeries();
     const allSeriesSlugs = Object.keys(allSeriesMap);
-    const pageSlugSet = getAllPages().map(p => p.slug);
+    const pageSlugSet = getAllPagesIncludingUnpublished().map(p => p.slug);
     validateSeriesAutoPaths(allSeriesSlugs, [...pageSlugSet, ...Object.values(customPaths)]); // Throws if any slug collides with a reserved route, static page, or customPaths prefix
     for (const seriesSlug of allSeriesSlugs) {
       if (Object.hasOwn(customPaths, seriesSlug)) continue; // Already handled by customPaths above

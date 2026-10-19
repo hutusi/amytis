@@ -21,3 +21,56 @@ export function shouldBypassImageOptimization(src: string): boolean {
   const pathWithoutQuery = src.split('#')[0]?.split('?')[0] ?? src;
   return /\.(avif|webp)$/i.test(pathWithoutQuery);
 }
+
+const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
+
+/**
+ * Collapse `.` / `..` / empty segments of a site path. Returns null when the
+ * path climbs above the site root (`/../x`). Dependency-free (no node:path)
+ * because components share this module.
+ */
+function normalizeSitePath(sitePath: string): string | null {
+  const segments: string[] = [];
+  for (const segment of sitePath.split('/')) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') {
+      if (segments.length === 0) return null;
+      segments.pop();
+      continue;
+    }
+    segments.push(segment);
+  }
+  return `/${segments.join('/')}`;
+}
+
+/**
+ * Public site path ('/posts/my-post/images/x.png') for an image src as
+ * authored in content, or null when the src is not a local asset (external
+ * URL, data: URI, fragment) or escapes its allowed root: a relative path must
+ * stay inside the content's asset base, a site-absolute one inside the site.
+ * The on-page pipeline resolves the result against public/ and reads the
+ * file, so an escaping path would read outside public/.
+ *
+ * `slug` is the content's public-relative asset base (e.g. `posts/my-post`,
+ * `books/my-book`, `flows/2026/01/15`): `./x.png` and bare `x.png` resolve
+ * against it, `/x.png` is already site-absolute. Shared by the on-page image
+ * pipeline (rehype-image-metadata) and feed rendering so a co-located image
+ * resolves to the same file on both surfaces.
+ */
+export function resolveContentImagePath(src: string, slug?: string): string | null {
+  if (!src) return null;
+  // A browser's URL parser treats `\` as `/`, so the containment check must
+  // too (`..\other-post\a.png` would otherwise pass it and still escape).
+  const path = src.replace(/\\/g, '/');
+  // Any URL scheme (case-insensitive: `HTTPS://…`, `data:`, `mailto:`) or a
+  // protocol-relative URL is not a local asset. A filename that merely starts
+  // with "http" (`http-flow.png`) is.
+  if (URL_SCHEME_RE.test(path) || path.startsWith('//') || path.startsWith('#')) return null;
+  if (path.startsWith('/')) return normalizeSitePath(path);
+  if (!slug) return null;
+  const relative = path.startsWith('./') ? path.substring(2) : path;
+  const base = normalizeSitePath(`/${slug}`);
+  const resolved = normalizeSitePath(`/${slug}/${relative}`);
+  if (!base || !resolved || !resolved.startsWith(`${base}/`)) return null;
+  return resolved;
+}

@@ -2,6 +2,7 @@ import { siteConfig } from '../../site.config';
 import type { PostData } from './content/types';
 import {
   getAllPages,
+  getAllPagesIncludingUnpublished,
   getAllPosts,
   getListingPosts,
   getPageBySlug,
@@ -239,7 +240,7 @@ export function seriesListingPrefixes(locale: string): Array<{ prefix: string; s
 /** Per-tree collision validation, mirroring prefixedPostParams for the default tree. */
 function validateLocaleSeriesPaths(locale: string): void {
   if (!getSeriesAutoPaths()) return;
-  const pageSlugSet = getAllPages(locale).map(p => p.slug);
+  const pageSlugSet = getAllPagesIncludingUnpublished(locale).map(p => p.slug);
   validateSeriesAutoPaths(Object.keys(getAllSeries(locale)), [
     ...pageSlugSet,
     ...Object.values(getSeriesCustomPaths()),

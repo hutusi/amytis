@@ -19,7 +19,7 @@ Amytis is a static-export-first Next.js 16 App Router project for Markdown/MDX p
 - `content/books/<slug>/`: book metadata + chapter files
 - `content/flows/YYYY/MM/DD.(md|mdx)`: daily flow entries
 - `content/notes/`: evergreen notes
-- `content/*.mdx`: static pages (about, links, subscribe, privacy, etc.)
+- `content/*.mdx`: static pages (about, links, subscribe, privacy, etc.). `draft: true` hides a page from production builds (and the sitemap) like a post; draft pages still claim their slug in collision checks, so dev and prod reserve the same URLs.
 
 ## Runtime Data Flow
 
@@ -219,9 +219,13 @@ types → io/cache → series-metadata → parse → posts → series → {relat
 
 All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateRssFeed` / `generateAtomFeed` / `getFeedItems`). With `feed.content: 'full'`:
 
-- Markdown/MDX items render through `src/lib/markdown-to-html.ts` — the same author-facing syntax set as `MarkdownRenderer` (GFM, GitHub alerts, VuePress containers, code groups, wikilinks, math) as a plain HTML string. Feed-specific choices: synthetic `<github-alert>`/`<code-group>` elements are rewritten to titled blockquotes / labeled `<pre>` blocks, KaTeX emits MathML-only output (readers never load the KaTeX stylesheet), and Shiki / `rehype-slug` / `rehype-image-metadata` are deliberately skipped (page-only concerns). Mermaid fences likewise stay plain `<pre><code class="language-mermaid">` blocks — feed readers run no JS. If `MarkdownRenderer` gains a syntax plugin, add it here too — `tests/integration/feed-utils.test.ts` asserts the known syntaxes don't leak as literal text.
+- Markdown/MDX items render through `src/lib/markdown-to-html.ts` — the same author-facing syntax set as `MarkdownRenderer` (GFM, GitHub alerts, VuePress containers, code groups, wikilinks, math) as a plain HTML string. Feed-specific choices: synthetic `<github-alert>`/`<code-group>` elements are rewritten to titled blockquotes / labeled `<pre>` blocks, KaTeX emits MathML-only output (readers never load the KaTeX stylesheet), and Shiki / heading ids / `rehype-image-metadata` are deliberately skipped (page-only concerns). Mermaid fences likewise stay plain `<pre><code class="language-mermaid">` blocks — feed readers run no JS. If `MarkdownRenderer` gains a syntax plugin, add it here too — `tests/integration/feed-utils.test.ts` asserts the known syntaxes don't leak as literal text.
 - rST items embed their docutils `renderedHtml`, sanitized by the same shared allowlist the on-page renderer uses (`src/lib/rst-sanitize.ts`); when docutils didn't run, the item falls back to the plain-text excerpt rather than mis-parsing rST source as Markdown.
-- Sorting and the `maxItems` cut happen before content rendering, so only surviving items pay the render cost. All relative URLs are absolutized against the item's page URL.
+- Sorting and the `maxItems` cut happen before content rendering, so only surviving items pay the render cost. URLs are absolutized on the HAST by `src/lib/rehype-absolute-urls.ts` (never by regex over serialized HTML, which would rewrite code samples): `<img src>` resolves through `resolveContentImagePath` (`src/lib/image-utils.ts`) against the entry's asset base — the same resolver `rehype-image-metadata` uses on the page, so co-located images of series posts on autoPaths/customPaths URLs point at `/posts/<slug>/…` in both places — and every other URL resolves against the item's page URL.
+
+## Heading IDs and the TOC
+
+Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts` slugs every Markdown heading in document order (all depths through one GitHub slugger, wikilink syntax reduced to its display text). `getHeadings` builds the TOC from it at content-load time, and the `remarkHeadingIds` plugin — the first transformer in `MarkdownRenderer` — stamps the same ids onto the rendered headings, so TOC links match page ids by construction, whether or not a surface resolves wikilinks. Headings that arrive as raw HTML get ids from `src/lib/rehype-heading-ids.ts`, which collects every id already in the document first, so a raw `<h2>Setup</h2>` next to `## Setup` becomes `setup-1` instead of a duplicate. `tests/integration/reading-time-headings.test.ts` asserts every post's TOC ids exist in its rendered body.
 
 ## Code Block Highlighting
 
@@ -256,6 +260,8 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 ## Content Frontmatter
 
 Validated by Zod in `src/lib/content/` (PostSchema in `parse.ts`; book/flow/note schemas in their domain modules) — invalid frontmatter throws at build time.
+
+**Dates** normalize to `YYYY-MM-DD` via `dateField` (`content/schema.ts`). A quoted string that starts with a calendar date — `"2026-01-01"`, `"2026-1-1"`, `"2026-01-01 08:00"`, `"2026-01-01T08:00:00+08:00"` — keeps the day as written, independent of the build machine's timezone; a non-existent day (`"2026-02-30"`) or a malformed time after the date fails the build. Unquoted YAML timestamps arrive as UTC instants and keep their UTC day, so quote any datetime that carries a non-UTC offset.
 
 ### Posts
 

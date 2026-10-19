@@ -4,6 +4,11 @@ import { getAllPosts, getTwinPost } from '../../src/lib/content/posts';
 import { getAllFlows } from '../../src/lib/content/flows';
 import { getPostUrl, getFlowUrl, withTrailingSlash } from "../../src/lib/urls";
 import { siteConfig } from "../../site.config";
+import { markdownToHtml } from "../../src/lib/markdown-to-html";
+import { unified } from "unified";
+import rehypeParse from "rehype-parse";
+import { visit } from "unist-util-visit";
+import type { Element } from "hast";
 
 
 // The post set feeds serve: the default tree plus locale-tree originals
@@ -250,14 +255,51 @@ describe("Integration: Feed Utils", () => {
     }
   });
 
+  // Inspect real element attributes: serialized code samples legitimately
+  // contain text like `src="audio.ogg"`, which must stay as written.
+  function elementUrls(html: string): { tag: string; attr: string; url: string }[] {
+    const urls: { tag: string; attr: string; url: string }[] = [];
+    visit(unified().use(rehypeParse, { fragment: true }).parse(html), "element", (node: Element) => {
+      for (const attr of ["src", "href", "poster"]) {
+        const url = node.properties?.[attr];
+        if (typeof url === "string") urls.push({ tag: node.tagName, attr, url });
+      }
+    });
+    return urls;
+  }
+
   test("full-content items carry no relative src/href (feed readers resolve nothing)", () => {
     const items = getFeedItems("all", true);
     items.forEach((item) => {
-      for (const [, , url] of item.content.matchAll(/(src|href)="([^"]*)"/g)) {
+      for (const { url } of elementUrls(item.content)) {
         if (url === "" || url.startsWith("#")) continue;
         expect(url).toMatch(/^[a-z][a-z0-9+.-]*:|^\/\//i);
       }
     });
+  });
+
+  test("co-located images resolve to the asset base, not the series page URL", () => {
+    // The post renders at /nextjs-deep-dive/02-routing-mastery/ (autoPaths)
+    // but its assets are copied to /posts/02-routing-mastery/.
+    const post = getAllPosts().find((p) => p.slug === "02-routing-mastery");
+    expect(post).toBeDefined();
+    const url = withTrailingSlash(siteConfig.baseUrl.replace(/\/+$/, "") + getPostUrl(post!));
+    const item = getFeedItems("posts", true).find((i) => i.url === url);
+    expect(item).toBeDefined();
+    const imgs = elementUrls(item!.content).filter((u) => u.tag === "img").map((u) => u.url);
+    expect(imgs).toContain(`${siteConfig.baseUrl.replace(/\/+$/, "")}/${post!.imageBaseSlug}/assets/diagram.svg`);
+  });
+
+  test("text inside code samples is never rewritten", () => {
+    const post = getAllPosts().find((p) => p.slug === "multimedia-showcase");
+    expect(post).toBeDefined();
+    const url = withTrailingSlash(siteConfig.baseUrl.replace(/\/+$/, "") + getPostUrl(post!));
+    const item = getFeedItems("all", true).find((i) => i.url === url);
+    // The post may fall outside maxItems; render through the same seam then.
+    const html = item?.content ?? markdownToHtml(post!.content, {
+      absoluteUrls: { pageUrl: url, siteUrl: "https://site.test", imageBaseSlug: post!.imageBaseSlug },
+    });
+    expect(html).toContain('src="audio.ogg"');
   });
 
   // renderedHtml exists only when the Python docutils renderer ran; the JS

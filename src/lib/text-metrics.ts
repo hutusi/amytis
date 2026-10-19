@@ -1,4 +1,10 @@
 import GithubSlugger from 'github-slugger';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkDirective from 'remark-directive';
+import type { Heading as MdastHeading, Nodes, Root } from 'mdast';
+import { normalizeVuepressContainerSyntax } from './remark-vuepress-containers';
 
 /**
  * Shared text metrics for all content formats (Markdown, rST, plain text).
@@ -25,8 +31,9 @@ const HAN_CHAR_RE = /[㐀-䶿一-鿿豈-﫿]/g;
 const LATIN_WORD_RE = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
 
 // Fenced code blocks in BOTH CommonMark fence styles (``` and ~~~). A fence's
-// body is not prose: it must not count as words, leak into excerpts, or
-// contribute TOC headings. Only used with .replace(), which resets lastIndex.
+// body is not prose: it must not count as words or leak into excerpts (TOC
+// headings use the real parser instead). Only used with .replace(), which
+// resets lastIndex.
 const FENCED_CODE_BLOCK_RE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
 
 // Shared text-stripping + tokenization used by both `calculateReadingMinutes`
@@ -93,15 +100,20 @@ export function calculateWordCountFromText(text: string): number {
   return latinWords + hanChars;
 }
 
+// Wikilinks: keep the display text ([[slug|display]]) or the slug ([[slug]]).
+function stripWikilinkSyntax(text: string): string {
+  return text
+    .replace(/\[\[([^\]|]+?)\|([^\]]+?)\]\]/g, '$2')
+    .replace(/\[\[([^\]]+?)\]\]/g, '$1');
+}
+
 export function generateExcerpt(content: string): string {
   let plain = content.replace(/^#+\s+/gm, '');
   plain = plain.replace(FENCED_CODE_BLOCK_RE, '');
   // ::: container opener/closer lines (VuePress/directive syntax) are pure
   // markup; after fence removal any remaining ones are prose-level.
   plain = plain.replace(/^:{3,}[^\n]*$/gm, '');
-  // Wikilinks: keep the display text ([[slug|display]]) or the slug ([[slug]]).
-  plain = plain.replace(/\[\[([^\]|]+?)\|([^\]]+?)\]\]/g, '$2');
-  plain = plain.replace(/\[\[([^\]]+?)\]\]/g, '$1');
+  plain = stripWikilinkSyntax(plain);
   // Unwrap inline code BEFORE stripping tags: `<br>` must not become a
   // dangling backtick pair once the tag inside it is deleted.
   plain = plain.replace(/`([^`]+)`/g, '$1');
@@ -121,26 +133,72 @@ export function generateExcerpt(content: string): string {
   return plain.slice(0, 160).trim() + '...';
 }
 
-export function getHeadings(content: string): Heading[] {
-  const regex = /^(#{2,3})\s+(.*)$/gm;
-  const headings: Heading[] = [];
+// Parse-only processor (no transforms run): GFM and directive syntax change
+// what counts as a heading line, so they must match MarkdownRenderer's
+// syntax extensions. Fences, setext headings and closing `##` sequences are
+// handled by the real CommonMark parser instead of a line regex.
+const headingParser = unified().use(remarkParse).use(remarkGfm).use(remarkDirective);
+
+/**
+ * Text of a heading as it is slugged: inline markup (`**bold**`, links,
+ * inline code) contributes its text, raw HTML/JSX tags contribute nothing,
+ * and image alt text is not part of the text content.
+ */
+function headingText(node: Nodes): string {
+  if (node.type === 'html' || node.type === 'image' || node.type === 'imageReference') return '';
+  if ('value' in node) return node.value;
+  if ('children' in node) return node.children.map(child => headingText(child as Nodes)).join('');
+  return '';
+}
+
+/**
+ * Every heading of an mdast tree with its id, in document order. All depths
+ * go through one slugger (dedup across levels, as GitHub does), and
+ * wikilink syntax is reduced to its display text first, so the id is the
+ * same whether or not a surface resolves wikilinks.
+ *
+ * This is the single source of heading ids: getHeadings derives the TOC
+ * from it, and remarkHeadingIds stamps the same ids onto the rendered
+ * headings, so TOC links and page ids match by construction.
+ */
+function slugHeadingNodes(tree: Root): Array<{ node: MdastHeading; id: string; text: string }> {
   const slugger = new GithubSlugger();
-  let match;
+  const result: Array<{ node: MdastHeading; id: string; text: string }> = [];
+  const walk = (node: Nodes) => {
+    if (node.type === 'heading') {
+      const text = stripWikilinkSyntax(headingText(node)).trim();
+      result.push({ node, id: slugger.slug(text), text });
+      return;
+    }
+    if ('children' in node) {
+      for (const child of node.children) walk(child as Nodes);
+    }
+  };
+  walk(tree);
+  return result;
+}
 
-  // Strip fenced code blocks first: a `## foo` line inside a fence is not a
-  // heading in the rendered HTML, so harvesting it would emit a dead TOC
-  // anchor AND burn the slugger's dedup slot, desyncing every later
-  // duplicate-text heading id from the one rehype-slug assigns.
-  const withoutFences = content.replace(FENCED_CODE_BLOCK_RE, '');
+/** H2/H3 headings for the TOC (ids from slugHeadingNodes). */
+export function getHeadings(content: string): Heading[] {
+  const tree = headingParser.parse(normalizeVuepressContainerSyntax(content));
+  return slugHeadingNodes(tree)
+    .filter(({ node }) => node.depth === 2 || node.depth === 3)
+    .map(({ node, id, text }) => ({ id, text, level: node.depth }));
+}
 
-  while ((match = regex.exec(withoutFences)) !== null) {
-    const level = match[1].length;
-    const text = match[2].trim();
-    const id = slugger.slug(text);
-
-    headings.push({ id, text, level });
-  }
-  return headings;
+/**
+ * Remark plugin for MarkdownRenderer: give every Markdown heading the id
+ * getHeadings computed for it. Must run before any transformer that changes
+ * heading text (wikilinks, alerts, containers). rehypeRawHeadingIds then
+ * fills in raw-HTML headings, unique against these ids.
+ */
+export function remarkHeadingIds(options: { prefix?: string } = {}) {
+  const prefix = options.prefix ?? '';
+  return (tree: Root) => {
+    for (const { node, id } of slugHeadingNodes(tree)) {
+      node.data = { ...node.data, hProperties: { ...node.data?.hProperties, id: `${prefix}${id}` } };
+    }
+  };
 }
 
 interface ContentMetrics {
@@ -148,7 +206,7 @@ interface ContentMetrics {
   contentWithoutH1: string;
   /** Excerpt derived from `contentWithoutH1`. */
   excerpt: string;
-  /** H2/H3 headings, parsed from the original content (H1 is never a heading). */
+  /** H2/H3 headings of the rendered body (`contentWithoutH1`). */
   headings: Heading[];
 }
 
@@ -160,7 +218,7 @@ interface ContentMetricsWithCounts extends ContentMetrics {
 /**
  * The shared content-metrics extraction that posts/notes/flows/book-chapters
  * all performed inline: strip a leading H1, derive the excerpt from the
- * stripped body, and collect headings from the original content. Reading-time
+ * stripped body, and collect headings from that same rendered body. Reading-time
  * and word-count are included by default; pass `{ withCounts: false }` to skip
  * them (flows don't surface those metrics). Callers keep their own H1-text
  * capture and `data.excerpt ||` fallback where they need them.
@@ -173,7 +231,9 @@ export function extractContentMetrics(
 ): ContentMetrics | ContentMetricsWithCounts {
   const contentWithoutH1 = content.replace(/^\s*#\s+[^\n]+/, '').trim();
   const excerpt = generateExcerpt(contentWithoutH1);
-  const headings = getHeadings(content);
+  // Headings come from the body that is actually rendered: the stripped H1
+  // is never rendered, so it must not claim a slug dedup slot either.
+  const headings = getHeadings(contentWithoutH1);
 
   if (opts.withCounts === false) {
     return { contentWithoutH1, excerpt, headings };

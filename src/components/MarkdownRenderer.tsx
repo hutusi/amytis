@@ -23,11 +23,12 @@ import remarkBookChapterLinks, { type BookChapterLinksOptions } from '@/lib/rema
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import rehypeSlug from 'rehype-slug';
+import rehypeRawHeadingIds from '@/lib/rehype-heading-ids';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
 import remarkWikilinks from '@/lib/remark-wikilinks';
+import { remarkHeadingIds } from '@/lib/text-metrics';
 import ExportedImage from 'next-image-export-optimizer';
 import { PluggableList } from 'unified';
 import type { SlugRegistryEntry } from '@/lib/content/discovery';
@@ -65,8 +66,8 @@ interface MarkdownRendererProps {
   bookContext?: BookChapterLinksOptions;
   /**
    * Set when rendering multiple documents on one page (e.g. the flow stream)
-   * to keep rehype-slug heading ids unique across documents. Note GFM footnote
-   * ids come from remark-rehype, not rehype-slug, and are not prefixed.
+   * to keep heading ids unique across documents. Note GFM footnote ids come
+   * from remark-rehype and are not prefixed.
    */
   headingIdPrefix?: string;
 }
@@ -76,6 +77,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
   // — they touch disjoint node types.
   const remarkPlugins: PluggableList = [
+    // First transformer: heading ids come from the same function as the TOC
+    // (getHeadings), before wikilinks/containers change heading text.
+    headingIdPrefix ? [remarkHeadingIds, { prefix: headingIdPrefix }] : remarkHeadingIds,
     remarkGfm,
     remarkGithubAlerts,
     remarkDirective,
@@ -92,7 +96,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   const rehypePlugins: PluggableList = [
     rehypeFenceMeta,
     rehypeRaw,
-    headingIdPrefix ? [rehypeSlug, { prefix: headingIdPrefix }] : rehypeSlug,
+    // Markdown headings already carry ids (remarkHeadingIds); this only fills
+    // in headings that arrive as raw HTML, unique against every existing id.
+    headingIdPrefix ? [rehypeRawHeadingIds, { prefix: headingIdPrefix }] : rehypeRawHeadingIds,
     [rehypeImageMetadata, { slug, cdnBaseUrl }],
   ];
 

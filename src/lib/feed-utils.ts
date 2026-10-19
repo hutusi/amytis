@@ -4,7 +4,11 @@ import { buildSlugRegistry, type SlugRegistryEntry } from './content/discovery';
 import { siteConfig } from '../../site.config';
 import { getPostUrl, getFlowUrl, withTrailingSlash } from './urls';
 import { resolveLocaleValue } from './i18n';
+import { unified } from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeStringify from 'rehype-stringify';
 import { markdownToHtml } from './markdown-to-html';
+import rehypeAbsoluteUrls, { type AbsoluteUrlsOptions } from './rehype-absolute-urls';
 import { sanitizeRenderedRstHtml } from './rst-sanitize';
 
 
@@ -19,20 +23,15 @@ export interface FeedItem {
   authors?: string[];
 }
 
-/**
- * Feed readers resolve nothing relative: rewrite relative and site-relative
- * src/href against the item's absolute page URL (which ends in '/', so
- * `images/x.png` resolves exactly as it does on the trailing-slash page).
- */
-function absolutizeHtmlUrls(html: string, pageUrl: string): string {
-  return html.replace(/(src|href)="([^"]*)"/g, (match, attr: string, url: string) => {
-    if (url === '' || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) return match;
-    try {
-      return `${attr}="${new URL(url, pageUrl).toString()}"`;
-    } catch {
-      return match;
-    }
-  });
+/** Rewrite URLs in already-rendered HTML (rST) on its HAST, never as text. */
+function absolutizeHtml(html: string, options: AbsoluteUrlsOptions): string {
+  return String(
+    unified()
+      .use(rehypeParse, { fragment: true })
+      .use(rehypeAbsoluteUrls, options)
+      .use(rehypeStringify)
+      .processSync(html),
+  );
 }
 
 /** The fields the feed needs from a post or flow to render full content. */
@@ -44,6 +43,8 @@ interface FeedContentSource {
   latex?: boolean;
   /** Locale tree the entry came from (posts carry it; flows are default-only). */
   locale?: string;
+  /** Public-relative base that co-located images resolve against. */
+  imageBaseSlug?: string;
 }
 
 const escapeHtmlText = (v: string) =>
@@ -63,18 +64,30 @@ function itemContentHtml(
   pageUrl: string,
   slugRegistry: Map<string, SlugRegistryEntry>,
 ): string {
-  let html: string;
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   if (post.sourceFormat === 'rst') {
     if (!post.renderedHtml) {
-      // Plain-text fallback: nothing to absolutize, and skipping that pass
-      // guarantees excerpt text resembling src="…"/href="…" is never rewritten.
+      // Plain-text fallback: nothing to absolutize.
       return `<p>${escapeHtmlText(post.excerpt)}</p>`;
     }
-    html = sanitizeRenderedRstHtml(post.renderedHtml);
-  } else {
-    html = markdownToHtml(post.content, { slugRegistry, math: post.latex });
+    // docutils already resolved image paths against the asset base, so the
+    // CDN prefix stays off here exactly as on the page.
+    return absolutizeHtml(sanitizeRenderedRstHtml(post.renderedHtml), {
+      pageUrl,
+      siteUrl,
+      imageBaseSlug: post.imageBaseSlug,
+    });
   }
-  return absolutizeHtmlUrls(html, pageUrl);
+  return markdownToHtml(post.content, {
+    slugRegistry,
+    math: post.latex,
+    absoluteUrls: {
+      pageUrl,
+      siteUrl,
+      imageBaseSlug: post.imageBaseSlug,
+      cdnBaseUrl: siteConfig.images?.cdnBaseUrl ?? '',
+    },
+  });
 }
 
 export type FeedType = 'main' | 'posts' | 'flows' | 'all';
@@ -124,7 +137,8 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
         content: '',
         tags: flow.tags || [],
       },
-      source: flow,
+      // Flows render on the page with `flows/<date>` as their asset base.
+      source: { ...flow, imageBaseSlug: `flows/${flow.slug}` },
     };
   });
 

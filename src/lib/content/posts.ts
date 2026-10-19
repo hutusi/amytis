@@ -12,6 +12,7 @@ import {
   parseSlugAndDate,
 } from './io';
 import { createKeyedMemo } from './cache';
+import { isDraftVisible } from './schema';
 import { resolveSeriesIndexInfo, getSeriesContentEntries } from './series-metadata';
 import { parseMarkdownFile, parseRstPostEntries, type RstPostEntry } from './parse';
 
@@ -115,9 +116,7 @@ export function getAllPosts(locale: string = DEFAULT_LOCALE): PostData[] {
       .filter(post => {
         if (post.category === 'Page') return false;
 
-        if (process.env.NODE_ENV === 'production' && post.draft) {
-          return false;
-        }
+        if (!isDraftVisible(post)) return false;
 
         if (!siteConfig.posts?.showFuturePosts) {
           const postDate = new Date(post.date);
@@ -226,9 +225,10 @@ export function getTwinPage(page: Pick<PostData, 'treePath'>, locale: string): P
 
 /**
  * Contract: returns null only when the page file does not exist (static pages
- * are optional — an absent about.md is fine). Any error past the existence
- * check — malformed frontmatter, unreadable file — propagates and fails the
- * build (strict-build invariant); a broken page must not silently 404.
+ * are optional — an absent about.md is fine) or is a draft in a production
+ * build. Any error past the existence check — malformed frontmatter,
+ * unreadable file — propagates and fails the build (strict-build invariant);
+ * a broken page must not silently 404.
  */
 export function getPageBySlug(slug: string, locale: string = DEFAULT_LOCALE): PostData | null {
   assertKnownLocale(locale);
@@ -238,12 +238,18 @@ export function getPageBySlug(slug: string, locale: string = DEFAULT_LOCALE): Po
     fullPath = path.join(/* turbopackIgnore: true */ treeRoot, `${slug}.md`);
   }
   if (!fs.existsSync(/* turbopackIgnore: true */ fullPath)) return null;
-  return parseMarkdownFile(fullPath, slug, undefined, undefined, locale);
+  const page = parseMarkdownFile(fullPath, slug, undefined, undefined, locale);
+  return isDraftVisible(page) ? page : null;
 }
 
 const allPagesMemo = createKeyedMemo<string, PostData[]>();
 
-export function getAllPages(locale: string = DEFAULT_LOCALE): PostData[] {
+/**
+ * Every static page in a locale tree, drafts included. Slug-reservation and
+ * collision checks use this so a draft page claims its slug identically in
+ * dev and production builds; rendering surfaces use `getAllPages`.
+ */
+export function getAllPagesIncludingUnpublished(locale: string = DEFAULT_LOCALE): PostData[] {
   assertKnownLocale(locale);
   return allPagesMemo.get(locale, () => {
     if (!getActiveContentLocales().includes(locale)) return [];
@@ -264,4 +270,9 @@ export function getAllPages(locale: string = DEFAULT_LOCALE): PostData[] {
         return parseMarkdownFile(fullPath, slug, undefined, undefined, locale);
       });
   });
+}
+
+/** Published static pages: drafts are dropped from production builds, like posts. */
+export function getAllPages(locale: string = DEFAULT_LOCALE): PostData[] {
+  return getAllPagesIncludingUnpublished(locale).filter(page => isDraftVisible(page));
 }
