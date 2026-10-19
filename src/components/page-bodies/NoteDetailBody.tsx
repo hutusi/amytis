@@ -72,7 +72,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
                 </span>
               </div>
             )}
-            <time className="text-sm font-mono text-accent" data-pagefind-meta="date[content]">
+            <time className="text-sm font-mono text-accent" dateTime={note.date} data-pagefind-meta="date[datetime]">
               {note.date}
             </time>
             <h1 className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading leading-tight">

@@ -26,7 +26,7 @@ const DEBOUNCE_MS = 150;
 // neither webpack nor Turbopack tries to bundle /pagefind/pagefind.js at
 // compile time (the file only exists after `pagefind --site out` runs).
 
-interface PagefindFragment {
+export interface PagefindFragment {
   url: string;
   excerpt: string; // contains <mark> tags
   meta: { title?: string; image?: string; date?: string; [key: string]: string | undefined };
@@ -36,6 +36,22 @@ interface PagefindFragment {
 interface PagefindAPI {
   init: () => Promise<void>;
   search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
+}
+
+/**
+ * Map a Pagefind fragment to a display result. The date comes from the
+ * page's `date` meta (a `<time datetime>` with data-pagefind-meta) and falls
+ * back to the date encoded in the URL (flows): `||`, not `??`, because a meta
+ * that matched no attribute is indexed as "".
+ */
+export function toDisplayResult(fragment: PagefindFragment): DisplayResult {
+  return {
+    url: fragment.url,
+    title: cleanTitle(fragment.meta.title ?? ''),
+    excerpt: fragment.excerpt,
+    date: fragment.meta.date || getDateFromUrl(fragment.url),
+    type: getResultType(fragment.url),
+  };
 }
 
 let pagefindCache: PagefindAPI | null = null;
@@ -137,15 +153,7 @@ export function usePagefind(
           search.results.slice(0, MAX_INDEXED_RESULTS).map((r) => r.data())
         );
         if (cancelled) return;
-        setAllResults(
-          fragments.map((f: PagefindFragment) => ({
-            url: f.url,
-            title: cleanTitle(f.meta.title ?? ''),
-            excerpt: f.excerpt,
-            date: f.meta.date ?? getDateFromUrl(f.url),
-            type: getResultType(f.url),
-          }))
-        );
+        setAllResults(fragments.map(toDisplayResult));
         setIsError(false);
         onResultsReset();
       } catch {

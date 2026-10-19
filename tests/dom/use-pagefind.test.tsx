@@ -1,6 +1,6 @@
 import { describe, test, expect, jest, afterEach } from 'bun:test';
 import { renderHook, act } from '@testing-library/react';
-import { usePagefind } from '@/hooks/usePagefind';
+import { toDisplayResult, usePagefind } from '@/hooks/usePagefind';
 
 /**
  * Pagefind itself never loads in this environment (the runtime dynamic import
@@ -35,5 +35,20 @@ describe('usePagefind', () => {
       rerender();
     });
     expect(result.current.isFetching).toBe(false);
+  });
+});
+
+describe('toDisplayResult', () => {
+  const base = { excerpt: 'x', word_count: 1 };
+
+  test('uses the indexed date meta', () => {
+    const r = toDisplayResult({ ...base, url: '/posts/a/', meta: { title: 'A | Site', date: '2026-01-02' } });
+    expect(r).toMatchObject({ title: 'A', date: '2026-01-02', type: 'Post' });
+  });
+
+  test('falls back to the URL date when the meta is empty, not just missing', () => {
+    // A data-pagefind-meta that matched no attribute is indexed as "".
+    expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: { date: '' } }).date).toBe('2026-03-04');
+    expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: {} }).date).toBe('2026-03-04');
   });
 });

@@ -75,7 +75,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
           {post.category}
         </span>
         <span className="w-1 h-1 rounded-full bg-surface-raised" />
-        <time className="font-mono" data-pagefind-meta="date[content]">{post.date}</time>
+        <time className="font-mono" dateTime={post.date} data-pagefind-meta="date[datetime]">{post.date}</time>
         <span className="w-1 h-1 rounded-full bg-surface-raised" />
         <span className="font-mono">
           {post.wordCount.toLocaleString()} {t('words')}
