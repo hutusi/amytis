@@ -6,7 +6,7 @@ import PostsListingBody from '@/components/page-bodies/PostsListingBody';
 import SeriesPrefixListingBody from '@/components/page-bodies/SeriesPrefixListingBody';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../site.config';
-import { siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
+import { buildRedirectMetadata, siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { topLevelSlugParams, resolveTopLevelSlug } from '@/lib/route-aliases';
 import { contentSeoUrls, localeHomeParams, resolveLocalizedPath } from '@/lib/locale-routes';
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       };
     }
     case 'redirect':
-      return { title: resolution.post.title };
+      return buildRedirectMetadata({ title: resolution.post.title, to: resolution.to });
     default:
       return { title: 'Page Not Found' };
   }

@@ -4,9 +4,9 @@ import { contentSeoUrls } from '@/lib/locale-routes';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
-import { getPostsBasePath, getPostUrl, withTrailingSlash } from '@/lib/urls';
+import { getPostsBasePath, getPostUrl } from '@/lib/urls';
 import { resolveImageUrl } from '@/lib/json-ld';
-import { buildArticleMetadata } from '@/lib/metadata';
+import { buildRedirectMetadata, buildArticleMetadata } from '@/lib/metadata';
 import RedirectPage from '@/components/RedirectPage';
 import { postsAcrossTrees } from '@/lib/route-aliases';
 import RenderPostPage from '@/components/RenderPostPage';
@@ -77,10 +77,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   // For redirect pages, return minimal metadata pointing to the canonical URL
   if (canonicalUrl !== currentPath) {
-    return {
-      title: post.title,
-      alternates: { canonical: withTrailingSlash(`${siteUrl}${canonicalUrl}`) },
-    };
+    return buildRedirectMetadata({ title: post.title, to: canonicalUrl });
   }
 
   // Twins canonicalize to the unprefixed URL with reciprocal hreflang;

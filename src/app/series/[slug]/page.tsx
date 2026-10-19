@@ -9,7 +9,7 @@ import RedirectPage from '@/components/RedirectPage';
 import { seriesSlugParams, resolveSeriesParam } from '@/lib/route-aliases';
 import { isFeatureEnabled } from '@/lib/features';
 import { resolveImageUrl } from '@/lib/json-ld';
-import { buildArticleMetadata } from '@/lib/metadata';
+import { buildRedirectMetadata, buildArticleMetadata } from '@/lib/metadata';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { t } = getTranslator(DEFAULT_LOCALE);
@@ -25,11 +25,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug: rawSlug } = await params;
   const resolution = resolveSeriesParam(rawSlug);
   if (resolution.kind === 'alias') {
-    const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-    return {
+    return buildRedirectMetadata({
       title: resolution.data.title,
-      alternates: { canonical: withTrailingSlash(`${siteUrl}${localizeUrl(getSeriesUrl(resolution.canonicalSlug), resolution.data.locale)}`) },
-    };
+      to: localizeUrl(getSeriesUrl(resolution.canonicalSlug), resolution.data.locale),
+    });
   }
   const slug = resolution.slug;
 

@@ -11,7 +11,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
-import { withSiteAlternates } from '@/lib/metadata';
+import { buildRedirectMetadata, withSiteAlternates } from '@/lib/metadata';
 import AuthorStats from '@/components/AuthorStats';
 import { T } from '@/components/T';
 
@@ -45,14 +45,18 @@ export async function generateMetadata({ params }: { params: Promise<{ author: s
     };
   }
 
+  // Legacy name-form URLs (/authors/Amytis%20Team) render a redirect stub.
+  const canonicalSlug = getAuthorSlug(resolvedAuthor);
+  if (safeDecodeParam(rawAuthor) !== canonicalSlug) {
+    return buildRedirectMetadata({ title: resolvedAuthor, to: `/authors/${canonicalSlug}` });
+  }
+
   const posts = getPostsByAuthor(resolvedAuthor);
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-  const canonicalUrl = withTrailingSlash(`${siteUrl}/authors/${getAuthorSlug(resolvedAuthor)}`);
+  const canonicalUrl = withTrailingSlash(`${siteUrl}/authors/${canonicalSlug}`);
   return {
     title: `${resolvedAuthor} | ${resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE)}`,
     description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${resolvedAuthor}.`,
-    // Legacy name-form URLs (/authors/Amytis%20Team) and the canonical slug URL
-    // both render; point both at the slug URL so crawlers don't see duplicates.
     alternates: withSiteAlternates({ canonical: canonicalUrl }),
   };
 }

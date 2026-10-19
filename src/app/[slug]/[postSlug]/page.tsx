@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { getPostUrl, getPostsBasePath, getStaticPageUrl, isNonDefaultLocale, localizeUrl, withTrailingSlash } from '@/lib/urls';
-import { buildArticleMetadata, createListingMetadata, siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
+import { buildRedirectMetadata, buildArticleMetadata, createListingMetadata, siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { getPageContentLocales, getPostContentLocales } from '@/lib/content/posts';
 import RedirectPage from '@/components/RedirectPage';
@@ -151,10 +151,7 @@ export async function generateMetadata({
 
   // For redirect pages, return minimal metadata pointing to the canonical URL
   if (resolution.kind === 'redirect') {
-    return {
-      title: post.title,
-      alternates: { canonical: withTrailingSlash(`${siteUrl}${resolution.to}`) },
-    };
+    return buildRedirectMetadata({ title: post.title, to: resolution.to });
   }
 
   // Twins canonicalize to the unprefixed URL with reciprocal hreflang;

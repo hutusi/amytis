@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { createListingMetadata, buildArticleMetadata, siteFeedTypes, siteTwitterHandles, withSiteAlternates } from './metadata';
+import { createListingMetadata, buildArticleMetadata, buildRedirectMetadata, siteFeedTypes, siteTwitterHandles, withSiteAlternates } from './metadata';
 import { getTranslator, resolveLocaleValue } from './i18n';
 import { siteConfig } from '../../site.config';
 
@@ -111,5 +111,15 @@ describe('site metadata helpers', () => {
       languages: { zh: 'https://x/zh/a/' },
       ...(siteFeedTypes() ? { types: siteFeedTypes() } : {}),
     });
+  });
+});
+
+describe('buildRedirectMetadata', () => {
+  test('noindexes the stub, keeps link following, and canonicalizes to the target', () => {
+    const meta = buildRedirectMetadata({ title: 'Old', to: '/posts/new' });
+    const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+    expect(meta.title).toBe('Old');
+    expect(meta.robots).toEqual({ index: false, follow: true });
+    expect(meta.alternates).toEqual({ canonical: `${siteUrl}/posts/new/` });
   });
 });

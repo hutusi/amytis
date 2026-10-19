@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import type { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
+import { withTrailingSlash } from '@/lib/urls';
 
 interface ListingMetadataOptions {
   /** Locale the title/description strings resolve in. */
@@ -110,6 +111,21 @@ export function siteTwitterHandles(): { site?: string; creator?: string } {
   if (!match) return {};
   const handle = `@${match[1]}`;
   return { site: handle, creator: handle };
+}
+
+/**
+ * Metadata for a redirect stub (RedirectPage): noindex so the old URL drops
+ * out of search results, `follow` so crawlers still pass through to the
+ * target, and a canonical naming the target. `to` is the site-relative
+ * target path.
+ */
+export function buildRedirectMetadata({ title, to }: { title: string; to: string }): Metadata {
+  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  return {
+    title,
+    robots: { index: false, follow: true },
+    alternates: { canonical: withTrailingSlash(`${siteUrl}${to}`) },
+  };
 }
 
 /** Standard OpenGraph image dimensions, shared by every article route. */
