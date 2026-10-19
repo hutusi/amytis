@@ -257,6 +257,7 @@ Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts
 5. Pagefind indexing:
    - Production: `pagefind --site out` (writes to `out/pagefind`)
    - Dev build: `pagefind --site out --output-path public/pagefind`
+   - Scope: only regions marked `data-pagefind-body` are indexed — the header and body of posts, static pages, notes, flow days, book chapters, and the book / series landing (page 1) headers. Pages with no marked region (home, listings, tags, archive, pagination, redirect stubs) are deliberately absent from search, and site chrome (navbar, footer, sidebars, related posts) never leaks into excerpts. Each surface's `<h1>` carries `data-pagefind-meta="title"`; dates come from `<time dateTime data-pagefind-meta="date[datetime]">`. `tests/tooling/pagefind-surfaces.test.ts` lists the surfaces.
 
 ## Content Frontmatter
 

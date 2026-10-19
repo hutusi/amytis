@@ -19,8 +19,9 @@ interface SimpleLayoutProps {
 export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayoutProps) {
   const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings?.length > 0;
 
+  // The whole article (header + body) is the search-indexed region.
   const articleContent = (
-    <>
+    <div data-pagefind-body>
       <SimpleLayoutHeader
         title={post.title}
         excerpt={post.excerpt}
@@ -30,7 +31,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       {post.sourceFormat === 'rst'
         ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} />
         : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />}
-    </>
+    </div>
   );
 
   const showComments = resolveCommentable(post.commentable, 'staticPages');

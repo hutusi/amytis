@@ -18,7 +18,7 @@ export default function SimpleLayoutHeader({ title, excerpt, titleKey, subtitleK
 
   return (
     <header className="page-header">
-      <h1 className="page-title">{displayTitle}</h1>
+      <h1 data-pagefind-meta="title" className="page-title">{displayTitle}</h1>
       {displaySubtitle && (
         <p className="page-subtitle">{displaySubtitle}</p>
       )}

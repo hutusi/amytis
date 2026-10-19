@@ -46,7 +46,8 @@ export default function SeriesLandingBody({ locale, seriesSlug, page }: SeriesLa
 
   return (
     <div className="layout-main">
-      <header className="mb-16">
+      {/* Only page 1 is indexed: later pages repeat the same header. */}
+      <header {...(page === 1 ? { 'data-pagefind-body': '' } : {})} className="mb-16">
         {/* Cover image hero */}
         {coverImage && (
           <div className="relative w-full h-56 md:h-72 mb-10 rounded-2xl overflow-hidden shadow-xl shadow-accent/5">
@@ -68,7 +69,7 @@ export default function SeriesLandingBody({ locale, seriesSlug, page }: SeriesLa
             {isCollection ? t('collection') : t('series')} • {allPosts.length} {t('parts')}
           </span>
           {page === 1 ? (
-            <h1 className="page-title mb-4">{title}</h1>
+            <h1 data-pagefind-meta="title" className="page-title mb-4">{title}</h1>
           ) : (
             <>
               <h1 className="page-title mb-2">{title}</h1>

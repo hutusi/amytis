@@ -83,7 +83,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <div className="layout-main">
-      <header className="mb-16">
+      <header data-pagefind-body className="mb-16">
         {/* Cover image */}
         {book.coverImage && (
           <div className="relative w-full h-56 md:h-72 mb-10 rounded-2xl overflow-hidden shadow-xl shadow-accent/5">
@@ -104,7 +104,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
           <span className="badge-accent mb-4">
             {t('book')} &bull; {book.chapters.length} {t('chapters_count')}
           </span>
-          <h1 className="page-title mb-4">{book.title}</h1>
+          <h1 data-pagefind-meta="title" className="page-title mb-4">{book.title}</h1>
           {book.excerpt && (
             <p className="text-lg text-muted font-serif italic leading-relaxed">
               {book.excerpt}
@@ -198,7 +198,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
 
       {/* Book body content — assets live under the tree's public dir (zh/books/…) */}
       {book.content && (
-        <section className="max-w-2xl mx-auto">
+        <section data-pagefind-body className="max-w-2xl mx-auto">
           <MarkdownRenderer
             content={book.content}
             slug={`${locale === siteConfig.i18n.defaultLocale ? '' : `${locale}/`}books/${book.slug}`}

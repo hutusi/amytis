@@ -62,7 +62,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
   // both places (only one of the two trees ever mounts, so it renders once).
   // Includes the immersive toggle when the post is in a series.
   const articleHeader = (
-    <header className="mb-16 border-b border-line pb-8">
+    <header data-pagefind-body className="mb-16 border-b border-line pb-8">
       {post.draft && (
         <div className="mb-4">
           <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -89,7 +89,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
         )}
       </div>
 
-      <h1 className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">
+      <h1 data-pagefind-meta="title" className="text-4xl md:text-5xl font-serif font-bold text-heading leading-tight mb-4">
         {post.title}
       </h1>
 
@@ -218,7 +218,9 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
               </div>
             )}
 
-            {bodyRenderer}
+            {/* Search indexes the header + body only (not related posts, nav,
+                comments): see the data-pagefind-body note in CLAUDE.md. */}
+            <div data-pagefind-body>{bodyRenderer}</div>
 
             {siteConfig.posts?.authors?.showAuthorCard !== false && (
               <AuthorCard authors={post.authors} locale={locale} />
