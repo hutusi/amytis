@@ -3,7 +3,7 @@ import type { PostData } from '@/lib/content/types';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
-import PostSidebar from '@/components/PostSidebar';
+import PostSidebar, { PostSidebarView } from '@/components/PostSidebar';
 import Comments from '@/components/Comments';
 import { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
@@ -41,7 +41,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
     <div className="layout-main">
       {showToc ? (
         <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
-          <Suspense fallback={null}>
+          <Suspense fallback={<PostSidebarView currentSlug={post.slug} headings={post.headings} collectionParam={null} />}>
             <PostSidebar currentSlug={post.slug} headings={post.headings} />
           </Suspense>
           <article className="min-w-0 w-full max-w-3xl overflow-x-hidden">

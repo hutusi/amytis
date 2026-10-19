@@ -6,8 +6,8 @@ import type { PostData, CollectionContext, PostNavItem } from '@/lib/content/typ
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import RelatedPosts from '@/components/RelatedPosts';
-import SeriesList from '@/components/SeriesList';
-import PostSidebar from '@/components/PostSidebar';
+import SeriesList, { SeriesListView } from '@/components/SeriesList';
+import PostSidebar, { PostSidebarView } from '@/components/PostSidebar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
 import { metaLabel } from '@/lib/ui-classes';
@@ -15,7 +15,7 @@ import ExternalLinks from '@/components/ExternalLinks';
 import Backlinks from '@/components/Backlinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
-import PostNavigation from '@/components/PostNavigation';
+import PostNavigation, { PostNavigationView } from '@/components/PostNavigation';
 import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
 import ImmersiveToggleButton from '@/components/ImmersiveToggleButton';
@@ -134,6 +134,29 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
     </header>
   );
 
+  // Props for the `?collection=`-aware navigation components. Each renders
+  // inside a Suspense boundary whose fallback is the same component's View
+  // with collectionParam={null}, so the static HTML carries the default
+  // (series-context) navigation instead of an empty hole.
+  const navigationProps = {
+    prev: prevPost ?? null,
+    next: nextPost ?? null,
+    currentSlug: post.slug,
+    collectionContexts,
+  };
+  const navigation = (
+    <Suspense fallback={<PostNavigationView {...navigationProps} collectionParam={null} />}>
+      <PostNavigation {...navigationProps} />
+    </Suspense>
+  );
+  const sidebarProps = {
+    seriesSlug: hasSeries ? post.series : undefined,
+    seriesTitle: hasSeries ? (seriesTitle || post.series) : undefined,
+    posts: hasSeries ? seriesPosts : undefined,
+    collectionContexts,
+    currentSlug: post.slug,
+  };
+
   // Slim subtree for the immersive overlay: header + body + prev/next nav. We
   // deliberately skip AuthorCard / ShareBar / Comments / RelatedPosts here —
   // the reader is focused on long-form reading; chrome lives in normal mode.
@@ -142,9 +165,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
       {articleHeader}
       {bodyRenderer}
       <div className="mt-16 pt-8 border-t border-line">
-        <Suspense fallback={null}>
-          <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} currentSlug={post.slug} collectionContexts={collectionContexts} />
-        </Suspense>
+        {navigation}
       </div>
     </>
   );
@@ -166,13 +187,19 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
         }>
           {/* Left sidebar: series nav + page TOC */}
           {showSidebar && (
-            <Suspense fallback={null}>
+            <Suspense
+              fallback={
+                <PostSidebarView
+                  {...sidebarProps}
+                  headings={showToc ? post.headings : []}
+                  shareUrl={postUrl}
+                  shareTitle={post.title}
+                  collectionParam={null}
+                />
+              }
+            >
               <PostSidebar
-                seriesSlug={hasSeries ? post.series : undefined}
-                seriesTitle={hasSeries ? (seriesTitle || post.series) : undefined}
-                posts={hasSeries ? seriesPosts : undefined}
-                collectionContexts={collectionContexts}
-                currentSlug={post.slug}
+                {...sidebarProps}
                 headings={showToc ? post.headings : []}
                 shareUrl={postUrl}
                 shareTitle={post.title}
@@ -185,8 +212,8 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
 
             {(hasSeries || (collectionContexts && collectionContexts.length > 0)) && (
               <div className="lg:hidden mb-12">
-                <Suspense fallback={null}>
-                  <SeriesList seriesSlug={hasSeries ? post.series! : undefined} seriesTitle={hasSeries ? (seriesTitle || post.series!) : undefined} posts={hasSeries ? seriesPosts! : undefined} collectionContexts={collectionContexts} currentSlug={post.slug} />
+                <Suspense fallback={<SeriesListView {...sidebarProps} collectionParam={null} />}>
+                  <SeriesList {...sidebarProps} />
                 </Suspense>
               </div>
             )}
@@ -222,9 +249,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
               <ExternalLinks links={post.externalLinks} />
             )}
 
-            <Suspense fallback={null}>
-              <PostNavigation prev={prevPost ?? null} next={nextPost ?? null} currentSlug={post.slug} collectionContexts={collectionContexts} />
-            </Suspense>
+            {navigation}
 
             <RelatedPosts posts={relatedPosts || []} locale={locale} />
           </article>
