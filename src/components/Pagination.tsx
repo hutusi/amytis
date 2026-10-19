@@ -10,7 +10,7 @@ interface PaginationProps {
 }
 
 export default function Pagination({ currentPage, totalPages, basePath }: PaginationProps) {
-  const { t } = useLanguage();
+  const { t, tWith } = useLanguage();
   
   if (totalPages <= 1) return null;
 
@@ -46,28 +46,35 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
   const pages = getPages();
 
   return (
-    <nav className="flex justify-center items-center gap-2 mt-8 border-t border-line pt-6" aria-label={t('pagination')}>
+    <nav className="flex flex-wrap justify-center items-center gap-2 mt-8 border-t border-line pt-6" aria-label={t('pagination')}>
       {/* Previous */}
       {currentPage > 1 ? (
         <Link
           href={getHref(currentPage - 1)}
           className="p-2 text-muted hover:text-accent transition-colors group no-underline"
           title={t('prev_page')}
+          aria-label={t('prev_page')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </Link>
       ) : (
-        <span className="p-2 text-muted/20 cursor-not-allowed">
+        <span className="p-2 text-muted/20 cursor-not-allowed" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </span>
       )}
 
+      {/* Phones: a compact "Page X of Y" between the arrows — the numbered
+          strip (up to ~11 items) is wider than a 360px viewport. */}
+      <span className="sm:hidden px-2 text-sm font-sans text-muted">
+        {tWith('page_of_total', { page: currentPage, total: totalPages })}
+      </span>
+
       {/* Page Numbers */}
-      <div className="flex items-center gap-1">
+      <div className="hidden sm:flex items-center gap-1">
         {pages.map((page, index) => {
           if (page === '...') {
             return (
@@ -103,13 +110,14 @@ export default function Pagination({ currentPage, totalPages, basePath }: Pagina
           href={getHref(currentPage + 1)}
           className="p-2 text-muted hover:text-accent transition-colors group no-underline"
           title={t('next_page')}
+          aria-label={t('next_page')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </Link>
       ) : (
-        <span className="p-2 text-muted/20 cursor-not-allowed">
+        <span className="p-2 text-muted/20 cursor-not-allowed" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>

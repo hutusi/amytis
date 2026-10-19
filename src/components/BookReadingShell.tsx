@@ -51,7 +51,7 @@ export default function BookReadingShell({
   const chapterHeader = (
     <header data-pagefind-body className="mb-12 pb-8 border-b border-line">
       {/* Word count / reading time / immersive button: not search content. */}
-      <div data-pagefind-ignore className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
+      <div data-pagefind-ignore className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-sans text-muted mb-4">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {t('chapter')}
         </span>

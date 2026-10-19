@@ -73,7 +73,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
       )}
       {/* Meta row stays out of search excerpts; the date meta inside is
           still captured (data-pagefind-ignore's default keeps metadata). */}
-      <div data-pagefind-ignore className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
+      <div data-pagefind-ignore className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-sans text-muted mb-6">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {post.category}
         </span>
