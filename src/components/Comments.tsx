@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Giscus from '@giscus/react';
 import { siteConfig } from '../../site.config';
 import { useTheme } from 'next-themes';
@@ -70,22 +71,10 @@ function CommentsEmbed({ slug, postUrl }: CommentsProps) {
   if (provider === 'disqus' && disqus.shortname) {
     return (
       <div className="mt-12 pt-12 border-t border-line">
-        <div id="disqus_thread"></div>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              var disqus_config = function () {
-                this.page.url = ${JSON.stringify(postUrl ?? `${siteConfig.baseUrl.replace(/\/+$/, '')}/${getPostsBasePath()}/${slug}`)};
-                this.page.identifier = ${JSON.stringify(slug)};
-              };
-              (function() {
-                var d = document, s = d.createElement('script');
-                s.src = 'https://${disqus.shortname}.disqus.com/embed.js';
-                s.setAttribute('data-timestamp', +new Date());
-                (d.head || d.body).appendChild(s);
-              })();
-            `,
-          }}
+        <DisqusThread
+          shortname={disqus.shortname}
+          url={postUrl ?? `${siteConfig.baseUrl.replace(/\/+$/, '')}/${getPostsBasePath()}/${slug}`}
+          identifier={slug}
         />
         <noscript>
           Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
@@ -95,4 +84,48 @@ function CommentsEmbed({ slug, postUrl }: CommentsProps) {
   }
 
   return null;
+}
+
+interface DisqusPageConfig {
+  page: { url: string; identifier: string };
+}
+
+declare global {
+  interface Window {
+    DISQUS?: { reset: (options: { reload: boolean; config: (this: DisqusPageConfig) => void }) => void };
+    disqus_config?: (this: DisqusPageConfig) => void;
+  }
+}
+
+/**
+ * Disqus thread that also works across client-side navigations. Rendering
+ * the embed as an inline <script> only worked on a full page load: React
+ * never executes scripts it inserts on the client, so navigating between
+ * posts left an empty thread. The effect injects embed.js once and, once
+ * Disqus is loaded, swaps threads with DISQUS.reset.
+ */
+export function DisqusThread({ shortname, url, identifier }: { shortname: string; url: string; identifier: string }) {
+  useEffect(() => {
+    const config = function (this: DisqusPageConfig) {
+      this.page.url = url;
+      this.page.identifier = identifier;
+    };
+    if (window.DISQUS) {
+      window.DISQUS.reset({ reload: true, config });
+      return;
+    }
+    // embed.js reads window.disqus_config when it runs; if it is still
+    // loading from an earlier page, updating the config is enough.
+    window.disqus_config = config;
+    const scriptId = 'disqus-embed';
+    if (document.getElementById(scriptId)) return;
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = `https://${shortname}.disqus.com/embed.js`;
+    script.async = true;
+    script.setAttribute('data-timestamp', String(Date.now()));
+    (document.head || document.body).appendChild(script);
+  }, [shortname, url, identifier]);
+
+  return <div id="disqus_thread" />;
 }
