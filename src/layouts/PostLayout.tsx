@@ -83,7 +83,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
           {post.wordCount.toLocaleString()} {t('words')}
         </span>
         <span className="w-1 h-1 rounded-full bg-surface-raised" />
-        <span className="font-mono text-muted/70">{post.readingMinutes} {t('reading_time')}</span>
+        <span className="font-mono text-muted">{post.readingMinutes} {t('reading_time')}</span>
         {hasSeries && (
           <span className="ml-auto">
             <ImmersiveToggleButton />

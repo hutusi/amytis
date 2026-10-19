@@ -85,7 +85,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
               <MetaLabel tone="accent">
                 {isCollectionContext ? t('collection') : t('series')}
               </MetaLabel>
-              <span className="text-[10px] font-mono text-muted/60">
+              <span className="text-[10px] font-mono text-muted">
                 {progressIndex >= 0 ? progressIndex + 1 : '?'} / {effectivePosts!.length}
               </span>
             </div>

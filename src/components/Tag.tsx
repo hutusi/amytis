@@ -32,7 +32,7 @@ export default function Tag({ tag, count, variant = 'default', showHash = true, 
     compact: 'text-xs text-muted hover:text-accent',
     large:
       'group relative inline-flex items-center px-4 py-2 rounded-2xl border border-line bg-surface-faint hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5',
-    pill: 'text-xs px-2 py-0.5 rounded-full bg-surface-soft text-muted/70 hover:bg-accent/10 hover:text-accent',
+    pill: 'text-xs px-2 py-0.5 rounded-full bg-surface-soft text-muted hover:bg-accent/10 hover:text-accent',
   };
 
   // Pill chips read better without the leading hash (matches their prior
@@ -50,7 +50,7 @@ export default function Tag({ tag, count, variant = 'default', showHash = true, 
             {tag}
           </span>
           {count !== undefined && (
-            <span className="ml-2 text-xs font-mono text-muted/60 group-hover:text-accent/60">
+            <span className="ml-2 text-xs font-mono text-muted group-hover:text-accent">
               {count}
             </span>
           )}

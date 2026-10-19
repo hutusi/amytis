@@ -83,7 +83,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                       >
                         {flow.date}
                       </time>
-                      <span className="ml-2 text-xs text-muted/60">
+                      <span className="ml-2 text-xs text-muted">
                         {weekdayFmt.format(new Date(`${flow.date}T00:00:00Z`))}
                       </span>
                     </Link>
@@ -93,7 +93,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                       href={getFlowUrl(flow.slug)}
                       tabIndex={-1}
                       aria-hidden="true"
-                      className="shrink-0 no-underline text-base leading-none text-muted/40 hover:text-accent transition-colors"
+                      className="shrink-0 no-underline text-base leading-none text-muted hover:text-accent transition-colors"
                     >
                       →
                     </Link>

@@ -465,7 +465,7 @@ export default function Search() {
               {/* Search tips — shown when input is empty and search is available */}
               {!query && !isUnavailable && (
                 <div className="px-4 py-3 border-t border-line">
-                  <p className="text-[10px] font-medium text-muted/50 uppercase tracking-wider mb-2">{t('search_tips')}</p>
+                  <p className="text-[10px] font-medium text-muted uppercase tracking-wider mb-2">{t('search_tips')}</p>
                   <div className="flex flex-col gap-1.5">
                     {([
                       ['"exact phrase"', t('search_tip_phrase')],
@@ -474,7 +474,7 @@ export default function Search() {
                     ] as [string, string][]).map(([syntax, desc]) => (
                       <div key={syntax} className="flex items-center gap-2 text-[11px]">
                         <code className="font-mono text-accent/70 bg-accent/5 px-1.5 py-0.5 rounded text-[10px] shrink-0">{syntax}</code>
-                        <span className="text-muted/50">{desc}</span>
+                        <span className="text-muted">{desc}</span>
                       </div>
                     ))}
                   </div>

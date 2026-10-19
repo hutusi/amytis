@@ -37,7 +37,7 @@ export default function Footer() {
 
           {/* Navigation */}
           <div className="text-center lg:text-left">
-            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6"><T k="explore" /></h4>
+            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted mb-6"><T k="explore" /></h4>
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.explore ?? [])].sort((a, b) => a.weight - b.weight).map((item) => (
                 <li key={item.url}>
@@ -51,7 +51,7 @@ export default function Footer() {
 
           {/* Connect */}
           <div className="text-center lg:text-left">
-            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted/80 mb-6"><T k="connect" /></h4>
+            <h4 className="font-sans font-bold text-xs uppercase tracking-widest text-muted mb-6"><T k="connect" /></h4>
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
                 const isExternal = item.external || item.url.startsWith('http');

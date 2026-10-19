@@ -65,7 +65,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
             className={`text-xs font-sans tracking-wide transition-colors duration-150 ${
               language === a
                 ? 'text-foreground/80 font-medium cursor-default'
-                : 'text-muted/50 hover:text-foreground/70 cursor-pointer'
+                : 'text-muted hover:text-foreground/70 cursor-pointer'
             }`}
           >
             {LOCALE_LABELS[a] ?? a.toUpperCase()}
@@ -78,7 +78,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
             className={`text-xs font-sans tracking-wide transition-colors duration-150 ${
               language === b
                 ? 'text-foreground/80 font-medium cursor-default'
-                : 'text-muted/50 hover:text-foreground/70 cursor-pointer'
+                : 'text-muted hover:text-foreground/70 cursor-pointer'
             }`}
           >
             {LOCALE_LABELS[b] ?? b.toUpperCase()}
@@ -91,7 +91,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
       <button
         type="button"
         onClick={() => switchTo(nextLocale)}
-        className="text-xs font-sans text-muted/60 hover:text-foreground/80 transition-colors duration-150"
+        className="text-xs font-sans text-muted hover:text-foreground/80 transition-colors duration-150"
         aria-label={`Switch to ${LOCALE_LABELS[nextLocale] ?? nextLocale}`}
       >
         {LOCALE_LABELS[language] ?? language.toUpperCase()}
@@ -113,7 +113,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
           className={`px-2 py-1 rounded-full text-[11px] font-sans font-bold tracking-wider transition-all duration-200 ${
             language === a
               ? 'text-accent bg-accent/10'
-              : 'text-muted/50 group-hover:text-foreground/60'
+              : 'text-muted group-hover:text-foreground/60'
           }`}
         >
           {LOCALE_LABELS_SHORT[a] ?? a.toUpperCase()}
@@ -123,7 +123,7 @@ export default function LanguageSwitch({ variant = 'pill' }: LanguageSwitchProps
           className={`px-2 py-1 rounded-full text-[11px] font-sans font-bold tracking-wider transition-all duration-200 ${
             language === b
               ? 'text-accent bg-accent/10'
-              : 'text-muted/50 group-hover:text-foreground/60'
+              : 'text-muted group-hover:text-foreground/60'
           }`}
         >
           {LOCALE_LABELS_SHORT[b] ?? b.toUpperCase()}

@@ -21,11 +21,11 @@ function FeedRow({ url, label }: { url: string; label?: string }) {
 
   return (
     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-surface-faint border border-line not-prose">
-      {label && <span className="text-xs font-medium text-muted/40 shrink-0 uppercase tracking-wide">{label}</span>}
-      <code className="text-xs font-mono text-muted/60 flex-1 truncate">{url}</code>
+      {label && <span className="text-xs font-medium text-muted shrink-0 uppercase tracking-wide">{label}</span>}
+      <code className="text-xs font-mono text-muted flex-1 truncate">{url}</code>
       <button
         onClick={handleCopy}
-        className="flex-shrink-0 flex items-center gap-1.5 text-xs text-muted/60 hover:text-accent transition-colors"
+        className="flex-shrink-0 flex items-center gap-1.5 text-xs text-muted hover:text-accent transition-colors"
         aria-label={t('copy_feed_url')}
       >
         {copied

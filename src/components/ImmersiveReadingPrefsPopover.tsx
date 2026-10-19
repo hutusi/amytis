@@ -56,7 +56,7 @@ const THEME_SWATCH_STYLE: Record<ReadingTheme, string> = {
 
 function GroupHeading({ children }: { children: ReactNode }) {
   return (
-    <MetaLabel as="div" className="text-muted/80 mb-2">
+    <MetaLabel as="div" className="text-muted mb-2">
       {children}
     </MetaLabel>
   );

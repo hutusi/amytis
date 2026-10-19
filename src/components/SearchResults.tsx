@@ -80,7 +80,7 @@ export default function SearchResults({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {result.date && (
-                      <span className="text-[10px] font-mono text-muted/60">{result.date}</span>
+                      <span className="text-[10px] font-mono text-muted">{result.date}</span>
                     )}
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${TYPE_STYLES[result.type]}`}>
                       {getTypeLabel(result.type)}
@@ -100,7 +100,7 @@ export default function SearchResults({
 
       {/* Result count when capped */}
       {displayedResults.length > 0 && totalFilteredCount > maxResults && (
-        <div className="px-4 py-2 text-[11px] text-muted/60 border-t border-line text-center">
+        <div className="px-4 py-2 text-[11px] text-muted border-t border-line text-center">
           {tWith('search_showing', { shown: displayedResults.length, total: totalFilteredCount })}
         </div>
       )}

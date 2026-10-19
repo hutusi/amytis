@@ -37,7 +37,7 @@ function renderTocSection(section: BookTocSection, slug: string, keyPrefix: stri
       ? 'text-lg font-serif font-bold text-heading mb-3'
       : headingDepth === 1
       ? 'text-sm font-sans font-bold uppercase tracking-wider text-muted mb-3'
-      : 'text-xs font-sans font-semibold uppercase tracking-wider text-muted/80 mb-2';
+      : 'text-xs font-sans font-semibold uppercase tracking-wider text-muted mb-2';
 
   return (
     <div key={keyPrefix} className={depth === 0 ? '' : 'mt-3'}>

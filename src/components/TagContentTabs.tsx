@@ -77,7 +77,7 @@ export default function TagContentTabs({ posts, locale, flows, notes }: TagConte
               }`}
             >
               {label}
-              <span className={`ml-1.5 text-xs font-mono ${activeTab === key ? 'text-accent/60' : 'text-muted/50'}`}>
+              <span className={`ml-1.5 text-xs font-mono ${activeTab === key ? 'text-accent' : 'text-muted'}`}>
                 {count}
               </span>
             </button>
@@ -91,7 +91,7 @@ export default function TagContentTabs({ posts, locale, flows, notes }: TagConte
           {showSectionHeaders && (
             <MetaLabel as="h2" className="mb-6">
               {t('posts')}
-              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
+              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted">
                 {posts.length}
               </span>
             </MetaLabel>
@@ -106,7 +106,7 @@ export default function TagContentTabs({ posts, locale, flows, notes }: TagConte
           {showSectionHeaders && (
             <MetaLabel as="h2" className="mb-4">
               {t('flow_notes')}
-              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
+              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted">
                 {flows.length}
               </span>
             </MetaLabel>
@@ -131,7 +131,7 @@ export default function TagContentTabs({ posts, locale, flows, notes }: TagConte
           {showSectionHeaders && (
             <MetaLabel as="h2" className="mb-4">
               {t('notes')}
-              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted/50">
+              <span className="ml-1.5 font-mono font-normal normal-case tracking-normal text-muted">
                 {notes.length}
               </span>
             </MetaLabel>

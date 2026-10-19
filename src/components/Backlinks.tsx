@@ -21,7 +21,7 @@ export default function Backlinks({ backlinks, locale }: BacklinksProps) {
         {backlinks.map(bl => (
           <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <MetaLabel className="text-muted/60 border border-line rounded px-1.5 py-0.5">
+              <MetaLabel className="text-muted border border-line rounded px-1.5 py-0.5">
                 {bl.type}
               </MetaLabel>
               <Link

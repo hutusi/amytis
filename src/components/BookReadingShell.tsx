@@ -60,7 +60,7 @@ export default function BookReadingShell({
           {chapter.wordCount.toLocaleString()} {t('words')}
         </span>
         <MetaDot />
-        <span className="font-mono text-muted/70">
+        <span className="font-mono text-muted">
           {chapter.readingMinutes} {t('reading_time')}
         </span>
         {/* ImmersiveToggleButton hides itself when enabled — no outer wrap
