@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
-import { getAllPosts, getAllPages, getPostContentLocales, getPageContentLocales } from '@/lib/content/posts';
+import { getAllPosts, getAllPages, getPostContentLocales, getPageContentLocales, getPostsWithLocaleOriginals } from '@/lib/content/posts';
 import { getAllFlows } from '@/lib/content/flows';
-import { getAllNotes, getNoteContentLocales } from '@/lib/content/notes';
+import { getAllNotes, getNoteContentLocales, getNotesWithLocaleOriginals } from '@/lib/content/notes';
 import { getAllBooks, getBookChapter } from '@/lib/content/books';
 import { getAllSeries, getSeriesData } from '@/lib/content/series';
-import { getAllAuthors, getAuthorSlug } from '@/lib/content/authors';
+import { getAllAuthors, getAuthorSlug, getPostsByAuthor } from '@/lib/content/authors';
 import { getAllTags } from '@/lib/content/discovery';
 import { isFeatureEnabled } from '@/lib/features';
 import {
@@ -25,6 +25,7 @@ import {
   getSeriesListUrl,
   getStaticPageUrl,
   getNoteUrl,
+  getFlowUrl,
   localizeUrl,
   withTrailingSlash,
 } from '@/lib/urls';
@@ -54,10 +55,33 @@ function seriesContentLocales(seriesSlug: string): string[] {
   );
 }
 
+/**
+ * Newest 'YYYY-MM-DD' among `dates`, or undefined so the entry omits
+ * lastModified. Listings advertise the date of the newest thing they list —
+ * stamping them with the build time (`new Date()`) told crawlers every
+ * listing changed on every deploy, which teaches them to ignore the field.
+ */
+function newestDate(dates: Iterable<string | undefined>): string | undefined {
+  let newest = '';
+  for (const date of dates) {
+    if (date && date > newest) newest = date;
+  }
+  return newest || undefined;
+}
+
+/**
+ * Sitemaps must carry RFC 3986 URLs: percent-encode non-ASCII paths (Unicode
+ * slugs) without double-encoding the already-encoded tag segments.
+ */
+function encodeSitemapUrl(url: string): string {
+  return new URL(withTrailingSlash(url)).href;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const pages = getAllPages();
-  const baseUrl = siteConfig.baseUrl;
+  const baseUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const latestPost = newestDate(posts.map((post) => post.date));
 
   // Feature-aware: the routes for a disabled feature call notFound(), so their
   // URLs must not be advertised. posts is the base surface and always present.
@@ -74,9 +98,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   const pageUrls = pages.map((page) => ({
-    url: `${baseUrl}/${page.slug}`,
-    lastModified: page.date, // Pages might not have date, fallback?
-    // markdown.ts logic provides default date if missing.
+    url: `${baseUrl}${getStaticPageUrl(page.slug)}`,
+    lastModified: page.date, // parse falls back to the file mtime when undated
     changeFrequency: 'yearly' as const,
     priority: 0.8,
     ...languagesFor(getStaticPageUrl(page.slug), getPageContentLocales(page)),
@@ -133,30 +156,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Flows — detail entries plus year/month listing pages
   const flows = flowEnabled ? getAllFlows() : [];
   const flowUrls = flows.map((flow) => ({
-    url: `${baseUrl}/flows/${flow.slug}`,
+    url: `${baseUrl}${getFlowUrl(flow.slug)}`,
     lastModified: flow.date,
     changeFrequency: 'monthly' as const,
     priority: 0.5,
   }));
 
-  const flowYears = new Set<string>();
-  const flowMonths = new Set<string>();
+  // Year/month buckets → the newest flow date in each.
+  const flowYears = new Map<string, string>();
+  const flowMonths = new Map<string, string>();
   flows.forEach(flow => {
     const [year, month] = flow.slug.split('/');
-    flowYears.add(year);
-    flowMonths.add(`${year}/${month}`);
+    flowYears.set(year, newestDate([flowYears.get(year), flow.date])!);
+    flowMonths.set(`${year}/${month}`, newestDate([flowMonths.get(`${year}/${month}`), flow.date])!);
   });
 
-  const flowYearUrls = Array.from(flowYears).map(year => ({
+  const flowYearUrls = Array.from(flowYears).map(([year, lastModified]) => ({
     url: `${baseUrl}/flows/${year}`,
-    lastModified: new Date(),
+    lastModified,
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }));
 
-  const flowMonthUrls = Array.from(flowMonths).map(ym => ({
+  const flowMonthUrls = Array.from(flowMonths).map(([ym, lastModified]) => ({
     url: `${baseUrl}/flows/${ym}`,
-    lastModified: new Date(),
+    lastModified,
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }));
@@ -164,7 +188,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Authors — canonical slug URL only (no /authors index route exists)
   const authorUrls = Object.keys(getAllAuthors()).map((name) => ({
     url: `${baseUrl}/authors/${getAuthorSlug(name)}`,
-    lastModified: new Date(),
+    lastModified: newestDate(getPostsByAuthor(name).map((post) => post.date)),
     changeFrequency: 'monthly' as const,
     priority: 0.5,
   }));
@@ -176,12 +200,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // point hreflang at each other); locale-original entries stay plain.
   const localeUrls: MetadataRoute.Sitemap = getNonDefaultLocales().flatMap((locale) => {
     const entries: MetadataRoute.Sitemap = [];
+    const localePosts = getAllPosts(locale);
+    const localeLatestPost = newestDate(localePosts.map((post) => post.date));
+    const localeSeries = seriesEnabled ? getAllSeries(locale) : {};
+    const localeBooks = booksEnabled ? getAllBooks(locale) : [];
+    const localeNotes = flowEnabled ? getAllNotes(locale) : [];
 
     // Section listings — same hasLocaleContent gates as localeHome/SecondLevel params.
     if (hasLocaleContent(locale, 'any')) {
       entries.push({
         url: `${baseUrl}${localizeUrl('/', locale)}`,
-        lastModified: new Date(),
+        lastModified: newestDate([localeLatestPost, ...localeNotes.map((note) => note.date)]),
         changeFrequency: 'weekly',
         priority: 0.8,
       });
@@ -189,7 +218,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     if (hasLocaleContent(locale, 'posts')) {
       entries.push({
         url: `${baseUrl}${localizeUrl(`/${getPostsBasePath()}`, locale)}`,
-        lastModified: new Date(),
+        lastModified: localeLatestPost,
         changeFrequency: 'weekly',
         priority: 0.8,
       });
@@ -197,7 +226,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     if (seriesEnabled && hasLocaleContent(locale, 'series')) {
       entries.push({
         url: `${baseUrl}${localizeUrl(getSeriesListUrl(), locale)}`,
-        lastModified: new Date(),
+        lastModified: newestDate(Object.values(localeSeries).flat().map((post) => post.date)),
         changeFrequency: 'weekly',
         priority: 0.8,
       });
@@ -205,7 +234,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     if (booksEnabled && hasLocaleContent(locale, 'books')) {
       entries.push({
         url: `${baseUrl}${localizeUrl('/books', locale)}`,
-        lastModified: new Date(),
+        lastModified: newestDate(localeBooks.map((book) => book.date)),
         changeFrequency: 'weekly',
         priority: 0.8,
       });
@@ -213,7 +242,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     if (flowEnabled && hasLocaleContent(locale, 'notes')) {
       entries.push({
         url: `${baseUrl}${localizeUrl('/notes', locale)}`,
-        lastModified: new Date(),
+        lastModified: newestDate(localeNotes.map((note) => note.date)),
         changeFrequency: 'weekly',
         priority: 0.7,
       });
@@ -231,7 +260,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
 
     // Posts — getPostUrl is entity-carried, so the URL is already prefixed.
-    for (const post of getAllPosts(locale)) {
+    for (const post of localePosts) {
       entries.push({
         url: `${baseUrl}${getPostUrl(post)}`,
         lastModified: post.date,
@@ -243,7 +272,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Series landings + prefix listings of the locale tree.
     if (seriesEnabled) {
-      for (const [slug, seriesPosts] of Object.entries(getAllSeries(locale))) {
+      for (const [slug, seriesPosts] of Object.entries(localeSeries)) {
         entries.push({
           url: `${baseUrl}${localizeUrl(getSeriesUrl(slug), locale)}`,
           lastModified:
@@ -255,10 +284,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
           ...languagesFor(getSeriesUrl(slug), seriesContentLocales(slug)),
         });
       }
-      for (const { prefix } of seriesListingPrefixes(locale)) {
+      for (const { prefix, seriesSlug } of seriesListingPrefixes(locale)) {
         entries.push({
           url: `${baseUrl}${localizeUrl(`/${prefix}`, locale)}`,
-          lastModified: new Date(),
+          lastModified: newestDate((localeSeries[seriesSlug] ?? []).map((post) => post.date)),
           changeFrequency: 'weekly',
           priority: 0.7,
         });
@@ -267,7 +296,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Books and chapters of the locale tree.
     if (booksEnabled) {
-      for (const book of getAllBooks(locale)) {
+      for (const book of localeBooks) {
         entries.push({
           url: `${baseUrl}${localizeUrl(getBookUrl(book.slug), locale)}`,
           lastModified: book.date,
@@ -290,7 +319,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Notes of the locale tree.
     if (flowEnabled) {
-      for (const note of getAllNotes(locale)) {
+      for (const note of localeNotes) {
         entries.push({
           url: `${baseUrl}${localizeUrl(getNoteUrl(note.slug), locale)}`,
           lastModified: note.date,
@@ -306,36 +335,65 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Tag detail pages. Encode the lowercased tag exactly as the Tag component's
   // href does, so special-character tags (spaces, `c#`, `a/b`) stay valid URLs.
+  // Same sources getAllTags aggregates, so every tag page gets a date.
+  const tagLatest = new Map<string, string>();
+  for (const item of [...getPostsWithLocaleOriginals(), ...getAllFlows(), ...getNotesWithLocaleOriginals()]) {
+    for (const tag of item.tags ?? []) {
+      const key = tag.toLowerCase();
+      tagLatest.set(key, newestDate([tagLatest.get(key), item.date])!);
+    }
+  }
   const tagUrls = Object.keys(getAllTags()).map((tag) => ({
     url: `${baseUrl}/tags/${encodeURIComponent(tag.toLowerCase())}`,
-    lastModified: new Date(),
+    lastModified: tagLatest.get(tag.toLowerCase()),
     changeFrequency: 'weekly' as const,
     priority: 0.5,
   }));
 
+  const notes = flowEnabled ? getAllNotes() : [];
+  const latestFlow = newestDate(flows.map((flow) => flow.date));
+  const latestNote = newestDate(notes.map((note) => note.date));
+
+  // Series prefix listings of the default tree (/<customPath>/ or
+  // /<series>/ under autoPaths); the locale mirror lists its own above.
+  const seriesPrefixUrls = seriesEnabled
+    ? seriesListingPrefixes(DEFAULT_LOCALE).map(({ prefix, seriesSlug }) => ({
+        url: `${baseUrl}/${prefix}`,
+        lastModified: newestDate((seriesEntry[seriesSlug] ?? []).map((post) => post.date)),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    : [];
+
   const entries: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: newestDate([latestPost, latestFlow, latestNote]),
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
+      url: `${baseUrl}/${getPostsBasePath()}`,
+      lastModified: latestPost,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/archive`,
-      lastModified: new Date(),
+      lastModified: latestPost,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/tags`,
-      lastModified: new Date(),
+      lastModified: newestDate(tagLatest.values()),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     ...(seriesEnabled
       ? [{
           url: `${baseUrl}${getSeriesListUrl()}`,
-          lastModified: new Date(),
+          lastModified: newestDate(Object.values(seriesEntry).flat().map((post) => post.date)),
           changeFrequency: 'weekly' as const,
           priority: 0.8,
         }]
@@ -343,7 +401,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...(booksEnabled
       ? [{
           url: `${baseUrl}/books`,
-          lastModified: new Date(),
+          lastModified: newestDate(getAllBooks().map((book) => book.date)),
           changeFrequency: 'weekly' as const,
           priority: 0.8,
         }]
@@ -352,13 +410,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ? [
           {
             url: `${baseUrl}/flows`,
-            lastModified: new Date(),
+            lastModified: latestFlow,
             changeFrequency: 'daily' as const,
             priority: 0.8,
           },
           {
             url: `${baseUrl}/notes`,
-            lastModified: new Date(),
+            lastModified: latestNote,
             changeFrequency: 'weekly' as const,
             priority: 0.7,
           },
@@ -367,6 +425,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...pageUrls,
     ...postUrls,
     ...seriesUrls,
+    ...seriesPrefixUrls,
     ...bookUrls,
     ...noteUrls,
     ...authorUrls,
@@ -381,5 +440,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Advertise the canonical trailing-slash form: with trailingSlash: true the
   // export serves /path/index.html, so the bare /path variant is a redirect
   // hop for crawlers on most static hosts.
-  return entries.map((entry) => ({ ...entry, url: withTrailingSlash(entry.url) }));
+  return entries.map((entry) => ({
+    ...entry,
+    url: encodeSitemapUrl(entry.url),
+    ...(entry.alternates?.languages
+      ? {
+          alternates: {
+            languages: Object.fromEntries(
+              Object.entries(entry.alternates.languages).map(([lang, href]) => [lang, encodeSitemapUrl(String(href))]),
+            ),
+          },
+        }
+      : {}),
+  }));
 }
