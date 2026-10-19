@@ -3,8 +3,6 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 4rem; /* offset for fixed navbar (h-16 = 64px) */
-  overflow-x: hidden;
 }
 
 :root {
@@ -866,13 +864,20 @@ html.dark .shiki .line.warning {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
+  /* Guard against horizontal overflow on phones with `clip`, not `hidden`:
+     `hidden` (on body and html) made body a scroll container that never
+     scrolls, so every `position: sticky` sidebar scrolled away with the
+     page. `clip` clips without creating a scroll container. */
+  overflow-x: clip;
   /* Font smoothing for elegance */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure anchor links are not hidden behind the fixed navbar */
+/* Ensure anchor links are not hidden behind the fixed navbar (h-16) with a
+   little breathing room. The single source of the offset: an
+   html { scroll-padding-top } on top of it used to double the gap on
+   #hash jumps. Matches HEADING_OFFSET_PX in src/lib/scroll-utils.ts. */
 [id] {
   scroll-margin-top: 5rem;
 }
