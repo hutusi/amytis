@@ -11,6 +11,12 @@ describe('RedirectPage', () => {
     expect(html).toContain('href="/posts/new/"');
   });
 
+  test('targets the canonical trailing-slash URL (no second redirect hop)', async () => {
+    const html = await renderAsync(<RedirectPage to="/posts/new" />);
+    expect(html).toContain('content="0;url=/posts/new/"');
+    expect(html).toContain('location.replace("/posts/new/"+location.hash)');
+  });
+
   test('is excluded from the search index', async () => {
     const html = await renderAsync(<RedirectPage to="/x/" />);
     expect(html).toContain('data-pagefind-ignore="all"');

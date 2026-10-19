@@ -1,5 +1,6 @@
 import { T } from '@/components/T';
 import RedirectEffect from '@/components/RedirectEffect';
+import { withTrailingSlash } from '@/lib/urls';
 
 /**
  * Rendered at old URLs (`redirectFrom` aliases, series aliases, legacy author
@@ -17,7 +18,10 @@ import RedirectEffect from '@/components/RedirectEffect';
  * metadata (`buildRedirectMetadata`) marks the stub noindex with a canonical
  * pointing at the target.
  */
-export default function RedirectPage({ to }: { to: string }) {
+export default function RedirectPage({ to: path }: { to: string }) {
+  // Land on the canonical trailing-slash form directly: the bare path would
+  // cost a second redirect hop on hosts that add the slash.
+  const to = withTrailingSlash(path);
   // JSON.stringify quotes and escapes the path; escaping `<` keeps a
   // `</script>` sequence from closing the inline script early.
   const target = JSON.stringify(to).replace(/</g, '\\u003c');
