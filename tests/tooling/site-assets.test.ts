@@ -37,4 +37,11 @@ describe('assertSiteAssetsExist', () => {
     expect(() => assertSiteAssetsExist(siteConfig)).not.toThrow();
     expect(() => assertSiteAssetsExist(exampleConfig)).not.toThrow();
   });
+
+  test('the apple touch icon the root layout links to exists', () => {
+    const layout = fs.readFileSync('src/app/layout.tsx', 'utf8');
+    const href = layout.match(/apple:\s*'([^']+)'/)?.[1];
+    expect(href).toBe('/apple-touch-icon.png');
+    expect(fs.existsSync(path.join('public', href!.slice(1)))).toBe(true);
+  });
 });

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { isFeatureEnabled } from '@/lib/features';
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
@@ -76,6 +76,9 @@ export const metadata: Metadata = {
   description: resolveLocaleValue(siteConfig.description, DEFAULT_LOCALE),
   icons: {
     icon: faviconMeta,
+    // iOS home-screen icon (also fetched from this conventional path when a
+    // page omits the link).
+    apple: '/apple-touch-icon.png',
   },
   alternates: withSiteAlternates(),
   openGraph: {
@@ -88,6 +91,17 @@ export const metadata: Metadata = {
     card: 'summary',
     ...siteTwitterHandles(),
   },
+};
+
+// Browser chrome (mobile address bar, PWA title bar) matches the paper
+// background in each scheme; colorScheme lets form controls and scrollbars
+// pick the right defaults before next-themes stamps the explicit scheme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fafaf9' },
+    { media: '(prefers-color-scheme: dark)', color: '#292524' },
+  ],
+  colorScheme: 'light dark',
 };
 
 export default function RootLayout({
