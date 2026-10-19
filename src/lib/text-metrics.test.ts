@@ -235,6 +235,42 @@ describe("text metrics", () => {
       expect(headings).toHaveLength(1);
       expect(headings[0].id).toBe("setup");
     });
+
+    // The cases below pin the ids rehype-slug assigns to the RENDERED text:
+    // the TOC anchor must equal the heading's id or the link goes nowhere.
+    test("slugs the rendered text of inline markup, not the raw source", () => {
+      expect(getHeadings("## [Link](http://x.com) text")[0]).toEqual({ id: "link-text", text: "Link text", level: 2 });
+      expect(getHeadings("## Use `bun test` **now**")[0]).toEqual({ id: "use-bun-test-now", text: "Use bun test now", level: 2 });
+      expect(getHeadings("## Logo ![alt](/x.png) here")[0].id).toBe("logo--here");
+    });
+
+    test("drops a closing ATX sequence", () => {
+      expect(getHeadings("## Setup ##")[0]).toEqual({ id: "setup", text: "Setup", level: 2 });
+    });
+
+    test("raw HTML/JSX tags contribute no text", () => {
+      expect(getHeadings("## Install <Badge /> now")[0].id).toBe("install--now");
+      expect(getHeadings("## Hello <code>x</code>")[0].id).toBe("hello-x");
+    });
+
+    test("recognizes setext headings", () => {
+      expect(getHeadings("Setup\n-----\n\nBody")[0]).toEqual({ id: "setup", text: "Setup", level: 2 });
+    });
+
+    test("ignores fences the regex could not see (indented, 4-backtick)", () => {
+      const content = ["````md", "```", "## not a heading", "```", "````", "", "    ## indented code", "", "## Real"].join("\n");
+      expect(getHeadings(content).map((h) => h.text)).toEqual(["Real"]);
+    });
+
+    test("H1 and H4+ headings claim slug slots like they do in the rendered page", () => {
+      // rehype-slug dedups across ALL levels: the h4 takes "foo", so the h2 is "foo-1".
+      const headings = getHeadings("#### Foo\n\n## Foo\n\n# Bar\n\n### Bar");
+      expect(headings.map((h) => h.id)).toEqual(["foo-1", "bar-1"]);
+    });
+
+    test("wikilinks keep their display text", () => {
+      expect(getHeadings("## About [[some-note|My Note]]")[0].text).toBe("About My Note");
+    });
   });
 
   describe("extractContentMetrics", () => {
@@ -246,6 +282,12 @@ describe("text metrics", () => {
       expect(m.contentWithoutH1).toContain("Intro paragraph.");
       expect(m.excerpt).toContain("Intro paragraph.");
       expect(m.headings.map((h) => h.text)).toEqual(["Section"]);
+    });
+
+    test("the stripped H1 does not claim a slug slot", () => {
+      // The page renders contentWithoutH1, so its "## Title" gets id="title".
+      const m = extractContentMetrics("# Title\n\n## Title\n\nBody");
+      expect(m.headings).toEqual([{ id: "title", text: "Title", level: 2 }]);
     });
 
     test("includes reading time and word count by default", () => {

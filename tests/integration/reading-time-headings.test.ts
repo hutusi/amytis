@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { renderAsync } from '@/test-utils/render';
+import { extractContentMetrics } from '@/lib/text-metrics';
 import { getAllPosts, getPostBySlug } from '../../src/lib/content/posts';
 
 describe("Integration: Reading Time & Headings", () => {
@@ -74,4 +77,63 @@ describe("Integration: Reading Time & Headings", () => {
       expect(typeof h.id).toBe("string");
     });
   });
+});
+
+describe("Integration: TOC ids match rendered heading ids", () => {
+  // Every TOC entry must point at an id the rendered page actually has, in
+  // document order — otherwise the link goes nowhere and active-heading
+  // tracking silently breaks.
+  function renderedHeadingIds(html: string): string[] {
+    return [...html.matchAll(/<h[1-6][^>]*\sid="([^"]+)"/g)].map((m) => m[1]);
+  }
+
+  function expectSubsequence(tocIds: string[], pageIds: string[]) {
+    let cursor = 0;
+    for (const id of tocIds) {
+      const found = pageIds.indexOf(id, cursor);
+      expect({ id, found: found !== -1 }).toEqual({ id, found: true });
+      cursor = found + 1;
+    }
+  }
+
+  test("tricky heading syntax keeps TOC and page in sync", async () => {
+    const content = [
+      "# Title",
+      "",
+      "## Title",
+      "",
+      "## [Link](http://x.com) text",
+      "",
+      "## Setup ##",
+      "",
+      "#### Setup",
+      "",
+      "### Setup",
+      "",
+      "## Install <span>inline</span> html",
+      "",
+      "Setext heading",
+      "--------------",
+      "",
+      "```md",
+      "## not a heading",
+      "```",
+    ].join("\n");
+    const { contentWithoutH1, headings } = extractContentMetrics(content);
+    const html = await renderAsync(MarkdownRenderer({ content: contentWithoutH1 }));
+    const pageIds = renderedHeadingIds(html);
+    expect(headings.length).toBe(6);
+    expectSubsequence(headings.map((h) => h.id), pageIds);
+  });
+
+  test("every Markdown post's TOC ids exist in its rendered body", async () => {
+    const posts = getAllPosts().filter((p) => p.sourceFormat !== "rst" && p.headings.length > 0);
+    expect(posts.length).toBeGreaterThan(0);
+    for (const post of posts) {
+      const html = await renderAsync(
+        MarkdownRenderer({ content: post.content, latex: post.latex, slug: post.imageBaseSlug }),
+      );
+      expectSubsequence(post.headings.map((h) => h.id), renderedHeadingIds(html));
+    }
+  }, 60_000);
 });
