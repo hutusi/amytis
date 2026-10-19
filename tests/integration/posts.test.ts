@@ -34,6 +34,14 @@ describe("Integration: Posts", () => {
     });
   });
 
+  test("every post date is a zero-padded calendar day", () => {
+    // Content includes single-digit forms like "2025-11-5"; they must
+    // normalize to the authored day, not a local-time-shifted one.
+    for (const post of getAllPosts()) {
+      expect(post.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
   test("should find related posts", () => {
     const posts = getAllPosts();
     if (posts.length > 1) {

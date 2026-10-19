@@ -257,6 +257,8 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 
 Validated by Zod in `src/lib/content/` (PostSchema in `parse.ts`; book/flow/note schemas in their domain modules) — invalid frontmatter throws at build time.
 
+**Dates** normalize to `YYYY-MM-DD` via `dateField` (`content/schema.ts`). A quoted string that starts with a calendar date — `"2026-01-01"`, `"2026-1-1"`, `"2026-01-01 08:00"`, `"2026-01-01T08:00:00+08:00"` — keeps the day as written, independent of the build machine's timezone; a non-existent day (`"2026-02-30"`) or a malformed time after the date fails the build. Unquoted YAML timestamps arrive as UTC instants and keep their UTC day, so quote any datetime that carries a non-UTC offset.
+
 ### Posts
 
 ```yaml

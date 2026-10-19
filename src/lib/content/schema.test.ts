@@ -9,6 +9,34 @@ describe('content/schema', () => {
     expect(S.parse({ date: new Date('2026-06-13T12:00:00Z') }).date).toBe('2026-06-13');
   });
 
+  test('dateField keeps the authored calendar day regardless of the build timezone', () => {
+    const S = z.object({ date: dateField });
+    const originalTz = process.env.TZ;
+    // UTC+8: every local-time parse lands on the previous UTC day, which is
+    // exactly the shift the calendar-prefix path must avoid.
+    process.env.TZ = 'Asia/Shanghai';
+    try {
+      expect(S.parse({ date: '2024-01-05 07:00' }).date).toBe('2024-01-05');
+      expect(S.parse({ date: '2024-01-05T07:00:00+08:00' }).date).toBe('2024-01-05');
+      expect(S.parse({ date: '2024-01-05 07:00:00 +0800' }).date).toBe('2024-01-05');
+      expect(S.parse({ date: '2024-1-5' }).date).toBe('2024-01-05');
+      expect(S.parse({ date: ' 2024-01-05 ' }).date).toBe('2024-01-05');
+      // Unquoted YAML timestamps arrive as UTC Date instants.
+      expect(S.parse({ date: new Date('2024-01-05T00:00:00Z') }).date).toBe('2024-01-05');
+    } finally {
+      if (originalTz === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTz;
+    }
+  });
+
+  test('dateField rejects calendar dates that do not exist or carry a malformed time', () => {
+    const S = z.object({ date: dateField });
+    expect(S.safeParse({ date: '2024-02-30' }).success).toBe(false);
+    expect(S.safeParse({ date: '2023-02-29' }).success).toBe(false);
+    expect(S.safeParse({ date: '2024-02-29' }).success).toBe(true);
+    expect(S.safeParse({ date: '2024-01-05Tgarbage' }).success).toBe(false);
+  });
+
   test('dateField rejects an invalid date as a CAUGHT validation error (not a thrown RangeError)', () => {
     const S = z.object({ date: dateField });
     // Must not throw — safeParse returns { success: false } so the content
