@@ -670,16 +670,16 @@ html.dark .shiki .line.warning {
 
   /* Focus ring for accessibility */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Button styles */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-accent-contrast font-medium transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-accent-contrast font-medium transition-all hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-line-strong text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-line-strong text-foreground font-medium transition-all hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Typography - Standardized heading styles */
@@ -882,6 +882,21 @@ body {
   /* Font smoothing for elegance */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Keyboard focus baseline: every focusable element gets a visible accent
+   outline unless a component styles its own focus-visible state (component
+   utilities sit in a later layer and win). Headings that scrollToHeading
+   focuses programmatically (tabindex="-1") are reading targets, not
+   controls, so they don't get a ring. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  :where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
+    outline: none;
+  }
 }
 
 /* Ensure anchor links are not hidden behind the fixed navbar (h-16) with a

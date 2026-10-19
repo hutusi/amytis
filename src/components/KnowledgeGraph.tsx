@@ -319,7 +319,7 @@ export default function KnowledgeGraph() {
           aria-label={t('graph_search_placeholder')}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-transparent outline-none focus:border-accent"
+          className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-transparent outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
         />
         <div className="space-y-1">
           {filtered.map(n => (

@@ -24,7 +24,7 @@ interface TagProps {
  */
 export default function Tag({ tag, count, variant = 'default', showHash = true, className }: TagProps) {
   const baseClasses =
-    'no-underline transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50';
+    'no-underline transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50';
 
   const variantClasses = {
     default:

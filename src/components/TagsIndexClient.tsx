@@ -78,7 +78,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('filter_tags')}
             aria-label={t('filter_tags')}
-            className="w-full pl-9 pr-8 py-2 text-sm bg-surface-faint border border-line rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted transition-colors"
+            className="w-full pl-9 pr-8 py-2 text-sm bg-surface-faint border border-line rounded-lg outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 text-foreground placeholder:text-muted transition-colors"
           />
           {filter && (
             <button

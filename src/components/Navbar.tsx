@@ -15,6 +15,7 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { splitLocaleFromPath } from '@/lib/urls';
 import { localeStickyHref } from '@/lib/locale-urls';
+import { scrollBehavior } from '@/lib/scroll-utils';
 import { TranslationKey } from '@/i18n/translations';
 
 interface NavItem {
@@ -154,7 +155,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link
           href={navHref('/')}
-          onClick={pathname === '/' ? (e) => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined}
+          onClick={pathname === '/' ? (e) => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); window.scrollTo({ top: 0, behavior: scrollBehavior() }); } } : undefined}
           className="flex items-center gap-3 min-w-0 text-xl font-serif font-bold text-heading hover:text-accent transition-colors duration-200"
         >
           {siteConfig.logo?.src ? (
