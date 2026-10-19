@@ -85,7 +85,8 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}
             >
-              <Link href={series.url} className="relative h-44 w-full overflow-hidden bg-surface-soft block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
+              {/* Duplicate of the title link below: kept out of the Tab order and the a11y tree. */}
+              <Link href={series.url} tabIndex={-1} aria-hidden="true" className="relative h-44 w-full overflow-hidden bg-surface-soft block">
                 <CoverImage
                   src={series.coverImage}
                   title={series.title}
@@ -102,7 +103,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                   </span>
                 </div>
                 <h3 className="mb-3 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors line-clamp-2">
-                  <Link href={series.url} className="no-underline focus:outline-none focus:text-accent">
+                  <Link href={series.url} className="no-underline focus-visible:text-accent">
                     {series.title}
                   </Link>
                 </h3>

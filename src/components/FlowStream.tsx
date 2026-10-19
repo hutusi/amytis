@@ -50,7 +50,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                 .filter(seg => seg.text.trim().length > 0)
                 .map((seg, i) => (
                   <Fragment key={i}>
-                    {/* Dot separator (PostCard meta vocabulary) makes the two
+                    {/* Dot separator (card meta vocabulary) makes the two
                         click targets visibly distinct; spacing comes from its
                         margins, so segment texts render trimmed. */}
                     {i > 0 && <MetaDot className="mx-2 inline-block align-middle" />}
