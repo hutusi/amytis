@@ -105,8 +105,15 @@ Built-in icon keys: `npm`, `yarn`, `pnpm`, `bun`, `deno`, `typescript`,
 
 A label that doesn't resolve renders without an icon (graceful fallback).
 To add an icon: extend the resolver in `src/lib/code-group-icons.ts` with
-the new key, then add a matching `.cg-tab[data-cg-icon="<key>"]::before`
-rule to `src/app/globals.css` with the SVG data URI.
+the new key, add the key → Iconify icon mapping to
+`scripts/generate-code-group-icons.ts`, and run
+`bun scripts/generate-code-group-icons.ts`. It writes
+`src/assets/code-group-icons/<key>.svg` and regenerates the
+`.cg-tab[data-cg-icon="<key>"]::before` rules in `src/app/globals.css`.
+The rules reference the files by relative `url()`, so the CSS pipeline
+emits them as hashed `/_next/static/media/` assets that a browser only
+fetches when a tab with that icon is on the page (inlined data URIs would
+weigh down the render-blocking stylesheet of every page).
 
 ## Notation comments
 
