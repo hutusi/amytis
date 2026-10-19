@@ -35,6 +35,7 @@ export interface PagefindFragment {
 
 interface PagefindAPI {
   init: () => Promise<void>;
+  destroy?: () => Promise<void>;
   search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
 }
 
@@ -54,22 +55,60 @@ export function toDisplayResult(fragment: PagefindFragment): DisplayResult {
   };
 }
 
-let pagefindCache: PagefindAPI | null = null;
+const runtimeImport = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
+let importPagefind: () => Promise<PagefindAPI> = () => runtimeImport('/pagefind/pagefind.js');
+
+let pagefindModule: PagefindAPI | null = null;
+let initializedLang: string | null = null;
+let inflight: { lang: string; promise: Promise<PagefindAPI | null> } | null = null;
 let pagefindUnavailable = false;
 
+/** The language Pagefind picks its index by: `<html lang>`, like its own init. */
+function documentLang(): string {
+  return (document.documentElement.getAttribute('lang') || 'unknown').toLowerCase();
+}
+
+/**
+ * Load and initialize Pagefind for the page's current language. Pagefind
+ * reads `<html lang>` once, at init, to choose the per-language index — and
+ * the language switch is a client-side navigation that only rewrites the
+ * attribute — so a cached instance from an English page would keep
+ * searching the English index on the 中文 page. Re-initialize whenever the
+ * language changed since the last init; concurrent callers share one load.
+ */
 async function loadPagefind(): Promise<PagefindAPI | null> {
-  if (pagefindCache) return pagefindCache;
   if (pagefindUnavailable) return null;
-  try {
-    const load = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
-    const pf = await load('/pagefind/pagefind.js');
-    await pf.init();
-    pagefindCache = pf;
-    return pf;
-  } catch {
-    pagefindUnavailable = true;
-    return null;
-  }
+  const lang = documentLang();
+  if (pagefindModule && initializedLang === lang) return pagefindModule;
+  if (inflight && inflight.lang === lang) return inflight.promise;
+
+  const promise = (async () => {
+    try {
+      pagefindModule ??= await importPagefind();
+      if (initializedLang !== null && initializedLang !== lang) {
+        await pagefindModule.destroy?.();
+      }
+      await pagefindModule.init();
+      initializedLang = lang;
+      return pagefindModule;
+    } catch {
+      pagefindUnavailable = true;
+      return null;
+    } finally {
+      inflight = null;
+    }
+  })();
+  inflight = { lang, promise };
+  return promise;
+}
+
+/** Test seam: swap the runtime import and reset the module-level cache. */
+export function __resetPagefindForTests(importer?: () => Promise<PagefindAPI>): void {
+  importPagefind = importer ?? (() => runtimeImport('/pagefind/pagefind.js'));
+  pagefindModule = null;
+  initializedLang = null;
+  inflight = null;
+  pagefindUnavailable = false;
 }
 
 /**
