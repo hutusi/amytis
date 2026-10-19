@@ -116,14 +116,25 @@ export default function Search() {
     return counts;
   }, [allResults]);
 
-  // Global Cmd/Ctrl+K + Escape shortcut
+  // Global shortcuts: Cmd/Ctrl+K toggles; "/" opens (the convention on
+  // GitHub, MDN, …) unless the user is typing into a field. Escape is handled
+  // by the dialog itself (handleModalKeyDown) so it closes only the search,
+  // not an immersive reader underneath that also listens for Escape.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsOpen((prev) => !prev);
+        return;
       }
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const target = e.target as HTMLElement | null;
+        const editing = !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+        if (!editing) {
+          e.preventDefault();
+          setIsOpen(true);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -189,14 +200,22 @@ export default function Search() {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, -1));
-    } else if (e.key === 'Enter' && activeIndex >= 0) {
+    } else if (e.key === 'Enter') {
+      // Enter without an arrowed selection opens the top hit.
       e.preventDefault();
-      router.push(displayedResults[activeIndex].url);
+      router.push(displayedResults[Math.max(activeIndex, 0)].url);
       handleNavigate(query);
     }
   }
 
   function handleModalKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Escape') {
+      // Stop here so window-level Escape listeners (the immersive reader)
+      // don't also close underneath the search.
+      e.stopPropagation();
+      setIsOpen(false);
+      return;
+    }
     if (e.key !== 'Tab') return;
     // Result links and inactive tabs carry tabindex="-1" (combobox/tabs
     // patterns: reachable via arrows, not Tab) — exclude them so the trap
@@ -244,8 +263,10 @@ export default function Search() {
       <button
         ref={triggerRef}
         onClick={() => setIsOpen(true)}
-        className="text-foreground/80 hover:text-heading transition-colors duration-200"
+        className="w-8 h-8 flex items-center justify-center text-foreground/80 hover:text-heading transition-colors duration-200"
         aria-label={t('search_label')}
+        aria-keyshortcuts="Meta+K Control+K /"
+        title={`${t('search_label')} (/)`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
       </button>
@@ -260,7 +281,7 @@ export default function Search() {
             aria-modal="true"
             aria-label={t('search_label')}
             onKeyDown={handleModalKeyDown}
-            className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-line rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+            className="flex flex-col flex-1 sm:flex-initial min-h-0 w-full sm:max-w-xl bg-background border-b sm:border border-line rounded-none sm:rounded-lg shadow-none sm:shadow-2xl overflow-hidden animate-fade-in"
           >
             {/* Screen-reader live region for result counts */}
             <div aria-live="polite" aria-atomic="true" className="sr-only">

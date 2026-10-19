@@ -58,11 +58,45 @@ describe('Search modal', () => {
     fireEvent.click(trigger);
     await screen.findByRole('dialog', { name: 'Search' });
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('combobox', { name: 'Search' }), { key: 'Escape' });
 
     await waitFor(() => {
       if (screen.queryByRole('dialog') !== null) throw new Error('dialog still open');
     });
     expect(document.activeElement === trigger).toBe(true);
+  });
+
+  test('Escape in the dialog does not reach window-level listeners (immersive reader)', async () => {
+    renderSearch();
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+    await screen.findByRole('dialog', { name: 'Search' });
+
+    let windowSawEscape = false;
+    const onWindowKey = (e: KeyboardEvent) => { if (e.key === 'Escape') windowSawEscape = true; };
+    window.addEventListener('keydown', onWindowKey);
+    try {
+      fireEvent.keyDown(screen.getByRole('combobox', { name: 'Search' }), { key: 'Escape' });
+      await waitFor(() => {
+        if (screen.queryByRole('dialog') !== null) throw new Error('dialog still open');
+      });
+      expect(windowSawEscape).toBe(false);
+    } finally {
+      window.removeEventListener('keydown', onWindowKey);
+    }
+  });
+
+  test('"/" opens the search unless the user is typing in a field', async () => {
+    renderSearch();
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    try {
+      fireEvent.keyDown(field, { key: '/' });
+      expect(screen.queryByRole('dialog')).toBeNull();
+
+      fireEvent.keyDown(document.body, { key: '/' });
+      expect(await screen.findByRole('dialog', { name: 'Search' })).toBeTruthy();
+    } finally {
+      field.remove();
+    }
   });
 });
