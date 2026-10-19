@@ -92,6 +92,9 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
               title={book.title}
               slug={book.slug}
               className="w-full h-full object-cover"
+              sizes="(min-width: 1200px) 1104px, 100vw"
+              // Above-the-fold hero: the page's LCP image.
+              loading="eager"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
           </div>

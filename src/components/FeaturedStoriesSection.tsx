@@ -118,6 +118,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                 slug={hero.slug}
                 className={cn(COVER_ZOOM, 'duration-700')}
                 loading="eager"
+                sizes="(min-width: 1024px) 60vw, 100vw"
               />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
@@ -177,6 +178,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                     title={post.title}
                     slug={post.slug}
                     className={COVER_ZOOM}
+                    sizes="128px"
                   />
                 </div>
               </Link>

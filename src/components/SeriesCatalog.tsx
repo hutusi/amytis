@@ -57,6 +57,7 @@ export default function SeriesCatalog({ posts, locale, startIndex = 0, totalPost
                         title={post.title}
                         slug={post.slug}
                         className={COVER_ZOOM}
+                        sizes="(min-width: 640px) 192px, 100vw"
                       />
                     </Link>
                     {/* Mobile number badge */}

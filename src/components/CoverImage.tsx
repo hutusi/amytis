@@ -57,9 +57,17 @@ interface CoverImageProps {
   src?: string;
   className?: string;
   loading?: 'eager' | 'lazy';
+  /**
+   * The rendered slot width, for the browser's srcset pick. The default suits
+   * multi-column card grids; thumbnails and full-width heroes must pass their
+   * real width, or a 128px thumbnail downloads a 1200px variant on phones.
+   */
+  sizes?: string;
 }
 
-export default function CoverImage({ title, slug, src, className = "h-full w-full object-cover", loading }: CoverImageProps) {
+const DEFAULT_SIZES = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw';
+
+export default function CoverImage({ title, slug, src, className = "h-full w-full object-cover", loading, sizes = DEFAULT_SIZES }: CoverImageProps) {
   // Use text-based cover when no src or explicit "text:" prefix
   const isTextCover = !src || src.startsWith('text:');
   const coverText = !src
@@ -97,7 +105,7 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
       alt={title}
       className={className}
       fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      sizes={sizes}
       unoptimized={!useBlurPlaceholder}
       placeholder={useBlurPlaceholder ? 'blur' : 'empty'}
       loading={loading}

@@ -76,7 +76,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
       </div>
       <HorizontalScroll>
         <div className={`flex gap-8 ${displayed.length > 1 ? 'pb-4' : ''}`}>
-          {displayed.map((series, idx) => (
+          {displayed.map((series) => (
             <div
               key={series.name}
               className={`card-base group flex flex-col p-0 overflow-hidden snap-start ${
@@ -91,7 +91,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                   title={series.title}
                   slug={series.name}
                   className={cn(COVER_ZOOM, 'duration-700')}
-                  loading={idx === 0 ? 'eager' : undefined}
+                  sizes="(min-width: 1200px) 536px, (min-width: 768px) 50vw, 85vw"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
               </Link>

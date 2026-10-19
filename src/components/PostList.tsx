@@ -53,6 +53,7 @@ export default function PostList({
                     title={post.title}
                     slug={post.slug}
                     className={COVER_ZOOM}
+                    sizes="(min-width: 640px) 192px, 128px"
                   />
                 </Link>
               </div>
