@@ -70,6 +70,7 @@ src/app/
   flows/feed.atom/route.ts          # Flows-only Atom feed
   search.json/route.ts
   sitemap.ts
+  robots.ts                         # robots.txt — allow all + Sitemap: line
   [slug]/page.tsx                   # Static pages + custom series listing path
   [slug]/page/[page]/page.tsx       # Custom series listing pagination
   [slug]/[postSlug]/page.tsx        # Custom post basePath/series post path
