@@ -33,13 +33,19 @@ html {
   --ink: #fafaf9; /* Stone 50 */
 }
 
-/* Palette Overrides */
+/* Palette Overrides
+   data-palette sits on <html>, next to the `.dark` class next-themes toggles.
+   Dark variants match both `<html data-palette class="dark">` and a `.dark`
+   descendant (the immersive overlay adds its own `.dark` for the dark
+   reading theme); at specificity 0,2,0 they beat both `.dark` and the light
+   palette rule. */
 /* Blue */
 [data-palette="blue"] {
   --accent: #2563eb; /* Blue 600 */
   --accent-hover: #1d4ed8;
 }
-.dark[data-palette="blue"] {
+[data-palette="blue"].dark,
+[data-palette="blue"] .dark {
   --accent: #60a5fa; /* Blue 400 */
   --accent-hover: #3b82f6;
 }
@@ -49,7 +55,8 @@ html {
   --accent: #e11d48; /* Rose 600 */
   --accent-hover: #be123c;
 }
-.dark[data-palette="rose"] {
+[data-palette="rose"].dark,
+[data-palette="rose"] .dark {
   --accent: #fb7185; /* Rose 400 */
   --accent-hover: #f43f5e;
 }
@@ -59,7 +66,8 @@ html {
   --accent: #d97706; /* Amber 600 */
   --accent-hover: #b45309;
 }
-.dark[data-palette="amber"] {
+[data-palette="amber"].dark,
+[data-palette="amber"] .dark {
   --accent: #fbbf24; /* Amber 400 */
   --accent-hover: #f59e0b;
 }
@@ -1172,8 +1180,8 @@ html.dark .rst-rendered aside.admonition-danger {
  * selectors like `[data-site-nav]` — they end up missing from the compiled
  * CSS bundle even though they're written here in source. The surviving
  * patterns are bare-attribute-with-value (e.g. `[data-palette="blue"]`,
- * `[data-line-numbers="true"]`) and class-prefixed compounds (e.g.
- * `.dark[data-palette="blue"]`). React serialises a bare JSX
+ * `[data-line-numbers="true"]`) and compounds/descendants of them (e.g.
+ * `[data-palette="blue"].dark`). React serialises a bare JSX
  * `data-site-nav` prop to the HTML `data-site-nav="true"`, so writing
  * `="true"` here costs nothing on the component side. */
 [data-immersive="true"] [data-site-nav="true"],
