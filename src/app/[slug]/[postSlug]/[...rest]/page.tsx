@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { getBookChapterUrl, getBookUrl, getNoteUrl, getPostUrl, getPostsBasePath, getSeriesUrl, isNonDefaultLocale, localizeUrl, withTrailingSlash } from '@/lib/urls';
-import { buildArticleMetadata , siteOpenGraph } from '@/lib/metadata';
+import { buildArticleMetadata, siteOpenGraph, siteTwitterHandles, withSiteAlternates } from '@/lib/metadata';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import RenderPostPage from '@/components/RenderPostPage';
 import PostsListingBody from '@/components/page-bodies/PostsListingBody';
@@ -150,10 +150,7 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
       return {
         title: `${chapterOgTitle} | ${siteTitle}`,
         description: resolution.chapter.excerpt,
-        alternates: {
-          canonical: seo.canonicalUrl,
-          ...(seo.languageAlternates ? { languages: seo.languageAlternates } : {}),
-        },
+        alternates: withSiteAlternates({ canonical: seo.canonicalUrl, languages: seo.languageAlternates }),
         openGraph: {
           title: chapterOgTitle,
           description: resolution.chapter.excerpt,
@@ -168,6 +165,7 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
           title: chapterOgTitle,
           description: resolution.chapter.excerpt,
           images: [ogImage],
+          ...siteTwitterHandles(),
         },
       };
     }

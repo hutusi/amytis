@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { getPostUrl, getPostsBasePath, getStaticPageUrl, isNonDefaultLocale, localizeUrl, withTrailingSlash } from '@/lib/urls';
-import { buildArticleMetadata, createListingMetadata , siteOpenGraph } from '@/lib/metadata';
+import { buildArticleMetadata, createListingMetadata, siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { getPageContentLocales, getPostContentLocales } from '@/lib/content/posts';
 import RedirectPage from '@/components/RedirectPage';
@@ -43,10 +43,7 @@ function localizedMetadata(locale: string, resolution: LocalizedResolution): Met
         title: `${resolution.page.title} | ${resolveLocaleValue(siteConfig.title, locale)}`,
         description: resolution.page.excerpt,
         openGraph: siteOpenGraph(locale),
-        alternates: {
-          canonical: seo.canonicalUrl,
-          ...(seo.languageAlternates ? { languages: seo.languageAlternates } : {}),
-        },
+        alternates: withSiteAlternates({ canonical: seo.canonicalUrl, languages: seo.languageAlternates }),
       };
     }
     case 'postsListing':

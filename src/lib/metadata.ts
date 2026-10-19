@@ -70,6 +70,48 @@ export function createListingMetadata({
     : { title, openGraph };
 }
 
+/**
+ * RSS/Atom autodiscovery links (`alternates.types`) for the configured feed
+ * format, or undefined when no feed is published.
+ */
+export function siteFeedTypes(): Record<string, string> | undefined {
+  const { format } = siteConfig.feed;
+  const types: Record<string, string> = {};
+  if (format === 'rss' || format === 'both') types['application/rss+xml'] = '/feed.xml';
+  if (format === 'atom' || format === 'both') types['application/atom+xml'] = '/feed.atom';
+  return Object.keys(types).length > 0 ? types : undefined;
+}
+
+/**
+ * Page-level `alternates` with the site feed links merged in. Next.js REPLACES
+ * a parent's `alternates` object instead of merging it, so a page that sets
+ * its own canonical would otherwise drop the root layout's RSS/Atom
+ * autodiscovery links — on exactly the article pages readers subscribe from.
+ */
+export function withSiteAlternates(
+  alternates: { canonical?: string; languages?: Record<string, string> } = {},
+): NonNullable<Metadata['alternates']> {
+  const types = siteFeedTypes();
+  return {
+    ...(alternates.canonical ? { canonical: alternates.canonical } : {}),
+    ...(alternates.languages ? { languages: alternates.languages } : {}),
+    ...(types ? { types } : {}),
+  };
+}
+
+/**
+ * `twitter:site` / `twitter:creator` from `siteConfig.social.twitter`. Like
+ * `alternates`, a page-level `twitter` object replaces the root one, so every
+ * override must spread these back in.
+ */
+export function siteTwitterHandles(): { site?: string; creator?: string } {
+  const url = siteConfig.social?.twitter ?? '';
+  const match = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
+  if (!match) return {};
+  const handle = `@${match[1]}`;
+  return { site: handle, creator: handle };
+}
+
 /** Standard OpenGraph image dimensions, shared by every article route. */
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
@@ -108,10 +150,7 @@ interface ArticleMetadataOptions {
    * served page emits no canonical link while its bare-path variant circulates.
    */
   canonicalUrl?: string;
-  /**
-   * Per-locale alternate URLs, emitted as `alternates.languages` (hreflang).
-   * Plumbing for the locale-routes SEO slice — omit until callers thread it.
-   */
+  /** Per-locale alternate URLs, emitted as `alternates.languages` (hreflang). */
   languageAlternates?: Record<string, string>;
   /** Absolute OG image (resolve via resolveImageUrl). Omit to emit no images. */
   ogImage?: string;
@@ -141,15 +180,10 @@ export function buildArticleMetadata({
 }: ArticleMetadataOptions): Metadata {
   const siteTitle = resolveLocaleValue(siteConfig.title, locale);
 
-  const alternates = {
-    ...(canonicalUrl ? { canonical: canonicalUrl } : {}),
-    ...(languageAlternates ? { languages: languageAlternates } : {}),
-  };
-
   const metadata: Metadata = {
     title: `${title}${titleSuffix} | ${siteTitle}`,
     description,
-    ...(canonicalUrl || languageAlternates ? { alternates } : {}),
+    alternates: withSiteAlternates({ canonical: canonicalUrl, languages: languageAlternates }),
     openGraph: {
       title,
       description,
@@ -171,6 +205,7 @@ export function buildArticleMetadata({
       title,
       description,
       ...(ogImage ? { images: [ogImage] } : {}),
+      ...siteTwitterHandles(),
     };
   }
 

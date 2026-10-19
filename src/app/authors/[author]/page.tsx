@@ -11,6 +11,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
+import { withSiteAlternates } from '@/lib/metadata';
 import AuthorStats from '@/components/AuthorStats';
 import { T } from '@/components/T';
 
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ author: s
     description: `${posts.length} ${t('posts').toLowerCase()} ${t('written_by').toLowerCase()} ${resolvedAuthor}.`,
     // Legacy name-form URLs (/authors/Amytis%20Team) and the canonical slug URL
     // both render; point both at the slug URL so crawlers don't see duplicates.
-    alternates: { canonical: canonicalUrl },
+    alternates: withSiteAlternates({ canonical: canonicalUrl }),
   };
 }
 

@@ -5,6 +5,7 @@ import { Metadata } from 'next';
 import { siteConfig } from '../../../../../site.config';
 import BookChapterBody from '@/components/page-bodies/BookChapterBody';
 import { resolveLocaleValue } from '@/lib/i18n';
+import { siteTwitterHandles, withSiteAlternates } from '@/lib/metadata';
 import { getBookChapterUrl } from '@/lib/urls';
 import { chapterContentLocales, contentSeoUrls } from '@/lib/locale-routes';
 import { safeDecodeParam } from '@/lib/route-params';
@@ -79,10 +80,7 @@ export async function generateMetadata({ params }: { params: ChapterPageParams }
   return {
     title: `${chapter.title} - ${book.title} | ${resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE)}`,
     description: chapter.excerpt,
-    alternates: {
-      canonical: seo.canonicalUrl,
-      ...(seo.languageAlternates ? { languages: seo.languageAlternates } : {}),
-    },
+    alternates: withSiteAlternates({ canonical: seo.canonicalUrl, languages: seo.languageAlternates }),
     openGraph: {
       title: `${chapter.title} - ${book.title}`,
       description: chapter.excerpt,
@@ -96,6 +94,7 @@ export async function generateMetadata({ params }: { params: ChapterPageParams }
       title: `${chapter.title} - ${book.title}`,
       description: chapter.excerpt,
       images: [ogImage],
+      ...siteTwitterHandles(),
     },
   };
 }
