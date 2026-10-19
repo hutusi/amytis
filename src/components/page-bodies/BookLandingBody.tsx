@@ -101,7 +101,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
         )}
 
         <div className="text-center max-w-2xl mx-auto">
-          <span className="badge-accent mb-4">
+          <span data-pagefind-ignore className="badge-accent mb-4">
             {t('book')} &bull; {book.chapters.length} {t('chapters_count')}
           </span>
           <h1 data-pagefind-meta="title" className="page-title mb-4">{book.title}</h1>
@@ -129,7 +129,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
 
           {/* Start Reading CTAs */}
           {firstChapter && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div data-pagefind-ignore className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={localizeUrl(getBookChapterUrl(book.slug, firstChapter.id), locale)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"

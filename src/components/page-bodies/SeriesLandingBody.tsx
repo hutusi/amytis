@@ -65,7 +65,7 @@ export default function SeriesLandingBody({ locale, seriesSlug, page }: SeriesLa
         )}
 
         <div className="text-center max-w-2xl mx-auto">
-          <span className="badge-accent mb-4">
+          <span data-pagefind-ignore className="badge-accent mb-4">
             {isCollection ? t('collection') : t('series')} • {allPosts.length} {t('parts')}
           </span>
           {page === 1 ? (
@@ -94,7 +94,7 @@ export default function SeriesLandingBody({ locale, seriesSlug, page }: SeriesLa
             // flag handler would never fire. Use the right separator.
             const immersiveHref = `${primaryHref}${primaryHref.includes('?') ? '&' : '?'}immersive=1`;
             return (
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <div data-pagefind-ignore className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href={primaryHref}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors no-underline"
