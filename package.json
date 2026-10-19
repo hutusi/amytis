@@ -13,7 +13,7 @@
   "private": false,
   "packageManager": "bun@1.3.11",
   "scripts": {
-    "dev": "bun scripts/run-with-rst-python.ts next dev",
+    "dev": "bun scripts/copy-vendor-assets.ts && bun scripts/run-with-rst-python.ts next dev",
     "build": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && next-image-export-optimizer && bun scripts/fix-locale-html-lang.ts && bun run build:search",
     "build:webpack": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build --webpack && next-image-export-optimizer && bun scripts/fix-locale-html-lang.ts && bun run build:search",
     "build:dev": "bun scripts/copy-assets.ts && bun run build:graph && bun scripts/run-with-rst-python.ts next build && bun scripts/fix-locale-html-lang.ts && bun run build:search:dev",
@@ -23,7 +23,7 @@
     "build:search:cli": "pagefind --site out",
     "build:search:cli:dev": "pagefind --site out --output-path public/pagefind",
     "validate": "bun run lint && bun run typecheck && bun run test && bun run build:dev",
-    "clean": "rm -rf .next out public/posts public/books public/flows public/images/nextImageExportOptimizer",
+    "clean": "rm -rf .next out public/posts public/books public/flows public/vendor public/images/nextImageExportOptimizer",
     "new": "bun scripts/new-post.ts",
     "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
     "new-series": "bun scripts/new-series.ts",

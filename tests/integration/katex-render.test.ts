@@ -30,3 +30,15 @@ describe('Integration: KaTeX rendering', () => {
     expect(html).toContain('<span class="note">b</span>');
   });
 });
+
+describe('Integration: KaTeX stylesheet', () => {
+  test('math posts link the vendored stylesheet', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: '$x$', latex: true }));
+    expect(html).toMatch(/<link rel="stylesheet" href="\/vendor\/katex\/[^"]+\/katex\.min\.css" data-precedence="katex"/);
+  });
+
+  test('math-free posts do not', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: 'No math here.' }));
+    expect(html).not.toContain('katex.min.css');
+  });
+});
