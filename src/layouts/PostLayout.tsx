@@ -15,6 +15,7 @@ import ExternalLinks from '@/components/ExternalLinks';
 import Backlinks from '@/components/Backlinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
+import MobileToc from '@/components/MobileToc';
 import PostNavigation, { PostNavigationView } from '@/components/PostNavigation';
 import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
@@ -219,6 +220,8 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
                 </Suspense>
               </div>
             )}
+
+            {showToc && <MobileToc headings={post.headings} />}
 
             {/* Search indexes the header + body only (not related posts, nav,
                 comments): see the data-pagefind-body note in CLAUDE.md. */}
