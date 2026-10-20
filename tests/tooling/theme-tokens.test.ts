@@ -19,6 +19,17 @@ describe('theme palettes', () => {
   test('no dark palette rule requires .dark and data-palette on the same element only', () => {
     expect(css).not.toContain('.dark[data-palette=');
   });
+
+  test('dark: utilities follow the .dark class, not the OS color scheme', () => {
+    // Without this, dark:prose-invert keys off prefers-color-scheme while the
+    // tokens key off .dark, and inline code turns unreadable when they differ.
+    const variant = css.match(/@custom-variant dark \((.*)\);/)?.[1] ?? '';
+    expect(variant).toStartWith('&:where(.dark, .dark *)');
+    // The immersive reader's light themes stay light on a dark site.
+    for (const theme of ['light', 'sepia']) {
+      expect(variant).toContain(`[data-reader-overlay="true"][data-reading-theme="${theme}"] *`);
+    }
+  });
 });
 
 // ─── WCAG contrast of the color tokens ───────────────────────────────────────

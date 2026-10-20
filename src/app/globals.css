@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* `dark:` follows the site theme (next-themes puts .dark on <html>), like the
+ * color tokens below. Tailwind's default is the OS setting, which split pages
+ * whose reader picked the other theme: dark:prose-invert gave inline code
+ * white text on the light theme under a dark OS, and near-black on the dark
+ * theme under a light one. The immersive reader's light and sepia themes are
+ * light even on a dark site, so their subtree opts out (its dark theme adds
+ * its own .dark). */
+@custom-variant dark (&:where(.dark, .dark *):not(:where([data-reader-overlay="true"][data-reading-theme="light"] *, [data-reader-overlay="true"][data-reading-theme="sepia"] *)));
+
 html {
   scroll-behavior: smooth;
 }
