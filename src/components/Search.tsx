@@ -150,7 +150,10 @@ export default function Search() {
         }
       }
     };
-    const handleOpenRequest = () => setIsOpen(true);
+    const handleOpenRequest = () => {
+      rememberOpener();
+      setIsOpen(true);
+    };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener(OPEN_SEARCH_EVENT, handleOpenRequest);
     return () => {

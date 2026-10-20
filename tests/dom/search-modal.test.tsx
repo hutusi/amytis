@@ -105,8 +105,19 @@ describe('Search modal', () => {
   test('other components can open it through openSearch() (e.g. the 404 page)', async () => {
     renderSearch();
     expect(screen.queryByRole('dialog')).toBeNull();
-    act(() => openSearch());
-    expect(await screen.findByRole('dialog', { name: 'Search' })).toBeTruthy();
+    const opener = document.createElement('button');
+    opener.textContent = 'Search the site';
+    document.body.appendChild(opener);
+    try {
+      opener.focus();
+      act(() => openSearch());
+      const input = await screen.findByRole('combobox', { name: 'Search' });
+      // Closing returns to the component's own button, not the navbar trigger.
+      fireEvent.keyDown(input, { key: 'Escape' });
+      expect(document.activeElement).toBe(opener);
+    } finally {
+      opener.remove();
+    }
   });
 
   test('Escape works immediately after opening (focus moves in synchronously)', () => {
