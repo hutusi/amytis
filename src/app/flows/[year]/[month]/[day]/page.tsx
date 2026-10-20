@@ -15,6 +15,7 @@ import { resolveCommentable } from '@/lib/comments';
 import { buildArticleMetadata } from '@/lib/metadata';
 import { withTrailingSlash } from '@/lib/urls';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { t } = getTranslator(DEFAULT_LOCALE);
@@ -62,30 +63,25 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
   const backlinks = getBacklinks(flow.slug);
   const flowUrl = `${siteConfig.baseUrl}/flows/${year}/${month}/${day}`;
 
-  const breadcrumb = (
-    <nav aria-label={t('breadcrumb')} className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
-      <Link href="/flows" className="hover:text-accent no-underline shrink-0">
-        {t('all_flows')}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <Link href={`/flows/${year}`} className="hover:text-accent no-underline shrink-0">
-        {year}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <Link href={`/flows/${year}/${month}`} className="hover:text-accent no-underline shrink-0">
-        {month}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <span className="text-foreground shrink-0">{day}</span>
-    </nav>
-  );
+  const trail = [
+    { label: t('all_flows'), href: '/flows' },
+    { label: year, href: `/flows/${year}` },
+    { label: month, href: `/flows/${year}/${month}` },
+    { label: day },
+  ];
 
   return (
     <div className="layout-main">
       <div className="flex gap-10">
-        <FlowCalendarSidebar entryDates={entryDates} currentDate={flow.date} breadcrumb={breadcrumb} />
+        <FlowCalendarSidebar
+          entryDates={entryDates}
+          currentDate={flow.date}
+          breadcrumb={<Breadcrumbs items={trail} locale={DEFAULT_LOCALE} />}
+        />
 
         <article className="flex-1 min-w-0">
+          {/* The calendar sidebar (and its trail) is desktop-only. */}
+          <Breadcrumbs items={trail} locale={DEFAULT_LOCALE} className="mb-6 lg:hidden" />
           {/* Header */}
           <header data-pagefind-body data-pagefind-filter="type:Flow" className="mb-8">
             <time className="text-base font-mono text-accent" dateTime={flow.date} data-pagefind-meta="date[datetime]">{flow.date}</time>

@@ -223,6 +223,28 @@ test.describe('Mobile Compatibility', () => {
     });
   });
 
+  // ── Breadcrumbs ────────────────────────────────────────────────────────────
+  test.describe('Breadcrumbs', () => {
+    // Notes with a sidebar and flow days keep their desktop trail in a
+    // sidebar that is hidden below lg; phones get a copy above the article.
+    for (const path of [
+      `/${getPostsBasePath()}/kitchen-sink`,
+      '/books/sample-book/setup',
+      '/notes/tailwind-v4',
+      '/flows/2026/02/10',
+    ]) {
+      test(`a trail is visible on ${path}`, async ({ page }) => {
+        if (!isPhone(page)) test.skip();
+
+        await page.goto(path, { waitUntil: 'domcontentloaded' });
+        const trail = page.getByRole('navigation', { name: 'Breadcrumb' });
+        await expect(trail).toHaveCount(1);
+        await expect(trail).toBeVisible();
+        await expect(trail.locator('[aria-current="page"]')).toHaveCount(1);
+      });
+    }
+  });
+
   // ── Post sidebar / TOC ─────────────────────────────────────────────────────
   test.describe('Post sidebar and TOC', () => {
     test('post sidebar is hidden on mobile and tablet viewports', async ({ page }) => {

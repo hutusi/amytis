@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smaller Client Bundles**: Footer/Hero/PageHeader and the homepage sections became Server Components via new `T`/`TLocale`/`TLabel` translation leaves; d3 is deferred out of the `/graph` initial chunk; KaTeX CSS no longer ships with math-free articles; the serif font ships as WOFF2 (~209 KB saved).
 
 ### Fixed
+- **Breadcrumbs on Phones**: note pages with a sidebar and flow day pages only showed their breadcrumb in a desktop-only sidebar; phones now get it above the article.
 - **Inline Code on a Theme Opposite the OS**: `dark:` utilities followed the OS color scheme while the theme tokens follow the site toggle, so inline code turned white on the light theme under a dark OS (and near-black on the dark theme under a light one). They now follow the toggle; the immersive reader's light and sepia themes stay light on a dark site.
 - **Canonical URLs for Crawlers**: sitemap entries, RSS/Atom item links/guids, JSON-LD, and canonical alternates now use the trailing-slash form the static export actually serves (feed guids change once as a result).
 - **OpenGraph Images on Prefixed Post Routes**: were emitted site-relative (rejected by OG consumers); now absolute.
