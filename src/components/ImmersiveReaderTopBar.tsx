@@ -35,7 +35,7 @@ export default function ImmersiveReaderTopBar({
       // above those, so the Aa popover (which renders inside the header and
       // visually overflows down into the article area) stays on top and
       // clickable when it overlaps a code block.
-      className="relative z-30 h-12 flex items-center gap-3 px-3 border-b border-line bg-background/95 backdrop-blur-md shrink-0 select-none"
+      className="relative z-30 h-12 flex items-center gap-3 px-3 border-b border-line bg-background/95 backdrop-blur-md shrink-0 select-none print:hidden"
     >
       <button
         type="button"

@@ -37,7 +37,7 @@ export default function CodeBlockToolbar({ code }: CodeBlockToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 print:hidden">
       <button
         ref={buttonRef}
         onClick={handleToggleWrap}

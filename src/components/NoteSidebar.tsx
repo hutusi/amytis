@@ -19,7 +19,7 @@ export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }
   const { t } = useLanguage();
 
   return (
-    <aside className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin">
+    <aside className="hidden lg:block print:hidden sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin">
       {breadcrumb && <div className="mb-4">{breadcrumb}</div>}
       {/* TOC */}
       {showToc && (

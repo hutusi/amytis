@@ -48,7 +48,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
       <Breadcrumbs items={trail} locale={locale} className={showSidebar ? 'mb-6 lg:hidden' : 'mb-6'} />
 
       <div className={showSidebar
-        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block'
         : 'max-w-3xl mx-auto'
       }>
         {showSidebar && (
@@ -94,7 +94,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           )}
 
           {/* Prev/Next navigation */}
-          <nav aria-label={t('note_navigation')} className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
+          <nav aria-label={t('note_navigation')} className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4 print:hidden">
             {prev ? (
               <Link href={localizeUrl(getNoteUrl(prev.slug), locale)} className="group text-left no-underline">
                 <span className="text-xs text-muted">{t('older')}</span>

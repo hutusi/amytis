@@ -249,6 +249,13 @@ Heading anchors: `src/lib/rehype-heading-anchors.ts` runs last in `MarkdownRende
 - rST path: `scripts/render-rst.py` rewrites every `literal_block` into a `<pre data-amytis-code …>` marker carrying option attributes (`data-language`, `data-line-numbers`, `data-highlight-lines`, `data-title`); `src/lib/shiki-rst.ts` walks the rendered HTML inside `RstRenderer` (async server component) and replaces each marker with Shiki output. The fallback rST parser routes through `rstToMarkdown` and lands in the MDX path — single highlighter, single source of truth.
 - Cache: `RST_RENDERER_DISK_CACHE_VERSION` in `src/lib/rst-renderer.ts` must be bumped whenever the docutils output shape or Shiki theme changes, otherwise stale cached entries in `.cache/rst-renderer/` keep rendering with the old markup.
 
+## Theme and Print
+
+- Theme tokens are CSS custom properties: `:root` (light), `.dark` (next-themes puts the class on `<html>`) and `[data-palette=…]` accents, mapped to Tailwind colors in `@theme inline`. The `dark:` variant is a custom variant keyed off the same `.dark` class (Tailwind's default would follow the OS instead and split from the tokens), excluding the immersive reader's light and sepia subtrees.
+- **Print is always light.** Every dark-only rule (tokens, palette variants, Shiki colors and line tints, card and alert overrides, the dark reading theme) and the `dark:` variant itself sit inside `@media screen`, so paper gets the light values with no duplicated tokens. `tests/tooling/print-css.test.ts` scans the stylesheet and fails on a dark rule outside `@media screen`.
+- The `@media print` block at the end of `globals.css` forces `color-scheme: light` (next-themes writes `dark` inline), releases the inline scroll locks of the immersive reader and the lightbox, hides the navbar/footer/progress hooks, prints code with its light theme and wrapped lines, and appends the address after external links marked `data-print-url="true"` (`src/lib/print-urls.ts`, in `MarkdownRenderer` and the post-sanitize rST pass; not autolinks, image links or internal links). Other chrome carries `print:hidden` on its root (`tests/tooling/print-chrome.test.ts` lists it), the sidebar grids `print:block`, and the immersive overlay `print:static`/`print:block` so it flows onto pages.
+- Known limits: Mermaid SVGs keep the on-screen theme's colors, code groups print only the active tab, closed `<details>` stay closed, and backgrounds print only if the reader enables them.
+
 ## rST Notes
 
 - Full-fidelity rST rendering depends on a Python environment with `docutils` (and ideally `pygments`) available.

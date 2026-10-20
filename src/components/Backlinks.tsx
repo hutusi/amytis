@@ -13,7 +13,7 @@ export default function Backlinks({ backlinks, locale }: BacklinksProps) {
   if (!backlinks.length) return null;
 
   return (
-    <div className="mt-12 pt-12 border-t border-line">
+    <div className="mt-12 pt-12 border-t border-line print:hidden">
       <h3 className="text-sm font-sans font-semibold uppercase tracking-widest text-muted mb-4">
         {t('backlinks')}
       </h3>

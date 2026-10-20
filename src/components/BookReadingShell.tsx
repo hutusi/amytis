@@ -119,7 +119,7 @@ export default function BookReadingShell({
   return (
     <div className="layout-container">
       <ReadingProgressBar />
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block">
         <BookSidebar
           bookSlug={book.slug}
           bookTitle={book.title}
@@ -131,7 +131,7 @@ export default function BookReadingShell({
 
         <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
           {breadcrumbs}
-          <div className="lg:hidden mb-8">
+          <div className="lg:hidden mb-8 print:hidden">
             <BookMobileNav
               bookSlug={book.slug}
               bookTitle={book.title}

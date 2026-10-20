@@ -57,7 +57,7 @@ export default function BrowserDetectionBanner({ updateUrl }: { updateUrl?: stri
   return (
     <div
       role="alert"
-      className="bg-amber-100 dark:bg-amber-900/40 border-b border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 px-4 py-2.5 flex items-center justify-center gap-3 text-sm"
+      className="print:hidden bg-amber-100 dark:bg-amber-900/40 border-b border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 px-4 py-2.5 flex items-center justify-center gap-3 text-sm"
     >
       <svg
         className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"

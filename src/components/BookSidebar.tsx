@@ -247,8 +247,8 @@ export default function BookSidebar({ bookSlug, bookTitle, toc, chapters, curren
       ref={sidebarRef}
       className={
         mode === 'fill'
-          ? 'block w-full h-full overflow-y-auto px-4 py-6 scrollbar-hide hover:scrollbar-thin'
-          : 'hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin'
+          ? 'block print:hidden w-full h-full overflow-y-auto px-4 py-6 scrollbar-hide hover:scrollbar-thin'
+          : 'hidden lg:block print:hidden sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin'
       }
     >
       {/* Book Header */}

@@ -189,7 +189,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
       <div className="layout-container">
         <ReadingProgressBar />
         <div className={showSidebar
-          ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+          ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block'
           : 'max-w-6xl mx-auto'
         }>
           {/* Left sidebar: series nav + page TOC */}
@@ -221,7 +221,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
             {articleHeader}
 
             {(hasSeries || (collectionContexts && collectionContexts.length > 0)) && (
-              <div className="lg:hidden mb-12">
+              <div className="lg:hidden mb-12 print:hidden">
                 <Suspense fallback={<SeriesListView {...sidebarProps} collectionParam={null} />}>
                   <SeriesList {...sidebarProps} />
                 </Suspense>

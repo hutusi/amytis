@@ -24,6 +24,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRawHeadingIds from '@/lib/rehype-heading-ids';
 import rehypeHeadingAnchors, { HEADING_ANCHOR_CLASS } from '@/lib/rehype-heading-anchors';
 import rehypeZoomableImages from '@/lib/rehype-zoomable-images';
+import rehypePrintLinkUrls from '@/lib/print-urls';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
@@ -144,8 +145,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   if (headingAnchors) {
     rehypePlugins.push([rehypeHeadingAnchors, { label: t('heading_anchor') }]);
   }
-  // Marks images the ImageZoom lightbox may open (not linked or styled ones).
-  rehypePlugins.push(rehypeZoomableImages);
+  // Marks images the ImageZoom lightbox may open (not linked or styled ones),
+  // and external links whose address the print stylesheet appends.
+  rehypePlugins.push(rehypeZoomableImages, rehypePrintLinkUrls);
 
   const components: Components = {
     // No `p` override: paragraphs take PROSE_CLASSES' styling exactly like

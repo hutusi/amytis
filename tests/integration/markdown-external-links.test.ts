@@ -101,3 +101,18 @@ describe('Integration: external-link icon in MarkdownRenderer', () => {
     expect(html).not.toMatch(/<img[^>]*>\s*<svg/);
   });
 });
+
+describe('Integration: printed link addresses', () => {
+  const printed = (html: string) => [...html.matchAll(/<a [^>]*data-print-url="true"[^>]*href="([^"]+)"|<a [^>]*href="([^"]+)"[^>]*data-print-url="true"/g)].map((m) => m[1] ?? m[2]);
+
+  test('external links with their own text are marked; autolinks, images and internal links are not', async () => {
+    const content = [
+      'Read [the spec](https://example.org/spec).',
+      'Or visit https://example.org/raw directly.',
+      '[![logo](/logo.png)](https://example.org/logo)',
+      'See [a post](/posts/hello/).',
+    ].join('\n\n');
+    const html = await renderAsync(MarkdownRenderer({ content }));
+    expect(printed(html)).toEqual(['https://example.org/spec']);
+  });
+});

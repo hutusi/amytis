@@ -29,7 +29,7 @@ export default function PrevNextNav({ prev, next, size = 'sm' }: PrevNextNavProp
   // default min-width (its content width) otherwise pushed the Next link
   // past the card edge on phones.
   return (
-    <div className={`flex ${isLg ? 'gap-4' : 'gap-3'}`}>
+    <div className={`flex print:hidden ${isLg ? 'gap-4' : 'gap-3'}`}>
       {prev ? (
         <Link
           href={prev.href}

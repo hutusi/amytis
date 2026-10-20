@@ -13,7 +13,8 @@ describe('theme palettes', () => {
 
   test.each(PALETTES)('the %s palette has light and dark (incl. overlay) variants', (palette) => {
     expect(css).toContain(`[data-palette="${palette}"] {`);
-    expect(css).toContain(`[data-palette="${palette}"].dark,\n[data-palette="${palette}"] .dark {`);
+    // Indented: dark rules sit inside @media screen (see print-css.test.ts).
+    expect(css).toMatch(new RegExp(`\\[data-palette="${palette}"\\]\\.dark,\\n\\s*\\[data-palette="${palette}"\\] \\.dark \\{`));
   });
 
   test('no dark palette rule requires .dark and data-palette on the same element only', () => {
@@ -23,8 +24,8 @@ describe('theme palettes', () => {
   test('dark: utilities follow the .dark class, not the OS color scheme', () => {
     // Without this, dark:prose-invert keys off prefers-color-scheme while the
     // tokens key off .dark, and inline code turns unreadable when they differ.
-    const variant = css.match(/@custom-variant dark \((.*)\);/)?.[1] ?? '';
-    expect(variant).toStartWith('&:where(.dark, .dark *)');
+    const variant = css.match(/@custom-variant dark \{[\s\S]*?@slot;/)?.[0] ?? '';
+    expect(variant).toContain('&:where(.dark, .dark *)');
     // The immersive reader's light themes stay light on a dark site.
     for (const theme of ['light', 'sepia']) {
       expect(variant).toContain(`[data-reader-overlay="true"][data-reading-theme="${theme}"] *`);
@@ -62,7 +63,7 @@ const themes = [
   { name: 'dark', base: { ...light, ...dark }, accent: dark['--accent'] },
   ...PALETTES.flatMap((p) => [
     { name: `${p} light`, base: light, accent: tokens(`[data-palette="${p}"]`)['--accent'] },
-    { name: `${p} dark`, base: { ...light, ...dark }, accent: tokens(`[data-palette="${p}"].dark,\n[data-palette="${p}"] .dark`)['--accent'] },
+    { name: `${p} dark`, base: { ...light, ...dark }, accent: tokens(`[data-palette="${p}"].dark,\n  [data-palette="${p}"] .dark`)['--accent'] },
   ]),
 ];
 
