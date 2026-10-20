@@ -1,10 +1,17 @@
-import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { normalizeRstMetadata, RstParseError, type RstMetadata } from './rst-metadata';
 import { calculateReadingMinutesFromText, calculateWordCountFromText } from './text-metrics';
+
+// Not imported: Turbopack traces the executable of an imported spawnSync as a
+// file, and the configurable Python command (AMYTIS_RST_PYTHON, `py -3`) is
+// not a literal, so every route that reaches this module traced the whole
+// project ("Encountered unexpected file in NFT list"). turbopackIgnore has no
+// effect on spawn calls; one fetched at runtime is opaque to the tracer.
+// Node 20.16+ / 22.3+, and Bun.
+const { spawnSync } = process.getBuiltinModule('node:child_process');
 
 export interface PythonRstHeading {
   id: string;
