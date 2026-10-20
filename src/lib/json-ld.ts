@@ -90,8 +90,12 @@ export function resolveImageUrl(
   defaultOgImage: string,
   siteUrl: string,
 ): string {
-  const toAbsolute = (url: string) =>
-    url.startsWith('http') ? url : `${siteUrl}${url.startsWith('/') ? url : `/${url}`}`;
+  const toAbsolute = (url: string) => {
+    if (url.startsWith('http')) return url;
+    // Protocol-relative CDN URL: not a site path.
+    if (url.startsWith('//')) return `https:${url}`;
+    return `${siteUrl}${url.startsWith('/') ? url : `/${url}`}`;
+  };
 
   if (coverImage && !coverImage.startsWith('text:') && !coverImage.startsWith('./')) {
     return toAbsolute(coverImage);

@@ -37,6 +37,11 @@ describe('resolveImageUrl', () => {
     );
   });
 
+  test('treats protocol-relative URLs as external (https), not as site paths', () => {
+    expect(resolveImageUrl('//cdn.example.org/a.jpg', DEFAULT_OG, SITE_URL)).toBe('https://cdn.example.org/a.jpg');
+    expect(resolveImageUrl(undefined, '//cdn.example.org/og.png', SITE_URL)).toBe('https://cdn.example.org/og.png');
+  });
+
   test('prefixes site-relative paths with the site URL', () => {
     expect(resolveImageUrl('/books/x/cover.jpg', DEFAULT_OG, SITE_URL)).toBe(
       `${SITE_URL}/books/x/cover.jpg`

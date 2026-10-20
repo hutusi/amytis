@@ -443,6 +443,47 @@ function processFlows() {
   }
 }
 
+interface SiteAssetConfig {
+  ogImage?: string;
+  logo?: { src?: string; favicon?: string };
+}
+
+/**
+ * Site-level assets that site.config.ts references by path — the default
+ * social image, the navbar logo, the favicon — must exist, or every share
+ * card (og:image, twitter:image, JSON-LD, the RSS <image>) or the tab icon
+ * breaks on every page without any build error. copy-assets runs first in
+ * every build script, so the check fails the build up front. Absolute and
+ * protocol-relative URLs are hosted elsewhere and not checked. A favicon may
+ * also be one of Next's app-directory icon files (src/app/favicon.ico).
+ */
+export function assertSiteAssetsExist(
+  config: SiteAssetConfig,
+  root: string = process.cwd(),
+): void {
+  const refs: Array<[field: string, value: string | undefined, appDirFallback: boolean]> = [
+    ['ogImage', config.ogImage, false],
+    ['logo.src', config.logo?.src, false],
+    ['logo.favicon', config.logo?.favicon, true],
+  ];
+  const missing: string[] = [];
+  for (const [field, value, appDirFallback] of refs) {
+    if (!value || !value.startsWith('/') || value.startsWith('//')) continue;
+    const relative = value.slice(1).split(/[?#]/)[0];
+    const candidates = [path.join(root, 'public', relative)];
+    if (appDirFallback) candidates.push(path.join(root, 'src', 'app', relative));
+    if (!candidates.some((candidate) => fs.existsSync(candidate))) {
+      missing.push(`  ${field}: "${value}" → expected public/${relative}`);
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `[copy-assets] site.config.ts references site assets that do not exist:\n${missing.join('\n')}\n` +
+      `Add the file(s), point the field at an existing file, or use an absolute URL.`
+    );
+  }
+}
+
 // Exported for unit tests (the collision guard is pure). Clears the claim map
 // so tests start from a known state.
 export function resetAssetClaims() {
@@ -453,6 +494,7 @@ export { claimAssetDir };
 // Only run the copy when invoked as a script — importing the module (e.g. from
 // a test) must not touch the filesystem.
 if (import.meta.main) {
+  assertSiteAssetsExist(siteConfig);
   console.log('Copying assets...');
   resetGeneratedAssetDirs();
   processPosts();

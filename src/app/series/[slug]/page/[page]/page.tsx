@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../../../site.config';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
-import { getSeriesListUrl, localizeUrl, withTrailingSlash } from '@/lib/urls';
+import { getSeriesListUrl, localizeUrl } from '@/lib/urls';
 import SeriesLandingBody from '@/components/page-bodies/SeriesLandingBody';
 import RedirectPage from '@/components/RedirectPage';
 import { seriesPageParams, resolveSeriesParam } from '@/lib/route-aliases';
+import { buildRedirectMetadata } from '@/lib/metadata';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { tWith } = getTranslator(DEFAULT_LOCALE);
@@ -23,11 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug: rawSlug, page } = await params;
   const resolution = resolveSeriesParam(rawSlug);
   if (resolution.kind === 'alias') {
-    const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
-    return {
+    // Same target the page body redirects to (localized like the alias).
+    return buildRedirectMetadata({
       title: resolution.data.title,
-      alternates: { canonical: withTrailingSlash(`${siteUrl}${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}`) },
-    };
+      to: localizeUrl(`${getSeriesListUrl()}/${resolution.canonicalSlug}/page/${page}`, resolution.data.locale),
+    });
   }
   const slug = resolution.slug;
 

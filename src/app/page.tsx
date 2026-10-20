@@ -14,6 +14,7 @@ import RecentNotesSection, { RecentNoteItem } from '@/components/RecentNotesSect
 import { Metadata } from 'next';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { buildWebsiteJsonLd, serializeJsonLd } from '@/lib/json-ld';
+import { siteTwitterHandles } from '@/lib/metadata';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { t } = getTranslator(DEFAULT_LOCALE);
@@ -33,6 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE),
     description: resolveLocaleValue(siteConfig.description, DEFAULT_LOCALE),
+    ...siteTwitterHandles(),
   },
 };
 

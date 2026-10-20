@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { isFeatureEnabled } from '@/lib/features';
 import localFont from "next/font/local";
 import Navbar from "@/components/Navbar";
@@ -15,6 +15,7 @@ import { getTwinnedPathManifest } from "@/lib/locale-routes";
 import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import { getAllBooks } from '@/lib/content/books';
 import { resolveLocaleValue } from "@/lib/i18n";
+import { siteTwitterHandles, withSiteAlternates } from "@/lib/metadata";
 import "./globals.css";
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
@@ -58,12 +59,6 @@ const baskerville = localFont({
   display: "swap",
 });
 
-const siteTwitterHandle = (() => {
-  const url = siteConfig.social?.twitter ?? '';
-  const m = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
-  return m ? `@${m[1]}` : undefined;
-})();
-
 // Build icon metadata with explicit MIME type so browsers correctly handle
 // all formats. Without this, .ico files served via the metadata API lack
 // type="image/x-icon" and may be ignored in favour of app/favicon.ico.
@@ -75,22 +70,17 @@ const faviconMeta =
   ext === 'svg' ? [{ url: faviconSrc, type: 'image/svg+xml' }] :
   faviconSrc;
 
-const feedAlternates = (() => {
-  const { format } = siteConfig.feed;
-  const types: Record<string, string> = {};
-  if (format === 'rss' || format === 'both') types['application/rss+xml'] = '/feed.xml';
-  if (format === 'atom' || format === 'both') types['application/atom+xml'] = '/feed.atom';
-  return Object.keys(types).length > 0 ? { types } : undefined;
-})();
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.baseUrl),
   title: resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE),
   description: resolveLocaleValue(siteConfig.description, DEFAULT_LOCALE),
   icons: {
     icon: faviconMeta,
+    // iOS home-screen icon (also fetched from this conventional path when a
+    // page omits the link).
+    apple: '/apple-touch-icon.png',
   },
-  ...(feedAlternates && { alternates: feedAlternates }),
+  alternates: withSiteAlternates(),
   openGraph: {
     siteName: resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE),
     locale: siteConfig.i18n.defaultLocale,
@@ -99,9 +89,19 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    site: siteTwitterHandle,
-    creator: siteTwitterHandle,
+    ...siteTwitterHandles(),
   },
+};
+
+// Browser chrome (mobile address bar, PWA title bar) matches the paper
+// background in each scheme; colorScheme lets form controls and scrollbars
+// pick the right defaults before next-themes stamps the explicit scheme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fafaf9' },
+    { media: '(prefers-color-scheme: dark)', color: '#292524' },
+  ],
+  colorScheme: 'light dark',
 };
 
 export default function RootLayout({

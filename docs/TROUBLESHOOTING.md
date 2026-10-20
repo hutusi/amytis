@@ -20,6 +20,12 @@ The messages come from **browser extensions** (e.g. uBlock Origin, Privacy Badge
 
 **To verify:** Open `http://localhost:3000` in a Chrome Incognito window with extensions disabled — both messages will be gone.
 
+## Build fails with "site.config.ts references site assets that do not exist"
+
+`scripts/copy-assets.ts` (the first step of every build script) checks that the site-relative paths in `ogImage`, `logo.src` and `logo.favicon` exist under `public/` (the favicon may also be an app-directory icon such as `src/app/favicon.ico`). A missing file would otherwise break every social share card (og:image, twitter:image, JSON-LD, the RSS `<image>`) or the tab icon on every page with no build error.
+
+Fix: add the file, point the field at an existing file, or use an absolute URL (hosted assets are not checked). A default 1200×630 `public/og-image.png` ships with the template — replace it with your own artwork rather than deleting it.
+
 ## AVIF/WebP source images bypass the optimizer (served as-is)
 
 **Related upstream issue:** [Niels-IO/next-image-export-optimizer#263](https://github.com/Niels-IO/next-image-export-optimizer/issues/263)

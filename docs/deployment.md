@@ -130,6 +130,14 @@ const nextConfig: NextConfig = {
 
 ---
 
+## Deploy to Vercel
+
+The repo ships a `vercel.json` for the static export:
+
+- `"framework": null` — deploy `out/` as plain static files (the Next.js preset expects a server build and fails on the missing `routes-manifest.json`).
+- `"trailingSlash": true` — bare `/slug` requests 308 to `/slug/`, the canonical form every canonical link, sitemap entry and hreflang uses (files such as `/feed.xml` are not redirected).
+- `headers` — `/_next/static/*` is content-hashed, so it is served `immutable` for a year; `/pagefind/*` is rebuilt every deploy and gets a one-hour TTL. Without these rules, static deployments serve everything with `max-age=0, must-revalidate`, so every page load revalidates every script, stylesheet and font.
+
 ## Deploy to a Linux Server
 
 ### Prerequisites
@@ -184,8 +192,10 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    # Cache post images and optimized images
-    location /posts/ {
+    # Cache co-located content images (and their optimized variants).
+    # Match file extensions only: a bare `location /posts/` would also cache
+    # the post HTML pages for 30 days, hiding edits from returning readers.
+    location ~* ^/(posts|books|flows)/.+\.(png|jpe?g|gif|webp|avif|svg)$ {
         expires 30d;
         add_header Cache-Control "public";
     }
@@ -195,8 +205,8 @@ server {
         add_header Cache-Control "public, max-age=3600";
     }
 
-    # trailingSlash is true, so pages are slug/index.html
-    # Redirect URLs without trailing slash to add one (except files)
+    # trailingSlash is true, so pages are slug/index.html and canonical URLs
+    # end in '/'. `$uri/` serves /slug/ and 301s a bare /slug to /slug/.
     location / {
         try_files $uri $uri/ =404;
     }
@@ -230,7 +240,8 @@ yourdomain.com {
     @static path /_next/static/*
     header @static Cache-Control "public, max-age=31536000, immutable"
 
-    @postassets path /posts/*
+    # Images only — `path /posts/*` would also cache post HTML for 30 days.
+    @postassets path_regexp ^/(posts|books|flows)/.+\.(png|jpe?g|gif|webp|avif|svg)$
     header @postassets Cache-Control "public, max-age=2592000"
 
     @pagefind path /pagefind/*

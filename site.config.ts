@@ -34,7 +34,7 @@ export const siteConfig = {
   },
   description: { en: "Amytis — an elegant open-source framework for building your personal digital garden.", zh: "Amytis — 优雅的开源数字花园框架。" },
   baseUrl: "https://amytis.vercel.app", // Replace with your actual domain
-  ogImage: "/og-image.png", // Default OG/social preview image — place a 1200×630 PNG at public/og-image.png
+  ogImage: "/og-image.png", // Default OG/social preview image (1200×630 PNG). A default ships in public/ — replace it with your own; a missing site-relative file fails the build
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
 
   // ── i18n ──────────────────────────────────────────────────────────────────

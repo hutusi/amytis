@@ -1,7 +1,8 @@
 import { describe, expect, test, mock } from 'bun:test';
 import sitemap from '@/app/sitemap';
-import { getAllPosts } from '@/lib/content/posts';
-import { getAllNotes } from '@/lib/content/notes';
+import { getAllPosts, getPostsWithLocaleOriginals } from '@/lib/content/posts';
+import { getAllNotes, getNotesWithLocaleOriginals } from '@/lib/content/notes';
+import { getAllFlows } from '@/lib/content/flows';
 import * as realSeriesNs from '@/lib/content/series';
 import { getAllSeries } from '@/lib/content/series';
 
@@ -9,7 +10,8 @@ import { getAllSeries } from '@/lib/content/series';
 const realSeriesModule = { ...realSeriesNs };
 import { getAllAuthors, getAuthorSlug } from '@/lib/content/authors';
 import { getAllTags } from '@/lib/content/discovery';
-import { getPostUrl, getNoteUrl, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
+import { getPostUrl, getNoteUrl, getPostsBasePath, getSeriesUrl, withTrailingSlash } from '@/lib/urls';
+import { seriesListingPrefixes } from '@/lib/locale-routes';
 import { siteConfig } from '../../site.config';
 
 // The sitemap reads real content, so these tests assert invariants that must
@@ -62,10 +64,41 @@ describe('Integration: sitemap', () => {
     }
   });
 
+  // Sitemap URLs are RFC 3986: Unicode slugs are percent-encoded.
+  const sitemapUrl = (path: string) => new URL(withTrailingSlash(`${baseUrl}${path}`)).href;
+
   test('includes every post at its canonical URL', () => {
     const urlSet = new Set(urls);
     for (const post of getAllPosts()) {
-      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getPostUrl(post)}`))).toBe(true);
+      expect(urlSet.has(sitemapUrl(getPostUrl(post)))).toBe(true);
+    }
+  });
+
+  test('every URL is ASCII (percent-encoded), including hreflang alternates', () => {
+    for (const entry of entries) {
+      expect(entry.url).toMatch(/^[\x21-\x7e]+$/);
+      for (const href of Object.values(entry.alternates?.languages ?? {})) {
+        expect(String(href)).toMatch(/^[\x21-\x7e]+$/);
+      }
+    }
+  });
+
+  test('includes the default posts listing and series prefix listings', () => {
+    expect(urls).toContain(sitemapUrl(`/${getPostsBasePath()}`));
+    for (const { prefix } of seriesListingPrefixes(siteConfig.i18n.defaultLocale)) {
+      expect(urls).toContain(sitemapUrl(`/${prefix}`));
+    }
+  });
+
+  test('listings carry the newest listed content date, never the build time', () => {
+    const newestPost = getAllPosts().map((p) => p.date).sort().at(-1);
+    const byUrl = new Map(entries.map((e) => [e.url, e.lastModified]));
+    expect(byUrl.get(sitemapUrl(`/${getPostsBasePath()}`))).toBe(newestPost);
+    expect(byUrl.get(sitemapUrl('/archive'))).toBe(newestPost);
+    for (const entry of entries) {
+      // Content dates are calendar days ('YYYY-MM-DD'); a Date object or a
+      // full timestamp would mean a build-time stamp crept back in.
+      if (entry.lastModified != null) expect(String(entry.lastModified)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
   });
 
@@ -78,16 +111,16 @@ describe('Integration: sitemap', () => {
   test('includes every note, series, author-slug, and tag exactly once', () => {
     const urlSet = new Set(urls);
     for (const note of getAllNotes()) {
-      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getNoteUrl(note.slug)}`))).toBe(true);
+      expect(urlSet.has(sitemapUrl(getNoteUrl(note.slug)))).toBe(true);
     }
     for (const slug of Object.keys(getAllSeries())) {
-      expect(urlSet.has(withTrailingSlash(`${baseUrl}${getSeriesUrl(slug)}`))).toBe(true);
+      expect(urlSet.has(sitemapUrl(getSeriesUrl(slug)))).toBe(true);
     }
     for (const name of Object.keys(getAllAuthors())) {
-      expect(urlSet.has(withTrailingSlash(`${baseUrl}/authors/${getAuthorSlug(name)}`))).toBe(true);
+      expect(urlSet.has(sitemapUrl(`/authors/${getAuthorSlug(name)}`))).toBe(true);
     }
     for (const tag of Object.keys(getAllTags())) {
-      expect(urlSet.has(withTrailingSlash(`${baseUrl}/tags/${encodeURIComponent(tag.toLowerCase())}`))).toBe(true);
+      expect(urlSet.has(sitemapUrl(`/tags/${encodeURIComponent(tag.toLowerCase())}`))).toBe(true);
     }
   });
 
@@ -140,6 +173,55 @@ describe('Integration: sitemap — empty series', () => {
       for (const e of entries) expect(e.lastModified).not.toBe('');
     } finally {
       mock.module('@/lib/content/series', () => realSeriesModule);
+    }
+  });
+});
+
+describe('Integration: sitemap — flow feature disabled', () => {
+  // Scope: this pins the per-tag lastModified gating in sitemap.ts. The tag
+  // SET comes from getAllTags(), which is memoized per environment with no
+  // reset API (content/cache.ts, by design), so a flow-enabled call earlier
+  // in this process can leave flow/note-only tags in it; its own feature
+  // gate is getAllTags' concern, not this route's.
+  test('tag lastModified comes only from posts when flows and notes are off', async () => {
+    const features = await import('@/lib/features');
+    const realFeatures = { ...features };
+    mock.module('@/lib/features', () => ({
+      ...realFeatures,
+      isFeatureEnabled: (feature: string) => feature !== 'flow' && realFeatures.isFeatureEnabled(feature as never),
+    }));
+    try {
+      const entries = sitemap();
+      const newestByTag = (items: { tags?: string[]; date: string }[]) => {
+        const dates = new Map<string, string>();
+        for (const item of items) {
+          for (const tag of item.tags ?? []) {
+            const key = tag.toLowerCase();
+            if ((dates.get(key) ?? '') < item.date) dates.set(key, item.date);
+          }
+        }
+        return dates;
+      };
+      const postDatesByTag = newestByTag(getPostsWithLocaleOriginals());
+      const flowAndNoteDates = newestByTag([...getAllFlows(), ...getNotesWithLocaleOriginals()]);
+
+      // Non-vacuous: some post tag must also carry newer flow/note content,
+      // or this test would pass without exercising the gate at all.
+      const gatedTags = [...postDatesByTag].filter(([tag, date]) => (flowAndNoteDates.get(tag) ?? '') > date);
+      expect(gatedTags.length).toBeGreaterThan(0);
+
+      const tagPrefix = `${siteConfig.baseUrl.replace(/\/+$/, '')}/tags/`;
+      const tagEntries = entries.filter((e) => e.url.startsWith(tagPrefix) && e.url !== tagPrefix);
+      const emitted = tagEntries.map((e) => decodeURIComponent(e.url.slice(tagPrefix.length).replace(/\/$/, '')));
+      // The route emits exactly getAllTags()' tags (see scope note above).
+      expect([...emitted].sort()).toEqual(Object.keys(getAllTags()).map((t) => t.toLowerCase()).sort());
+
+      tagEntries.forEach((entry, i) => {
+        const tag = emitted[i];
+        expect({ tag, lastModified: entry.lastModified }).toEqual({ tag, lastModified: postDatesByTag.get(tag) });
+      });
+    } finally {
+      mock.module('@/lib/features', () => realFeatures);
     }
   });
 });
