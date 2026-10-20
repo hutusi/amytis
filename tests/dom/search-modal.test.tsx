@@ -7,7 +7,7 @@ import {
 import { LanguageProvider } from '@/components/LanguageProvider';
 import Search from '@/components/Search';
 import { openSearch } from '@/lib/search-events';
-import { __resetPagefindForTests } from '@/hooks/usePagefind';
+import { __resetPagefindForTests, type PagefindSearch } from '@/hooks/usePagefind';
 
 // Modal focus lifecycle. Pagefind itself is absent in this environment (the
 // dynamic import fails and Search flips to its unavailable state), which is
@@ -208,10 +208,10 @@ describe('Search modal with results', () => {
       init: async () => {},
       destroy: async () => {},
       filters: async () => { filtersLoaded = true; return {}; },
-      search: async (_q: string, options?: { filters?: Record<string, string> }) => {
+      search: async (_q: string, options?: { filters?: Record<string, string> }): Promise<PagefindSearch> => {
         const type = options?.filters?.type;
         const results = type === 'Flow' ? flows : type === 'Post' ? posts : [...posts, ...flows];
-        const counts = type ? { [type]: results.length } : { Post: 12, Flow: 1 };
+        const counts: Record<string, number> = type ? { [type]: results.length } : { Post: 12, Flow: 1 };
         return { results, filters: filtersLoaded ? { type: counts } : {} };
       },
     }));
