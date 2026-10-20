@@ -63,7 +63,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
   // both places (only one of the two trees ever mounts, so it renders once).
   // Includes the immersive toggle when the post is in a series.
   const articleHeader = (
-    <header data-pagefind-body className="mb-16 border-b border-line pb-8">
+    <header data-pagefind-body data-pagefind-filter="type:Post" className="mb-16 border-b border-line pb-8">
       {post.draft && (
         <div className="mb-4">
           <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest uppercase inline-block">
