@@ -1,7 +1,8 @@
 import { describe, expect, test, mock } from 'bun:test';
 import sitemap from '@/app/sitemap';
 import { getAllPosts, getPostsWithLocaleOriginals } from '@/lib/content/posts';
-import { getAllNotes } from '@/lib/content/notes';
+import { getAllNotes, getNotesWithLocaleOriginals } from '@/lib/content/notes';
+import { getAllFlows } from '@/lib/content/flows';
 import * as realSeriesNs from '@/lib/content/series';
 import { getAllSeries } from '@/lib/content/series';
 
@@ -177,6 +178,11 @@ describe('Integration: sitemap — empty series', () => {
 });
 
 describe('Integration: sitemap — flow feature disabled', () => {
+  // Scope: this pins the per-tag lastModified gating in sitemap.ts. The tag
+  // SET comes from getAllTags(), which is memoized per environment with no
+  // reset API (content/cache.ts, by design), so a flow-enabled call earlier
+  // in this process can leave flow/note-only tags in it; its own feature
+  // gate is getAllTags' concern, not this route's.
   test('tag lastModified comes only from posts when flows and notes are off', async () => {
     const features = await import('@/lib/features');
     const realFeatures = { ...features };
@@ -186,18 +192,34 @@ describe('Integration: sitemap — flow feature disabled', () => {
     }));
     try {
       const entries = sitemap();
-      const postDatesByTag = new Map<string, string>();
-      for (const post of getPostsWithLocaleOriginals()) {
-        for (const tag of post.tags) {
-          const key = tag.toLowerCase();
-          if ((postDatesByTag.get(key) ?? '') < post.date) postDatesByTag.set(key, post.date);
+      const newestByTag = (items: { tags?: string[]; date: string }[]) => {
+        const dates = new Map<string, string>();
+        for (const item of items) {
+          for (const tag of item.tags ?? []) {
+            const key = tag.toLowerCase();
+            if ((dates.get(key) ?? '') < item.date) dates.set(key, item.date);
+          }
         }
-      }
+        return dates;
+      };
+      const postDatesByTag = newestByTag(getPostsWithLocaleOriginals());
+      const flowAndNoteDates = newestByTag([...getAllFlows(), ...getNotesWithLocaleOriginals()]);
+
+      // Non-vacuous: some post tag must also carry newer flow/note content,
+      // or this test would pass without exercising the gate at all.
+      const gatedTags = [...postDatesByTag].filter(([tag, date]) => (flowAndNoteDates.get(tag) ?? '') > date);
+      expect(gatedTags.length).toBeGreaterThan(0);
+
       const tagPrefix = `${siteConfig.baseUrl.replace(/\/+$/, '')}/tags/`;
-      for (const entry of entries.filter((e) => e.url.startsWith(tagPrefix) && e.url !== tagPrefix)) {
-        const tag = decodeURIComponent(entry.url.slice(tagPrefix.length).replace(/\/$/, ''));
+      const tagEntries = entries.filter((e) => e.url.startsWith(tagPrefix) && e.url !== tagPrefix);
+      const emitted = tagEntries.map((e) => decodeURIComponent(e.url.slice(tagPrefix.length).replace(/\/$/, '')));
+      // The route emits exactly getAllTags()' tags (see scope note above).
+      expect([...emitted].sort()).toEqual(Object.keys(getAllTags()).map((t) => t.toLowerCase()).sort());
+
+      tagEntries.forEach((entry, i) => {
+        const tag = emitted[i];
         expect({ tag, lastModified: entry.lastModified }).toEqual({ tag, lastModified: postDatesByTag.get(tag) });
-      }
+      });
     } finally {
       mock.module('@/lib/features', () => realFeatures);
     }
