@@ -96,8 +96,8 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   }
 
   // While the menu is open it behaves like a modal panel: body scroll is
-  // locked, the page behind it is inert (Tab can't wander behind the
-  // backdrop), focus moves into the panel, and Escape closes it and returns
+  // locked, the page behind it is inert, Tab cycles within the toggle and
+  // the panel, focus moves into the panel, and Escape closes it and returns
   // focus to the toggle.
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -107,6 +107,22 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
     menuPanelRef.current?.querySelector<HTMLElement>('a[href], button')?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        // Keep Tab inside the open menu: the toggle (so it can be closed)
+        // plus the panel's controls. The page behind is inert, but the
+        // other navbar controls aren't, and focus must not slip out to them.
+        const toggle = menuButtonRef.current;
+        const panel = menuPanelRef.current;
+        if (!toggle || !panel) return;
+        const cycle = [toggle, ...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+        const index = cycle.indexOf(document.activeElement as HTMLElement);
+        const next = index === -1
+          ? (event.shiftKey ? cycle.length - 1 : 0)
+          : (index + (event.shiftKey ? cycle.length - 1 : 1)) % cycle.length;
+        event.preventDefault();
+        cycle[next].focus();
+        return;
+      }
       if (event.key !== 'Escape') return;
       setIsMenuOpen(false);
       setOpenDropdown(null);

@@ -75,4 +75,27 @@ describe('mobile navigation menu', () => {
       window.matchMedia = originalMatchMedia;
     }
   });
+
+  test('Tab and Shift+Tab stay within the toggle and the open panel', () => {
+    render(<Page pathname="/" />);
+    fireEvent.click(toggle());
+    const panel = screen.getByTestId('mobile-nav-panel');
+    const items = [toggle(), ...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+    expect(items.length).toBeGreaterThan(2);
+
+    // From the last panel control, Tab wraps to the toggle instead of the
+    // search/theme buttons that follow in the DOM.
+    items[items.length - 1].focus();
+    fireEvent.keyDown(document.activeElement!, { key: 'Tab' });
+    expect(document.activeElement).toBe(toggle());
+
+    // Shift+Tab from the toggle wraps to the last panel control.
+    fireEvent.keyDown(document.activeElement!, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(items[items.length - 1]);
+
+    // Tab from the toggle enters the panel.
+    toggle().focus();
+    fireEvent.keyDown(document.activeElement!, { key: 'Tab' });
+    expect(panel.contains(document.activeElement)).toBe(true);
+  });
 });
