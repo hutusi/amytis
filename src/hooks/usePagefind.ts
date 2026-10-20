@@ -26,7 +26,7 @@ const DEBOUNCE_MS = 150;
 // neither webpack nor Turbopack tries to bundle /pagefind/pagefind.js at
 // compile time (the file only exists after `pagefind --site out` runs).
 
-interface PagefindFragment {
+export interface PagefindFragment {
   url: string;
   excerpt: string; // contains <mark> tags
   meta: { title?: string; image?: string; date?: string; [key: string]: string | undefined };
@@ -35,25 +35,89 @@ interface PagefindFragment {
 
 interface PagefindAPI {
   init: () => Promise<void>;
+  destroy?: () => Promise<void>;
   search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
 }
 
-let pagefindCache: PagefindAPI | null = null;
+/**
+ * Map a Pagefind fragment to a display result. The date comes from the
+ * page's `date` meta (a `<time datetime>` with data-pagefind-meta) and falls
+ * back to the date encoded in the URL (flows): `||`, not `??`, because a meta
+ * that matched no attribute is indexed as "".
+ */
+export function toDisplayResult(fragment: PagefindFragment): DisplayResult {
+  return {
+    url: fragment.url,
+    title: cleanTitle(fragment.meta.title ?? ''),
+    excerpt: fragment.excerpt,
+    date: fragment.meta.date || getDateFromUrl(fragment.url),
+    type: getResultType(fragment.url),
+  };
+}
+
+const runtimeImport = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
+let importPagefind: () => Promise<PagefindAPI> = () => runtimeImport('/pagefind/pagefind.js');
+
+let pagefindModule: PagefindAPI | null = null;
+let initializedLang: string | null = null;
+let inflight: { lang: string; promise: Promise<PagefindAPI | null> } | null = null;
+// Loads run one at a time: destroy()/init() on the shared module must never
+// interleave (a language switch while a load is still pending).
+let loadQueue: Promise<unknown> = Promise.resolve();
 let pagefindUnavailable = false;
 
+/** The language Pagefind picks its index by: `<html lang>`, like its own init. */
+function documentLang(): string {
+  return (document.documentElement.getAttribute('lang') || 'unknown').toLowerCase();
+}
+
+/**
+ * Load and initialize Pagefind for the page's current language. Pagefind
+ * reads `<html lang>` once, at init, to choose the per-language index — and
+ * the language switch is a client-side navigation that only rewrites the
+ * attribute — so a cached instance from an English page would keep
+ * searching the English index on the 中文 page. Re-initialize whenever the
+ * language changed since the last init. Concurrent callers for the same
+ * language share one load; loads for different languages queue behind each
+ * other, and each clears only its own in-flight record.
+ */
 async function loadPagefind(): Promise<PagefindAPI | null> {
-  if (pagefindCache) return pagefindCache;
   if (pagefindUnavailable) return null;
-  try {
-    const load = new Function('path', 'return import(path)') as (p: string) => Promise<PagefindAPI>;
-    const pf = await load('/pagefind/pagefind.js');
-    await pf.init();
-    pagefindCache = pf;
-    return pf;
-  } catch {
-    pagefindUnavailable = true;
-    return null;
-  }
+  const lang = documentLang();
+  if (inflight?.lang === lang) return inflight.promise;
+  if (!inflight && pagefindModule && initializedLang === lang) return pagefindModule;
+
+  const record: { lang: string; promise: Promise<PagefindAPI | null> } = { lang, promise: Promise.resolve(null) };
+  record.promise = loadQueue.then(async () => {
+    try {
+      if (pagefindUnavailable) return null;
+      pagefindModule ??= await importPagefind();
+      if (initializedLang !== lang) {
+        if (initializedLang !== null) await pagefindModule.destroy?.();
+        await pagefindModule.init();
+        initializedLang = lang;
+      }
+      return pagefindModule;
+    } catch {
+      pagefindUnavailable = true;
+      return null;
+    } finally {
+      if (inflight === record) inflight = null;
+    }
+  });
+  inflight = record;
+  loadQueue = record.promise;
+  return record.promise;
+}
+
+/** Test seam: swap the runtime import and reset the module-level cache. */
+export function __resetPagefindForTests(importer?: () => Promise<PagefindAPI>): void {
+  importPagefind = importer ?? (() => runtimeImport('/pagefind/pagefind.js'));
+  pagefindModule = null;
+  initializedLang = null;
+  inflight = null;
+  loadQueue = Promise.resolve();
+  pagefindUnavailable = false;
 }
 
 /**
@@ -137,15 +201,7 @@ export function usePagefind(
           search.results.slice(0, MAX_INDEXED_RESULTS).map((r) => r.data())
         );
         if (cancelled) return;
-        setAllResults(
-          fragments.map((f: PagefindFragment) => ({
-            url: f.url,
-            title: cleanTitle(f.meta.title ?? ''),
-            excerpt: f.excerpt,
-            date: f.meta.date ?? getDateFromUrl(f.url),
-            type: getResultType(f.url),
-          }))
-        );
+        setAllResults(fragments.map(toDisplayResult));
         setIsError(false);
         onResultsReset();
       } catch {

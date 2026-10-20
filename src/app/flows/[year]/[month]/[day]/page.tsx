@@ -87,10 +87,10 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
 
         <article className="flex-1 min-w-0">
           {/* Header */}
-          <header className="mb-8">
-            <time className="text-base font-mono text-accent" data-pagefind-meta="date[content]">{flow.date}</time>
+          <header data-pagefind-body className="mb-8">
+            <time className="text-base font-mono text-accent" dateTime={flow.date} data-pagefind-meta="date[datetime]">{flow.date}</time>
             {flow.title !== flow.date && (
-              <h1 className="mt-2 text-xl sm:text-2xl font-serif font-bold text-heading">{flow.title}</h1>
+              <h1 data-pagefind-meta="title" className="mt-2 text-xl sm:text-2xl font-serif font-bold text-heading">{flow.title}</h1>
             )}
             {flow.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -102,7 +102,7 @@ export default async function FlowPage({ params }: { params: Promise<{ year: str
           </header>
 
           {/* Content */}
-          <div className="prose prose-lg dark:prose-invert max-w-none">
+          <div data-pagefind-body className="prose prose-lg dark:prose-invert max-w-none">
             <MarkdownRenderer content={flow.content} slug={`flows/${year}/${month}/${day}`} slugRegistry={slugRegistry} />
           </div>
 

@@ -1,6 +1,6 @@
-import { describe, test, expect, jest, afterEach } from 'bun:test';
+import { describe, test, expect, jest, afterEach, mock } from 'bun:test';
 import { renderHook, act } from '@testing-library/react';
-import { usePagefind } from '@/hooks/usePagefind';
+import { __resetPagefindForTests, toDisplayResult, usePagefind } from '@/hooks/usePagefind';
 
 /**
  * Pagefind itself never loads in this environment (the runtime dynamic import
@@ -35,5 +35,104 @@ describe('usePagefind', () => {
       rerender();
     });
     expect(result.current.isFetching).toBe(false);
+  });
+});
+
+describe('toDisplayResult', () => {
+  const base = { excerpt: 'x', word_count: 1 };
+
+  test('uses the indexed date meta', () => {
+    const r = toDisplayResult({ ...base, url: '/posts/a/', meta: { title: 'A | Site', date: '2026-01-02' } });
+    expect(r).toMatchObject({ title: 'A', date: '2026-01-02', type: 'Post' });
+  });
+
+  test('falls back to the URL date when the meta is empty, not just missing', () => {
+    // A data-pagefind-meta that matched no attribute is indexed as "".
+    expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: { date: '' } }).date).toBe('2026-03-04');
+    expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: {} }).date).toBe('2026-03-04');
+  });
+});
+
+describe('usePagefind language handling', () => {
+  afterEach(() => {
+    __resetPagefindForTests();
+    document.documentElement.setAttribute('lang', 'en');
+  });
+
+  function fakePagefind() {
+    const calls: string[] = [];
+    const api = {
+      init: mock(async () => { calls.push(`init:${document.documentElement.lang}`); }),
+      destroy: mock(async () => { calls.push('destroy'); }),
+      search: mock(async () => ({ results: [] })),
+    };
+    __resetPagefindForTests(async () => api);
+    return { api, calls };
+  }
+
+  const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+
+  test('initializes once per language and re-initializes after a switch', async () => {
+    const { api, calls } = fakePagefind();
+    document.documentElement.setAttribute('lang', 'en');
+    const noop = () => {};
+    let query = '';
+    const { rerender } = renderHook(() => usePagefind(query, true, noop));
+    await flush();
+    expect(calls).toEqual(['init:en']);
+
+    // Same language: the cached instance is reused.
+    query = 'react';
+    rerender();
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    expect(calls).toEqual(['init:en']);
+    expect(api.search).toHaveBeenCalledTimes(1);
+
+    // Client-side language switch rewrites <html lang>; the next search must
+    // tear down and re-init so Pagefind loads the zh index.
+    document.documentElement.setAttribute('lang', 'zh');
+    query = '测试';
+    rerender();
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    expect(calls).toEqual(['init:en', 'destroy', 'init:zh']);
+    expect(api.search).toHaveBeenCalledTimes(2);
+  });
+
+  test('a language switch during a pending load queues instead of overlapping init()', async () => {
+    let active = 0;
+    let maxActive = 0;
+    const inits: string[] = [];
+    let releaseFirst!: () => void;
+    const firstGate = new Promise<void>((r) => { releaseFirst = r; });
+    const api = {
+      init: mock(async () => {
+        active++; maxActive = Math.max(maxActive, active);
+        inits.push(document.documentElement.lang);
+        if (inits.length === 1) await firstGate;
+        active--;
+      }),
+      destroy: mock(async () => {}),
+      search: mock(async () => ({ results: [] })),
+    };
+    __resetPagefindForTests(async () => api);
+    document.documentElement.setAttribute('lang', 'en');
+    let query = '';
+    // Stable callback: it is an effect dependency (see the hook's docs).
+    const noop = () => {};
+    const { rerender } = renderHook(() => usePagefind(query, true, noop));
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(inits).toEqual(['en']); // en init is now pending on the gate
+
+    document.documentElement.setAttribute('lang', 'zh');
+    query = '中文';
+    rerender();
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    expect(maxActive).toBe(1); // zh is queued, not running alongside en
+
+    await act(async () => { releaseFirst(); await new Promise((r) => setTimeout(r, 50)); });
+    expect(maxActive).toBe(1);
+    expect(inits).toEqual(['en', 'zh']);
+    expect(api.destroy).toHaveBeenCalledTimes(1);
+    expect(api.search).toHaveBeenCalled();
   });
 });

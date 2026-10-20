@@ -49,8 +49,9 @@ export default function BookReadingShell({
   const { enabled } = useImmersiveReading();
 
   const chapterHeader = (
-    <header className="mb-12 pb-8 border-b border-line">
-      <div className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
+    <header data-pagefind-body className="mb-12 pb-8 border-b border-line">
+      {/* Word count / reading time / immersive button: not search content. */}
+      <div data-pagefind-ignore className="flex items-center gap-3 text-xs font-sans text-muted mb-4">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {t('chapter')}
         </span>
@@ -69,7 +70,7 @@ export default function BookReadingShell({
         </span>
       </div>
 
-      <h1 className="text-3xl md:text-4xl font-serif font-bold text-heading leading-tight mb-4">
+      <h1 data-pagefind-meta="title" className="text-3xl md:text-4xl font-serif font-bold text-heading leading-tight mb-4">
         {chapter.title}
       </h1>
 
@@ -137,7 +138,7 @@ export default function BookReadingShell({
           </div>
 
           {chapterHeader}
-          {children}
+          <div data-pagefind-body>{children}</div>
           {comments && <Comments slug={comments.slug} postUrl={comments.postUrl} />}
           {prevNext}
         </article>

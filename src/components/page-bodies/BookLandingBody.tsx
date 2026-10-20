@@ -83,7 +83,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <div className="layout-main">
-      <header className="mb-16">
+      <header data-pagefind-body className="mb-16">
         {/* Cover image */}
         {book.coverImage && (
           <div className="relative w-full h-56 md:h-72 mb-10 rounded-2xl overflow-hidden shadow-xl shadow-accent/5">
@@ -101,10 +101,10 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
         )}
 
         <div className="text-center max-w-2xl mx-auto">
-          <span className="badge-accent mb-4">
+          <span data-pagefind-ignore className="badge-accent mb-4">
             {t('book')} &bull; {book.chapters.length} {t('chapters_count')}
           </span>
-          <h1 className="page-title mb-4">{book.title}</h1>
+          <h1 data-pagefind-meta="title" className="page-title mb-4">{book.title}</h1>
           {book.excerpt && (
             <p className="text-lg text-muted font-serif italic leading-relaxed">
               {book.excerpt}
@@ -129,7 +129,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
 
           {/* Start Reading CTAs */}
           {firstChapter && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div data-pagefind-ignore className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={localizeUrl(getBookChapterUrl(book.slug, firstChapter.id), locale)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-sans font-medium text-sm hover:bg-accent/90 no-underline transition-colors shadow-lg shadow-accent/20"
@@ -198,7 +198,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
 
       {/* Book body content — assets live under the tree's public dir (zh/books/…) */}
       {book.content && (
-        <section className="max-w-2xl mx-auto">
+        <section data-pagefind-body className="max-w-2xl mx-auto">
           <MarkdownRenderer
             content={book.content}
             slug={`${locale === siteConfig.i18n.defaultLocale ? '' : `${locale}/`}books/${book.slug}`}

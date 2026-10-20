@@ -64,7 +64,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           />
         )}
         <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
-          <header className="mb-8 border-b border-line pb-8">
+          <header data-pagefind-body className="mb-8 border-b border-line pb-8">
             {note.draft && (
               <div className="mb-4">
                 <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
@@ -72,10 +72,10 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
                 </span>
               </div>
             )}
-            <time className="text-sm font-mono text-accent" data-pagefind-meta="date[content]">
+            <time className="text-sm font-mono text-accent" dateTime={note.date} data-pagefind-meta="date[datetime]">
               {note.date}
             </time>
-            <h1 className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading leading-tight">
+            <h1 data-pagefind-meta="title" className="mt-2 text-3xl md:text-4xl font-serif font-bold text-heading leading-tight">
               {note.title}
             </h1>
             {note.tags.length > 0 && (
@@ -87,7 +87,9 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
             )}
           </header>
 
-          <MarkdownRenderer content={note.content} slug={`notes/${note.slug}`} slugRegistry={slugRegistry} />
+          <div data-pagefind-body>
+            <MarkdownRenderer content={note.content} slug={`notes/${note.slug}`} slugRegistry={slugRegistry} />
+          </div>
 
           <ShareBar url={noteUrl} title={note.title} className="mt-8 mb-2" />
 
