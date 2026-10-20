@@ -109,6 +109,25 @@ describe('Search modal', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  test('closing with Cmd/Ctrl+K still returns focus to the original opener', async () => {
+    renderSearch();
+    const link = document.createElement('a');
+    link.href = '#elsewhere';
+    link.textContent = 'another link';
+    document.body.appendChild(link);
+    try {
+      link.focus();
+      fireEvent.keyDown(link, { key: '/' });
+      const input = await screen.findByRole('combobox', { name: 'Search' });
+      // The toggle shortcut fires with focus inside the dialog.
+      fireEvent.keyDown(input, { key: 'k', metaKey: true });
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(document.activeElement).toBe(link);
+    } finally {
+      link.remove();
+    }
+  });
+
   test('closing returns focus to the element that had it when "/" opened search', async () => {
     renderSearch();
     const link = document.createElement('a');

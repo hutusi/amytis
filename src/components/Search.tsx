@@ -125,6 +125,10 @@ export default function Search() {
     // Remember what had focus so closing returns there (a keyboard user who
     // pressed "/" on a link expects to land back on that link).
     const rememberOpener = () => {
+      // Only when opening: while the dialog is mounted (Cmd/Ctrl+K closing
+      // it, "/" on a tab inside it) the focused element is inside the dialog
+      // and is about to unmount, which would lose the real opener.
+      if (searchRef.current) return;
       const active = document.activeElement;
       openerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
     };
