@@ -26,6 +26,12 @@ The messages come from **browser extensions** (e.g. uBlock Origin, Privacy Badge
 
 Fix: add the file, point the field at an existing file, or use an absolute URL (hosted assets are not checked). A default 1200×630 `public/og-image.png` ships with the template — replace it with your own artwork rather than deleting it.
 
+## Some characters render in a different sans-serif font
+
+The bundled Inter files are subset to Latin, Latin Extended-A, pinyin tone vowels, Greek, punctuation, arrows and math symbols. Text in other scripts — Cyrillic, Vietnamese, IPA, combining accents — falls back to the system sans-serif, the same way CJK text always has. It stays readable, just not in Inter.
+
+Fix: add the Unicode range to `UNICODE_RANGES` in `scripts/subset-inter.py` and re-run it against the full upstream Inter files (see "Maintenance Tools" in `docs/CONTRIBUTING.md`). Each added script costs roughly 3–10 KB per weight on every page.
+
 ## AVIF/WebP source images bypass the optimizer (served as-is)
 
 **Related upstream issue:** [Niels-IO/next-image-export-optimizer#263](https://github.com/Niels-IO/next-image-export-optimizer/issues/263)

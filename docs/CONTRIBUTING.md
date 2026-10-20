@@ -127,7 +127,12 @@ bun run add-series-redirects --dry-run          # preview without writing
 
 # Reset build caches (when copy-assets or the image optimizer misbehave)
 bun run clean                       # removes .next, out, public/posts
+
+# Re-subset Inter from the full upstream files (needs: python3 -m pip install fonttools brotli)
+python3 scripts/subset-inter.py <dir-with-full-Inter-Regular-and-Bold.woff2>
 ```
+
+`src/fonts/Inter-*.woff2` are subsets (Latin, Latin Extended-A, pinyin, Greek, punctuation, arrows, math symbols — ~36 KB each instead of ~112 KB), because body text renders in Inter and every page preloads both weights. To cover another script, add its range to `UNICODE_RANGES` in `scripts/subset-inter.py` and re-run it against the full upstream files; `git show 95e5fb8:src/fonts/Inter-Regular.woff2` (and `-Bold`) recovers the original Inter 4.001 files.
 
 ### Translating content (locale trees)
 
