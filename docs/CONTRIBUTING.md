@@ -29,6 +29,10 @@ Markdown links to other hosts (anything whose host differs from
 open in a new tab — don't write `<a target="_blank">` manually. Internal
 links, wikilinks, `mailto:`, and `tel:` are unaffected.
 
+Article images open in a full-screen lightbox when clicked. Linked images
+(`[![alt](img)](href)`) follow their link instead, and raw-HTML `<img>` tags
+with an inline `style` (badges, icons) never zoom.
+
 ### Creating Posts
 
 Use the CLI to scaffold new content:

@@ -953,6 +953,11 @@ h4:hover > .heading-anchor,
   }
 }
 
+/* Content images the ImageZoom lightbox opens (rehype-zoomable-images). */
+img[data-zoomable="true"] {
+  cursor: zoom-in;
+}
+
 .rst-rendered figure {
   margin: 2rem 0;
 }

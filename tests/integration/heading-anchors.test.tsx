@@ -53,14 +53,17 @@ describe('heading anchors on the page', () => {
   });
 });
 
-describe('heading anchors never reach feeds', () => {
-  test('markdownToHtml leaves headings bare', () => {
-    expect(markdownToHtml(MD)).not.toContain('heading-anchor');
+describe('page-only markup never reaches feeds', () => {
+  test('markdownToHtml leaves headings and images bare', () => {
+    const html = markdownToHtml(`${MD}\n![photo](/images/photo.jpg)\n`);
+    expect(html).not.toContain('heading-anchor');
+    expect(html).not.toContain('data-zoomable');
   });
 
-  test('no full-content feed item carries one, Markdown or rST', () => {
+  test('no full-content feed item carries anchors or zoom markers, Markdown or rST', () => {
     const items = getFeedItems('all', true);
     expect(items.length).toBeGreaterThan(0);
-    expect(items.filter((item) => item.content.includes('heading-anchor')).map((item) => item.url)).toEqual([]);
+    const leaked = items.filter((item) => item.content.includes('heading-anchor') || item.content.includes('data-zoomable'));
+    expect(leaked.map((item) => item.url)).toEqual([]);
   });
 });

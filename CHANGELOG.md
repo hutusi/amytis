@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Image Zoom**: clicking an article image opens it full size in a lightbox (Escape, a click or ✕ closes it); linked images and inline icons are left alone.
 - **Heading Anchors**: h2–h4 headings in articles, chapters, notes and rST pages get a `#` link (on hover or keyboard focus, faint on touch screens) to link straight to a section.
 - **Branded 404 and Error Pages**: localized `not-found` / client error boundary replace Next's default unbranded pages.
 - **DOM Behavior Tests**: happy-dom + React Testing Library behind `bun run test:dom`, with first tests for the theme toggle, language provider, scroll/heading hooks, immersive-reading provider, nav dropdowns, and the search modal.

@@ -168,6 +168,7 @@ Content renderers:
 - `MarkdownRenderer` — MDX with GFM, KaTeX math, build-time syntax highlighting via Shiki, Mermaid
 - `CodeBlock` (async server component, calls Shiki) and `CodeBlockToolbar` (client: copy + word-wrap toggle), `Mermaid`
 - `CoverImage` — optimized image component with WebP support
+- `ImageZoom` — lightbox for content images, mounted once in the root layout. `rehype-zoomable-images` (in `MarkdownRenderer` and the post-sanitize rST pass) marks images `data-zoomable="true"`, except linked ones, Mermaid content and raw-HTML images with an inline `style` (badges/icons); one delegated click listener opens the marked image's full-size `src` in a native modal `<dialog>`. The top layer puts it above the immersive reader and outside the transformed flow cards; it locks `<html>` scrolling (the reader owns `<body>`'s) and stops key events, so Escape doesn't also exit the reader.
 
 Post & series surfaces:
 

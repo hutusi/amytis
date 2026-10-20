@@ -4,7 +4,6 @@
 - [ ] **Breadcrumbs**: Extend Flow breadcrumbs to standard Posts and Books.
 - [ ] **Dynamic OG**: Generate automated social cards with Satori for every post.
 - [ ] **PWA Support**: Add manifest and service worker for offline reading.
-- [ ] **Image Zoom**: Implement medium-zoom or a lightbox for MDX images.
 
 ## 🌿 Digital Garden Evolution
 - [ ] **Knowledge Graph**:
@@ -38,6 +37,7 @@
 - [ ] **Advanced Constructs**: Evaluate the highest-value next rST features from real imported content, such as footnotes, simple tables, and selected directives.
 
 ## ✅ Completed Highlights
+- [x] **Image Zoom**: Content images (Markdown and rST) open in a native-`<dialog>` lightbox.
 - [x] **Immersive Reading Mode**: Fullscreen distraction-free reader for books and series with persisted preferences (1.17.0).
 - [x] **Shiki Code Pipeline**: Build-time highlighting with code-group tabs, notation comments, and GitHub-flavored alerts (1.16.0).
 - [x] **Flow Card Feed & Ink Design System**: Full-content flow feed with a month timeline rail; shared ink tokens across all surfaces (unreleased).

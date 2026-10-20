@@ -30,6 +30,14 @@ describe("MarkdownRenderer", () => {
       expect(html).toContain('fetchPriority="low"');
     });
 
+    test("marks content images for the zoom lightbox, but not linked or styled ones", () => {
+      const html = (content: string) => renderToStaticMarkup(<LanguageProvider><MarkdownRenderer content={content} /></LanguageProvider>);
+      expect(html("![local](/images/local.jpg)")).toContain('data-zoomable="true"');
+      expect(html("![external](https://example.com/image.jpg)")).toContain('data-zoomable="true"');
+      expect(html("[![linked](/images/local.jpg)](https://example.com/)")).not.toContain('data-zoomable');
+      expect(html('<img src="/images/badge.svg" style="height:20px" alt="badge">')).not.toContain('data-zoomable');
+    });
+
     test("bypasses optimization for local avif images", () => {
       const content = "![alt text](/images/background-new-wave.avif)";
       const html = renderToStaticMarkup(<LanguageProvider><MarkdownRenderer content={content} /></LanguageProvider>);
