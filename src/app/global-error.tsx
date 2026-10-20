@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { siteConfig } from '../../site.config';
 import { translations, type Language } from '@/i18n/translations';
-import { localeFromPathname } from '@/lib/locale-urls';
+import { localeFromPathname, localizePath } from '@/lib/locale-urls';
 
 /**
  * Last-resort boundary for errors thrown by the root layout's own client
@@ -22,10 +22,11 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   }, [error]);
 
   const i18nEnabled = siteConfig.i18n.enabled !== false && siteConfig.i18n.locales.length >= 2;
-  const language = localeFromPathname(typeof window === 'undefined' ? null : window.location.pathname, {
+  const localeConfig = {
     locales: i18nEnabled ? siteConfig.i18n.locales : [],
     defaultLocale: siteConfig.i18n.defaultLocale,
-  }) as Language;
+  };
+  const language = localeFromPathname(typeof window === 'undefined' ? null : window.location.pathname, localeConfig) as Language;
   const t = translations[language] ?? translations.en;
 
   const button = {
@@ -67,7 +68,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             </button>
             {/* A full page load, not <Link>: the client router is what failed. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see above */}
-            <a href="/" style={button}>
+            <a href={localizePath('/', language, localeConfig)} style={button}>
               {t.back_to_home}
             </a>
           </div>

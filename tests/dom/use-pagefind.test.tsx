@@ -97,4 +97,42 @@ describe('usePagefind language handling', () => {
     expect(calls).toEqual(['init:en', 'destroy', 'init:zh']);
     expect(api.search).toHaveBeenCalledTimes(2);
   });
+
+  test('a language switch during a pending load queues instead of overlapping init()', async () => {
+    let active = 0;
+    let maxActive = 0;
+    const inits: string[] = [];
+    let releaseFirst!: () => void;
+    const firstGate = new Promise<void>((r) => { releaseFirst = r; });
+    const api = {
+      init: mock(async () => {
+        active++; maxActive = Math.max(maxActive, active);
+        inits.push(document.documentElement.lang);
+        if (inits.length === 1) await firstGate;
+        active--;
+      }),
+      destroy: mock(async () => {}),
+      search: mock(async () => ({ results: [] })),
+    };
+    __resetPagefindForTests(async () => api);
+    document.documentElement.setAttribute('lang', 'en');
+    let query = '';
+    // Stable callback: it is an effect dependency (see the hook's docs).
+    const noop = () => {};
+    const { rerender } = renderHook(() => usePagefind(query, true, noop));
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(inits).toEqual(['en']); // en init is now pending on the gate
+
+    document.documentElement.setAttribute('lang', 'zh');
+    query = '中文';
+    rerender();
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    expect(maxActive).toBe(1); // zh is queued, not running alongside en
+
+    await act(async () => { releaseFirst(); await new Promise((r) => setTimeout(r, 50)); });
+    expect(maxActive).toBe(1);
+    expect(inits).toEqual(['en', 'zh']);
+    expect(api.destroy).toHaveBeenCalledTimes(1);
+    expect(api.search).toHaveBeenCalled();
+  });
 });

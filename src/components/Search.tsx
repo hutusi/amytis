@@ -66,6 +66,7 @@ export default function Search() {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const tablistRef = useRef<HTMLDivElement>(null);
   // Tracks whether the modal was actually open, so the close-effect only
   // restores focus after a real close (not on mount).
@@ -121,9 +122,16 @@ export default function Search() {
   // by the dialog itself (handleModalKeyDown) so it closes only the search,
   // not an immersive reader underneath that also listens for Escape.
   useEffect(() => {
+    // Remember what had focus so closing returns there (a keyboard user who
+    // pressed "/" on a link expects to land back on that link).
+    const rememberOpener = () => {
+      const active = document.activeElement;
+      openerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    };
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        rememberOpener();
         setIsOpen((prev) => !prev);
         return;
       }
@@ -132,6 +140,7 @@ export default function Search() {
         const editing = !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
         if (!editing) {
           e.preventDefault();
+          rememberOpener();
           setIsOpen(true);
         }
       }
@@ -147,13 +156,18 @@ export default function Search() {
   useEffect(() => {
     if (isOpen) {
       wasOpenRef.current = true;
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // Focus right away, not on a timer: until focus is inside the dialog,
+      // its own Escape handler can't fire. (The effect of a click/keydown
+      // update runs in the same gesture, so mobile keyboards still open.)
+      inputRef.current?.focus();
     } else {
-      // Restore focus to the trigger after a real close so keyboard users
-      // aren't dropped at the top of the document.
+      // Restore focus to whatever opened the search (falling back to the
+      // trigger) so keyboard users aren't dropped at the top of the document.
       if (wasOpenRef.current) {
         wasOpenRef.current = false;
-        triggerRef.current?.focus();
+        const opener = openerRef.current;
+        openerRef.current = null;
+        (opener?.isConnected ? opener : triggerRef.current)?.focus();
       }
       /* eslint-disable react-hooks/set-state-in-effect */
       setQuery('');
@@ -187,6 +201,11 @@ export default function Search() {
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // An IME (Chinese, Japanese, Korean input) uses Enter and the arrows to
+    // pick and commit candidates; never treat those as result navigation.
+    // keyCode 229 covers Safari, which reports the committing Enter with
+    // isComposing already false.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     // Alt+digit switches type tabs when results are visible.
     if (allResults.length > 0 && e.altKey) {
       const visibleTypes = CONTENT_TYPES.filter((ct) => ct === 'All' || typeCounts[ct] > 0);
