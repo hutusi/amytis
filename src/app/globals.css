@@ -906,6 +906,11 @@ body {
   :where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
     outline: none;
   }
+  /* BackToTop parks focus on <main> after scrolling up; a ring around the
+     whole page would read as a glitch. */
+  :where(#main-content)[tabindex="-1"]:focus {
+    outline: none;
+  }
 }
 
 /* Ensure anchor links are not hidden behind the fixed navbar (h-16) with a
@@ -1276,7 +1281,8 @@ html.dark .rst-rendered aside.admonition-danger {
  * `="true"` here costs nothing on the component side. */
 [data-immersive="true"] [data-site-nav="true"],
 [data-immersive="true"] [data-site-footer="true"],
-[data-immersive="true"] [data-reading-progress="true"] {
+[data-immersive="true"] [data-reading-progress="true"],
+[data-immersive="true"] [data-back-to-top="true"] {
   display: none;
 }
 [data-immersive="true"] #main-content {

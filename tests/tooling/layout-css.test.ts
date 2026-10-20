@@ -23,6 +23,14 @@ describe('page-level overflow and anchor offsets', () => {
   });
 });
 
+describe('immersive reading hides floating chrome', () => {
+  test('the back-to-top button is hidden with the navbar and footer', () => {
+    // The window doesn't scroll while the reader is open, so the button
+    // would sit there doing nothing.
+    expect(css).toMatch(/\[data-immersive="true"\] \[data-back-to-top="true"\][^{]*\{\n  display: none;/);
+  });
+});
+
 describe('heading anchors', () => {
   test('the "#" is drawn by CSS, hidden until hover or focus, faint on touch', () => {
     // The link itself is empty so the glyph stays out of copied text and the

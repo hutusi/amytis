@@ -179,7 +179,8 @@ Post & series surfaces:
 - `SeriesCatalog` — timeline-style listing with numbered entries and progress indicator
 - `SeriesSidebar` — series navigation sidebar with progress bar and color-coded states
 - `SeriesList` — mobile-optimized series navigation matching sidebar design
-- `TableOfContents` — sticky TOC with scroll tracking, reading progress, back-to-top
+- `TocPanel` (sticky desktop TOC with active-heading tracking, inside `PostSidebar`) and `MobileToc` (server-rendered `<details>` below `lg`)
+- `BackToTop` — floating button on every page, mounted in the root layout: appears past two screens of scrolling, scrolls up (instant under reduced motion) and moves focus to `#main-content`; hidden in the immersive reader and in print
 - `HorizontalScroll` — scrollable container with navigation arrows for featured content
 
 Notes & flows:
@@ -479,12 +480,16 @@ static prerender.
 - Main scroll area — article centred at the column width the user picked
   (`max-w-2xl` to `max-w-none`).
 
-**CSS scoping.** `html[data-immersive]` hides site chrome via the three stable
-hooks `data-site-nav` / `data-site-footer` / `data-reading-progress` —
-defense-in-depth (the fixed overlay covers them anyway). Reading-theme
+**CSS scoping.** `html[data-immersive]` hides site chrome via the stable
+hooks `data-site-nav` / `data-site-footer` / `data-reading-progress` /
+`data-back-to-top` — defense-in-depth (the fixed overlay covers them anyway;
+the window doesn't scroll while the reader is open, so the back-to-top button
+would be dead weight). Reading-theme
 overrides are scoped to `[data-reader-overlay]` so they don't leak outside the
 reader; when `readingTheme === 'dark'` the overlay also gets Tailwind's `.dark`
-class so `dark:prose-invert` fires regardless of the underlying site theme.
+class so `dark:prose-invert` fires regardless of the underlying site theme, and
+the `dark` custom variant excludes the light and sepia overlay subtrees, so
+they stay light on a dark site.
 Shiki code blocks deliberately keep their normal theme.
 
 ## Configuration Reference (`site.config.ts`)
