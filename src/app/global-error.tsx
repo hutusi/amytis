@@ -67,7 +67,6 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               {t.try_again}
             </button>
             {/* A full page load, not <Link>: the client router is what failed. */}
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see above */}
             <a href={localizePath('/', language, localeConfig)} style={button}>
               {t.back_to_home}
             </a>
