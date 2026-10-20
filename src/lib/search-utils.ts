@@ -1,7 +1,20 @@
 export type ContentType = 'All' | 'Post' | 'Flow' | 'Book' | 'Note';
+export type ResultType = Exclude<ContentType, 'All'>;
+
+/**
+ * The Pagefind filter carrying each indexed page's type: every
+ * data-pagefind-body surface marks `data-pagefind-filter="type:<ResultType>"`.
+ */
+export const SEARCH_TYPE_FILTER = 'type';
+
+const RESULT_TYPES: readonly string[] = ['Post', 'Flow', 'Book', 'Note'] satisfies ResultType[];
+
+export function isResultType(value: string): value is ResultType {
+  return RESULT_TYPES.includes(value);
+}
 
 /** Derive content type from a Pagefind result URL. */
-export function getResultType(url: string): Exclude<ContentType, 'All'> {
+export function getResultType(url: string): ResultType {
   if (url.includes('/flows/')) return 'Flow';
   if (url.includes('/books/')) return 'Book';
   if (url.includes('/notes/')) return 'Note';

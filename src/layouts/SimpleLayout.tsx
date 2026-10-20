@@ -22,7 +22,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
 
   // The whole article (header + body) is the search-indexed region.
   const articleContent = (
-    <div data-pagefind-body>
+    <div data-pagefind-body data-pagefind-filter="type:Post">
       <SimpleLayoutHeader
         title={post.title}
         excerpt={post.excerpt}

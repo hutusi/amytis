@@ -7,7 +7,7 @@ import {
 import { LanguageProvider } from '@/components/LanguageProvider';
 import Search from '@/components/Search';
 import { openSearch } from '@/lib/search-events';
-import { __resetPagefindForTests } from '@/hooks/usePagefind';
+import { __resetPagefindForTests, type PagefindSearch } from '@/hooks/usePagefind';
 
 // Modal focus lifecycle. Pagefind itself is absent in this environment (the
 // dynamic import fails and Search flips to its unavailable state), which is
@@ -195,5 +195,44 @@ describe('Search modal with results', () => {
 
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(push).toHaveBeenCalledWith('/posts/a/');
+  });
+
+  test('tabs show the indexed per-type counts and switch to that type', async () => {
+    const page = (url: string, type: string) => ({
+      data: async () => ({ url, excerpt: 'x', meta: { title: url }, filters: { type: [type] }, word_count: 1 }),
+    });
+    const posts = Array.from({ length: 12 }, (_, i) => page(`/posts/p${i}/`, 'Post'));
+    const flows = [page('/flows/2026/01/02/', 'Flow')];
+    let filtersLoaded = false;
+    __resetPagefindForTests(async () => ({
+      init: async () => {},
+      destroy: async () => {},
+      filters: async () => { filtersLoaded = true; return {}; },
+      search: async (_q: string, options?: { filters?: Record<string, string> }): Promise<PagefindSearch> => {
+        const type = options?.filters?.type;
+        const results = type === 'Flow' ? flows : type === 'Post' ? posts : [...posts, ...flows];
+        const counts: Record<string, number> = type ? { [type]: results.length } : { Post: 12, Flow: 1 };
+        return { results, filters: filtersLoaded ? { type: counts } : {} };
+      },
+    }));
+    render(
+      <AppRouterContext.Provider value={stubRouter}>
+        <LanguageProvider>
+          <Search />
+        </LanguageProvider>
+      </AppRouterContext.Provider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Search' }), { target: { value: 'q' } });
+    await screen.findByText('/posts/p0/');
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((tab) => tab.getAttribute('data-type'))).toEqual(['All', 'Post', 'Flow']);
+    expect(tabs.map((tab) => tab.querySelector('span')?.textContent)).toEqual(['13', '12', '1']);
+
+    fireEvent.click(tabs[2]);
+    await screen.findByText('/flows/2026/01/02/');
+    expect(screen.queryByText('/posts/p0/')).toBeNull();
+    expect(screen.getByRole('tab', { selected: true }).getAttribute('data-type')).toBe('Flow');
   });
 });

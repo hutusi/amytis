@@ -191,7 +191,7 @@ Notes & flows:
 
 Search & discovery:
 
-- `Search` — full-text search modal (Cmd/Ctrl+K): combobox ARIA, focus trap/restore, roving-tabindex type tabs, recent searches. The Pagefind loader/debounce/search machinery lives in the `usePagefind` hook; the results listbox in `SearchResults`.
+- `Search` — full-text search modal (Cmd/Ctrl+K): combobox ARIA, focus trap/restore, roving-tabindex type tabs, recent searches. The Pagefind loader/debounce/search machinery, the per-type counts and the active type tab live in the `usePagefind` hook; the results listbox in `SearchResults`.
 - `Pagination`, `KnowledgeGraph` (loaded via `KnowledgeGraphLazy` — `next/dynamic` with `ssr: false` keeps d3 out of the `/graph` initial chunk; reduced-motion and mobile users get the searchable list view)
 
 Integrations:
@@ -264,7 +264,7 @@ Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts
 5. Pagefind indexing:
    - Production: `pagefind --site out` (writes to `out/pagefind`)
    - Dev build: `pagefind --site out --output-path public/pagefind`
-   - Scope: only regions marked `data-pagefind-body` are indexed — the header and body of posts, static pages, notes, flow days, book chapters, and the book / series landing (page 1) headers. Pages with no marked region (home, listings, tags, archive, pagination, redirect stubs) are deliberately absent from search, and site chrome (navbar, footer, sidebars, related posts) never leaks into excerpts. Each surface's `<h1>` carries `data-pagefind-meta="title"`; dates come from `<time dateTime data-pagefind-meta="date[datetime]">`. `tests/tooling/pagefind-surfaces.test.ts` lists the surfaces.
+   - Scope: only regions marked `data-pagefind-body` are indexed — the header and body of posts, static pages, notes, flow days, book chapters, and the book / series landing (page 1) headers. Pages with no marked region (home, listings, tags, archive, pagination, redirect stubs) are deliberately absent from search, and site chrome (navbar, footer, sidebars, related posts) never leaks into excerpts. Each surface's `<h1>` carries `data-pagefind-meta="title"`; dates come from `<time dateTime data-pagefind-meta="date[datetime]">`. Each surface also tags its pages with exactly one `data-pagefind-filter="type:Post|Flow|Book|Note"` (static pages and series landings count as Post). The search modal's tabs take their counts from Pagefind's per-filter counts and search within a type, so a query loads fragments only for the 8 hits shown, however many match. `tests/tooling/pagefind-surfaces.test.ts` lists the surfaces and their types.
 
 ## Content Frontmatter
 

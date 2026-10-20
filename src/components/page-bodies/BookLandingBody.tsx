@@ -83,7 +83,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <div className="layout-main">
-      <header data-pagefind-body className="mb-16">
+      <header data-pagefind-body data-pagefind-filter="type:Book" className="mb-16">
         {/* Cover image */}
         {book.coverImage && (
           <div className="relative w-full h-56 md:h-72 mb-10 rounded-2xl overflow-hidden shadow-xl shadow-accent/5">
