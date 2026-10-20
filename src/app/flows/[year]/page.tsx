@@ -60,7 +60,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
 
   const breadcrumb = (
     <div className="space-y-2">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted">
+      <nav aria-label={t('breadcrumb')} className="flex items-center gap-1.5 text-sm text-muted">
         <Link href="/flows" className="hover:text-accent no-underline">
           {t('all_flows')}
         </Link>

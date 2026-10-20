@@ -1,5 +1,6 @@
 import { Children, type ReactNode } from 'react';
 import { resolveCodeGroupIcon } from '@/lib/code-group-icons';
+import { T } from '@/components/T';
 
 interface CodeGroupProps {
   'data-labels'?: string;
@@ -9,7 +10,11 @@ interface CodeGroupProps {
 
 /**
  * Tabbed code group widget. CSS-only — the radio + label sibling trick handles
- * tab switching with zero JavaScript. The matching CSS in globals.css picks the
+ * tab switching with zero JavaScript. Accessibility is the native radio
+ * group's: the radios share a `name`, so only the checked one is a Tab stop,
+ * arrow keys move between them, and each radio is named by its <label>. (No
+ * tab/tablist roles — the labels aren't focusable, so they'd promise a
+ * keyboard model the widget doesn't have.) The matching CSS in globals.css picks the
  * checked input's matching panel via attribute selectors (input[data-idx=N] →
  * .cg-panel[data-panel=N]).
  *
@@ -33,7 +38,8 @@ export default function CodeGroup(props: CodeGroupProps) {
     if (typeof child === 'string') return child.trim().length > 0;
     return true;
   });
-  const tabs = labels.length > 0 ? labels : panels.map((_, i) => `Tab ${i + 1}`);
+  // Unlabeled groups fall back to a translated "Tab N".
+  const tabs: (string | null)[] = labels.length > 0 ? labels : panels.map(() => null);
 
   return (
     <div className="code-group my-6" data-group-id={groupId}>
@@ -46,21 +52,19 @@ export default function CodeGroup(props: CodeGroupProps) {
           data-idx={String(i)}
           defaultChecked={i === 0}
           aria-controls={`cg-${groupId}-panel-${i}`}
-          tabIndex={i === 0 ? 0 : -1}
         />
       ))}
-      <div className="cg-tablist" role="tablist">
+      <div className="cg-tablist">
         {tabs.map((label, i) => {
-          const icon = resolveCodeGroupIcon(label);
+          const icon = label ? resolveCodeGroupIcon(label) : null;
           return (
             <label
               key={`l-${i}`}
               htmlFor={`cg-${groupId}-${i}`}
               className="cg-tab"
-              role="tab"
               {...(icon ? { 'data-cg-icon': icon } : {})}
             >
-              {label}
+              {label ?? <T k="code_tab_fallback" params={{ n: i + 1 }} />}
             </label>
           );
         })}
@@ -70,7 +74,6 @@ export default function CodeGroup(props: CodeGroupProps) {
           key={`p-${i}`}
           className="cg-panel"
           data-panel={String(i)}
-          role="tabpanel"
           id={`cg-${groupId}-panel-${i}`}
         >
           {child}

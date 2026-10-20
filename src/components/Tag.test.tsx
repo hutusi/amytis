@@ -15,7 +15,7 @@ describe('Tag', () => {
     expect(html).toContain('href="/tags/react"');
     expect(html).not.toContain('#React');
     expect(html).toContain('React');
-    expect(html).toContain('text-muted/70');
+    expect(html).toContain('text-muted');
     expect(html).toContain('relative');
     expect(html).toContain('z-10');
   });

@@ -4,6 +4,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import RstRenderer from '@/components/RstRenderer';
 import SimpleLayoutHeader from '@/components/SimpleLayoutHeader';
 import PostSidebar, { PostSidebarView } from '@/components/PostSidebar';
+import MobileToc from '@/components/MobileToc';
 import Comments from '@/components/Comments';
 import { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
@@ -28,9 +29,10 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
         titleKey={titleKey}
         subtitleKey={subtitleKey}
       />
+      {showToc && <MobileToc headings={post.headings} />}
       {post.sourceFormat === 'rst'
         ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} />
-        : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} />}
+        : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} locale={post.locale} />}
     </div>
   );
 

@@ -15,6 +15,7 @@ import ExternalLinks from '@/components/ExternalLinks';
 import Backlinks from '@/components/Backlinks';
 import Tag from '@/components/Tag';
 import ReadingProgressBar from '@/components/ReadingProgressBar';
+import MobileToc from '@/components/MobileToc';
 import PostNavigation, { PostNavigationView } from '@/components/PostNavigation';
 import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
@@ -55,7 +56,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
   const bodyRenderer = post.sourceFormat === 'rst'
     ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
-    : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />;
+    : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} locale={locale} />;
 
   // The article <header> is identical in both the normal and the immersive
   // article subtrees — extracting it as a variable lets us reference it in
@@ -65,14 +66,14 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
     <header data-pagefind-body className="mb-16 border-b border-line pb-8">
       {post.draft && (
         <div className="mb-4">
-          <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest inline-block">
-            DRAFT
+          <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded tracking-widest uppercase inline-block">
+            {t('draft_badge')}
           </span>
         </div>
       )}
       {/* Meta row stays out of search excerpts; the date meta inside is
           still captured (data-pagefind-ignore's default keeps metadata). */}
-      <div data-pagefind-ignore className="flex items-center gap-3 text-xs font-sans text-muted mb-6">
+      <div data-pagefind-ignore className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-sans text-muted mb-6">
         <span className="uppercase tracking-widest font-semibold text-accent">
           {post.category}
         </span>
@@ -83,7 +84,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
           {post.wordCount.toLocaleString()} {t('words')}
         </span>
         <span className="w-1 h-1 rounded-full bg-surface-raised" />
-        <span className="font-mono text-muted/70">{post.readingMinutes} {t('reading_time')}</span>
+        <span className="font-mono text-muted">{post.readingMinutes} {t('reading_time')}</span>
         {hasSeries && (
           <span className="ml-auto">
             <ImmersiveToggleButton />
@@ -219,6 +220,8 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
                 </Suspense>
               </div>
             )}
+
+            {showToc && <MobileToc headings={post.headings} />}
 
             {/* Search indexes the header + body only (not related posts, nav,
                 comments): see the data-pagefind-body note in CLAUDE.md. */}

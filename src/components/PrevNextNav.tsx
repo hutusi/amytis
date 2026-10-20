@@ -25,12 +25,15 @@ export default function PrevNextNav({ prev, next, size = 'sm' }: PrevNextNavProp
   const titleClass = isLg ? 'text-sm font-medium text-foreground/80 group-hover:text-foreground truncate transition-colors' : 'text-sm text-foreground/80 group-hover:text-foreground truncate transition-colors';
   const labelMargin = isLg ? 'mb-1' : 'mb-0.5';
 
+  // min-w-0 on the flex-1 links lets long titles truncate: a flex item's
+  // default min-width (its content width) otherwise pushed the Next link
+  // past the card edge on phones.
   return (
     <div className={`flex ${isLg ? 'gap-4' : 'gap-3'}`}>
       {prev ? (
         <Link
           href={prev.href}
-          className={`flex-1 flex items-center ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group`}
+          className={`flex-1 min-w-0 flex items-center ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group`}
         >
           <svg className={`${iconSize} flex-shrink-0 text-muted group-hover:text-accent transition-colors`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -46,7 +49,7 @@ export default function PrevNextNav({ prev, next, size = 'sm' }: PrevNextNavProp
       {next ? (
         <Link
           href={next.href}
-          className={`flex-1 flex items-center justify-end ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group text-right`}
+          className={`flex-1 min-w-0 flex items-center justify-end ${gap} ${padding} ${rounding} bg-surface-faint hover:bg-surface-soft no-underline transition-colors group text-right`}
         >
           <div className="min-w-0">
             <MetaLabel className={`block ${labelMargin}`}>{t('next')}</MetaLabel>

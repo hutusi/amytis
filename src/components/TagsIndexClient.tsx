@@ -28,7 +28,7 @@ function TagLink({ tag, count, min, max }: { tag: string; count: number; min: nu
       className={`group inline-flex items-baseline gap-1.5 rounded-2xl border border-line bg-surface-faint hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 no-underline transition-all duration-200 ${getTagClasses(count, min, max)}`}
     >
       <span className="text-foreground group-hover:text-accent transition-colors">{tag}</span>
-      <span className="font-mono text-muted/50 group-hover:text-accent/50 transition-colors" style={{ fontSize: '0.7em' }}>{count}</span>
+      <span className="font-mono text-muted group-hover:text-accent transition-colors" style={{ fontSize: '0.7em' }}>{count}</span>
     </Link>
   );
 }
@@ -78,13 +78,13 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('filter_tags')}
             aria-label={t('filter_tags')}
-            className="w-full pl-9 pr-8 py-2 text-sm bg-surface-faint border border-line rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
+            className="w-full pl-9 pr-8 py-2 text-sm bg-surface-faint border border-line rounded-lg outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 text-foreground placeholder:text-muted transition-colors"
           />
           {filter && (
             <button
               onClick={() => setFilter('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted/40 hover:text-muted transition-colors p-0.5 rounded"
-              aria-label="Clear filter"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors p-0.5 rounded"
+              aria-label={t('clear_filter')}
             >
               <LuX className="w-3.5 h-3.5" />
             </button>
@@ -139,7 +139,7 @@ export default function TagsIndexClient({ tags }: TagsIndexClientProps) {
             sortedLetters.map((letter, i) => (
               <div key={letter} className={i > 0 ? 'mt-10' : ''}>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xs font-mono font-bold text-muted/40 w-4">{letter}</span>
+                  <span className="text-xs font-mono font-bold text-muted w-4">{letter}</span>
                   <div className="divider-hairline" />
                 </div>
                 <div className="flex flex-wrap gap-3 items-baseline">

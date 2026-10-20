@@ -39,7 +39,7 @@ export default function NoteSidebar({ headings, showToc, backlinks, breadcrumb }
             {backlinks.map(bl => (
               <div key={`${bl.type}-${bl.slug}`} className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <MetaLabel className="text-muted/60 border border-line rounded px-1.5 py-0.5 shrink-0">
+                  <MetaLabel className="text-muted border border-line rounded px-1.5 py-0.5 shrink-0">
                     {bl.type}
                   </MetaLabel>
                   <Link

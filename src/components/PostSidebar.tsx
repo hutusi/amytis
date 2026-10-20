@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
@@ -62,6 +62,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
   const currentItemRef = useRef<HTMLLIElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const [seriesCollapsed, setSeriesCollapsed] = useState(false);
+  const seriesListId = useId();
   useSidebarAutoScroll(sidebarRef, currentItemRef, currentSlug);
 
   return (
@@ -85,7 +86,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
               <MetaLabel tone="accent">
                 {isCollectionContext ? t('collection') : t('series')}
               </MetaLabel>
-              <span className="text-[10px] font-mono text-muted/60">
+              <span className="text-[10px] font-mono text-muted">
                 {progressIndex >= 0 ? progressIndex + 1 : '?'} / {effectivePosts!.length}
               </span>
             </div>
@@ -96,9 +97,12 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
                 </h3>
               </Link>
               <button
+                type="button"
                 onClick={() => setSeriesCollapsed(prev => !prev)}
                 className="flex-shrink-0 mt-0.5 text-muted hover:text-foreground transition-colors"
                 aria-label={seriesCollapsed ? t('expand_series') : t('collapse_series')}
+                aria-expanded={!seriesCollapsed}
+                aria-controls={seriesListId}
               >
                 <svg
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${seriesCollapsed ? '' : 'rotate-180'}`}
@@ -113,7 +117,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
           {/* Collapsible: post list + footer link */}
           {!seriesCollapsed && (
             <>
-              <nav aria-label={t('series_navigation')} className="mb-4 animate-slide-down">
+              <nav id={seriesListId} aria-label={t('series_navigation')} className="mb-4 animate-slide-down">
                 <ul className="space-y-1 relative before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-px before:bg-surface-soft">
                   {getVisibleIndices(effectivePosts!.length, currentIndex).map((item, i) => {
                     if (item === 'ellipsis') {
@@ -138,7 +142,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
                         >
                           <div className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-colors ${
                             isCurrent
-                              ? 'bg-accent text-white shadow-sm shadow-accent/30'
+                              ? 'bg-accent text-accent-contrast shadow-sm shadow-accent/30'
                               : isPast
                                 ? 'bg-accent/20 text-accent'
                                 : 'bg-surface-soft text-muted group-hover:bg-surface-raised group-hover:text-foreground'

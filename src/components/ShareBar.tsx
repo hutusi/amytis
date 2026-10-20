@@ -56,7 +56,7 @@ function getShareUrl(platform: Platform, url: string, title: string): string {
 }
 
 export default function ShareBar({ url, title, className = '' }: ShareBarProps) {
-  const { t } = useLanguage();
+  const { t, tWith } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   if (!siteConfig.share?.enabled) return null;
@@ -103,7 +103,7 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
             target="_blank"
             rel="noopener noreferrer"
             title={label}
-            aria-label={`Share on ${label}`}
+            aria-label={tWith('share_on', { platform: label })}
             className={`${btnClass} no-underline`}
           >
             <Icon size={16} />

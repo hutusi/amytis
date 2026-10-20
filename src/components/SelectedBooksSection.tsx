@@ -85,7 +85,8 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   : 'flex-1 md:max-w-[calc(50%-1rem)]'
               }`}
             >
-              <Link href={getBookUrl(book.slug)} className="relative h-44 w-full overflow-hidden bg-surface-soft block focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-inset">
+              {/* Duplicate of the title link below: kept out of the Tab order and the a11y tree. */}
+              <Link href={getBookUrl(book.slug)} tabIndex={-1} aria-hidden="true" className="relative h-44 w-full overflow-hidden bg-surface-soft block">
                 <CoverImage
                   src={book.coverImage}
                   title={book.title}
@@ -102,7 +103,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   </span>
                 </div>
                 <h3 className="mb-2 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors line-clamp-2">
-                  <Link href={getBookUrl(book.slug)} className="no-underline focus:outline-none focus:text-accent">
+                  <Link href={getBookUrl(book.slug)} className="no-underline focus-visible:text-accent">
                     {book.title}
                   </Link>
                 </h3>

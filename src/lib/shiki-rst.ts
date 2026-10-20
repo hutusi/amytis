@@ -134,7 +134,6 @@ export async function applyShikiToRstHtml(html: string): Promise<string> {
         'data-idx': String(i),
         ...(i === 0 ? { checked: true } : {}),
         'aria-controls': `cg-${groupId}-panel-${i}`,
-        tabIndex: i === 0 ? 0 : -1,
       },
       children: [],
     }));
@@ -147,7 +146,6 @@ export async function applyShikiToRstHtml(html: string): Promise<string> {
         properties: {
           htmlFor: [`cg-${groupId}-${i}`],
           className: ['cg-tab'],
-          role: 'tab',
           ...(icon ? { 'data-cg-icon': icon } : {}),
         },
         children: [{ type: 'text' as const, value: label }],
@@ -157,7 +155,7 @@ export async function applyShikiToRstHtml(html: string): Promise<string> {
     const tablist: Element = {
       type: 'element',
       tagName: 'div',
-      properties: { className: ['cg-tablist'], role: 'tablist' },
+      properties: { className: ['cg-tablist'] },
       children: tabLabels,
     };
 
@@ -167,7 +165,6 @@ export async function applyShikiToRstHtml(html: string): Promise<string> {
       properties: {
         className: ['cg-panel'],
         'data-panel': String(i),
-        role: 'tabpanel',
         id: `cg-${groupId}-panel-${i}`,
       },
       children: [panel],

@@ -25,6 +25,7 @@ import rehypeRawHeadingIds from '@/lib/rehype-heading-ids';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
+import { getTranslator } from '@/lib/i18n';
 import remarkWikilinks from '@/lib/remark-wikilinks';
 import { remarkHeadingIds } from '@/lib/text-metrics';
 import ExportedImage from 'next-image-export-optimizer';
@@ -53,6 +54,11 @@ function flattenChildrenToText(node: React.ReactNode): string {
 
 interface MarkdownRendererProps {
   content: string;
+  /**
+   * Locale of the content (its tree), for generated text such as the GFM
+   * footnotes heading and back-link labels. Defaults to the site locale.
+   */
+  locale?: string;
   latex?: boolean;
   slug?: string;
   slugRegistry?: Map<string, SlugRegistryEntry>;
@@ -70,7 +76,15 @@ interface MarkdownRendererProps {
   headingIdPrefix?: string;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext, headingIdPrefix }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext, headingIdPrefix, locale = siteConfig.i18n.defaultLocale }: MarkdownRendererProps) {
+  // remark-rehype generates the footnotes section and back links with
+  // English defaults ("Footnotes", "Back to reference 1"); localize them.
+  const { t, tWith } = getTranslator(locale);
+  const footnoteOptions = {
+    footnoteLabel: t('footnotes_label'),
+    footnoteBackLabel: (referenceIndex: number, rereferenceIndex: number) =>
+      tWith('footnote_back', { n: rereferenceIndex > 1 ? `${referenceIndex + 1}-${rereferenceIndex}` : referenceIndex + 1 }),
+  };
   // remark-directive must precede remark-code-group AND remark-vuepress-containers
   // so they see parsed containerDirective nodes. Order vs remark-gfm doesn't matter
   // — they touch disjoint node types.
@@ -120,15 +134,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   }
 
   const components: Components = {
-    // Use 'p' by default, but fallback to 'div' only if children contain block elements
-    // to avoid invalid HTML nesting warnings while preserving semantics.
-    p: ({ children }) => {
-      // Check if any child is a block-level element (like Mermaid or CodeBlock)
-      // Since children is a ReactNode, we can only do a shallow check here.
-      // Simple heuristic: if any child is not a string/number, it *might* be a block.
-      // However, react-markdown usually nests blocks at the top level.
-      return <p className="mb-4 leading-relaxed text-foreground">{children}</p>;
-    },
+    // No `p` override: paragraphs take PROSE_CLASSES' styling exactly like
+    // RstRenderer's sanitized HTML, so Markdown and rST posts set paragraphs
+    // identically (line-height via prose-p:leading-loose, prose-lg margins).
     // Explicitly style lists to ensure contrast
     li: ({ children }) => <li className="text-foreground">{children}</li>,
     // Explicitly style blockquotes
@@ -367,6 +375,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
         <ReactMarkdown
           remarkPlugins={remarkPlugins}
           rehypePlugins={rehypePlugins}
+          remarkRehypeOptions={footnoteOptions}
           components={allComponents}
         >
           {latex

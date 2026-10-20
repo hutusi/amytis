@@ -56,7 +56,7 @@ export function PostNavigationView({ prev, next, currentSlug, collectionContexts
           <span className="text-sm font-serif font-semibold text-heading group-hover:text-accent transition-colors line-clamp-2 leading-snug">
             {effectivePrev.title}
           </span>
-          <span className="text-xs font-mono text-muted/60">{effectivePrev.date}</span>
+          <span className="text-xs font-mono text-muted">{effectivePrev.date}</span>
         </Link>
       )}
 
@@ -74,7 +74,7 @@ export function PostNavigationView({ prev, next, currentSlug, collectionContexts
           <span className="text-sm font-serif font-semibold text-heading group-hover:text-accent transition-colors line-clamp-2 leading-snug">
             {effectiveNext.title}
           </span>
-          <span className="text-xs font-mono text-muted/60">{effectiveNext.date}</span>
+          <span className="text-xs font-mono text-muted">{effectiveNext.date}</span>
         </Link>
       )}
     </nav>

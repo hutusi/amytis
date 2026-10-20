@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -15,6 +15,7 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { splitLocaleFromPath } from '@/lib/urls';
 import { localeStickyHref } from '@/lib/locale-urls';
+import { scrollBehavior } from '@/lib/scroll-utils';
 import { TranslationKey } from '@/i18n/translations';
 
 interface NavItem {
@@ -31,8 +32,19 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
   const { t, tWith, language, twinnedPaths } = useLanguage();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // Close the menu on any route change (link click, browser back/forward).
+  // Adjusting state during render on a changed input is the React-sanctioned
+  // alternative to a set-state-in-effect.
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (pathname !== menuPathname) {
+    setMenuPathname(pathname);
+    if (isMenuOpen) setIsMenuOpen(false);
+    if (openDropdown !== null) setOpenDropdown(null);
+  }
 
   const navItems = visibleNavItems(siteConfig.nav);
 
@@ -83,15 +95,55 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
     setOpenDropdown(null);
   }
 
-  // Prevent body scroll when menu is open
+  // While the menu is open it behaves like a modal panel: body scroll is
+  // locked, the page behind it is inert, Tab cycles within the toggle and
+  // the panel, focus moves into the panel, and Escape closes it and returns
+  // focus to the toggle.
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!isMenuOpen) return;
+    document.body.style.overflow = 'hidden';
+    const background = [document.getElementById('main-content'), document.querySelector('[data-site-footer]')];
+    background.forEach((el) => el?.setAttribute('inert', ''));
+    menuPanelRef.current?.querySelector<HTMLElement>('a[href], button')?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        // Keep Tab inside the open menu: the toggle (so it can be closed)
+        // plus the panel's controls. The page behind is inert, but the
+        // other navbar controls aren't, and focus must not slip out to them.
+        const toggle = menuButtonRef.current;
+        const panel = menuPanelRef.current;
+        if (!toggle || !panel) return;
+        const cycle = [toggle, ...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+        const index = cycle.indexOf(document.activeElement as HTMLElement);
+        const next = index === -1
+          ? (event.shiftKey ? cycle.length - 1 : 0)
+          : (index + (event.shiftKey ? cycle.length - 1 : 1)) % cycle.length;
+        event.preventDefault();
+        cycle[next].focus();
+        return;
+      }
+      if (event.key !== 'Escape') return;
+      setIsMenuOpen(false);
+      setOpenDropdown(null);
+      menuButtonRef.current?.focus();
+    };
+    // The panel, backdrop and toggle are all md:hidden. If the viewport grows
+    // past md while open (rotating a phone to landscape), close the menu, or
+    // the page would stay inert and scroll-locked with no visible control.
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const onBreakpoint = (event: MediaQueryListEvent) => {
+      if (!event.matches) return;
+      setIsMenuOpen(false);
+      setOpenDropdown(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    desktop.addEventListener('change', onBreakpoint);
     return () => {
       document.body.style.overflow = '';
+      background.forEach((el) => el?.removeAttribute('inert'));
+      document.removeEventListener('keydown', onKeyDown);
+      desktop.removeEventListener('change', onBreakpoint);
     };
   }, [isMenuOpen]);
 
@@ -130,7 +182,7 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link
           href={navHref('/')}
-          onClick={pathname === '/' ? (e) => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } } : undefined}
+          onClick={pathname === '/' ? (e) => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); window.scrollTo({ top: 0, behavior: scrollBehavior() }); } } : undefined}
           className="flex items-center gap-3 min-w-0 text-xl font-serif font-bold text-heading hover:text-accent transition-colors duration-200"
         >
           {siteConfig.logo?.src ? (
@@ -247,10 +299,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
           <div className="w-px h-4 bg-surface-raised mx-1 hidden md:block"></div>
           {/* Hamburger button - mobile only */}
           <button
+            ref={menuButtonRef}
             className="md:hidden p-3 -mr-3 text-foreground/80 hover:text-heading transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={isMenuOpen ? t('nav_close_menu') : t('nav_open_menu')}
             aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav-panel"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isMenuOpen ? (
@@ -282,7 +336,12 @@ export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps)
             onClick={() => closeMenu()}
           />
           {/* Menu */}
-          <div className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-line shadow-lg animate-slide-down" data-testid="mobile-nav-panel">
+          <div
+            ref={menuPanelRef}
+            id="mobile-nav-panel"
+            className="md:hidden absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md border-b border-line shadow-lg animate-slide-down"
+            data-testid="mobile-nav-panel"
+          >
             <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
               {navItems.map((item) => {
                 const isExternal = !!('external' in item && item.external);

@@ -58,7 +58,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
         >
           <LuTag className="w-3 h-3" />
           <span>{t('tags')}</span>
-          <span className="ml-auto font-mono font-normal normal-case tracking-normal text-muted/50">
+          <span className="ml-auto font-mono font-normal normal-case tracking-normal text-muted">
             {totalCount}
           </span>
         </Link>
@@ -72,12 +72,12 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('filter_tags')}
             aria-label={t('filter_tags')}
-            className="w-full pl-8 pr-7 py-1.5 text-xs bg-surface-faint border border-line rounded-lg outline-none focus:border-accent/40 text-foreground placeholder:text-muted/40 transition-colors"
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-surface-faint border border-line rounded-lg outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 text-foreground placeholder:text-muted transition-colors"
           />
           {filter && (
             <button
               onClick={() => setFilter('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/40 hover:text-muted transition-colors p-0.5 rounded"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors p-0.5 rounded"
               aria-label={t('clear_filter')}
             >
               <LuX className="w-3 h-3" />
@@ -104,7 +104,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
                   }`}
                 >
                   <span className="truncate">{tag}</span>
-                  <span className={`ml-2 text-xs font-mono flex-shrink-0 ${isActive ? 'text-accent/70' : 'text-muted/50'}`}>
+                  <span className={`ml-2 text-xs font-mono flex-shrink-0 ${isActive ? 'text-accent' : 'text-muted'}`}>
                     {count}
                   </span>
                 </Link>
@@ -117,7 +117,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             <button
               onClick={() => setExpanded(true)}
               aria-expanded={false}
-              className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
+              className="w-full text-left px-2.5 py-1.5 text-xs text-muted hover:text-accent transition-colors"
             >
               {tWith('more_tags', { count: remainingCount })}
             </button>
@@ -128,7 +128,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
             <button
               onClick={() => setExpanded(false)}
               aria-expanded={true}
-              className="w-full text-left px-2.5 py-1.5 text-xs text-muted/50 hover:text-accent transition-colors"
+              className="w-full text-left px-2.5 py-1.5 text-xs text-muted hover:text-accent transition-colors"
             >
               {t('collapse_tags')}
             </button>
@@ -136,7 +136,7 @@ export default function TagSidebar({ tags, activeTag }: TagSidebarProps) {
 
           {/* Empty state */}
           {visibleTags.length === 0 && (
-            <p className="text-xs text-muted/60 italic px-2.5 py-2">{t('no_tags_found')}</p>
+            <p className="text-xs text-muted italic px-2.5 py-2">{t('no_tags_found')}</p>
           )}
         </nav>
 

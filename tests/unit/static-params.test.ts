@@ -109,7 +109,6 @@ mock.module('@/components/CoverImage', () => Noop);
 mock.module('@/components/SeriesCatalog', () => Noop);
 mock.module('@/components/Pagination', () => Noop);
 mock.module('@/components/PostList', () => Noop);
-mock.module('@/components/PostCard', () => Noop);
 mock.module('@/components/TagPageHeader', () => Noop);
 mock.module('@/components/TagSidebar', () => Noop);
 mock.module('@/components/TagContentTabs', () => Noop);

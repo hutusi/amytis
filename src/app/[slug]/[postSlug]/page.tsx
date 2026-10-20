@@ -20,6 +20,7 @@ import { contentSeoUrls, localeSecondLevelParams, resolveLocalizedPath, type Loc
 import { safeDecodeParam } from '@/lib/route-params';
 import { getAllSeries, getSeriesData } from '@/lib/content/series';
 import { getAllBooks } from '@/lib/content/books';
+import { getAllNotes } from '@/lib/content/notes';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 
@@ -63,7 +64,10 @@ function localizedMetadata(locale: string, resolution: LocalizedResolution): Met
         descriptionOneKey: 'books_subtitle_one', count: getAllBooks(locale).length,
       });
     case 'notesListing':
-      return createListingMetadata({ locale, titleKey: 'notes', description: 'Knowledge base notes.' });
+      return createListingMetadata({
+        locale, titleKey: 'notes', descriptionKey: 'notes_subtitle',
+        descriptionOneKey: 'notes_subtitle_one', count: getAllNotes(locale).length,
+      });
     case 'seriesPrefixListing': {
       const seriesData = getSeriesData(resolution.seriesSlug, locale);
       if (!seriesData) return { title: 'Page Not Found' };

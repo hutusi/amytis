@@ -102,7 +102,10 @@ export default function CoverImage({ title, slug, src, className = "h-full w-ful
   return (
     <ExportedImage
       src={imageSrc}
-      alt={title}
+      // Decorative: every cover sits next to its visible title (cards, list
+      // rows, landing heroes), so naming it again only makes screen readers
+      // announce the title twice.
+      alt=""
       className={className}
       fill
       sizes={sizes}

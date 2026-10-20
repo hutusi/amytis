@@ -69,6 +69,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
     >
       <MarkdownRenderer
         content={chapter.content}
+        locale={book.locale}
         latex={chapter.latex}
         slug={imageSlug}
         bookContext={{

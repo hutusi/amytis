@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
 import type { BookTocItem, BookTocSection, BookChapterRef, BookChapterEntry } from '@/lib/content/books';
 import { useLanguage } from './LanguageProvider';
@@ -19,6 +19,7 @@ interface BookMobileNavProps {
 export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, currentChapter }: BookMobileNavProps) {
   const { t, language } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
+  const listId = useId();
 
   const currentIndex = chapters.findIndex(ch => ch.id === currentChapter);
   const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
@@ -29,7 +30,7 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
     const chIdx = chapters.findIndex(c => c.id === ch.id);
     const isPast = chIdx >= 0 && chIdx < currentIndex;
     return isCurrent ? (
-      <div key={key} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-accent/5">
+      <div key={key} aria-current="page" className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-accent/5">
         <span className="text-sm font-semibold text-accent truncate">{ch.title}</span>
       </div>
     ) : (
@@ -96,7 +97,10 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
 
       {/* Toggle to expand full chapter list */}
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+        aria-controls={listId}
         className="w-full flex items-center justify-center gap-2 py-2 text-xs font-sans text-muted hover:text-accent transition-colors"
       >
         <span className="divider-hairline" />
@@ -114,7 +118,7 @@ export default function BookMobileNav({ bookSlug, bookTitle, toc, chapters, curr
 
       {/* Collapsible chapter list */}
       {isExpanded && (
-        <div className="mt-3 space-y-2 animate-slide-down">
+        <div id={listId} className="mt-3 space-y-2 animate-slide-down">
           {toc.map((item, tocIdx) => {
             if ('part' in item) {
               return (

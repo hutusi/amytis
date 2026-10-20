@@ -66,7 +66,7 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed, brea
                     onClick={() => handleTagSelect(tag)}
                     className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full border transition-colors ${
                       selectedTag === tag
-                        ? 'bg-accent text-white border-accent'
+                        ? 'bg-accent text-accent-contrast border-accent'
                         : 'border-line-strong text-muted hover:border-accent hover:text-accent'
                     }`}
                   >

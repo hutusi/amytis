@@ -3,8 +3,6 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 4rem; /* offset for fixed navbar (h-16 = 64px) */
-  overflow-x: hidden;
 }
 
 :root {
@@ -12,8 +10,15 @@ html {
   --background: #fafaf9; /* Stone 50 */
   --foreground: #44403c; /* Stone 700 */
   --heading: #1c1917; /* Stone 900 */
-  --accent: #059669; /* Emerald 600 */
-  --accent-hover: #047857; /* Emerald 700 */
+  /* Light-mode accents use the 700 shades: accent is the link, date and
+     active-TOC text color, which needs >= 4.5:1 on the paper background
+     (emerald-600 was 3.6:1). */
+  --accent: #047857; /* Emerald 700 */
+  --accent-hover: #065f46; /* Emerald 800 */
+  /* Text on accent fills (badges, active pagination, primary buttons):
+     white on the dark light-mode accents, ink on the bright dark-mode ones
+     (white on emerald-400 was 1.9:1). */
+  --accent-contrast: #ffffff;
   --muted: #78716c; /* Stone 500 - Improved contrast */
   --code-fg: #1c1917; /* Stone 900 - High contrast neutral */
   /* Warm contrast hue for surfaces & hairlines at ultra-low alpha
@@ -28,38 +33,47 @@ html {
   --heading: #fafaf9; /* Stone 50 */
   --accent: #34d399; /* Emerald 400 */
   --accent-hover: #10b981; /* Emerald 500 */
+  --accent-contrast: #1c1917; /* Stone 900 */
   --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
   --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
   --ink: #fafaf9; /* Stone 50 */
 }
 
-/* Palette Overrides */
+/* Palette Overrides
+   data-palette sits on <html>, next to the `.dark` class next-themes toggles.
+   Dark variants match both `<html data-palette class="dark">` and a `.dark`
+   descendant (the immersive overlay adds its own `.dark` for the dark
+   reading theme); at specificity 0,2,0 they beat both `.dark` and the light
+   palette rule. */
 /* Blue */
 [data-palette="blue"] {
-  --accent: #2563eb; /* Blue 600 */
-  --accent-hover: #1d4ed8;
+  --accent: #1d4ed8; /* Blue 700 */
+  --accent-hover: #1e40af;
 }
-.dark[data-palette="blue"] {
+[data-palette="blue"].dark,
+[data-palette="blue"] .dark {
   --accent: #60a5fa; /* Blue 400 */
   --accent-hover: #3b82f6;
 }
 
 /* Rose */
 [data-palette="rose"] {
-  --accent: #e11d48; /* Rose 600 */
-  --accent-hover: #be123c;
+  --accent: #be123c; /* Rose 700 */
+  --accent-hover: #9f1239;
 }
-.dark[data-palette="rose"] {
+[data-palette="rose"].dark,
+[data-palette="rose"] .dark {
   --accent: #fb7185; /* Rose 400 */
   --accent-hover: #f43f5e;
 }
 
 /* Amber */
 [data-palette="amber"] {
-  --accent: #d97706; /* Amber 600 */
-  --accent-hover: #b45309;
+  --accent: #b45309; /* Amber 700 */
+  --accent-hover: #92400e;
 }
-.dark[data-palette="amber"] {
+[data-palette="amber"].dark,
+[data-palette="amber"] .dark {
   --accent: #fbbf24; /* Amber 400 */
   --accent-hover: #f59e0b;
 }
@@ -425,8 +439,18 @@ html.dark .shiki .line.warning {
   background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
-.code-group > input[type="radio"]:focus-visible ~ .cg-tablist .cg-tab,
-.code-group .cg-tab:focus-visible {
+/* Keyboard focus sits on the (visually hidden) radio: outline only that
+ * radio's label, not every tab in the group. */
+.code-group > input[data-idx="0"]:focus-visible ~ .cg-tablist .cg-tab[for$="-0"],
+.code-group > input[data-idx="1"]:focus-visible ~ .cg-tablist .cg-tab[for$="-1"],
+.code-group > input[data-idx="2"]:focus-visible ~ .cg-tablist .cg-tab[for$="-2"],
+.code-group > input[data-idx="3"]:focus-visible ~ .cg-tablist .cg-tab[for$="-3"],
+.code-group > input[data-idx="4"]:focus-visible ~ .cg-tablist .cg-tab[for$="-4"],
+.code-group > input[data-idx="5"]:focus-visible ~ .cg-tablist .cg-tab[for$="-5"],
+.code-group > input[data-idx="6"]:focus-visible ~ .cg-tablist .cg-tab[for$="-6"],
+.code-group > input[data-idx="7"]:focus-visible ~ .cg-tablist .cg-tab[for$="-7"],
+.code-group > input[data-idx="8"]:focus-visible ~ .cg-tablist .cg-tab[for$="-8"],
+.code-group > input[data-idx="9"]:focus-visible ~ .cg-tablist .cg-tab[for$="-9"] {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
@@ -646,16 +670,16 @@ html.dark .shiki .line.warning {
 
   /* Focus ring for accessibility */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Button styles */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-white font-medium transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-accent text-accent-contrast font-medium transition-all hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-line-strong text-foreground font-medium transition-all hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl border border-line-strong text-foreground font-medium transition-all hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Typography - Standardized heading styles */
@@ -788,6 +812,7 @@ html.dark .shiki .line.warning {
   --color-heading: var(--heading);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
   --color-muted: var(--muted);
   --color-ink: var(--ink);
 
@@ -849,13 +874,35 @@ html.dark .shiki .line.warning {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
+  /* Guard against horizontal overflow on phones with `clip`, not `hidden`:
+     `hidden` (on body and html) made body a scroll container that never
+     scrolls, so every `position: sticky` sidebar scrolled away with the
+     page. `clip` clips without creating a scroll container. */
+  overflow-x: clip;
   /* Font smoothing for elegance */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure anchor links are not hidden behind the fixed navbar */
+/* Keyboard focus baseline: every focusable element gets a visible accent
+   outline unless a component styles its own focus-visible state (component
+   utilities sit in a later layer and win). Headings that scrollToHeading
+   focuses programmatically (tabindex="-1") are reading targets, not
+   controls, so they don't get a ring. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  :where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
+    outline: none;
+  }
+}
+
+/* Ensure anchor links are not hidden behind the fixed navbar (h-16) with a
+   little breathing room. The single source of the offset: an
+   html { scroll-padding-top } on top of it used to double the gap on
+   #hash jumps. Matches HEADING_OFFSET_PX in src/lib/scroll-utils.ts. */
 [id] {
   scroll-margin-top: 5rem;
 }
@@ -1172,8 +1219,8 @@ html.dark .rst-rendered aside.admonition-danger {
  * selectors like `[data-site-nav]` — they end up missing from the compiled
  * CSS bundle even though they're written here in source. The surviving
  * patterns are bare-attribute-with-value (e.g. `[data-palette="blue"]`,
- * `[data-line-numbers="true"]`) and class-prefixed compounds (e.g.
- * `.dark[data-palette="blue"]`). React serialises a bare JSX
+ * `[data-line-numbers="true"]`) and compounds/descendants of them (e.g.
+ * `[data-palette="blue"].dark`). React serialises a bare JSX
  * `data-site-nav` prop to the HTML `data-site-nav="true"`, so writing
  * `="true"` here costs nothing on the component side. */
 [data-immersive="true"] [data-site-nav="true"],
@@ -1203,6 +1250,11 @@ html.dark .rst-rendered aside.admonition-danger {
   --foreground: #44403c;
   --heading: #1c1917;
   --muted: #78716c;
+  /* Light surfaces need the light-mode accent even on a dark site, which
+     would otherwise leak dark mode's bright 400 accent in (~1.8:1). */
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --accent-contrast: #ffffff;
 }
 [data-reader-overlay="true"][data-reading-theme="dark"] {
   --background: #292524;
@@ -1215,6 +1267,36 @@ html.dark .rst-rendered aside.admonition-danger {
   --foreground: #5b4636;
   --heading: #3b2f24;
   --muted: #8a7a66;
+  --accent: #047857;
+  --accent-hover: #065f46;
+  --accent-contrast: #ffffff;
+}
+/* Palette accents for the light and sepia readers (the dark reader is
+   covered by the palettes' `.dark` descendant rules). Sepia's warmer
+   background needs amber-800 for 4.5:1. */
+[data-palette="blue"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+}
+[data-palette="blue"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+}
+[data-palette="rose"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #be123c;
+  --accent-hover: #9f1239;
+}
+[data-palette="rose"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #be123c;
+  --accent-hover: #9f1239;
+}
+[data-palette="amber"] [data-reader-overlay="true"][data-reading-theme="light"] {
+  --accent: #b45309;
+  --accent-hover: #92400e;
+}
+[data-palette="amber"] [data-reader-overlay="true"][data-reading-theme="sepia"] {
+  --accent: #92400e;
+  --accent-hover: #78350f;
 }
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h1,
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h2,

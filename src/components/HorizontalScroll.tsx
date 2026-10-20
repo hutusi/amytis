@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useLanguage } from './LanguageProvider';
+import { scrollBehavior } from '@/lib/scroll-utils';
 
 interface HorizontalScrollProps {
   children: ReactNode;
@@ -48,7 +49,7 @@ export default function HorizontalScroll({
     const scrollAmount = container.clientWidth * 0.8;
     container.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth'
+      behavior: scrollBehavior(),
     });
   }, []);
 
@@ -76,7 +77,7 @@ export default function HorizontalScroll({
         onClick={() => scroll('left')}
         className={`absolute -left-4 lg:-left-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-line-strong rounded-full shadow-md transition-all duration-200 ${hasOverflow ? 'hidden md:flex' : 'hidden'} items-center justify-center ${
           canScrollLeft
-            ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
+            ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollLeft}
@@ -102,7 +103,7 @@ export default function HorizontalScroll({
         onClick={() => scroll('right')}
         className={`absolute -right-4 lg:-right-14 top-1/2 -translate-y-1/2 z-20 p-2 lg:p-3 bg-background border border-line-strong rounded-full shadow-md transition-all duration-200 ${hasOverflow ? 'hidden md:flex' : 'hidden'} items-center justify-center ${
           canScrollRight
-            ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus:outline-none focus:ring-2 focus:ring-accent/50'
+            ? 'text-muted hover:text-accent hover:border-accent/40 hover:shadow-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50'
             : 'text-muted/30 cursor-not-allowed opacity-50'
         }`}
         disabled={!canScrollRight}
@@ -115,7 +116,7 @@ export default function HorizontalScroll({
       </button>
 
       {/* Keyboard hint - visible on focus */}
-      <div className="sr-only">Use left and right arrow keys to scroll</div>
+      <div className="sr-only">{t('scroll_keyboard_hint')}</div>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export default function ArchivePage() {
         {years.length > 1 && (
           <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16 mb-16">
             <div />
-            <nav aria-label="Jump to year" className="flex flex-wrap items-center gap-2">
+            <nav aria-label={t('jump_to_year')} className="flex flex-wrap items-center gap-2">
               {years.map(year => (
                 <a
                   key={year}
@@ -101,7 +101,7 @@ export default function ArchivePage() {
                 {/* Year Marker */}
                 <div className="relative">
                   <div className="sticky top-24 lg:top-32 text-left md:text-right">
-                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-muted/50">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-muted">
                       {year}
                     </h2>
                     <span className="block text-xs font-bold uppercase tracking-widest text-muted mt-2">
@@ -121,7 +121,7 @@ export default function ArchivePage() {
                         
                         <h3 className="text-base font-sans font-bold uppercase tracking-widest text-accent mb-8">
                           {getMonthName(Number(month))}
-                          <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted/60 bg-surface-soft rounded px-1.5 py-0.5 align-middle leading-none">
+                          <span className="ml-2 inline-flex items-center text-[10px] font-mono text-muted bg-surface-soft rounded px-1.5 py-0.5 align-middle leading-none">
                             {monthPosts.length}
                           </span>
                         </h3>
@@ -158,7 +158,7 @@ export default function ArchivePage() {
                                     {showAuthors && post.authors.length > 0 && (
                                       <span 
                                         title={post.authors.join(', ')}
-                                        className="text-sm font-sans italic text-muted/60 hidden sm:block max-w-[12rem] md:max-w-[16rem] lg:max-w-[20rem] truncate text-right shrink-0"
+                                        className="text-sm font-sans italic text-muted hidden sm:block max-w-[12rem] md:max-w-[16rem] lg:max-w-[20rem] truncate text-right shrink-0"
                                       >
                                         {post.authors.join(', ')}
                                       </span>

@@ -72,6 +72,6 @@ describe("MarkdownRenderer", () => {
     // so the article HTML must not paint its own background (which is what caused
     // Chromium's clipboard serializer to inline `background-color` on every <p>).
     expect(html).not.toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
-    expect(html).toContain('<p class="mb-4 leading-relaxed text-foreground">Hello world</p>');
+    expect(html).toContain('<p>Hello world</p>');
   });
 });
