@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { featureLabelKey, visibleNavItems } from '@/lib/nav';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
 import type { NavChildItem } from '../../site.config';
 import ThemeToggle from './ThemeToggle';
@@ -12,6 +11,7 @@ import Search from '@/components/Search';
 import NavDropdown, { type NavMenuItem } from './NavDropdown';
 import NavAccordion from './NavAccordion';
 import { useLanguage } from '@/components/LanguageProvider';
+import { useRenderedPathname } from '@/hooks/useRenderedPathname';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { splitLocaleFromPath } from '@/lib/urls';
 import { localeStickyHref } from '@/lib/locale-urls';
@@ -30,7 +30,9 @@ interface NavbarProps {
 
 export default function Navbar({ seriesList = [], booksList = [] }: NavbarProps) {
   const { t, tWith, language, twinnedPaths } = useLanguage();
-  const pathname = usePathname();
+  // Rendered from the pathname (active item, home scroll), so it must match
+  // the HTML while hydrating the fallback 404 page.
+  const pathname = useRenderedPathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);

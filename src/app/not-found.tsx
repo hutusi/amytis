@@ -1,7 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useLanguage } from '@/components/LanguageProvider';
+import LocaleLink from '@/components/LocaleLink';
+import { useRenderedPathname } from '@/hooks/useRenderedPathname';
 import { openSearch } from '@/lib/search-events';
 
 const ACTION_CLASS =
@@ -12,11 +13,17 @@ const ACTION_CLASS =
 // forward) rather than the default unbranded Next.js 404. A dead end with
 // only "home" loses readers who followed a stale link; search and the
 // archive usually get them to what they were after.
+//
+// Because that one file answers /zh/… too, it stamps the pathname it was
+// rendered for: useRenderedPathname() hydrates against the stamp, then
+// re-renders in the URL's locale. The links stay in that locale where the
+// target exists there.
 export default function NotFound() {
   const { t } = useLanguage();
+  const renderedPathname = useRenderedPathname();
 
   return (
-    <div className="layout-main">
+    <div className="layout-main" data-rendered-pathname={renderedPathname ?? undefined}>
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="font-mono text-7xl font-bold text-muted/30" aria-hidden="true">
           404
@@ -27,15 +34,15 @@ export default function NotFound() {
           <button type="button" onClick={openSearch} className={ACTION_CLASS}>
             {t('search_the_site')}
           </button>
-          <Link href="/archive" className={ACTION_CLASS}>
+          <LocaleLink href="/archive" className={ACTION_CLASS}>
             {t('archive')}
-          </Link>
-          <Link href="/tags" className={ACTION_CLASS}>
+          </LocaleLink>
+          <LocaleLink href="/tags" className={ACTION_CLASS}>
             {t('tags')}
-          </Link>
-          <Link href="/" className={ACTION_CLASS}>
+          </LocaleLink>
+          <LocaleLink href="/" className={ACTION_CLASS}>
             {t('back_to_home')}
-          </Link>
+          </LocaleLink>
         </div>
       </div>
     </div>

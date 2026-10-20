@@ -127,9 +127,16 @@ and keeps its unprefixed URLs.
   unprefixed paths and redirect into the tree. No alias pages exist *at*
   locale-prefixed paths.
 - **Chrome**: the client locale is URL-derived (`LanguageProvider` +
-  `usePathname`); `LanguageSwitch` navigates to the page's twin (falling back
-  to the locale home) via the twin manifest `getTwinnedPathManifest()` passed
-  through the root layout.
+  `useRenderedPathname`); `LanguageSwitch` navigates to the page's twin
+  (falling back to the locale home) via the twin manifest
+  `getTwinnedPathManifest()` passed through the root layout.
+- **Fallback 404**: hosts serve the single `out/404.html` (prerendered at
+  `/_not-found`, default locale) for every unknown URL, `/zh/…` included. The
+  not-found page stamps `data-rendered-pathname`, and
+  `src/hooks/useRenderedPathname.ts` returns that stamp while hydrating, so
+  the first client render matches the HTML; React then re-renders in the
+  URL's locale. Components that *render* from the pathname (provider,
+  Navbar) use the hook; event handlers and effects can keep `usePathname()`.
 - **Aggregations**: `/tags`, `/archive`, `/authors`, `/graph` stay global and
   include locale-tree originals (linking to `/zh/…`); feeds serve the default
   tree plus locale-tree originals (twins excluded); search indexes all trees

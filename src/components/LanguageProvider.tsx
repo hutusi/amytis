@@ -1,11 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
 import { siteConfig } from '../../site.config';
 import { translations, Language, TranslationKey } from '../i18n/translations';
 import { buildFeatureOverrides } from '@/lib/i18n';
 import { localeFromPathname } from '@/lib/locale-urls';
+import { useRenderedPathname } from '@/hooks/useRenderedPathname';
 
 /**
  * Per-locale switch manifest, computed on the server and passed down through
@@ -37,8 +37,11 @@ const LOCALE_CONFIG = {
  * Language context, derived from the URL. The locale prefix in the pathname
  * (/zh/…) is authoritative, so the server and every client render agree from
  * the first paint — no localStorage, no hydration gate, no post-hydration
- * language swap. An explicit `locale` prop wins over pathname derivation
- * (used by tests and available to locale-aware layouts).
+ * language swap. The one exception is the exported 404.html, which hosts
+ * serve for every unknown URL: it hydrates in the language it was rendered
+ * in, then switches to the URL's (see useRenderedPathname). An explicit
+ * `locale` prop wins over pathname derivation (used by tests and available
+ * to locale-aware layouts).
  */
 export function LanguageProvider({
   locale,
@@ -51,7 +54,7 @@ export function LanguageProvider({
 }) {
   // Returns null outside a Next router (unit-test renders) — the helper
   // falls back to the default locale there.
-  const pathname = usePathname();
+  const pathname = useRenderedPathname();
   const language = (locale ?? localeFromPathname(pathname, LOCALE_CONFIG)) as Language;
   const table = translations[language] ?? translations[LOCALE_CONFIG.defaultLocale as Language] ?? translations.en;
 
