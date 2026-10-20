@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { isFeatureEnabled } from '@/lib/features';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -8,7 +8,7 @@ import { type ContentType, parseRecentSearches, resolveTypeHotkey } from '@/lib/
 import type { TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
 import { resolveLocaleValue } from '@/lib/i18n';
-import { usePagefind } from '@/hooks/usePagefind';
+import { RESULTS_PER_TAB, usePagefind } from '@/hooks/usePagefind';
 import SearchResults from '@/components/SearchResults';
 import { OPEN_SEARCH_EVENT } from '@/lib/search-events';
 
@@ -30,7 +30,6 @@ const CONTENT_TYPE_FEATURE: Record<Exclude<ContentType, 'All'>, keyof typeof sit
 };
 const RECENT_KEY = 'amytis-recent-searches';
 const MAX_RECENT = 5;
-const MAX_RESULTS = 8;
 
 const TYPE_LABEL_KEYS: Record<Exclude<ContentType, 'All'>, TranslationKey> = {
   Post: 'search_type_post',
@@ -62,7 +61,6 @@ export default function Search() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [activeType, setActiveType] = useState<ContentType>('All');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,16 +73,26 @@ export default function Search() {
   const baseId = useId();
   const { t, tWith, language } = useLanguage();
 
-  // Reset the keyboard highlight and type tab whenever usePagefind replaces
-  // the result set. Stable identity (setState functions never change) so the
-  // hook's search effect doesn't re-run on every render.
+  // Reset the keyboard highlight whenever usePagefind replaces the result
+  // set. Stable identity (setState functions never change) so the hook's
+  // search effect doesn't re-run on every render.
   const resetResultSelection = useCallback(() => {
     setActiveIndex(-1);
-    setActiveType('All');
   }, []);
 
-  const { allResults, isFetching, isUnavailable, isError, isTyping, debouncedQuery } =
-    usePagefind(query, isOpen, resetResultSelection);
+  const {
+    results: displayedResults,
+    typeCounts,
+    activeType,
+    setActiveType,
+    isFetching,
+    isUnavailable,
+    isError,
+    isTyping,
+    debouncedQuery,
+  } = usePagefind(query, isOpen, resetResultSelection);
+  const totalFilteredCount = typeCounts[activeType];
+  const hasResults = typeCounts.All > 0;
 
   const listboxId = `${baseId}-listbox`;
   const optionId = (index: number) => `${baseId}-option-${index}`;
@@ -104,19 +112,6 @@ export default function Search() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecentSearches(loadRecentSearches());
   }, []);
-
-  // Filtered results for the active type tab
-  const { displayedResults, totalFilteredCount } = useMemo(() => {
-    const filtered = activeType === 'All' ? allResults : allResults.filter((r) => r.type === activeType);
-    return { displayedResults: filtered.slice(0, MAX_RESULTS), totalFilteredCount: filtered.length };
-  }, [allResults, activeType]);
-
-  // Count per type for tab badges
-  const typeCounts = useMemo(() => {
-    const counts: Record<ContentType, number> = { All: allResults.length, Post: 0, Flow: 0, Book: 0, Note: 0 };
-    for (const r of allResults) counts[r.type]++;
-    return counts;
-  }, [allResults]);
 
   // Global shortcuts: Cmd/Ctrl+K toggles; "/" opens (the convention on
   // GitHub, MDN, …) unless the user is typing into a field. Escape is handled
@@ -185,7 +180,6 @@ export default function Search() {
       /* eslint-disable react-hooks/set-state-in-effect */
       setQuery('');
       setActiveIndex(-1);
-      setActiveType('All');
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [isOpen]);
@@ -220,7 +214,7 @@ export default function Search() {
     // isComposing already false.
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     // Alt+digit switches type tabs when results are visible.
-    if (allResults.length > 0 && e.altKey) {
+    if (hasResults && e.altKey) {
       const visibleTypes = CONTENT_TYPES.filter((ct) => ct === 'All' || typeCounts[ct] > 0);
       const target = resolveTypeHotkey(e.key, visibleTypes);
       if (target) { e.preventDefault(); setActiveType(target); setActiveIndex(-1); return; }
@@ -361,7 +355,7 @@ export default function Search() {
             </div>
 
             {/* Type filter tabs — visible when results exist */}
-            {allResults.length > 0 && (
+            {hasResults && (
               <div
                 ref={tablistRef}
                 className="flex items-center gap-1 px-4 pt-2 pb-1 border-b border-line shrink-0"
@@ -396,15 +390,15 @@ export default function Search() {
                 Doubles as the tabpanel for the type tablist when tabs are shown. */}
             <div
               className="flex-1 sm:flex-none overflow-y-auto min-h-0 sm:max-h-[60vh]"
-              role={allResults.length > 0 ? 'tabpanel' : undefined}
-              aria-labelledby={allResults.length > 0 ? tabId(activeType) : undefined}
+              role={hasResults ? 'tabpanel' : undefined}
+              aria-labelledby={hasResults ? tabId(activeType) : undefined}
             >
 
               {/* Results listbox + capped-count footer + no-results block */}
               <SearchResults
                 displayedResults={displayedResults}
                 totalFilteredCount={totalFilteredCount}
-                maxResults={MAX_RESULTS}
+                maxResults={RESULTS_PER_TAB}
                 activeIndex={activeIndex}
                 listboxId={listboxId}
                 optionId={optionId}

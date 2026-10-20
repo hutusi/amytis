@@ -1,6 +1,14 @@
 import { describe, test, expect, jest, afterEach, mock } from 'bun:test';
 import { renderHook, act } from '@testing-library/react';
-import { __resetPagefindForTests, toDisplayResult, usePagefind } from '@/hooks/usePagefind';
+import {
+  __resetPagefindForTests,
+  countTypes,
+  RESULTS_PER_TAB,
+  toDisplayResult,
+  usePagefind,
+  type PagefindFragment,
+  type PagefindSearch,
+} from '@/hooks/usePagefind';
 
 /**
  * Pagefind itself never loads in this environment (the runtime dynamic import
@@ -50,6 +58,107 @@ describe('toDisplayResult', () => {
     // A data-pagefind-meta that matched no attribute is indexed as "".
     expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: { date: '' } }).date).toBe('2026-03-04');
     expect(toDisplayResult({ ...base, url: '/flows/2026/03/04/', meta: {} }).date).toBe('2026-03-04');
+  });
+
+  test('takes the type from the indexed filter, falling back to the URL', () => {
+    // A post under a custom base path whose URL reads like a flow.
+    expect(toDisplayResult({ ...base, url: '/flows-of-thought/a/', meta: {}, filters: { type: ['Note'] } }).type).toBe('Note');
+    expect(toDisplayResult({ ...base, url: '/books/x/', meta: {}, filters: { type: ['Bogus'] } }).type).toBe('Book');
+    expect(toDisplayResult({ ...base, url: '/books/x/', meta: {} }).type).toBe('Book');
+  });
+});
+
+describe('countTypes', () => {
+  const hits = (n: number) => ({ results: Array.from({ length: n }, () => ({ data: async () => ({}) as PagefindFragment })) });
+
+  test('counts every hit for All and each type from the filter counts', () => {
+    expect(countTypes({ ...hits(5), filters: { type: { Post: 3, Flow: 2 } } }))
+      .toEqual({ All: 5, Post: 3, Flow: 2, Book: 0, Note: 0 });
+  });
+
+  test('an index without type filters still counts All', () => {
+    expect(countTypes(hits(4))).toEqual({ All: 4, Post: 0, Flow: 0, Book: 0, Note: 0 });
+  });
+});
+
+describe('usePagefind type tabs', () => {
+  afterEach(() => __resetPagefindForTests());
+
+  // 20 posts and 3 flows, all matching every query.
+  const PAGES = [
+    ...Array.from({ length: 20 }, (_, i) => ({ url: `/posts/p${i}/`, type: 'Post' })),
+    ...Array.from({ length: 3 }, (_, i) => ({ url: `/flows/2026/01/0${i + 1}/`, type: 'Flow' })),
+  ];
+
+  function fakeIndex() {
+    const loaded: string[] = [];
+    // Like Pagefind: searches report filter counts only after filters() loads the filter index.
+    let filtersLoaded = false;
+    const filters = mock(async () => { filtersLoaded = true; return {}; });
+    const search = mock(async (_q: string, options?: { filters?: Record<string, string> }): Promise<PagefindSearch> => {
+      const pages = PAGES.filter((p) => !options?.filters?.type || p.type === options.filters.type);
+      const byType: Record<string, number> = {};
+      for (const p of pages) byType[p.type] = (byType[p.type] ?? 0) + 1;
+      return {
+        results: pages.map((p) => ({
+          data: async () => {
+            loaded.push(p.url);
+            return { url: p.url, excerpt: '', meta: { title: p.url }, filters: { type: [p.type] }, word_count: 1 };
+          },
+        })),
+        filters: filtersLoaded ? { type: byType } : {},
+      };
+    });
+    __resetPagefindForTests(async () => ({ init: async () => {}, destroy: async () => {}, filters, search }));
+    return { search, filters, loaded };
+  }
+
+  const settle = () => act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+
+  test('loads only the shown hits and counts every hit per type', async () => {
+    const { loaded, filters } = fakeIndex();
+    const noop = () => {};
+    const { result } = renderHook(() => usePagefind('q', true, noop));
+    await settle();
+
+    expect(filters).toHaveBeenCalledTimes(1);
+    expect(result.current.typeCounts).toEqual({ All: 23, Post: 20, Flow: 3, Book: 0, Note: 0 });
+    expect(result.current.results).toHaveLength(RESULTS_PER_TAB);
+    expect(loaded).toHaveLength(RESULTS_PER_TAB);
+  });
+
+  test('a type tab searches within its type and keeps the counts', async () => {
+    const { search, loaded } = fakeIndex();
+    const noop = () => {};
+    const { result } = renderHook(() => usePagefind('q', true, noop));
+    await settle();
+    loaded.length = 0;
+
+    act(() => result.current.setActiveType('Flow'));
+    await settle();
+
+    expect(result.current.activeType).toBe('Flow');
+    expect(search).toHaveBeenLastCalledWith('q', { filters: { type: 'Flow' } });
+    expect(result.current.results.map((r) => r.type)).toEqual(['Flow', 'Flow', 'Flow']);
+    expect(loaded).toHaveLength(3);
+    expect(result.current.typeCounts.All).toBe(23);
+  });
+
+  test('a new query falls back to All', async () => {
+    fakeIndex();
+    const noop = () => {};
+    let query = 'q';
+    const { result, rerender } = renderHook(() => usePagefind(query, true, noop));
+    await settle();
+    act(() => result.current.setActiveType('Flow'));
+    await settle();
+
+    query = 'q2';
+    rerender();
+    await settle();
+
+    expect(result.current.activeType).toBe('All');
+    expect(result.current.results).toHaveLength(RESULTS_PER_TAB);
   });
 });
 

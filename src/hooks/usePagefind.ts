@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { type ContentType, getResultType, getDateFromUrl, cleanTitle } from '@/lib/search-utils';
+import {
+  type ContentType,
+  type ResultType,
+  SEARCH_TYPE_FILTER,
+  cleanTitle,
+  getDateFromUrl,
+  getResultType,
+  isResultType,
+} from '@/lib/search-utils';
 
 /** A Pagefind hit mapped for display in the search modal. */
 export interface DisplayResult {
@@ -9,15 +17,18 @@ export interface DisplayResult {
   title: string;
   excerpt: string; // contains <mark> tags from Pagefind
   date: string;
-  type: Exclude<ContentType, 'All'>;
+  type: ResultType;
 }
 
-// Load the full match set (bounded) so per-type counts and tabs reflect every
-// result, not just the first page — a 24-hit cap could hide a whole content
-// type when one type dominates the ranking. Display is capped separately by the
-// consumer. The bound guards a pathological match count on large indexes; a
-// personal-blog query never approaches it, so counts are exact in practice.
-const MAX_INDEXED_RESULTS = 100;
+/** Hits per tab for the debounced query; `All` counts every hit. */
+export type TypeCounts = Record<ContentType, number>;
+
+const EMPTY_COUNTS: TypeCounts = { All: 0, Post: 0, Flow: 0, Book: 0, Note: 0 };
+
+// Hits shown per tab. Only these load their fragment (`.data()`, one request
+// each). The tab counts come from the search itself: every indexed page
+// carries a `type` filter, and Pagefind reports how many hits have each value.
+export const RESULTS_PER_TAB = 8;
 const DEBOUNCE_MS = 150;
 
 // ─── Pagefind loader ──────────────────────────────────────────────────────────
@@ -30,28 +41,52 @@ export interface PagefindFragment {
   url: string;
   excerpt: string; // contains <mark> tags
   meta: { title?: string; image?: string; date?: string; [key: string]: string | undefined };
+  /** data-pagefind-filter values, e.g. `{ type: ['Post'] }`. */
+  filters?: Record<string, string[]>;
   word_count: number;
+}
+
+export interface PagefindSearch {
+  results: Array<{ data: () => Promise<PagefindFragment> }>;
+  /** Hits per filter value for this search, e.g. `{ type: { Post: 3 } }`. */
+  filters?: Record<string, Record<string, number>>;
 }
 
 interface PagefindAPI {
   init: () => Promise<void>;
   destroy?: () => Promise<void>;
-  search: (q: string) => Promise<{ results: Array<{ data: () => Promise<PagefindFragment> }> }>;
+  /** Loads the filter index; returns the counts over every page. */
+  filters?: () => Promise<Record<string, Record<string, number>>>;
+  search: (q: string, options?: { filters?: Record<string, string> }) => Promise<PagefindSearch>;
 }
 
 /**
  * Map a Pagefind fragment to a display result. The date comes from the
  * page's `date` meta (a `<time datetime>` with data-pagefind-meta) and falls
  * back to the date encoded in the URL (flows): `||`, not `??`, because a meta
- * that matched no attribute is indexed as "".
+ * that matched no attribute is indexed as "". The type comes from the page's
+ * `type` filter, or from the URL for an index built before pages carried one.
  */
 export function toDisplayResult(fragment: PagefindFragment): DisplayResult {
+  const indexedType = fragment.filters?.[SEARCH_TYPE_FILTER]?.[0];
   return {
     url: fragment.url,
     title: cleanTitle(fragment.meta.title ?? ''),
     excerpt: fragment.excerpt,
     date: fragment.meta.date || getDateFromUrl(fragment.url),
-    type: getResultType(fragment.url),
+    type: indexedType && isResultType(indexedType) ? indexedType : getResultType(fragment.url),
+  };
+}
+
+/** Tab counts from an unfiltered search. A stale index without type filters counts only `All`. */
+export function countTypes(search: PagefindSearch): TypeCounts {
+  const byType = search.filters?.[SEARCH_TYPE_FILTER] ?? {};
+  return {
+    All: search.results.length,
+    Post: byType.Post ?? 0,
+    Flow: byType.Flow ?? 0,
+    Book: byType.Book ?? 0,
+    Note: byType.Note ?? 0,
   };
 }
 
@@ -95,6 +130,9 @@ async function loadPagefind(): Promise<PagefindAPI | null> {
       if (initializedLang !== lang) {
         if (initializedLang !== null) await pagefindModule.destroy?.();
         await pagefindModule.init();
+        // Searches report per-filter counts (the tab counts) only once the
+        // filter index is loaded; until then `filters` comes back empty.
+        await pagefindModule.filters?.();
         initializedLang = lang;
       }
       return pagefindModule;
@@ -123,22 +161,30 @@ export function __resetPagefindForTests(importer?: () => Promise<PagefindAPI>): 
 /**
  * Debounced Pagefind search over the static index, for the search modal.
  *
- * Debounces `query`, runs Pagefind on the debounced value, and maps the
- * fragments to `DisplayResult`s. Pre-loads the Pagefind bundle whenever
- * `isOpen` becomes true (flipping `isUnavailable` if the index is missing)
- * and fully resets search state when it flips back to false.
+ * Debounces `query`, runs Pagefind on the debounced value, and maps the first
+ * `RESULTS_PER_TAB` hits of the active type tab to `DisplayResult`s, with
+ * exact per-tab counts. Pre-loads the Pagefind bundle whenever `isOpen`
+ * becomes true (flipping `isUnavailable` if the index is missing) and fully
+ * resets search state when it flips back to false.
  *
- * `onResultsReset` fires whenever the result set is replaced (fresh results
- * or a cleared query) so the caller can reset its selection state. Pass a
- * stable callback (`useCallback`) — it participates in the search effect's
- * dependencies, so a new identity per render would re-run searches.
+ * The active tab lives here because the search depends on it: a tab is picked
+ * for one query, and any other query shows All.
+ *
+ * `onResultsReset` fires whenever the result set is replaced (fresh results,
+ * a tab switch or a cleared query) so the caller can reset its selection
+ * state. Pass a stable callback (`useCallback`) — it participates in the
+ * search effect's dependencies, so a new identity per render would re-run
+ * searches.
  */
 export function usePagefind(
   query: string,
   isOpen: boolean,
   onResultsReset: () => void,
 ): {
-  allResults: DisplayResult[];
+  results: DisplayResult[];
+  typeCounts: TypeCounts;
+  activeType: ContentType;
+  setActiveType: (type: ContentType) => void;
   isFetching: boolean;
   isUnavailable: boolean;
   isError: boolean;
@@ -146,7 +192,11 @@ export function usePagefind(
   debouncedQuery: string;
 } {
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [allResults, setAllResults] = useState<DisplayResult[]>([]);
+  const [results, setResults] = useState<DisplayResult[]>([]);
+  const [typeCounts, setTypeCounts] = useState<TypeCounts>(EMPTY_COUNTS);
+  const [typeChoice, setTypeChoice] = useState<{ query: string; type: ContentType }>({ query: '', type: 'All' });
+  const activeType = typeChoice.query === debouncedQuery ? typeChoice.type : 'All';
+  const setActiveType = (type: ContentType) => setTypeChoice({ query: debouncedQuery, type });
   const [isFetching, setIsFetching] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
   // Recoverable: a rejected search (vs. a missing index) — the user can retry.
@@ -174,11 +224,12 @@ export function usePagefind(
 
   // Run Pagefind search on debounced query. Synchronous resets when the
   // query becomes empty are the simplest way to clear results state without
-  // threading conditional renders through every consumer of allResults.
+  // threading conditional renders through every consumer of the results.
   useEffect(() => {
     if (!debouncedQuery) {
       /* eslint-disable react-hooks/set-state-in-effect */
-      setAllResults([]);
+      setResults([]);
+      setTypeCounts(EMPTY_COUNTS);
       setIsError(false);
       // Clearing the input mid-search cancels the in-flight request, whose
       // finally skips its own reset (cancelled), so reset here too — otherwise
@@ -196,19 +247,27 @@ export function usePagefind(
     loadPagefind().then(async (pf) => {
       if (!pf || cancelled) { setIsFetching(false); return; }
       try {
-        const search = await pf.search(debouncedQuery);
+        // The unfiltered search gives the counts for every tab; a type tab
+        // then searches within its type. Both reuse the index chunks Pagefind
+        // has already loaded, so only the shown hits' fragments are fetched.
+        const all = await pf.search(debouncedQuery);
+        const shown = activeType === 'All'
+          ? all
+          : await pf.search(debouncedQuery, { filters: { [SEARCH_TYPE_FILTER]: activeType } });
         const fragments = await Promise.all(
-          search.results.slice(0, MAX_INDEXED_RESULTS).map((r) => r.data())
+          shown.results.slice(0, RESULTS_PER_TAB).map((r) => r.data())
         );
         if (cancelled) return;
-        setAllResults(fragments.map(toDisplayResult));
+        setResults(fragments.map(toDisplayResult));
+        setTypeCounts(countTypes(all));
         setIsError(false);
         onResultsReset();
       } catch {
         // A rejected search (Pagefind runtime error) previously went unhandled
         // and silently showed "no results". Surface a recoverable error instead.
         if (cancelled) return;
-        setAllResults([]);
+        setResults([]);
+        setTypeCounts(EMPTY_COUNTS);
         setIsError(true);
         onResultsReset();
       } finally {
@@ -217,7 +276,7 @@ export function usePagefind(
     });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, onResultsReset]);
+  }, [debouncedQuery, activeType, onResultsReset]);
 
   // Full reset on close. `isFetching` must be forced off here: a search
   // in flight during close is cancelled, and its own setIsFetching(false)
@@ -229,11 +288,13 @@ export function usePagefind(
     if (isOpen) return;
     /* eslint-disable react-hooks/set-state-in-effect */
     setDebouncedQuery('');
-    setAllResults([]);
+    setResults([]);
+    setTypeCounts(EMPTY_COUNTS);
+    setTypeChoice({ query: '', type: 'All' });
     setIsFetching(false);
     setIsError(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [isOpen]);
 
-  return { allResults, isFetching, isUnavailable, isError, isTyping, debouncedQuery };
+  return { results, typeCounts, activeType, setActiveType, isFetching, isUnavailable, isError, isTyping, debouncedQuery };
 }
