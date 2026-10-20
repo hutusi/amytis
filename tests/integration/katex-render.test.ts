@@ -25,6 +25,20 @@ describe('Integration: KaTeX rendering', () => {
     expect(html).toContain('<path d="');
   });
 
+  test('authored raw HTML with a katex class is not serialized as trusted markup', async () => {
+    // Only rehype-katex's own spans take the dangerouslySetInnerHTML path; an
+    // author's look-alike span renders through React, which drops string
+    // event handlers.
+    const html = await renderAsync(MarkdownRenderer({
+      content: 'x <span class="katex"><img src="x.png" onerror="alert(1)"></span> and $y$',
+      latex: true,
+    }));
+    expect(html).not.toMatch(/onerror/i);
+    expect(html).not.toContain('alert(1)');
+    // The real formula is still collapsed into one HTML string.
+    expect(html).toMatch(/<span class="katex"><span class="katex-mathml"><math/);
+  });
+
   test('plain spans outside math still render as React children', async () => {
     const html = await renderAsync(MarkdownRenderer({ content: 'a <span class="note">b</span> c', latex: true }));
     expect(html).toContain('<span class="note">b</span>');

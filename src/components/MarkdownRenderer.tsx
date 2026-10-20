@@ -10,6 +10,7 @@ import ExternalLinkIcon from '@/components/ExternalLinkIcon';
 import ArticleCopyCleaner from '@/components/ArticleCopyCleaner';
 import remarkGfm from 'remark-gfm';
 import { toHtml } from 'hast-util-to-html';
+import { isGeneratedKatexSpan, rehypeKatexAfter, rehypeKatexBefore } from '@/lib/rehype-katex-provenance';
 import KatexStyles from '@/components/KatexStyles';
 import remarkDirective from 'remark-directive';
 import remarkCodeGroup from '@/lib/remark-code-group';
@@ -111,9 +112,11 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // character per chapter view). A bare `strict: 'ignore'` would silence
     // *every* KaTeX strict check including genuinely broken math, so use a
     // predicate that targets just this transgression.
-    rehypePlugins.push([rehypeKatex, {
+    // The before/after pair records which katex spans rehype-katex generated,
+    // so only those take the serialized-string path in the `span` override.
+    rehypePlugins.push(rehypeKatexBefore, [rehypeKatex, {
       strict: (code: string) => (code === 'unicodeTextInMathMode' ? 'ignore' : 'warn'),
-    }]);
+    }], rehypeKatexAfter);
   }
 
   const components: Components = {
@@ -155,7 +158,9 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       const { node, children, className, ...rest } = props as React.HTMLAttributes<HTMLSpanElement> & ExtraProps;
       const classes = typeof className === 'string' ? className.split(/\s+/) : [];
       const isFormula = classes.includes('katex-display') || (classes.includes('katex') && !classes.includes('katex-error'));
-      if (isFormula && node) {
+      // Only rehype-katex's own output: an authored raw-HTML span with the
+      // same class renders through React, which drops string event handlers.
+      if (isFormula && node && isGeneratedKatexSpan(node)) {
         return <span {...rest} className={className} dangerouslySetInnerHTML={{ __html: toHtml(node.children) }} />;
       }
       return <span {...rest} className={className}>{children}</span>;
