@@ -335,9 +335,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Tag detail pages. Encode the lowercased tag exactly as the Tag component's
   // href does, so special-character tags (spaces, `c#`, `a/b`) stay valid URLs.
-  // Same sources getAllTags aggregates, so every tag page gets a date.
+  // Same sources getAllTags aggregates, including its feature gate: flows and
+  // notes count only when the flow feature is on, so disabled content can't
+  // date a post-only tag page (or the /tags index).
   const tagLatest = new Map<string, string>();
-  for (const item of [...getPostsWithLocaleOriginals(), ...getAllFlows(), ...getNotesWithLocaleOriginals()]) {
+  const taggedContent = [
+    ...getPostsWithLocaleOriginals(),
+    ...(flowEnabled ? [...flows, ...getNotesWithLocaleOriginals()] : []),
+  ];
+  for (const item of taggedContent) {
     for (const tag of item.tags ?? []) {
       const key = tag.toLowerCase();
       tagLatest.set(key, newestDate([tagLatest.get(key), item.date])!);

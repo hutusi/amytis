@@ -100,7 +100,9 @@ server {
     # Page requests (/slug/) reach this block through the index module's
     # internal redirect to /slug/index.html, so every page gets the header.
     # The __next.*.txt / index.txt RSC payloads that client-side navigation
-    # fetches must stay in sync with the HTML, so they share it.
+    # fetches must stay in sync with the HTML, so they share it. This also
+    # matches /robots.txt, which crawlers then revalidate on each fetch —
+    # intended: it is tiny and should never be served stale.
     location ~* \.(html|txt)$ {
         add_header Cache-Control "no-cache";
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;

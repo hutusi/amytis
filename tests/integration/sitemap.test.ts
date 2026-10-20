@@ -1,6 +1,6 @@
 import { describe, expect, test, mock } from 'bun:test';
 import sitemap from '@/app/sitemap';
-import { getAllPosts } from '@/lib/content/posts';
+import { getAllPosts, getPostsWithLocaleOriginals } from '@/lib/content/posts';
 import { getAllNotes } from '@/lib/content/notes';
 import * as realSeriesNs from '@/lib/content/series';
 import { getAllSeries } from '@/lib/content/series';
@@ -172,6 +172,34 @@ describe('Integration: sitemap — empty series', () => {
       for (const e of entries) expect(e.lastModified).not.toBe('');
     } finally {
       mock.module('@/lib/content/series', () => realSeriesModule);
+    }
+  });
+});
+
+describe('Integration: sitemap — flow feature disabled', () => {
+  test('tag lastModified comes only from posts when flows and notes are off', async () => {
+    const features = await import('@/lib/features');
+    const realFeatures = { ...features };
+    mock.module('@/lib/features', () => ({
+      ...realFeatures,
+      isFeatureEnabled: (feature: string) => feature !== 'flow' && realFeatures.isFeatureEnabled(feature as never),
+    }));
+    try {
+      const entries = sitemap();
+      const postDatesByTag = new Map<string, string>();
+      for (const post of getPostsWithLocaleOriginals()) {
+        for (const tag of post.tags) {
+          const key = tag.toLowerCase();
+          if ((postDatesByTag.get(key) ?? '') < post.date) postDatesByTag.set(key, post.date);
+        }
+      }
+      const tagPrefix = `${siteConfig.baseUrl.replace(/\/+$/, '')}/tags/`;
+      for (const entry of entries.filter((e) => e.url.startsWith(tagPrefix) && e.url !== tagPrefix)) {
+        const tag = decodeURIComponent(entry.url.slice(tagPrefix.length).replace(/\/$/, ''));
+        expect({ tag, lastModified: entry.lastModified }).toEqual({ tag, lastModified: postDatesByTag.get(tag) });
+      }
+    } finally {
+      mock.module('@/lib/features', () => realFeatures);
     }
   });
 });
