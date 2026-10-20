@@ -63,7 +63,25 @@ interface SchemaWebSite {
   inLanguage?: string;
 }
 
-type SchemaNode = SchemaBlogPosting | SchemaBook | SchemaArticle | SchemaWebSite;
+interface SchemaListItem {
+  '@type': 'ListItem';
+  position: number;
+  name: string;
+  item: string;
+}
+
+interface SchemaBreadcrumbList {
+  '@type': 'BreadcrumbList';
+  itemListElement: SchemaListItem[];
+}
+
+type SchemaNode = SchemaBlogPosting | SchemaBook | SchemaArticle | SchemaWebSite | SchemaBreadcrumbList;
+
+/** A visible breadcrumb step (structurally `BreadcrumbItem` from src/lib/breadcrumbs.ts). */
+export interface JsonLdBreadcrumb {
+  label: string;
+  href?: string;
+}
 
 interface SchemaGraph {
   '@context': 'https://schema.org';
@@ -116,6 +134,25 @@ function wrapGraph(nodes: SchemaNode[]): SchemaGraph {
   return { '@context': 'https://schema.org', '@graph': nodes };
 }
 
+/**
+ * BreadcrumbList for the visible trail. Google needs an `item` URL on every
+ * step but the last, so steps without a page (book parts and sections) are
+ * left out; the last step is the page itself. URLs are absolute, in the
+ * trailing-slash form the export serves.
+ */
+function buildBreadcrumbList(crumbs: JsonLdBreadcrumb[], pageUrl: string, base: string): SchemaBreadcrumbList | null {
+  if (crumbs.length === 0) return null;
+  const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`);
+  const steps = [
+    ...crumbs.slice(0, -1).filter((c) => c.href).map((c) => ({ name: c.label, item: withSlash(`${base}${c.href}`) })),
+    { name: crumbs[crumbs.length - 1].label, item: pageUrl },
+  ];
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: steps.map((step, index) => ({ '@type': 'ListItem', position: index + 1, ...step })),
+  };
+}
+
 export interface WebsiteJsonLdParams {
   siteTitle: string;
   siteUrl: string;
@@ -141,6 +178,8 @@ export interface PostJsonLdParams {
   defaultOgImage: string;
   /** BCP-47 language of the post (schema.org inLanguage); omitted when unset. */
   inLanguage?: string;
+  /** The visible breadcrumb trail; adds a BreadcrumbList node. */
+  breadcrumbs?: JsonLdBreadcrumb[];
 }
 
 export interface BookJsonLdParams {
@@ -175,6 +214,8 @@ export interface BookChapterJsonLdParams {
   siteUrl: string;
   /** BCP-47 language of the chapter (schema.org inLanguage); omitted when unset. */
   inLanguage?: string;
+  /** The visible breadcrumb trail; adds a BreadcrumbList node. */
+  breadcrumbs?: JsonLdBreadcrumb[];
 }
 
 // ── Builders ──────────────────────────────────────────────────────────────────
@@ -195,7 +236,7 @@ export function buildWebsiteJsonLd(params: WebsiteJsonLdParams): SchemaGraph {
 }
 
 export function buildPostJsonLd(params: PostJsonLdParams): SchemaGraph {
-  const { post, postUrl, siteTitle, siteUrl, defaultOgImage, inLanguage } = params;
+  const { post, postUrl, siteTitle, siteUrl, defaultOgImage, inLanguage, breadcrumbs = [] } = params;
   const base = siteUrl.replace(/\/+$/, '');
 
   const node: SchemaBlogPosting = {
@@ -213,7 +254,8 @@ export function buildPostJsonLd(params: PostJsonLdParams): SchemaGraph {
     mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
   };
 
-  return wrapGraph([node]);
+  const trail = buildBreadcrumbList(breadcrumbs, postUrl, base);
+  return wrapGraph(trail ? [node, trail] : [node]);
 }
 
 export function buildBookJsonLd(params: BookJsonLdParams): SchemaGraph {
@@ -237,7 +279,7 @@ export function buildBookJsonLd(params: BookJsonLdParams): SchemaGraph {
 }
 
 export function buildBookChapterJsonLd(params: BookChapterJsonLdParams): SchemaGraph {
-  const { chapter, book, chapterUrl, bookUrl, siteTitle, siteUrl, inLanguage } = params;
+  const { chapter, book, chapterUrl, bookUrl, siteTitle, siteUrl, inLanguage, breadcrumbs = [] } = params;
   const base = siteUrl.replace(/\/+$/, '');
 
   const node: SchemaArticle = {
@@ -252,5 +294,6 @@ export function buildBookChapterJsonLd(params: BookChapterJsonLdParams): SchemaG
     isPartOf: { '@type': 'Book', '@id': bookUrl, name: book.title },
   };
 
-  return wrapGraph([node]);
+  const trail = buildBreadcrumbList(breadcrumbs, chapterUrl, base);
+  return wrapGraph(trail ? [node, trail] : [node]);
 }

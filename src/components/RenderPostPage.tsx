@@ -8,6 +8,7 @@ import { siteConfig } from '../../site.config';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { getPostUrl, withTrailingSlash } from '@/lib/urls';
 import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
+import { getPostBreadcrumbs } from '@/lib/breadcrumbs';
 
 /**
  * Shared body for the two routes that render a canonical post —
@@ -18,6 +19,10 @@ import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
  */
 export default function RenderPostPage({ post, locale }: { post: PostData; locale: string }) {
   const layout = post.layout || 'post';
+  const seriesTitle = post.series ? getSeriesData(post.series, post.locale)?.title : undefined;
+  // One trail for the page and its JSON-LD. Simple-layout posts read like
+  // static pages and get none.
+  const breadcrumbs = layout === 'post' ? getPostBreadcrumbs(post, seriesTitle, locale) : [];
 
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const jsonLd = buildPostJsonLd({
@@ -27,6 +32,7 @@ export default function RenderPostPage({ post, locale }: { post: PostData; local
     siteUrl,
     defaultOgImage: siteConfig.ogImage,
     inLanguage: post.locale,
+    breadcrumbs,
   });
   const jsonLdScript = (
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
@@ -41,15 +47,8 @@ export default function RenderPostPage({ post, locale }: { post: PostData; local
   const slugRegistry = buildSlugRegistry(post.locale);
   const backlinks = getBacklinks(post.slug, post.locale);
   const collectionContexts = getCollectionsForPost(post);
-  let seriesPosts: PostNavItem[] = [];
-  let seriesTitle: string | undefined;
-
-  if (post.series) {
-    // Project to nav items so sibling article bodies stay out of the client payload.
-    seriesPosts = toPostNavItems(getSeriesPosts(post.series, post.locale));
-    const seriesData = getSeriesData(post.series, post.locale);
-    seriesTitle = seriesData?.title;
-  }
+  // Project to nav items so sibling article bodies stay out of the client payload.
+  const seriesPosts: PostNavItem[] = post.series ? toPostNavItems(getSeriesPosts(post.series, post.locale)) : [];
 
   return (
     <>
@@ -65,6 +64,7 @@ export default function RenderPostPage({ post, locale }: { post: PostData; local
         nextPost={next}
         backlinks={backlinks}
         slugRegistry={slugRegistry}
+        breadcrumbs={breadcrumbs}
       />
     </>
   );

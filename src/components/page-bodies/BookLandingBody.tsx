@@ -6,7 +6,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import Link from 'next/link';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { buildBookJsonLd, serializeJsonLd } from '@/lib/json-ld';
-import { getBookUrl, getBookChapterUrl, localizeUrl } from '@/lib/urls';
+import { getBookUrl, getBookChapterUrl, localizeUrl, withTrailingSlash } from '@/lib/urls';
 import { siteConfig } from '../../../site.config';
 
 // Visual depth limit for nested-section headings. After the first two levels
@@ -72,7 +72,7 @@ export default function BookLandingBody({ locale, bookSlug }: BookLandingBodyPro
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const jsonLd = buildBookJsonLd({
     book,
-    bookUrl: `${siteUrl}${localizeUrl(getBookUrl(bookSlug), locale)}`,
+    bookUrl: withTrailingSlash(`${siteUrl}${localizeUrl(getBookUrl(bookSlug), locale)}`),
     siteTitle: resolveLocaleValue(siteConfig.title, locale),
     siteUrl,
     defaultOgImage: siteConfig.ogImage,

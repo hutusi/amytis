@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Breadcrumbs on Posts and Chapters**: Series › series › post (or Articles › post) and Books › book › part/section › chapter, with matching BreadcrumbList structured data for search results.
 - **Back to Top**: a floating button appears once you're two screens down any page; it returns to the top and moves keyboard focus there too.
 - **Image Zoom**: clicking an article image opens it full size in a lightbox (Escape, a click or ✕ closes it); linked images and inline icons are left alone.
 - **Heading Anchors**: h2–h4 headings in articles, chapters, notes and rST pages get a `#` link (on hover or keyboard focus, faint on touch screens) to link straight to a section.

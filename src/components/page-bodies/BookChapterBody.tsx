@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import BookLayout from '@/layouts/BookLayout';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { buildBookChapterJsonLd, serializeJsonLd } from '@/lib/json-ld';
-import { getBookUrl, getBookChapterUrl, localizeUrl } from '@/lib/urls';
+import { getBookUrl, getBookChapterUrl, localizeUrl, withTrailingSlash } from '@/lib/urls';
+import { getBookChapterBreadcrumbs } from '@/lib/breadcrumbs';
 import { siteConfig } from '../../../site.config';
 
 interface BookChapterBodyProps {
@@ -23,20 +24,22 @@ export default function BookChapterBody({ locale, bookSlug, chapterId }: BookCha
   }
 
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
+  const breadcrumbs = getBookChapterBreadcrumbs(book, { id: chapterId, title: chapter.title }, locale);
   const jsonLd = buildBookChapterJsonLd({
     chapter,
     book,
-    chapterUrl: `${siteUrl}${localizeUrl(getBookChapterUrl(bookSlug, chapterId), locale)}`,
-    bookUrl: `${siteUrl}${localizeUrl(getBookUrl(bookSlug), locale)}`,
+    chapterUrl: withTrailingSlash(`${siteUrl}${localizeUrl(getBookChapterUrl(bookSlug, chapterId), locale)}`),
+    bookUrl: withTrailingSlash(`${siteUrl}${localizeUrl(getBookUrl(bookSlug), locale)}`),
     siteTitle: resolveLocaleValue(siteConfig.title, locale),
     siteUrl,
     inLanguage: book.locale,
+    breadcrumbs,
   });
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
-      <BookLayout book={book} chapter={chapter} />
+      <BookLayout book={book} chapter={chapter} breadcrumbs={breadcrumbs} />
     </>
   );
 }

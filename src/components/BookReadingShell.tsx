@@ -34,6 +34,8 @@ interface BookReadingShellProps {
   prev: { href: string; title: string } | null;
   next: { href: string; title: string } | null;
   comments: { slug: string; postUrl: string } | null;
+  /** Server-rendered trail, shown above the chapter outside the immersive reader. */
+  breadcrumbs?: ReactNode;
   children: ReactNode;
 }
 
@@ -43,6 +45,7 @@ export default function BookReadingShell({
   prev,
   next,
   comments,
+  breadcrumbs,
   children,
 }: BookReadingShellProps) {
   const { t, language } = useLanguage();
@@ -127,6 +130,7 @@ export default function BookReadingShell({
         />
 
         <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
+          {breadcrumbs}
           <div className="lg:hidden mb-8">
             <BookMobileNav
               bookSlug={book.slug}

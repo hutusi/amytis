@@ -126,7 +126,9 @@ describe('buildWebsiteJsonLd', () => {
 
   test('strips trailing slashes from the site URL', () => {
     const graph = buildWebsiteJsonLd({ siteTitle: 'T', siteUrl: `${SITE_URL}//` });
-    expect(graph['@graph'][0].url).toBe(SITE_URL);
+    const [node] = graph['@graph'];
+    if (node['@type'] !== 'WebSite') throw new Error('expected WebSite node');
+    expect(node.url).toBe(SITE_URL);
   });
 
   test('omits description when empty or missing', () => {
@@ -321,5 +323,50 @@ describe('buildBookChapterJsonLd', () => {
     const [node] = graph['@graph'];
     if (node['@type'] !== 'Article') throw new Error('expected Article node');
     expect(node.description).toBeUndefined();
+  });
+});
+
+describe('BreadcrumbList', () => {
+  const trail = [
+    { label: 'Series', href: '/series' },
+    { label: 'Building Amytis', href: '/series/building-amytis' },
+    { label: 'Hello World' },
+  ];
+
+  test('follows the post node: linked steps, then the page, with absolute trailing-slash URLs', () => {
+    const graph = buildPostJsonLd({ ...basePostParams, breadcrumbs: trail });
+    expect(graph['@graph']).toHaveLength(2);
+    const list = graph['@graph'][1];
+    if (list['@type'] !== 'BreadcrumbList') throw new Error('expected BreadcrumbList node');
+    expect(list.itemListElement).toEqual([
+      { '@type': 'ListItem', position: 1, name: 'Series', item: `${SITE_URL}/series/` },
+      { '@type': 'ListItem', position: 2, name: 'Building Amytis', item: `${SITE_URL}/series/building-amytis/` },
+      { '@type': 'ListItem', position: 3, name: 'Hello World', item: basePostParams.postUrl },
+    ]);
+  });
+
+  test('leaves out steps without a page and renumbers', () => {
+    const graph = buildBookChapterJsonLd({
+      chapter: { title: 'Vectors' },
+      book: { title: 'Maths', date: '2026-01-01', authors: [] },
+      chapterUrl: `${SITE_URL}/books/maths/linear/vectors/`,
+      bookUrl: `${SITE_URL}/books/maths`,
+      siteTitle: 'T',
+      siteUrl: SITE_URL,
+      breadcrumbs: [
+        { label: 'Books', href: '/books' },
+        { label: 'Maths', href: '/books/maths' },
+        { label: 'Linear algebra' },
+        { label: 'Vectors' },
+      ],
+    });
+    const list = graph['@graph'][1];
+    if (list['@type'] !== 'BreadcrumbList') throw new Error('expected BreadcrumbList node');
+    expect(list.itemListElement.map((step) => [step.position, step.name])).toEqual([[1, 'Books'], [2, 'Maths'], [3, 'Vectors']]);
+  });
+
+  test('no trail, no node', () => {
+    expect(buildPostJsonLd(basePostParams)['@graph']).toHaveLength(1);
+    expect(buildPostJsonLd({ ...basePostParams, breadcrumbs: [] })['@graph']).toHaveLength(1);
   });
 });
