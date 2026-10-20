@@ -7,6 +7,7 @@ import {
   findTruncatedOutputs,
   getPagefindManifestPathForTests,
   shouldSkipPagefindBuild,
+  writeIndexFiles,
 } from "../../scripts/build-pagefind";
 
 const createdDirs: string[] = [];
@@ -73,6 +74,18 @@ describe("Tooling: build-pagefind", () => {
     fs.writeFileSync(path.join(outputDir, "fragment", "a.pf_fragment"), "", "utf8");
     expect(findTruncatedOutputs(outputDir)).toEqual(["fragment/a.pf_fragment", "pagefind-worker.js"]);
     expect(findTruncatedOutputs(path.join(outputDir, "missing"))).toEqual([]);
+  });
+
+  test("writeIndexFiles writes every file, nested ones included, byte for byte", () => {
+    const outputDir = path.join(makeTempDir("amytis-pagefind-out-"), "pagefind");
+    const wasm = new Uint8Array([0, 97, 115, 109]);
+    writeIndexFiles(outputDir, [
+      { path: "pagefind.js", content: new TextEncoder().encode("export{}") },
+      { path: "fragment/en_a.pf_fragment", content: wasm },
+    ]);
+    expect(fs.readFileSync(path.join(outputDir, "pagefind.js"), "utf8")).toBe("export{}");
+    expect(new Uint8Array(fs.readFileSync(path.join(outputDir, "fragment", "en_a.pf_fragment")))).toEqual(wasm);
+    expect(findTruncatedOutputs(outputDir)).toEqual([]);
   });
 
   test("a truncated output is never skipped as up to date", () => {

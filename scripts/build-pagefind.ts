@@ -159,24 +159,23 @@ async function buildPagefind(sitePath: string, outputPath: string): Promise<void
     return;
   }
 
-  // pagefind.close() kills the backend process outright; an intermittent
-  // race has been observed where files the backend reported as written were
-  // left empty. Verify the output and rebuild once before failing the build
-  // (a broken index must never ship silently or be cached as up to date).
-  const MAX_ATTEMPTS = 2;
-  for (let attempt = 1; ; attempt++) {
-    await writePagefindIndex(sitePath, outputPath);
-    const truncated = findTruncatedOutputs(outputPath);
-    if (truncated.length === 0) break;
-    if (attempt >= MAX_ATTEMPTS) {
-      throw new Error(
-        `Pagefind wrote ${truncated.length} empty file(s) to ${outputPath} after ${attempt} attempts: ${truncated.slice(0, 5).join(', ')}`
-      );
-    }
-    console.warn(`[pagefind] ${truncated.length} empty output file(s) (e.g. ${truncated[0]}); rebuilding the index.`);
+  await writePagefindIndex(sitePath, outputPath);
+  // A broken index must never ship silently or be cached as up to date.
+  const truncated = findTruncatedOutputs(outputPath);
+  if (truncated.length > 0) {
+    throw new Error(`Pagefind wrote ${truncated.length} empty file(s) to ${outputPath}: ${truncated.slice(0, 5).join(', ')}`);
   }
 
   writeManifest(sitePath, outputPath, currentFiles);
+}
+
+/** Writes an in-memory Pagefind bundle (paths relative to outputPath) synchronously. */
+export function writeIndexFiles(outputPath: string, files: { path: string; content: Uint8Array }[]): void {
+  for (const file of files) {
+    const target = path.join(outputPath, file.path);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, file.content);
+  }
 }
 
 async function writePagefindIndex(sitePath: string, outputPath: string): Promise<void> {
@@ -193,10 +192,17 @@ async function writePagefindIndex(sitePath: string, outputPath: string): Promise
       throw new Error(`Failed to index ${sitePath}: ${addResult.errors.join(', ')}`);
     }
 
-    const writeResult = await index.writeFiles({ outputPath });
-    if (writeResult.errors.length > 0) {
-      throw new Error(`Failed to write Pagefind output: ${writeResult.errors.join(', ')}`);
+    // Not index.writeFiles(): the backend can answer before its writes land.
+    // Files it reported written (pagefind.js, the worker, the UI bundles)
+    // have been seen empty right after, then filled in moments later, or
+    // never, when the close() below killed the backend first. getFiles()
+    // returns the same bundle in memory; writing it here puts every byte on
+    // disk before the backend is gone.
+    const filesResult = await index.getFiles();
+    if (filesResult.errors.length > 0) {
+      throw new Error(`Failed to build Pagefind output: ${filesResult.errors.join(', ')}`);
     }
+    writeIndexFiles(outputPath, filesResult.files);
   } finally {
     await pagefind.close();
   }
