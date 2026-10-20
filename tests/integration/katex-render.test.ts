@@ -1,0 +1,58 @@
+import { describe, expect, test } from 'bun:test';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { renderAsync } from '@/test-utils/render';
+
+// MarkdownRenderer ships each KaTeX formula as one pre-serialized HTML
+// string (see the `span` override). The markup must stay exactly what
+// rehype-katex produces: HTML rendering + MathML twin with the TeX source.
+describe('Integration: KaTeX rendering', () => {
+  test('display math keeps the katex-display > katex > MathML structure', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: '$$\n\\frac{a}{b}\n$$', latex: true }));
+    expect(html).toMatch(/<span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http:\/\/www\.w3\.org\/1998\/Math\/MathML" display="block">/);
+    expect(html).toContain('<annotation encoding="application/x-tex">\\frac{a}{b}</annotation>');
+    expect(html).toContain('<span class="katex-html" aria-hidden="true">');
+  });
+
+  test('inline math renders inside the paragraph', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: 'Euler: $e^{i\\pi}+1=0$ holds.', latex: true }));
+    expect(html).toMatch(/Euler: <span class="katex"><span class="katex-mathml"><math/);
+    expect(html).toContain('holds.');
+  });
+
+  test('SVG glyphs (sqrt) survive serialization in the SVG namespace', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: '$\\sqrt{x}$', latex: true }));
+    expect(html).toMatch(/<svg[^>]*viewBox="[^"]+"/);
+    expect(html).toContain('<path d="');
+  });
+
+  test('authored raw HTML with a katex class is not serialized as trusted markup', async () => {
+    // Only rehype-katex's own spans take the dangerouslySetInnerHTML path; an
+    // author's look-alike span renders through React, which drops string
+    // event handlers.
+    const html = await renderAsync(MarkdownRenderer({
+      content: 'x <span class="katex"><img src="x.png" onerror="alert(1)"></span> and $y$',
+      latex: true,
+    }));
+    expect(html).not.toMatch(/onerror/i);
+    expect(html).not.toContain('alert(1)');
+    // The real formula is still collapsed into one HTML string.
+    expect(html).toMatch(/<span class="katex"><span class="katex-mathml"><math/);
+  });
+
+  test('plain spans outside math still render as React children', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: 'a <span class="note">b</span> c', latex: true }));
+    expect(html).toContain('<span class="note">b</span>');
+  });
+});
+
+describe('Integration: KaTeX stylesheet', () => {
+  test('math posts link the vendored stylesheet', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: '$x$', latex: true }));
+    expect(html).toMatch(/<link rel="stylesheet" href="\/vendor\/katex\/[^"]+\/katex\.min\.css" data-precedence="katex"/);
+  });
+
+  test('math-free posts do not', async () => {
+    const html = await renderAsync(MarkdownRenderer({ content: 'No math here.' }));
+    expect(html).not.toContain('katex.min.css');
+  });
+});

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
 import type { CollectionContext, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
@@ -18,13 +19,10 @@ interface SeriesListProps {
   currentSlug: string;
 }
 
-export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug }: SeriesListProps) {
+/** Mobile series/collection list shown above the article body. */
+export function SeriesListView({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug, collectionParam }: SeriesListProps & { collectionParam: string | null }) {
   const { t, language } = useLanguage();
-  const searchParams = useSearchParams();
-  const collectionParam = searchParams.get('collection');
-  const activeCollection = collectionParam
-    ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
-    : null;
+  const activeCollection = resolveActiveCollection(collectionContexts, collectionParam);
 
   const effectiveSlug = activeCollection?.slug ?? seriesSlug;
   const effectiveTitle = activeCollection?.title ?? seriesTitle;
@@ -156,4 +154,16 @@ export default function SeriesList({ seriesSlug, seriesTitle, posts, collectionC
       </div>
     </div>
   );
+}
+
+/**
+ * Reads `?collection=` and renders the view. `useSearchParams` bails the
+ * surrounding Suspense boundary out of static prerendering, so layouts pass
+ * `<SeriesListView collectionParam={null} … />` as the boundary's fallback: the
+ * exported HTML then carries the default (series-context) rendering instead
+ * of an empty hole that pops in after hydration.
+ */
+export default function SeriesList(props: SeriesListProps) {
+  const collectionParam = useSearchParams().get('collection');
+  return <SeriesListView {...props} collectionParam={collectionParam} />;
 }

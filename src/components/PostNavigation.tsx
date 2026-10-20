@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
 import type { CollectionContext, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
@@ -14,13 +15,10 @@ interface PostNavigationProps {
   collectionContexts?: CollectionContext[];
 }
 
-export default function PostNavigation({ prev, next, currentSlug, collectionContexts }: PostNavigationProps) {
+/** Prev/next links for a post, in series or `collectionParam` collection order. */
+export function PostNavigationView({ prev, next, currentSlug, collectionContexts, collectionParam }: PostNavigationProps & { collectionParam: string | null }) {
   const { t } = useLanguage();
-  const searchParams = useSearchParams();
-  const collectionParam = searchParams.get('collection');
-  const activeCollection = collectionParam
-    ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
-    : null;
+  const activeCollection = resolveActiveCollection(collectionContexts, collectionParam);
 
   // PostData satisfies PostNavItem, so prev/next widen cleanly; collection
   // entries are already PostNavItem.
@@ -81,4 +79,16 @@ export default function PostNavigation({ prev, next, currentSlug, collectionCont
       )}
     </nav>
   );
+}
+
+/**
+ * Reads `?collection=` and renders the view. `useSearchParams` bails the
+ * surrounding Suspense boundary out of static prerendering, so layouts pass
+ * `<PostNavigationView collectionParam={null} … />` as the boundary's fallback: the
+ * exported HTML then carries the default (series-context) rendering instead
+ * of an empty hole that pops in after hydration.
+ */
+export default function PostNavigation(props: PostNavigationProps) {
+  const collectionParam = useSearchParams().get('collection');
+  return <PostNavigationView {...props} collectionParam={collectionParam} />;
 }

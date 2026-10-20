@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
 import type { CollectionContext, Heading, PostNavItem } from '@/lib/content/types';
 import { useLanguage } from './LanguageProvider';
@@ -41,11 +42,8 @@ export default function ImmersiveSeriesSidebar({
 }: ImmersiveSeriesSidebarProps) {
   const { t } = useLanguage();
   const { enabled: immersiveEnabled } = useImmersiveReading();
-  const searchParams = useSearchParams();
-  const collectionParam = searchParams.get('collection');
-  const activeCollection = collectionParam
-    ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
-    : null;
+  const collectionParam = useSearchParams().get('collection');
+  const activeCollection = resolveActiveCollection(collectionContexts, collectionParam);
 
   const effectiveSlug = activeCollection?.slug ?? seriesSlug;
   const effectiveTitle = activeCollection?.title ?? seriesTitle;

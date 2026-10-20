@@ -62,6 +62,8 @@ next-env.d.ts
 
 # pagefind index (generated after build)
 /public/pagefind/
+# Vendored third-party assets copied from node_modules (scripts/copy-vendor-assets.ts)
+/public/vendor/
 
 # knowledge graph (generated at build time)
 /public/knowledge-graph.json

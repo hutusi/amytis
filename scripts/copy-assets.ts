@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { siteConfig } from '../site.config';
+import { copyKatexAssets } from './copy-vendor-assets';
 
 const srcDir = path.join(process.cwd(), 'content', 'posts');
 const seriesSrcDir = path.join(process.cwd(), 'content', 'series');
@@ -495,6 +496,7 @@ export { claimAssetDir };
 // a test) must not touch the filesystem.
 if (import.meta.main) {
   assertSiteAssetsExist(siteConfig);
+  copyKatexAssets();
   console.log('Copying assets...');
   resetGeneratedAssetDirs();
   processPosts();

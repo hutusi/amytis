@@ -160,6 +160,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
             if (isCurrent) {
               return (
                 <Link
+                  prefetch={false}
                   key={dateStr}
                   href={`/flows/${viewYear}/${padNumber(viewMonth + 1)}/${padNumber(day)}`}
                   className={`${baseClasses} bg-accent text-white font-bold no-underline`}
@@ -172,6 +173,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
             if (hasEntry) {
               return (
                 <Link
+                  prefetch={false}
                   key={dateStr}
                   href={`/flows/${viewYear}/${padNumber(viewMonth + 1)}/${padNumber(day)}`}
                   className={`${baseClasses} text-foreground hover:bg-accent/10 font-medium no-underline ${isToday ? 'ring-1 ring-accent' : ''}`}
@@ -225,6 +227,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                 return (
                   <div key={year}>
                     <Link
+                      prefetch={false}
                       href={`/flows/${year}`}
                       className={`flex items-center justify-between text-xs no-underline px-1 py-0.5 rounded hover:bg-accent/10 ${
                         isCurrentYear ? 'text-accent font-medium' : 'text-foreground'
@@ -241,6 +244,7 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
                           const isCurrentMonth = isCurrentYear && m - 1 === viewMonth;
                           return (
                             <Link
+                              prefetch={false}
                               key={m}
                               href={`/flows/${year}/${padNumber(m)}`}
                               className={`flex items-center justify-between text-xs no-underline px-1 py-0.5 rounded hover:bg-accent/10 ${

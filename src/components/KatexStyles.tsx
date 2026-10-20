@@ -1,10 +1,18 @@
-import "katex/dist/katex.min.css";
+import katexPackage from 'katex/package.json';
 
-// Rendered by MarkdownRenderer/RstRenderer only when a post has latex: true.
-// IMPORTANT: consumers must load this via next/dynamic, not a static import —
-// a static import executes the CSS side-effect at module load, which bundles
-// katex.min.css (~23 KB) into every article chunk even for math-free posts.
-// The dynamic boundary is what actually gives the CSS its own chunk.
+/** Public URL of the vendored KaTeX stylesheet (scripts/copy-vendor-assets.ts). */
+export const KATEX_STYLESHEET_HREF = `/vendor/katex/${katexPackage.version}/katex.min.css`;
+
+/**
+ * KaTeX's stylesheet, rendered by MarkdownRenderer/RstRenderer only when a
+ * post has `latex: true`. It is a plain <link> to a vendored copy rather
+ * than `import 'katex/dist/katex.min.css'`: any CSS import in the article
+ * module graph — even behind next/dynamic — lands in the route's CSS and
+ * becomes render-blocking on every article, math or not. React 19 hoists
+ * the link into <head> (deduped by href via `precedence`), and on
+ * client-side navigation holds the commit until it loads, so math never
+ * flashes unstyled.
+ */
 export default function KatexStyles() {
-  return null;
+  return <link rel="stylesheet" href={KATEX_STYLESHEET_HREF} precedence="katex" />;
 }

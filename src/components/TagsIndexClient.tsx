@@ -23,6 +23,7 @@ function getTagClasses(count: number, min: number, max: number): string {
 function TagLink({ tag, count, min, max }: { tag: string; count: number; min: number; max: number }) {
   return (
     <Link
+      prefetch={false}
       href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
       className={`group inline-flex items-baseline gap-1.5 rounded-2xl border border-line bg-surface-faint hover:bg-background hover:border-accent hover:shadow-md hover:shadow-accent/5 no-underline transition-all duration-200 ${getTagClasses(count, min, max)}`}
     >

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { resolveActiveCollection } from '@/lib/collections';
 import Link from 'next/link';
 import type { Heading, CollectionContext, PostNavItem } from '@/lib/content/types';
 import { getPostUrl, getPostUrlInCollection, localizeUrl } from '@/lib/urls';
@@ -37,13 +38,10 @@ function getVisibleIndices(total: number, current: number): (number | 'ellipsis'
   return result;
 }
 
-export default function PostSidebar({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug, headings, shareUrl, shareTitle }: PostSidebarProps) {
+/** Desktop sidebar: series/collection list, page TOC and share links. */
+export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionContexts, currentSlug, headings, shareUrl, shareTitle, collectionParam }: PostSidebarProps & { collectionParam: string | null }) {
   const { t, language } = useLanguage();
-  const searchParams = useSearchParams();
-  const collectionParam = searchParams.get('collection');
-  const activeCollection = collectionParam
-    ? (collectionContexts ?? []).find(c => c.slug === collectionParam) ?? null
-    : null;
+  const activeCollection = resolveActiveCollection(collectionContexts, collectionParam);
 
   const effectiveSlug = activeCollection?.slug ?? seriesSlug;
   const effectiveTitle = activeCollection?.title ?? seriesTitle;
@@ -189,4 +187,16 @@ export default function PostSidebar({ seriesSlug, seriesTitle, posts, collection
       )}
     </aside>
   );
+}
+
+/**
+ * Reads `?collection=` and renders the view. `useSearchParams` bails the
+ * surrounding Suspense boundary out of static prerendering, so layouts pass
+ * `<PostSidebarView collectionParam={null} … />` as the boundary's fallback: the
+ * exported HTML then carries the default (series-context) rendering instead
+ * of an empty hole that pops in after hydration.
+ */
+export default function PostSidebar(props: PostSidebarProps) {
+  const collectionParam = useSearchParams().get('collection');
+  return <PostSidebarView {...props} collectionParam={collectionParam} />;
 }

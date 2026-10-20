@@ -118,6 +118,9 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                 slug={hero.slug}
                 className={cn(COVER_ZOOM, 'duration-700')}
                 loading="eager"
+                // With secondary stories the hero is lg:col-span-7 (~60%);
+                // alone it spans the full 12-column row.
+                sizes={secondary.length > 0 ? '(min-width: 1024px) 60vw, 100vw' : '(min-width: 1200px) 1104px, 100vw'}
               />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
@@ -177,6 +180,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                     title={post.title}
                     slug={post.slug}
                     className={COVER_ZOOM}
+                    sizes="128px"
                   />
                 </div>
               </Link>

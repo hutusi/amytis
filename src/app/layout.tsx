@@ -57,6 +57,9 @@ const baskerville = localFont({
   ],
   variable: "--font-baskerville",
   display: "swap",
+  // Size-adjust the fallback against a serif. The default (Arial) gives a
+  // sans fallback whose metrics and look both jump when Baskerville swaps in.
+  adjustFontFallback: "Times New Roman",
 });
 
 // Build icon metadata with explicit MIME type so browsers correctly handle
