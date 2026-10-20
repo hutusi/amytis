@@ -916,6 +916,43 @@ body {
   scroll-margin-top: 5rem;
 }
 
+/* Heading permalinks (rehype-heading-anchors): an empty link whose "#" is
+   drawn here, so it never lands in copied text or the search index. Hidden
+   until the heading is hovered or the link has keyboard focus; faint on
+   touch screens, which can't hover. */
+.heading-anchor {
+  display: inline-block;
+  min-width: 1.5rem;
+  margin-inline-start: 0.25em;
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+}
+.heading-anchor::before {
+  content: "#";
+}
+h2:hover > .heading-anchor,
+h3:hover > .heading-anchor,
+h4:hover > .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+.heading-anchor:hover {
+  color: var(--accent);
+}
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 0.4;
+  }
+}
+@media print {
+  .heading-anchor {
+    display: none;
+  }
+}
+
 .rst-rendered figure {
   margin: 2rem 0;
 }
@@ -1094,14 +1131,14 @@ html.dark .rst-rendered aside.admonition-danger {
   color: var(--accent);
 }
 
-.rst-rendered a[href]:not([role="doc-noteref"]) {
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor) {
   color: var(--accent);
   text-decoration: none;
   transition: color 160ms ease, text-decoration-color 160ms ease;
 }
 
-.rst-rendered a[href]:not([role="doc-noteref"]):hover,
-.rst-rendered a[href]:not([role="doc-noteref"]):focus-visible {
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor):hover,
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor):focus-visible {
   color: var(--accent);
   text-decoration: underline;
 }

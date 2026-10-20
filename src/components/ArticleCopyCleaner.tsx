@@ -34,6 +34,9 @@ export default function ArticleCopyCleaner({ children }: { children: ReactNode }
       root.appendChild(sandbox);
 
       try {
+        // Heading "#" links are empty (CSS draws the glyph); pasted, they'd be
+        // stray empty links.
+        sandbox.querySelectorAll('.heading-anchor').forEach((el) => el.remove());
         sandbox.querySelectorAll<HTMLElement>(KEEP_BG_SELECTOR).forEach((el) => {
           const bg = getComputedStyle(el).backgroundColor;
           if (isMeaningfulBg(bg)) el.style.backgroundColor = bg;

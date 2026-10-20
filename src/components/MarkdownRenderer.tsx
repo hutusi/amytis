@@ -22,6 +22,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRawHeadingIds from '@/lib/rehype-heading-ids';
+import rehypeHeadingAnchors, { HEADING_ANCHOR_CLASS } from '@/lib/rehype-heading-anchors';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
@@ -74,9 +75,14 @@ interface MarkdownRendererProps {
    * from remark-rehype and are not prefixed.
    */
   headingIdPrefix?: string;
+  /**
+   * Append a "#" link to each h2–h4 (rehype-heading-anchors). Off for the
+   * flow stream, where many documents share one page.
+   */
+  headingAnchors?: boolean;
 }
 
-export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext, headingIdPrefix, locale = siteConfig.i18n.defaultLocale }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, latex = false, slug, slugRegistry, bookContext, headingIdPrefix, headingAnchors = true, locale = siteConfig.i18n.defaultLocale }: MarkdownRendererProps) {
   // remark-rehype generates the footnotes section and back links with
   // English defaults ("Footnotes", "Back to reference 1"); localize them.
   const { t, tWith } = getTranslator(locale);
@@ -133,6 +139,11 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     }], rehypeKatexAfter);
   }
 
+  // Last, so every heading already has its final id.
+  if (headingAnchors) {
+    rehypePlugins.push([rehypeHeadingAnchors, { label: t('heading_anchor') }]);
+  }
+
   const components: Components = {
     // No `p` override: paragraphs take PROSE_CLASSES' styling exactly like
     // RstRenderer's sanitized HTML, so Markdown and rST posts set paragraphs
@@ -178,6 +189,11 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // Style links individually to avoid hover-all issue
     a: (props) => {
       const { node, className, children, href, target, rel, ...rest } = props as React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+      // Heading anchors (rehype-heading-anchors) are styled by their own class
+      // and stay empty: the "#" is drawn by CSS.
+      if (className === HEADING_ANCHOR_CLASS) {
+        return <a {...rest} href={href} className={className} />;
+      }
       // Preserve wikilink classes injected by remark-wikilinks — they have their own CSS styling
       if (className?.includes('wikilink')) {
         return <a {...rest} href={href} target={target} rel={rel} className={className}>{children}</a>;

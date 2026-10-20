@@ -55,7 +55,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
     : `${siteUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
   const bodyRenderer = post.sourceFormat === 'rst'
-    ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
+    ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} locale={locale} />
     : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} locale={locale} />;
 
   // The article <header> is identical in both the normal and the immersive

@@ -115,6 +115,7 @@ export default function FlowStream({ flows, slugRegistry, pagination }: FlowStre
                   slug={`flows/${flow.slug}`}
                   slugRegistry={slugRegistry}
                   headingIdPrefix={`f-${flow.slug.replaceAll('/', '-')}-`}
+                  headingAnchors={false}
                 />
 
                 {flow.tags.length > 0 && (

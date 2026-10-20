@@ -235,6 +235,8 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 
 Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts` slugs every Markdown heading in document order (all depths through one GitHub slugger, wikilink syntax reduced to its display text). `getHeadings` builds the TOC from it at content-load time, and the `remarkHeadingIds` plugin — the first transformer in `MarkdownRenderer` — stamps the same ids onto the rendered headings, so TOC links match page ids by construction, whether or not a surface resolves wikilinks. Headings that arrive as raw HTML get ids from `src/lib/rehype-heading-ids.ts`, which collects every id already in the document first, so a raw `<h2>Setup</h2>` next to `## Setup` becomes `setup-1` instead of a duplicate. `tests/integration/reading-time-headings.test.ts` asserts every post's TOC ids exist in its rendered body.
 
+Heading anchors: `src/lib/rehype-heading-anchors.ts` runs last in `MarkdownRenderer` and appends an empty `<a class="heading-anchor" href="#id" aria-label=…>` to every h2–h4 (docutils rST headings borrow their `<section>`'s id). CSS draws the `#` with `::before`, so it stays out of copied text and the Pagefind index; it shows on hover/focus, faintly on touch screens. Skipped: the hidden GFM footnotes heading, headings in links or `<summary>`, the flow stream (`headingAnchors={false}`, many documents on one page) and feeds.
+
 ## Code Block Highlighting
 
 - Highlighter: **Shiki** (build-time, dual `github-light` / `github-dark` theme via CSS variables). See `docs/CODE-BLOCKS.md` for author-facing fence/directive metadata.
@@ -249,6 +251,7 @@ Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts
 - Full-fidelity rST rendering depends on a Python environment with `docutils` (and ideally `pygments`) available.
 - `src/lib/rst-renderer.ts` uses `AMYTIS_RST_PYTHON` when set; otherwise it falls back to `python3`.
 - Docinfo metadata normalization is shared: both the Python renderer and the JS fallback parser route every `:Field:` through `src/lib/rst-metadata.ts` (one field switch, one set of validators, one `RstParseError`), so the two paths cannot drift on metadata. Heading extraction still differs (docutils AST vs regex over the Markdown conversion) — pinned by `tests/integration/rst-parity.test.ts`.
+- Page-only additions to docutils HTML (heading anchors) run in `src/lib/rst-enhance.ts`, AFTER `sanitizeRenderedRstHtml`: they only add attributes whose values we control, and the sanitizer's allowlist is shared with the feeds, so it is never widened for them. `RstRenderer` takes a `locale` prop for their labels and passes it to its Markdown fallback.
 - Top-of-document docinfo is parsed into Amytis metadata, but it is stripped from rendered article HTML so blog-style posts do not show duplicate author/version blocks above the content.
 - Supported legacy roles are normalized or degraded intentionally:
   - `:doc:` resolves to local site URLs when the target exists in the imported content tree

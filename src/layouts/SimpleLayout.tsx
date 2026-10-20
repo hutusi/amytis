@@ -31,7 +31,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
       />
       {showToc && <MobileToc headings={post.headings} />}
       {post.sourceFormat === 'rst'
-        ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} />
+        ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} locale={post.locale} />
         : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} locale={post.locale} />}
     </div>
   );

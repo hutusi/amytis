@@ -27,7 +27,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
 - **Locale URLs (`/zh/…`) ride the same `[slug]` tree** plus the `[slug]/[postSlug]/[...rest]` catch-all — a sibling `[locale]` segment is a Next build error. Dispatcher + params providers live in `src/lib/locale-routes.ts`; content trees under `content/<locale>/` mirror the root (see ARCHITECTURE.md "Locale Content Trees").
 - Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; `robots.ts` points crawlers at it; search index at `search.json`.
-- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
+- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`, `rehype-heading-anchors`), the post-sanitize rST pass (`rst-enhance.ts`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
 
 ## Design principles
 
