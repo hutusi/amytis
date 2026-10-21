@@ -9,6 +9,7 @@ import { resolveLocaleValue } from '@/lib/i18n';
 import { getPostUrl, withTrailingSlash } from '@/lib/urls';
 import { buildPostJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getPostBreadcrumbs } from '@/lib/breadcrumbs';
+import { getShareImage } from '@/lib/og-images';
 
 /**
  * Shared body for the two routes that render a canonical post —
@@ -30,7 +31,8 @@ export default function RenderPostPage({ post, locale }: { post: PostData; local
     postUrl: withTrailingSlash(`${siteUrl}${getPostUrl(post)}`),
     siteTitle: resolveLocaleValue(siteConfig.title, locale),
     siteUrl,
-    defaultOgImage: siteConfig.ogImage,
+    // A cover still wins inside buildPostJsonLd; this is what the page's og:image falls back to.
+    defaultOgImage: getShareImage({ kind: 'post', pagePath: getPostUrl(post), coverImage: post.coverImage }).url,
     inLanguage: post.locale,
     breadcrumbs,
   });

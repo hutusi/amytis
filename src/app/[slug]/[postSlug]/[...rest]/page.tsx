@@ -4,6 +4,7 @@ import { siteConfig } from '../../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { getBookChapterUrl, getBookUrl, getNoteUrl, getPostUrl, getPostsBasePath, getSeriesUrl, isNonDefaultLocale, localizeUrl, withTrailingSlash } from '@/lib/urls';
 import { buildArticleMetadata, siteOpenGraph, siteTwitterHandles, withSiteAlternates } from '@/lib/metadata';
+import { getShareImage } from '@/lib/og-images';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import RenderPostPage from '@/components/RenderPostPage';
 import PostsListingBody from '@/components/page-bodies/PostsListingBody';
@@ -75,7 +76,7 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
         authors: resolution.post.authors,
         canonicalUrl: seo.canonicalUrl,
         languageAlternates: seo.languageAlternates,
-        ogImage: resolveImageUrl(resolution.post.coverImage, siteConfig.ogImage, siteUrl),
+        ogImage: getShareImage({ kind: 'post', pagePath: getPostUrl(resolution.post), coverImage: resolution.post.coverImage }).url,
         twitterCard: 'summary_large_image',
       });
     }
@@ -141,12 +142,11 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
         chapterContentLocales(resolution.book.slug, resolution.chapter.slug)
       );
       const chapterOgTitle = `${resolution.chapter.title} - ${resolution.book.title}`;
-      const ogImage =
-        resolution.book.coverImage &&
-        !resolution.book.coverImage.startsWith('text:') &&
-        !resolution.book.coverImage.startsWith('./')
-          ? resolution.book.coverImage
-          : siteConfig.ogImage;
+      const share = getShareImage({
+        kind: 'chapter',
+        pagePath: localizeUrl(getBookChapterUrl(resolution.book.slug, resolution.chapter.slug), locale),
+        coverImage: resolution.book.coverImage,
+      });
       return {
         title: `${chapterOgTitle} | ${siteTitle}`,
         description: resolution.chapter.excerpt,
@@ -158,22 +158,21 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
           url: seo.canonicalUrl,
           siteName: siteTitle,
           locale,
-          images: [{ url: ogImage, width: 1200, height: 630, alt: resolution.chapter.title }],
+          images: [{ url: share.url, width: 1200, height: 630, alt: resolution.chapter.title }],
         },
         twitter: {
-          card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
+          card: share.source === 'site' ? 'summary' : 'summary_large_image',
           title: chapterOgTitle,
           description: resolution.chapter.excerpt,
-          images: [ogImage],
+          images: [share.url],
           ...siteTwitterHandles(),
         },
       };
     }
     case 'note': {
-      const seo = contentSeoUrls(
-        localizeUrl(getNoteUrl(resolution.note.slug), locale),
-        getNoteContentLocales(resolution.note)
-      );
+      const notePath = localizeUrl(getNoteUrl(resolution.note.slug), locale);
+      const seo = contentSeoUrls(notePath, getNoteContentLocales(resolution.note));
+      const card = getShareImage({ kind: 'note', pagePath: notePath });
       return buildArticleMetadata({
         locale,
         title: resolution.note.title,
@@ -181,7 +180,8 @@ export async function generateMetadata({ params }: { params: DeepParams }): Prom
         publishedTime: resolution.note.date,
         canonicalUrl: seo.canonicalUrl,
         languageAlternates: seo.languageAlternates,
-        twitterCard: 'none',
+        ogImage: card.source === 'card' ? card.url : undefined,
+        twitterCard: card.source === 'card' ? 'summary_large_image' : 'none',
       });
     }
     default:

@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { buildArticleMetadata } from '@/lib/metadata';
+import { getShareImage } from '@/lib/og-images';
 import NoteDetailBody from '@/components/page-bodies/NoteDetailBody';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
@@ -35,10 +36,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!note) return { title: 'Not Found' };
   // Twin notes canonicalize to the unprefixed URL with reciprocal hreflang;
   // single-locale notes keep their plain self-canonical (byte-identical).
-  const seo = contentSeoUrls(
-    localizeUrl(getNoteUrl(note.slug), note.locale),
-    getNoteContentLocales(note)
-  );
+  const notePath = localizeUrl(getNoteUrl(note.slug), note.locale);
+  const seo = contentSeoUrls(notePath, getNoteContentLocales(note));
+  // Notes have no cover: a generated card, or no image at all.
+  const card = getShareImage({ kind: 'note', pagePath: notePath });
   return buildArticleMetadata({
     locale: DEFAULT_LOCALE,
     title: note.title,
@@ -46,7 +47,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     publishedTime: note.date,
     canonicalUrl: seo.canonicalUrl,
     languageAlternates: seo.languageAlternates,
-    twitterCard: 'none',
+    ogImage: card.source === 'card' ? card.url : undefined,
+    twitterCard: card.source === 'card' ? 'summary_large_image' : 'none',
   });
 }
 

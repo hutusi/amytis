@@ -32,6 +32,12 @@ The bundled Inter files are subset to Latin, Latin Extended-A, pinyin tone vowel
 
 Fix: add the Unicode range to `UNICODE_RANGES` in `scripts/subset-inter.py` and re-run it against the full upstream Inter files (see "Maintenance Tools" in `docs/CONTRIBUTING.md`). Each added script costs roughly 3–10 KB per weight on every page.
 
+## Share cards show boxes instead of some characters
+
+Generated share cards (`generateOgImages`) render with the fonts in `src/fonts/og/`, which cover Latin text and the 6,763 common simplified Chinese characters of GB2312 plus every character in the titles that existed when they were built. For any other glyph — a rarer hanzi, traditional characters, kana, Cyrillic, emoji — `next/og` downloads a font from Google Fonts during the build. Online that just works; offline, behind a firewall that blocks Google, or in mainland China it can't, and the card prints a box for that character. The build itself does not fail.
+
+Fix: rerun `scripts/build-og-fonts.py` (see "Maintenance Tools" in `docs/CONTRIBUTING.md`); it adds every title character it finds under `content/` to the Chinese subset.
+
 ## AVIF/WebP source images bypass the optimizer (served as-is)
 
 **Related upstream issue:** [Niels-IO/next-image-export-optimizer#263](https://github.com/Niels-IO/next-image-export-optimizer/issues/263)

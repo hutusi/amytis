@@ -6,6 +6,7 @@ import { siteConfig } from '../../../../../site.config';
 import BookChapterBody from '@/components/page-bodies/BookChapterBody';
 import { resolveLocaleValue } from '@/lib/i18n';
 import { siteTwitterHandles, withSiteAlternates } from '@/lib/metadata';
+import { getShareImage } from '@/lib/og-images';
 import { getBookChapterUrl } from '@/lib/urls';
 import { chapterContentLocales, contentSeoUrls } from '@/lib/locale-routes';
 import { safeDecodeParam } from '@/lib/route-params';
@@ -69,9 +70,8 @@ export async function generateMetadata({ params }: { params: ChapterPageParams }
     return { title: 'Chapter Not Found' };
   }
 
-  const ogImage = book.coverImage && !book.coverImage.startsWith('text:') && !book.coverImage.startsWith('./')
-    ? book.coverImage
-    : siteConfig.ogImage;
+  // The book's cover, else the chapter's generated card, else the site image.
+  const share = getShareImage({ kind: 'chapter', pagePath: getBookChapterUrl(slug, chapterSlug), coverImage: book.coverImage });
 
   // Twinned chapters advertise the reciprocal hreflang set; the canonical
   // stays this unprefixed URL either way.
@@ -87,13 +87,13 @@ export async function generateMetadata({ params }: { params: ChapterPageParams }
       type: 'article',
       url: `${siteConfig.baseUrl}${getBookChapterUrl(slug, chapterSlug)}`,
       siteName: resolveLocaleValue(siteConfig.title, DEFAULT_LOCALE),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: chapter.title }],
+      images: [{ url: share.url, width: 1200, height: 630, alt: chapter.title }],
     },
     twitter: {
-      card: ogImage !== siteConfig.ogImage ? 'summary_large_image' : 'summary',
+      card: share.source === 'site' ? 'summary' : 'summary_large_image',
       title: `${chapter.title} - ${book.title}`,
       description: chapter.excerpt,
-      images: [ogImage],
+      images: [share.url],
       ...siteTwitterHandles(),
     },
   };
