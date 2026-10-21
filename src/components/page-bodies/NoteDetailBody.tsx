@@ -11,6 +11,7 @@ import ShareBar from '@/components/ShareBar';
 import Comments from '@/components/Comments';
 import { resolveCommentable } from '@/lib/comments';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 interface NoteDetailBodyProps {
   locale: string;
@@ -37,22 +38,17 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
   const showSidebar = showToc || visibleBacklinks.length > 0;
   const noteUrl = `${siteConfig.baseUrl}${localizeUrl(getNoteUrl(note.slug), locale)}`;
 
-  const breadcrumb = (
-    <nav aria-label={t('breadcrumb')} className="flex items-center gap-1.5 text-sm text-muted">
-      <Link href={localizeUrl('/notes', locale)} className="hover:text-accent no-underline">
-        {t('notes')}
-      </Link>
-      <span className="text-muted/40" aria-hidden="true">›</span>
-      <span className="text-foreground truncate">{note.title}</span>
-    </nav>
-  );
+  const trail = [{ label: t('notes'), href: localizeUrl('/notes', locale) }, { label: note.title }];
+  const breadcrumb = <Breadcrumbs items={trail} locale={locale} />;
 
   return (
     <div className="layout-main">
-      {!showSidebar && <div className="mb-6">{breadcrumb}</div>}
+      {/* With a sidebar, the trail lives in it on desktop; the sidebar is
+          hidden below lg, so phones get this copy instead. */}
+      <Breadcrumbs items={trail} locale={locale} className={showSidebar ? 'mb-6 lg:hidden' : 'mb-6'} />
 
       <div className={showSidebar
-        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+        ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block'
         : 'max-w-3xl mx-auto'
       }>
         {showSidebar && (
@@ -98,7 +94,7 @@ export default function NoteDetailBody({ locale, noteSlug }: NoteDetailBodyProps
           )}
 
           {/* Prev/Next navigation */}
-          <nav aria-label={t('note_navigation')} className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4">
+          <nav aria-label={t('note_navigation')} className="mt-12 pt-12 border-t border-line grid grid-cols-2 gap-4 print:hidden">
             {prev ? (
               <Link href={localizeUrl(getNoteUrl(prev.slug), locale)} className="group text-left no-underline">
                 <span className="text-xs text-muted">{t('older')}</span>

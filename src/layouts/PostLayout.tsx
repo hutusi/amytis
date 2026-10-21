@@ -21,6 +21,8 @@ import AuthorCard from '@/components/AuthorCard';
 import ShareBar from '@/components/ShareBar';
 import ImmersiveToggleButton from '@/components/ImmersiveToggleButton';
 import PostReadingShell from '@/components/PostReadingShell';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import type { BreadcrumbItem } from '@/lib/breadcrumbs';
 import { siteConfig } from '../../site.config';
 import { getTranslator } from '@/lib/i18n';
 import { getPostUrl, getStaticPageUrl } from '@/lib/urls';
@@ -37,9 +39,11 @@ interface PostLayoutProps {
   backlinks?: BacklinkSource[];
   slugRegistry?: Map<string, SlugRegistryEntry>;
   commentCategory?: 'posts' | 'staticPages';
+  /** Trail shown above the header. Opt-in: static pages render through this layout too. */
+  breadcrumbs?: BreadcrumbItem[];
 }
 
-export default function PostLayout({ post, locale, relatedPosts, seriesPosts, seriesTitle, collectionContexts, prevPost, nextPost, backlinks, slugRegistry, commentCategory = 'posts' }: PostLayoutProps) {
+export default function PostLayout({ post, locale, relatedPosts, seriesPosts, seriesTitle, collectionContexts, prevPost, nextPost, backlinks, slugRegistry, commentCategory = 'posts', breadcrumbs = [] }: PostLayoutProps) {
   const { t } = getTranslator(locale);
   const showToc = siteConfig.posts?.toc !== false && post.toc !== false && post.headings && post.headings.length > 0;
   const hasSeries = !!(post.series && seriesPosts && seriesPosts.length > 0);
@@ -55,7 +59,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
     : `${siteUrl}${getPostUrl(post)}`;
   const commentSlug = isStaticPage ? `pages/${post.slug}` : post.slug;
   const bodyRenderer = post.sourceFormat === 'rst'
-    ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} />
+    ? <RstRenderer content={post.content} html={post.renderedHtml} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} locale={locale} />
     : <MarkdownRenderer content={post.content} latex={post.latex} slug={post.imageBaseSlug} slugRegistry={slugRegistry} locale={locale} />;
 
   // The article <header> is identical in both the normal and the immersive
@@ -185,7 +189,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
       <div className="layout-container">
         <ReadingProgressBar />
         <div className={showSidebar
-          ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start'
+          ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block'
           : 'max-w-6xl mx-auto'
         }>
           {/* Left sidebar: series nav + page TOC */}
@@ -211,10 +215,13 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
           )}
 
           <article className="min-w-0 w-full max-w-3xl mx-auto overflow-x-hidden">
+            {/* Outside articleHeader: kept out of the search index and the
+                immersive overlay, which has its own top bar. */}
+            <Breadcrumbs items={breadcrumbs} locale={locale} className="mb-8" />
             {articleHeader}
 
             {(hasSeries || (collectionContexts && collectionContexts.length > 0)) && (
-              <div className="lg:hidden mb-12">
+              <div className="lg:hidden mb-12 print:hidden">
                 <Suspense fallback={<SeriesListView {...sidebarProps} collectionParam={null} />}>
                   <SeriesList {...sidebarProps} />
                 </Suspense>

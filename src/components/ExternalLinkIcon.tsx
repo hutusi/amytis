@@ -9,7 +9,7 @@ export default function ExternalLinkIcon() {
   return (
     <LuArrowUpRight
       aria-hidden="true"
-      className="inline-block align-text-top ml-0.5 text-[0.85em] opacity-70"
+      className="inline-block align-text-top ml-0.5 text-[0.85em] opacity-70 print:hidden"
     />
   );
 }

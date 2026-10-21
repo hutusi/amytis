@@ -39,7 +39,7 @@ export function PostNavigationView({ prev, next, currentSlug, collectionContexts
 
   return (
     <nav
-      className="mt-12 pt-12 border-t border-line grid grid-cols-1 sm:grid-cols-2 gap-3"
+      className="mt-12 pt-12 border-t border-line grid grid-cols-1 sm:grid-cols-2 gap-3 print:hidden"
       aria-label={t('post_navigation')}
     >
       {effectivePrev && (

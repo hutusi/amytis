@@ -3,6 +3,17 @@ import RstRenderer from './RstRenderer';
 import { renderAsync } from '@/test-utils/render';
 
 describe('RstRenderer', () => {
+  test('marks docutils images for the zoom lightbox after sanitizing, except linked ones', async () => {
+    const html = await renderAsync(
+      <RstRenderer
+        content=""
+        html={'<figure><img src="/posts/demo/a.png" alt="A"></figure><a class="reference external image-reference" href="https://example.com/"><img src="/posts/demo/b.png" alt="B"></a>'}
+      />
+    );
+    expect(html).toMatch(/<img (?=[^>]*alt="A")(?=[^>]*data-zoomable="true")[^>]*>/);
+    expect(html).toMatch(/<img (?![^>]*data-zoomable)[^>]*alt="B"[^>]*>/);
+  });
+
   test('renders pre-rendered html when available', async () => {
     const html = await renderAsync(
       <RstRenderer

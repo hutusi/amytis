@@ -12,7 +12,7 @@ import { metaLabel } from '@/lib/ui-classes';
 export default function MobileToc({ headings }: { headings: Heading[] }) {
   if (headings.length === 0) return null;
   return (
-    <details data-pagefind-ignore className="group ink-card mb-10 lg:hidden">
+    <details data-pagefind-ignore className="group ink-card mb-10 lg:hidden print:hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3 [&::-webkit-details-marker]:hidden">
         <span id="mobile-toc-label" className={metaLabel()}>
           <T k="on_this_page" />

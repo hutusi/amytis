@@ -69,7 +69,7 @@ export function PostSidebarView({ seriesSlug, seriesTitle, posts, collectionCont
     <aside
       ref={sidebarRef}
       data-testid="post-sidebar"
-      className="hidden lg:block sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin select-none"
+      className="hidden lg:block print:hidden sticky top-20 self-start w-[280px] max-h-[calc(100vh-6rem)] overflow-y-auto pr-4 scrollbar-hide hover:scrollbar-thin select-none"
     >
       {/* TOC — always at top */}
       <TocPanel

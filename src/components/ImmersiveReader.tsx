@@ -90,7 +90,9 @@ export default function ImmersiveReader({
       // `dark` is added when readingTheme === 'dark' so Tailwind's `dark:`
       // variants (notably `dark:prose-invert` in MarkdownRenderer) activate
       // inside the overlay even when the site itself is in light mode.
-      className={`fixed inset-0 z-40 flex flex-col bg-background text-foreground ${
+      // print:static/block lets the overlay flow onto pages; fixed with an
+      // internal scroller, only one screen would print.
+      className={`fixed inset-0 z-40 flex flex-col bg-background text-foreground print:static print:block ${
         readingTheme === 'dark' ? 'dark' : ''
       }`}
       role="dialog"
@@ -104,7 +106,7 @@ export default function ImmersiveReader({
       />
 
       {progress > 0 && (
-        <div className="h-0.5 w-full bg-surface-soft shrink-0">
+        <div className="h-0.5 w-full bg-surface-soft shrink-0 print:hidden">
           <div
             className="h-full bg-accent/70 transition-[width] duration-150 ease-out"
             style={{ width: `${progress}%` }}
@@ -112,14 +114,14 @@ export default function ImmersiveReader({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex">
+      <div className="flex-1 min-h-0 flex print:block">
         {sidebarOpen && (
-          <aside className="w-[280px] shrink-0 border-r border-line bg-background/60">
+          <aside className="w-[280px] shrink-0 border-r border-line bg-background/60 print:hidden">
             {sidebar}
           </aside>
         )}
 
-        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto print:overflow-visible">
           <article className={`${COLUMN_WIDTH_CLASS[columnWidth]} mx-auto ${COLUMN_PADDING_CLASS[columnWidth]} py-10`}>
             {children}
           </article>

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Print Stylesheet**: printing an article gives a clean light page whatever the screen theme: no navigation, sidebars, share or comments; code wraps in its light theme; external links print their address; the immersive reader prints in full.
+- **Breadcrumbs on Posts and Chapters**: Series › series › post (or Articles › post) and Books › book › part/section › chapter, with matching BreadcrumbList structured data for search results.
+- **Back to Top**: a floating button appears once you're two screens down any page; it returns to the top and moves keyboard focus there too.
+- **Image Zoom**: clicking an article image opens it full size in a lightbox (Escape, a click or ✕ closes it); linked images and inline icons are left alone.
+- **Heading Anchors**: h2–h4 headings in articles, chapters, notes and rST pages get a `#` link (on hover or keyboard focus, faint on touch screens) to link straight to a section.
 - **Branded 404 and Error Pages**: localized `not-found` / client error boundary replace Next's default unbranded pages.
 - **DOM Behavior Tests**: happy-dom + React Testing Library behind `bun run test:dom`, with first tests for the theme toggle, language provider, scroll/heading hooks, immersive-reading provider, nav dropdowns, and the search modal.
 - **CI**: Windows production build and the Playwright mobile matrix now run on main pushes, manual dispatch, and a weekly schedule; `typecheck` joined `bun run validate`.
@@ -19,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smaller Client Bundles**: Footer/Hero/PageHeader and the homepage sections became Server Components via new `T`/`TLocale`/`TLabel` translation leaves; d3 is deferred out of the `/graph` initial chunk; KaTeX CSS no longer ships with math-free articles; the serif font ships as WOFF2 (~209 KB saved).
 
 ### Fixed
+- **Breadcrumbs on Phones**: note pages with a sidebar and flow day pages only showed their breadcrumb in a desktop-only sidebar; phones now get it above the article.
 - **Inline Code on a Theme Opposite the OS**: `dark:` utilities followed the OS color scheme while the theme tokens follow the site toggle, so inline code turned white on the light theme under a dark OS (and near-black on the dark theme under a light one). They now follow the toggle; the immersive reader's light and sepia themes stay light on a dark site.
 - **Canonical URLs for Crawlers**: sitemap entries, RSS/Atom item links/guids, JSON-LD, and canonical alternates now use the trailing-slash form the static export actually serves (feed guids change once as a result).
 - **OpenGraph Images on Prefixed Post Routes**: were emitted site-relative (rejected by OG consumers); now absolute.

@@ -7,8 +7,14 @@
  * white text on the light theme under a dark OS, and near-black on the dark
  * theme under a light one. The immersive reader's light and sepia themes are
  * light even on a dark site, so their subtree opts out (its dark theme adds
- * its own .dark). */
-@custom-variant dark (&:where(.dark, .dark *):not(:where([data-reader-overlay="true"][data-reading-theme="light"] *, [data-reader-overlay="true"][data-reading-theme="sepia"] *)));
+ * its own .dark). Screen only, like every dark rule: print is always light. */
+@custom-variant dark {
+  @media screen {
+    &:where(.dark, .dark *):not(:where([data-reader-overlay="true"][data-reading-theme="light"] *, [data-reader-overlay="true"][data-reading-theme="sepia"] *)) {
+      @slot;
+    }
+  }
+}
 
 html {
   scroll-behavior: smooth;
@@ -36,16 +42,19 @@ html {
   --ink: #1c1917; /* Stone 900 */
 }
 
-.dark {
-  --background: #292524; /* Stone 800 */
-  --foreground: #f5f5f4; /* Stone 100 */
-  --heading: #fafaf9; /* Stone 50 */
-  --accent: #34d399; /* Emerald 400 */
-  --accent-hover: #10b981; /* Emerald 500 */
-  --accent-contrast: #1c1917; /* Stone 900 */
-  --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
-  --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
-  --ink: #fafaf9; /* Stone 50 */
+/* Dark tokens apply on screen only, so print always gets the light theme (see the print block at the end) */
+@media screen {
+  .dark {
+    --background: #292524; /* Stone 800 */
+    --foreground: #f5f5f4; /* Stone 100 */
+    --heading: #fafaf9; /* Stone 50 */
+    --accent: #34d399; /* Emerald 400 */
+    --accent-hover: #10b981; /* Emerald 500 */
+    --accent-contrast: #1c1917; /* Stone 900 */
+    --muted: #a8a29e; /* Stone 400 - Good contrast on dark */
+    --code-fg: #e7e5e4; /* Stone 200 - High contrast neutral */
+    --ink: #fafaf9; /* Stone 50 */
+  }
 }
 
 /* Palette Overrides
@@ -59,10 +68,12 @@ html {
   --accent: #1d4ed8; /* Blue 700 */
   --accent-hover: #1e40af;
 }
-[data-palette="blue"].dark,
-[data-palette="blue"] .dark {
-  --accent: #60a5fa; /* Blue 400 */
-  --accent-hover: #3b82f6;
+@media screen {
+  [data-palette="blue"].dark,
+  [data-palette="blue"] .dark {
+    --accent: #60a5fa; /* Blue 400 */
+    --accent-hover: #3b82f6;
+  }
 }
 
 /* Rose */
@@ -70,10 +81,12 @@ html {
   --accent: #be123c; /* Rose 700 */
   --accent-hover: #9f1239;
 }
-[data-palette="rose"].dark,
-[data-palette="rose"] .dark {
-  --accent: #fb7185; /* Rose 400 */
-  --accent-hover: #f43f5e;
+@media screen {
+  [data-palette="rose"].dark,
+  [data-palette="rose"] .dark {
+    --accent: #fb7185; /* Rose 400 */
+    --accent-hover: #f43f5e;
+  }
 }
 
 /* Amber */
@@ -81,10 +94,12 @@ html {
   --accent: #b45309; /* Amber 700 */
   --accent-hover: #92400e;
 }
-[data-palette="amber"].dark,
-[data-palette="amber"] .dark {
-  --accent: #fbbf24; /* Amber 400 */
-  --accent-hover: #f59e0b;
+@media screen {
+  [data-palette="amber"].dark,
+  [data-palette="amber"] .dark {
+    --accent: #fbbf24; /* Amber 400 */
+    --accent-hover: #f59e0b;
+  }
 }
 
 /* Wikilink styles */
@@ -147,9 +162,11 @@ html:not(.dark) .shiki span {
   color: var(--shiki-light, var(--foreground));
 }
 
-html.dark .shiki,
-html.dark .shiki span {
-  color: var(--shiki-dark, var(--foreground));
+@media screen {
+  html.dark .shiki,
+  html.dark .shiki span {
+    color: var(--shiki-dark, var(--foreground));
+  }
 }
 
 .shiki {
@@ -205,9 +222,11 @@ html.dark .shiki span {
   padding-inline-start: calc(1.5rem - 3px);
 }
 
-html.dark .shiki .line.highlighted,
-html.dark .shiki .line[data-highlighted-line] {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
+@media screen {
+  html.dark .shiki .line.highlighted,
+  html.dark .shiki .line[data-highlighted-line] {
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
 }
 
 /* Diff fence backgrounds (raw + / - lines) */
@@ -219,12 +238,14 @@ html.dark .shiki .line[data-highlighted-line] {
   background: color-mix(in srgb, #dc2626 14%, transparent);
 }
 
-html.dark .shiki .line.diff.add {
-  background: color-mix(in srgb, #16a34a 22%, transparent);
-}
+@media screen {
+  html.dark .shiki .line.diff.add {
+    background: color-mix(in srgb, #16a34a 22%, transparent);
+  }
 
-html.dark .shiki .line.diff.remove {
-  background: color-mix(in srgb, #dc2626 22%, transparent);
+  html.dark .shiki .line.diff.remove {
+    background: color-mix(in srgb, #dc2626 22%, transparent);
+  }
 }
 
 /* Notation: error / warning lines (// [!code error] / [!code warning]).
@@ -242,12 +263,14 @@ html.dark .shiki .line.diff.remove {
   padding-inline-start: calc(1.5rem - 3px);
 }
 
-html.dark .shiki .line.error {
-  background: color-mix(in srgb, #dc2626 20%, transparent);
-}
+@media screen {
+  html.dark .shiki .line.error {
+    background: color-mix(in srgb, #dc2626 20%, transparent);
+  }
 
-html.dark .shiki .line.warning {
-  background: color-mix(in srgb, #eab308 20%, transparent);
+  html.dark .shiki .line.warning {
+    background: color-mix(in srgb, #eab308 20%, transparent);
+  }
 }
 
 /* Notation: focus (// [!code focus]).
@@ -566,19 +589,21 @@ html.dark .shiki .line.warning {
       inset 0 1px 0 rgb(255 255 255 / 0.65),
       0 1px 2px rgb(28 25 23 / 0.03);
   }
-  .dark .ink-card,
-  .dark .flow-card,
-  .dark .card-base {
-    background-color: rgb(255 255 255 / 0.03);
-    background-image: linear-gradient(
-      to bottom,
-      rgb(255 255 255 / 0.025),
-      rgb(255 255 255 / 0) 55%
-    );
-    border-color: rgb(255 255 255 / 0.07);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 1px 2px rgb(0 0 0 / 0.2);
+  @media screen {
+    .dark .ink-card,
+    .dark .flow-card,
+    .dark .card-base {
+      background-color: rgb(255 255 255 / 0.03);
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 0.025),
+        rgb(255 255 255 / 0) 55%
+      );
+      border-color: rgb(255 255 255 / 0.07);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.05),
+        0 1px 2px rgb(0 0 0 / 0.2);
+    }
   }
 
   .flow-card {
@@ -906,6 +931,11 @@ body {
   :where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
     outline: none;
   }
+  /* BackToTop parks focus on <main> after scrolling up; a ring around the
+     whole page would read as a glitch. */
+  :where(#main-content)[tabindex="-1"]:focus {
+    outline: none;
+  }
 }
 
 /* Ensure anchor links are not hidden behind the fixed navbar (h-16) with a
@@ -914,6 +944,48 @@ body {
    #hash jumps. Matches HEADING_OFFSET_PX in src/lib/scroll-utils.ts. */
 [id] {
   scroll-margin-top: 5rem;
+}
+
+/* Heading permalinks (rehype-heading-anchors): an empty link whose "#" is
+   drawn here, so it never lands in copied text or the search index. Hidden
+   until the heading is hovered or the link has keyboard focus; faint on
+   touch screens, which can't hover. */
+.heading-anchor {
+  display: inline-block;
+  min-width: 1.5rem;
+  margin-inline-start: 0.25em;
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+}
+.heading-anchor::before {
+  content: "#";
+}
+h2:hover > .heading-anchor,
+h3:hover > .heading-anchor,
+h4:hover > .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+.heading-anchor:hover {
+  color: var(--accent);
+}
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 0.4;
+  }
+}
+@media print {
+  .heading-anchor {
+    display: none;
+  }
+}
+
+/* Content images the ImageZoom lightbox opens (rehype-zoomable-images). */
+img[data-zoomable="true"] {
+  cursor: zoom-in;
 }
 
 .rst-rendered figure {
@@ -1033,32 +1105,34 @@ body {
 
 /* Dark-mode tweaks: GitHub Primer's dark-tier alert accents are brighter so
  * they read against the dark background instead of disappearing. */
-html.dark .alert-note,
-html.dark .rst-rendered aside.admonition-note {
-  --alert-accent: #58a6ff;
-}
+@media screen {
+  html.dark .alert-note,
+  html.dark .rst-rendered aside.admonition-note {
+    --alert-accent: #58a6ff;
+  }
 
-html.dark .alert-tip,
-html.dark .rst-rendered aside.admonition-tip,
-html.dark .rst-rendered aside.admonition-hint {
-  --alert-accent: #3fb950;
-}
+  html.dark .alert-tip,
+  html.dark .rst-rendered aside.admonition-tip,
+  html.dark .rst-rendered aside.admonition-hint {
+    --alert-accent: #3fb950;
+  }
 
-html.dark .alert-important,
-html.dark .rst-rendered aside.admonition-important {
-  --alert-accent: #a371f7;
-}
+  html.dark .alert-important,
+  html.dark .rst-rendered aside.admonition-important {
+    --alert-accent: #a371f7;
+  }
 
-html.dark .alert-warning,
-html.dark .rst-rendered aside.admonition-warning,
-html.dark .rst-rendered aside.admonition-attention {
-  --alert-accent: #d29922;
-}
+  html.dark .alert-warning,
+  html.dark .rst-rendered aside.admonition-warning,
+  html.dark .rst-rendered aside.admonition-attention {
+    --alert-accent: #d29922;
+  }
 
-html.dark .alert-caution,
-html.dark .rst-rendered aside.admonition-caution,
-html.dark .rst-rendered aside.admonition-danger {
-  --alert-accent: #f85149;
+  html.dark .alert-caution,
+  html.dark .rst-rendered aside.admonition-caution,
+  html.dark .rst-rendered aside.admonition-danger {
+    --alert-accent: #f85149;
+  }
 }
 
 /* rST admonitions: pick up the per-type accent via the same variable the MDX
@@ -1094,14 +1168,14 @@ html.dark .rst-rendered aside.admonition-danger {
   color: var(--accent);
 }
 
-.rst-rendered a[href]:not([role="doc-noteref"]) {
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor) {
   color: var(--accent);
   text-decoration: none;
   transition: color 160ms ease, text-decoration-color 160ms ease;
 }
 
-.rst-rendered a[href]:not([role="doc-noteref"]):hover,
-.rst-rendered a[href]:not([role="doc-noteref"]):focus-visible {
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor):hover,
+.rst-rendered a[href]:not([role="doc-noteref"]):not(.heading-anchor):focus-visible {
   color: var(--accent);
   text-decoration: underline;
 }
@@ -1234,7 +1308,8 @@ html.dark .rst-rendered aside.admonition-danger {
  * `="true"` here costs nothing on the component side. */
 [data-immersive="true"] [data-site-nav="true"],
 [data-immersive="true"] [data-site-footer="true"],
-[data-immersive="true"] [data-reading-progress="true"] {
+[data-immersive="true"] [data-reading-progress="true"],
+[data-immersive="true"] [data-back-to-top="true"] {
   display: none;
 }
 [data-immersive="true"] #main-content {
@@ -1265,11 +1340,13 @@ html.dark .rst-rendered aside.admonition-danger {
   --accent-hover: #065f46;
   --accent-contrast: #ffffff;
 }
-[data-reader-overlay="true"][data-reading-theme="dark"] {
-  --background: #292524;
-  --foreground: #f5f5f4;
-  --heading: #fafaf9;
-  --muted: #a8a29e;
+@media screen {
+  [data-reader-overlay="true"][data-reading-theme="dark"] {
+    --background: #292524;
+    --foreground: #f5f5f4;
+    --heading: #fafaf9;
+    --muted: #a8a29e;
+  }
 }
 [data-reader-overlay="true"][data-reading-theme="sepia"] {
   --background: #f4ecd8;
@@ -1314,4 +1391,89 @@ html.dark .rst-rendered aside.admonition-danger {
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h5,
 [data-reader-overlay="true"][data-reading-theme="sepia"] .prose h6 {
   color: var(--heading);
+}
+
+/* ── Print ──────────────────────────────────────────────────────────────────
+ * Paper always gets the light theme: every dark-only rule above sits in
+ * `@media screen`, and so does the `dark:` variant (both guarded by
+ * tests/tooling/print-css.test.ts). Site chrome carries `print:hidden` on its
+ * root; this block hides the chrome hooks, lets the immersive reader flow
+ * onto pages, and sets code and links for paper. */
+@media print {
+  :root {
+    /* next-themes writes an inline `color-scheme: dark` on <html>. */
+    color-scheme: light !important;
+  }
+
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  /* Scroll-driven reveals would leave the flow cards below the fold at
+     opacity 0, and color transitions would print mid-fade. */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* The immersive reader locks <body> and the lightbox <html> inline;
+     either would clip printing to one screen. */
+  html,
+  body {
+    overflow: visible !important;
+  }
+
+  [data-site-nav="true"],
+  [data-site-footer="true"],
+  [data-reading-progress="true"] {
+    display: none !important;
+  }
+
+  #main-content {
+    padding-top: 0 !important;
+  }
+
+  /* Code: light-theme tokens, wrapped instead of scrolled, nothing dimmed. */
+  .shiki,
+  .shiki span {
+    color: var(--shiki-light, var(--foreground)) !important;
+  }
+  .shiki code,
+  .shiki .line {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .shiki.has-focused .line:not(.focused) {
+    opacity: 1;
+    filter: none;
+  }
+  .cb-scroll,
+  .prose .overflow-x-auto,
+  .rst-table-wrapper,
+  .katex-display {
+    overflow: visible !important;
+  }
+
+  /* External links print where they go (data-print-url, src/lib/print-urls.ts). */
+  [data-print-url="true"]::after {
+    content: " (" attr(href) ")";
+    color: var(--muted);
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+  figure,
+  img,
+  pre,
+  table,
+  blockquote {
+    break-inside: avoid;
+  }
 }

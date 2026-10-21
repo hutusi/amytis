@@ -205,6 +205,44 @@ test.describe('Mobile Compatibility', () => {
       expect(box).not.toBeNull();
       expect(Math.max(box!.width, box!.height)).toBeGreaterThanOrEqual(32);
     });
+
+    test('back-to-top button appears on a long page, inside the viewport, at 44px', async ({ page }) => {
+      if (!isPhone(page)) test.skip();
+
+      await page.goto(`/${getPostsBasePath()}/kitchen-sink`, { waitUntil: 'domcontentloaded' });
+      const button = page.getByRole('button', { name: /back to top/i });
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expect(button).toBeVisible();
+      const box = await button.boundingBox();
+      const viewport = page.viewportSize()!;
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    });
+  });
+
+  // ── Breadcrumbs ────────────────────────────────────────────────────────────
+  test.describe('Breadcrumbs', () => {
+    // Notes with a sidebar and flow days keep their desktop trail in a
+    // sidebar that is hidden below lg; phones get a copy above the article.
+    for (const path of [
+      `/${getPostsBasePath()}/kitchen-sink`,
+      '/books/sample-book/setup',
+      '/notes/tailwind-v4',
+      '/flows/2026/02/10',
+    ]) {
+      test(`a trail is visible on ${path}`, async ({ page }) => {
+        if (!isPhone(page)) test.skip();
+
+        await page.goto(path, { waitUntil: 'domcontentloaded' });
+        const trail = page.getByRole('navigation', { name: 'Breadcrumb' });
+        await expect(trail).toHaveCount(1);
+        await expect(trail).toBeVisible();
+        await expect(trail.locator('[aria-current="page"]')).toHaveCount(1);
+      });
+    }
   });
 
   // ── Post sidebar / TOC ─────────────────────────────────────────────────────

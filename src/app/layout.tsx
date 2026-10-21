@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Analytics from "@/components/Analytics";
 import BrowserDetectionBanner from "@/components/BrowserDetectionBanner";
+import ImageZoom from "@/components/ImageZoom";
+import BackToTop from "@/components/BackToTop";
 // Import from config-schema (not site.config directly) so the build-time Zod
 // validation runs: the root layout renders for every page, so a malformed
 // config fails the build with a readable message.
@@ -164,6 +166,8 @@ export default function RootLayout({
               </main>
               <Footer />
             </div>
+            <BackToTop />
+            <ImageZoom />
             <Analytics />
           </LanguageProvider>
         </ThemeProvider>

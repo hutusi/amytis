@@ -2,6 +2,8 @@ import path from 'path';
 import { getBookDirPath, type BookData, type BookChapterData } from '@/lib/content/books';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import BookReadingShell from '@/components/BookReadingShell';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import type { BreadcrumbItem } from '@/lib/breadcrumbs';
 import { getBookChapterUrl, localizeUrl } from '@/lib/urls';
 import { siteConfig } from '../../site.config';
 import { resolveCommentable } from '@/lib/comments';
@@ -9,9 +11,10 @@ import { resolveCommentable } from '@/lib/comments';
 interface BookLayoutProps {
   book: BookData;
   chapter: BookChapterData;
+  breadcrumbs?: BreadcrumbItem[];
 }
 
-export default function BookLayout({ book, chapter }: BookLayoutProps) {
+export default function BookLayout({ book, chapter, breadcrumbs = [] }: BookLayoutProps) {
   // Everything book-scoped stays in the book's locale tree: source dir for
   // relative-link resolution, public asset dirs, chapter navigation, and the
   // comment thread identity.
@@ -66,6 +69,7 @@ export default function BookLayout({ book, chapter }: BookLayoutProps) {
       prev={prev}
       next={next}
       comments={comments}
+      breadcrumbs={<Breadcrumbs items={breadcrumbs} locale={book.locale} className="mb-6" />}
     >
       <MarkdownRenderer
         content={chapter.content}

@@ -77,7 +77,7 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
   const btnClass = 'inline-flex items-center justify-center w-8 h-8 rounded text-muted hover:text-accent hover:bg-surface-soft transition-colors';
 
   return (
-    <div className={`flex flex-row flex-wrap gap-1 ${className}`}>
+    <div className={`flex flex-row flex-wrap gap-1 print:hidden ${className}`}>
       {platforms.map((platform) => {
         const { label, Icon } = PLATFORM_META[platform];
 

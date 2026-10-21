@@ -168,17 +168,20 @@ Content renderers:
 - `MarkdownRenderer` — MDX with GFM, KaTeX math, build-time syntax highlighting via Shiki, Mermaid
 - `CodeBlock` (async server component, calls Shiki) and `CodeBlockToolbar` (client: copy + word-wrap toggle), `Mermaid`
 - `CoverImage` — optimized image component with WebP support
+- `ImageZoom` — lightbox for content images, mounted once in the root layout. `rehype-zoomable-images` (in `MarkdownRenderer` and the post-sanitize rST pass) marks images `data-zoomable="true"`, except linked ones, Mermaid content and raw-HTML images with an inline `style` (badges/icons); one delegated click listener opens the marked image's full-size `src` in a native modal `<dialog>`. The top layer puts it above the immersive reader and outside the transformed flow cards; it locks `<html>` scrolling (the reader owns `<body>`'s) and stops key events, so Escape doesn't also exit the reader.
 
 Post & series surfaces:
 
 - `RenderPostPage` — shared body for the two canonical-post routes (`/posts/[slug]` and prefixed `[slug]/[postSlug]`): owns the JSON-LD script, the simple-layout branch, and the related/adjacent/backlinks assembly. Detail-route metadata goes through `buildArticleMetadata` in `src/lib/metadata.ts`.
+- `Breadcrumbs` (server) — the trail above a post or book chapter, built by `src/lib/breadcrumbs.ts`: Series › series › post for a series post (when the `series` feature is on), else Posts › post; Books › book › part or each enclosing section (plain text, no pages) › chapter. Localized hrefs and labels; the current page is last, `aria-current` and truncated. The same items feed a `BreadcrumbList` node in the page's JSON-LD `@graph` (`buildPostJsonLd` / `buildBookChapterJsonLd`), minus the steps without a page, which Google requires to have a URL. Rendered outside the indexed header and the immersive overlay; `layout: simple` posts and static pages get none. Notes and flow days use the same component: where their trail sits in a `hidden lg:block` sidebar (`NoteSidebar`, `FlowCalendarSidebar`), an `lg:hidden` copy above the article covers phones.
 - `PostLayout` / `SimpleLayout` — post page layouts with TOC, series sidebar, external links, comments
 - `PostList` — card-based post listing with thumbnails, metadata, excerpts, tags
 - `PostCard`, `PostSidebar`, `RelatedPosts`, `ShareBar`
 - `SeriesCatalog` — timeline-style listing with numbered entries and progress indicator
 - `SeriesSidebar` — series navigation sidebar with progress bar and color-coded states
 - `SeriesList` — mobile-optimized series navigation matching sidebar design
-- `TableOfContents` — sticky TOC with scroll tracking, reading progress, back-to-top
+- `TocPanel` (sticky desktop TOC with active-heading tracking, inside `PostSidebar`) and `MobileToc` (server-rendered `<details>` below `lg`)
+- `BackToTop` — floating button on every page, mounted in the root layout: appears past two screens of scrolling, scrolls up (instant under reduced motion) and moves focus to `#main-content`; hidden in the immersive reader and in print
 - `HorizontalScroll` — scrollable container with navigation arrows for featured content
 
 Notes & flows:
@@ -235,6 +238,8 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 
 Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts` slugs every Markdown heading in document order (all depths through one GitHub slugger, wikilink syntax reduced to its display text). `getHeadings` builds the TOC from it at content-load time, and the `remarkHeadingIds` plugin — the first transformer in `MarkdownRenderer` — stamps the same ids onto the rendered headings, so TOC links match page ids by construction, whether or not a surface resolves wikilinks. Headings that arrive as raw HTML get ids from `src/lib/rehype-heading-ids.ts`, which collects every id already in the document first, so a raw `<h2>Setup</h2>` next to `## Setup` becomes `setup-1` instead of a duplicate. `tests/integration/reading-time-headings.test.ts` asserts every post's TOC ids exist in its rendered body.
 
+Heading anchors: `src/lib/rehype-heading-anchors.ts` runs last in `MarkdownRenderer` and appends an empty `<a class="heading-anchor" href="#id" aria-label=…>` to every h2–h4 (docutils rST headings borrow their `<section>`'s id). CSS draws the `#` with `::before`, so it stays out of copied text and the Pagefind index; it shows on hover/focus, faintly on touch screens. Skipped: the hidden GFM footnotes heading, headings in links or `<summary>`, the flow stream (`headingAnchors={false}`, many documents on one page) and feeds.
+
 ## Code Block Highlighting
 
 - Highlighter: **Shiki** (build-time, dual `github-light` / `github-dark` theme via CSS variables). See `docs/CODE-BLOCKS.md` for author-facing fence/directive metadata.
@@ -244,11 +249,19 @@ Heading ids have a single source: `slugHeadingNodes` in `src/lib/text-metrics.ts
 - rST path: `scripts/render-rst.py` rewrites every `literal_block` into a `<pre data-amytis-code …>` marker carrying option attributes (`data-language`, `data-line-numbers`, `data-highlight-lines`, `data-title`); `src/lib/shiki-rst.ts` walks the rendered HTML inside `RstRenderer` (async server component) and replaces each marker with Shiki output. The fallback rST parser routes through `rstToMarkdown` and lands in the MDX path — single highlighter, single source of truth.
 - Cache: `RST_RENDERER_DISK_CACHE_VERSION` in `src/lib/rst-renderer.ts` must be bumped whenever the docutils output shape or Shiki theme changes, otherwise stale cached entries in `.cache/rst-renderer/` keep rendering with the old markup.
 
+## Theme and Print
+
+- Theme tokens are CSS custom properties: `:root` (light), `.dark` (next-themes puts the class on `<html>`) and `[data-palette=…]` accents, mapped to Tailwind colors in `@theme inline`. The `dark:` variant is a custom variant keyed off the same `.dark` class (Tailwind's default would follow the OS instead and split from the tokens), excluding the immersive reader's light and sepia subtrees.
+- **Print is always light.** Every dark-only rule (tokens, palette variants, Shiki colors and line tints, card and alert overrides, the dark reading theme) and the `dark:` variant itself sit inside `@media screen`, so paper gets the light values with no duplicated tokens. `tests/tooling/print-css.test.ts` scans the stylesheet and fails on a dark rule outside `@media screen`.
+- The `@media print` block at the end of `globals.css` forces `color-scheme: light` (next-themes writes `dark` inline), releases the inline scroll locks of the immersive reader and the lightbox, hides the navbar/footer/progress hooks, prints code with its light theme and wrapped lines, and appends the address after external links marked `data-print-url="true"` (`src/lib/print-urls.ts`, in `MarkdownRenderer` and the post-sanitize rST pass; not autolinks, image-only links or internal links). Other chrome carries `print:hidden` on its root (`tests/tooling/print-chrome.test.ts` lists it), the sidebar grids `print:block`, and the immersive overlay `print:static`/`print:block` so it flows onto pages.
+- Known limits: Mermaid SVGs keep the on-screen theme's colors, code groups print only the active tab, closed `<details>` stay closed, and backgrounds print only if the reader enables them.
+
 ## rST Notes
 
 - Full-fidelity rST rendering depends on a Python environment with `docutils` (and ideally `pygments`) available.
 - `src/lib/rst-renderer.ts` uses `AMYTIS_RST_PYTHON` when set; otherwise it falls back to `python3`.
 - Docinfo metadata normalization is shared: both the Python renderer and the JS fallback parser route every `:Field:` through `src/lib/rst-metadata.ts` (one field switch, one set of validators, one `RstParseError`), so the two paths cannot drift on metadata. Heading extraction still differs (docutils AST vs regex over the Markdown conversion) — pinned by `tests/integration/rst-parity.test.ts`.
+- Page-only additions to docutils HTML (heading anchors) run in `src/lib/rst-enhance.ts`, AFTER `sanitizeRenderedRstHtml`: they only add attributes whose values we control, and the sanitizer's allowlist is shared with the feeds, so it is never widened for them. `RstRenderer` takes a `locale` prop for their labels and passes it to its Markdown fallback.
 - Top-of-document docinfo is parsed into Amytis metadata, but it is stripped from rendered article HTML so blog-style posts do not show duplicate author/version blocks above the content.
 - Supported legacy roles are normalized or degraded intentionally:
   - `:doc:` resolves to local site URLs when the target exists in the imported content tree
@@ -475,12 +488,16 @@ static prerender.
 - Main scroll area — article centred at the column width the user picked
   (`max-w-2xl` to `max-w-none`).
 
-**CSS scoping.** `html[data-immersive]` hides site chrome via the three stable
-hooks `data-site-nav` / `data-site-footer` / `data-reading-progress` —
-defense-in-depth (the fixed overlay covers them anyway). Reading-theme
+**CSS scoping.** `html[data-immersive]` hides site chrome via the stable
+hooks `data-site-nav` / `data-site-footer` / `data-reading-progress` /
+`data-back-to-top` — defense-in-depth (the fixed overlay covers them anyway;
+the window doesn't scroll while the reader is open, so the back-to-top button
+would be dead weight). Reading-theme
 overrides are scoped to `[data-reader-overlay]` so they don't leak outside the
 reader; when `readingTheme === 'dark'` the overlay also gets Tailwind's `.dark`
-class so `dark:prose-invert` fires regardless of the underlying site theme.
+class so `dark:prose-invert` fires regardless of the underlying site theme, and
+the `dark` custom variant excludes the light and sepia overlay subtrees, so
+they stay light on a dark site.
 Shiki code blocks deliberately keep their normal theme.
 
 ## Configuration Reference (`site.config.ts`)

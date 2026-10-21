@@ -48,7 +48,7 @@ function CommentsEmbed({ slug, postUrl }: CommentsProps) {
 
   if (provider === 'giscus' && giscus.repo) {
     return (
-      <div className="mt-12 pt-12 border-t border-line">
+      <div className="mt-12 pt-12 border-t border-line print:hidden">
         <Giscus
           id="comments"
           repo={giscus.repo as `${string}/${string}`}
@@ -70,7 +70,7 @@ function CommentsEmbed({ slug, postUrl }: CommentsProps) {
 
   if (provider === 'disqus' && disqus.shortname) {
     return (
-      <div className="mt-12 pt-12 border-t border-line">
+      <div className="mt-12 pt-12 border-t border-line print:hidden">
         <DisqusThread
           shortname={disqus.shortname}
           url={postUrl ?? `${siteConfig.baseUrl.replace(/\/+$/, '')}/${getPostsBasePath()}/${slug}`}
