@@ -27,8 +27,10 @@ export default function rehypePrintLinkUrls() {
     visit(tree, 'element', (node) => {
       if (node.tagName !== 'a') return;
       const href = typeof node.properties?.href === 'string' ? node.properties.href : undefined;
-      const isImageLink = node.children.some((child) => child.type === 'element' && child.tagName === 'img');
-      if (shouldPrintLinkUrl(href, node.children.map(textContent).join(''), isImageLink)) {
+      const text = node.children.map(textContent).join('');
+      // Image-only: a link with an image AND a label still prints its address.
+      const isImageLink = !text.trim() && node.children.some((child) => child.type === 'element' && child.tagName === 'img');
+      if (shouldPrintLinkUrl(href, text, isImageLink)) {
         node.properties = { ...node.properties, dataPrintUrl: 'true' };
       }
     });

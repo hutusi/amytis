@@ -30,6 +30,7 @@ describe('rehypePrintLinkUrls', () => {
   test('marks only the links that should print', () => {
     expect(run('<a href="https://example.org/doc">the docs</a>')).toContain('data-print-url="true"');
     expect(run('<a href="https://example.org/"><img src="/a.png" alt=""></a>')).not.toContain('data-print-url');
+    expect(run('<a href="https://example.org/"><img src="/logo.png" alt=""> Example docs</a>')).toContain('data-print-url="true"');
     expect(run('<a class="wikilink" href="/notes/x/">x</a>')).not.toContain('data-print-url');
   });
 });

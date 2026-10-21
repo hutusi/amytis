@@ -5,7 +5,8 @@ import { describe, expect, test } from 'bun:test';
  * Interactive and navigational chrome that must not print: each carries
  * `print:hidden` on its root (the navbar, footer and reading progress bar are
  * hidden by their data hooks in the print stylesheet instead). A new piece of
- * page chrome belongs on this list.
+ * page chrome belongs on this list. AuthorCard is not chrome: with
+ * `showInHeader: false` it is the only place a printed post names its author.
  */
 const PRINT_HIDDEN = [
   'src/components/PostSidebar.tsx',
@@ -18,7 +19,6 @@ const PRINT_HIDDEN = [
   'src/components/PostNavigation.tsx',
   'src/components/PrevNextNav.tsx',
   'src/components/RelatedPosts.tsx',
-  'src/components/AuthorCard.tsx',
   'src/components/Backlinks.tsx',
   'src/components/ExternalLinks.tsx',
   'src/components/CodeBlockToolbar.tsx',
@@ -39,7 +39,7 @@ describe('print hides page chrome', () => {
   test('two-column layouts collapse to one column on paper', () => {
     // A4 landscape is wide enough for lg:, which would reserve the hidden
     // sidebar's 280px column.
-    for (const file of ['src/layouts/PostLayout.tsx', 'src/components/BookReadingShell.tsx', 'src/components/page-bodies/NoteDetailBody.tsx']) {
+    for (const file of ['src/layouts/PostLayout.tsx', 'src/layouts/SimpleLayout.tsx', 'src/components/BookReadingShell.tsx', 'src/components/page-bodies/NoteDetailBody.tsx']) {
       expect(fs.readFileSync(file, 'utf8')).toMatch(/lg:grid-cols-\[280px_minmax\(0,1fr\)\][^'"`]*print:block/);
     }
   });

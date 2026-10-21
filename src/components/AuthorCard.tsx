@@ -14,7 +14,7 @@ export default function AuthorCard({ authors, locale }: { authors: string[]; loc
   if (!authors || authors.length === 0) return null;
 
   return (
-    <div className="mt-12 flex flex-col gap-4 print:hidden">
+    <div className="mt-12 flex flex-col gap-4">
       {authors.map((author) => {
         const slug = getAuthorSlug(author);
         const profile = siteConfig.authors?.[author];

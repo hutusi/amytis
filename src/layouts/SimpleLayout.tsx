@@ -43,7 +43,7 @@ export default function SimpleLayout({ post, titleKey, subtitleKey }: SimpleLayo
   return (
     <div className="layout-main">
       {showToc ? (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start print:block">
           <Suspense fallback={<PostSidebarView currentSlug={post.slug} headings={post.headings} collectionParam={null} />}>
             <PostSidebar currentSlug={post.slug} headings={post.headings} />
           </Suspense>
