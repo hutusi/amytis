@@ -69,6 +69,7 @@ src/app/
   flows/feed.xml/route.ts           # Flows-only RSS feed
   flows/feed.atom/route.ts          # Flows-only Atom feed
   search.json/route.ts
+  og/[...path]/route.tsx            # Generated share cards: /og/<page path>.png
   sitemap.ts
   robots.ts                         # robots.txt — allow all + Sitemap: line
   [slug]/page.tsx                   # Static pages + custom series listing path
@@ -233,6 +234,16 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 - Markdown/MDX items render through `src/lib/markdown-to-html.ts` — the same author-facing syntax set as `MarkdownRenderer` (GFM, GitHub alerts, VuePress containers, code groups, wikilinks, math) as a plain HTML string. Feed-specific choices: synthetic `<github-alert>`/`<code-group>` elements are rewritten to titled blockquotes / labeled `<pre>` blocks, KaTeX emits MathML-only output (readers never load the KaTeX stylesheet), and Shiki / heading ids / `rehype-image-metadata` are deliberately skipped (page-only concerns). Mermaid fences likewise stay plain `<pre><code class="language-mermaid">` blocks — feed readers run no JS. If `MarkdownRenderer` gains a syntax plugin, add it here too — `tests/integration/feed-utils.test.ts` asserts the known syntaxes don't leak as literal text.
 - rST items embed their docutils `renderedHtml`, sanitized by the same shared allowlist the on-page renderer uses (`src/lib/rst-sanitize.ts`); when docutils didn't run, the item falls back to the plain-text excerpt rather than mis-parsing rST source as Markdown.
 - Sorting and the `maxItems` cut happen before content rendering, so only surviving items pay the render cost. URLs are absolutized on the HAST by `src/lib/rehype-absolute-urls.ts` (never by regex over serialized HTML, which would rewrite code samples): `<img src>` resolves through `resolveContentImagePath` (`src/lib/image-utils.ts`) against the entry's asset base — the same resolver `rehype-image-metadata` uses on the page, so co-located images of series posts on autoPaths/customPaths URLs point at `/posts/<slug>/…` in both places — and every other URL resolves against the item's page URL.
+
+## Share Cards
+
+With `generateOgImages: true`, every post, note and book chapter without a cover image of its own gets a 1200×630 PNG share card at build time: the site logo and name, the series / book / "Notes" label, the title in Libre Baskerville (Noto Serif SC for Chinese), the date and authors, in the light palette of `themeColor`. A chapter whose book has a cover keeps sharing that cover.
+
+- `src/lib/og-images.ts` decides and enumerates. `getsOgCard(kind, coverImage)` is the one rule (feature on, the kind's feature enabled, no own cover; `text:` covers count as none). `getOgCards()` applies it over the same readers the page routes use, in every locale tree, keyed by image path; two cards claiming one path throw.
+- Image paths mirror the page path: `/posts/hello/` → `/og/posts/hello.png`, `/zh/notes/x/` → `/og/zh/notes/x.png`, nested chapter ids carry over. `og` is a reserved top-level segment.
+- `src/app/og/[...path]/route.tsx` is a static route handler (`force-static`, `dynamicParams = false`) that renders each card with `next/og`'s `ImageResponse` from `src/lib/og-card.tsx`. With no cards it emits one `_.png` placeholder, as output-export routes need a param.
+- Fonts live in `src/fonts/og/` and are built by `scripts/build-og-fonts.py`: Satori reads only ttf/otf/woff, so the site's woff2 fonts are re-saved as TrueType, and Noto Serif SC Bold is cut to GB2312's 6,763 hanzi plus CJK punctuation and any title character beyond them (2.1MB). `next/og` fetches any glyph its fonts lack from Google Fonts during the build — fine online, boxes offline or where Google is blocked — so rerun the script after adding titles with rarer characters. `tests/integration/og-images.test.ts` renders every current title and kicker with `fetch` stubbed and fails if one would download a font.
+- Cost: about 13ms per card once the renderer is warm (~200 cards here). In `bun dev`, a card renders on demand at its `/og/…png` URL.
 
 ## Heading IDs and the TOC
 
@@ -504,6 +515,8 @@ Shiki code blocks deliberately keep their normal theme.
 
 | Field | Notes |
 | --- | --- |
+| `ogImage` | Default share image (1200×630), served from `public/`; a missing file fails the build |
+| `generateOgImages` | Generate a share card per post, note and chapter without its own cover (see Share Cards); `false` in the example config |
 | `nav` | Navigation links with weights |
 | `social` | GitHub, Twitter, email links for the footer |
 | `series.navbar` | Series slugs to show in the navbar dropdown |

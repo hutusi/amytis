@@ -12,6 +12,14 @@ export function getCdnImageUrl(src: string, cdnBaseUrl: string): string {
 }
 
 /**
+ * Whether a `coverImage` is a real image a page can share: set, and not a
+ * `text:` title-card pseudo-image or an unresolved `./` relative path.
+ */
+export function hasOwnCover(coverImage: string | undefined): coverImage is string {
+  return !!coverImage && !coverImage.startsWith('text:') && !coverImage.startsWith('./');
+}
+
+/**
  * Certain source formats should bypass next-image-export-optimizer entirely.
  * AVIF currently has an upstream path-generation bug when WEBP output is enabled,
  * and user-supplied WEBP files are often already optimized enough to serve directly.

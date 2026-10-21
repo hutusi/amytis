@@ -35,6 +35,8 @@ export const siteConfig = {
   description: { en: "Amytis — an elegant open-source framework for building your personal digital garden.", zh: "Amytis — 优雅的开源数字花园框架。" },
   baseUrl: "https://amytis.vercel.app", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image (1200×630 PNG). A default ships in public/ — replace it with your own; a missing site-relative file fails the build
+  // Render a 1200×630 share card (title, series or book, date) for every post, note and book chapter without a cover image of its own; pages with a cover keep sharing it. See docs/ARCHITECTURE.md "Share Cards".
+  generateOgImages: true,
   footerText: { en: `© ${new Date().getFullYear()} Amytis. All rights reserved.`, zh: `© ${new Date().getFullYear()} Amytis. 保留所有权利。` },
 
   // ── i18n ──────────────────────────────────────────────────────────────────

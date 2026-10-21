@@ -1,3 +1,5 @@
+import { hasOwnCover } from './image-utils';
+
 // ── Schema shape types ────────────────────────────────────────────────────────
 
 interface SchemaOrganization {
@@ -115,7 +117,7 @@ export function resolveImageUrl(
     return `${siteUrl}${url.startsWith('/') ? url : `/${url}`}`;
   };
 
-  if (coverImage && !coverImage.startsWith('text:') && !coverImage.startsWith('./')) {
+  if (hasOwnCover(coverImage)) {
     return toAbsolute(coverImage);
   }
   return toAbsolute(defaultOgImage);

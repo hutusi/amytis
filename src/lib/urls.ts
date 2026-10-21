@@ -7,8 +7,9 @@ function normalizeSegment(segment: string): string {
 }
 
 // Top-level route segments reserved by the app — series slugs must not collide with these.
+// `og` holds the generated share cards (src/app/og/).
 export const RESERVED_ROUTE_SEGMENTS = new Set([
-  'posts', 'series', 'books', 'flows', 'tags', 'authors', 'archive', 'notes', 'graph', 'search', 'page', 'api',
+  'posts', 'series', 'books', 'flows', 'tags', 'authors', 'archive', 'notes', 'graph', 'search', 'page', 'api', 'og',
 ]);
 
 export function getPostsBasePath(): string {

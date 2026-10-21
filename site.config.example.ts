@@ -45,6 +45,8 @@ export const siteConfig = {
   description: "A personal digital garden — notes, articles, and ideas.",
   baseUrl: "https://example.com", // Replace with your actual domain
   ogImage: "/og-image.png", // Default OG/social preview image (1200×630 PNG). A default ships in public/ — replace it with your own; a missing site-relative file fails the build
+  // Render a 1200×630 share card (title, series or book, date) for every post, note and book chapter without a cover image of its own; pages with a cover keep sharing it. See docs/ARCHITECTURE.md "Share Cards".
+  generateOgImages: false,
   footerText: `© ${new Date().getFullYear()} My Garden. All rights reserved.`,
 
   // ── i18n ──────────────────────────────────────────────────────────────────

@@ -78,6 +78,7 @@ export const SiteConfigSchema = z.object({
   description: localeString,
   baseUrl: z.string().min(1),
   ogImage: z.string(),
+  generateOgImages: z.boolean(),
   footerText: localeString,
 
   // ── i18n ──
