@@ -72,7 +72,7 @@ export default function ArchivePage() {
       <main>
         {/* Year-jump navigation — mirrors content grid to align with timeline column */}
         {years.length > 1 && (
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)] gap-8 md:gap-16 mb-16">
             <div />
             <nav aria-label={t('jump_to_year')} className="flex flex-wrap items-center gap-2">
               {years.map(year => (
@@ -97,7 +97,7 @@ export default function ArchivePage() {
             const yearTotal = months.reduce((total, month) => total + groupedPosts[year][month].length, 0);
 
             return (
-              <section key={year} id={year} className="relative grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 md:gap-16">
+              <section key={year} id={year} className="relative grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)] gap-8 md:gap-16">
                 {/* Year Marker */}
                 <div className="relative">
                   <div className="sticky top-24 lg:top-32 text-left md:text-right">
