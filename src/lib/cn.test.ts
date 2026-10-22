@@ -14,14 +14,9 @@ describe('cn', () => {
     expect(cn('base', { active: true, hidden: false }, ['x', 'y'])).toBe('base active x y');
   });
 
-  test('last conflicting Tailwind utility wins (tailwind-merge)', () => {
-    expect(cn('p-2', 'p-4')).toBe('p-4');
-    expect(cn('text-muted', 'text-accent')).toBe('text-accent');
-  });
-
-  test('keeps non-conflicting utilities and respects variant prefixes', () => {
-    expect(cn('px-2 py-1', 'px-4')).toBe('py-1 px-4');
-    // hover: and base utilities target different states — both survive
+  test('does not resolve conflicting utilities: both are kept, in order', () => {
+    // No tailwind-merge: callers must not pass two utilities for one property.
+    expect(cn('p-2', 'p-4')).toBe('p-2 p-4');
     expect(cn('text-muted', 'hover:text-accent')).toBe('text-muted hover:text-accent');
   });
 

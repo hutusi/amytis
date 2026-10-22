@@ -195,7 +195,7 @@ Notes & flows:
 
 Search & discovery:
 
-- `Search` — full-text search modal (Cmd/Ctrl+K): combobox ARIA, focus trap/restore, roving-tabindex type tabs, recent searches. The Pagefind loader/debounce/search machinery, the per-type counts and the active type tab live in the `usePagefind` hook; the results listbox in `SearchResults`.
+- `Search` — full-text search modal (Cmd/Ctrl+K, `/`): the trigger, shortcuts, dialog frame, input, focus trap/restore and Escape. It is in the navbar on every page, so the rest loads on first use: `SearchPanel` (a `React.lazy` chunk, fetched early when the trigger is hovered, focused or touched) holds the type tabs, recent searches and tips, the results listbox (`SearchResults`) and the `usePagefind` hook (Pagefind loader, debounce, per-type counts, active tab). The input stays in `Search` so a tap focuses it inside the gesture (mobile keyboards open) and the same element survives the panel's arrival; the panel takes over its arrow/Enter keys through a ref and reports its combobox ARIA back. `tests/tooling/client-bundle-guard.test.ts` keeps `Search` and `Navbar` from importing the panel's modules statically.
 - `Pagination`, `KnowledgeGraph` (loaded via `KnowledgeGraphLazy` — `next/dynamic` with `ssr: false` keeps d3 out of the `/graph` initial chunk; reduced-motion and mobile users get the searchable list view)
 
 Integrations:

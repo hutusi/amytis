@@ -8,8 +8,7 @@ import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getPostUrl } from '@/lib/urls';
-import { cn } from '@/lib/cn';
-import { COVER_ZOOM } from '@/lib/ui-classes';
+import { COVER_ZOOM, COVER_ZOOM_SLOW } from '@/lib/ui-classes';
 
 export interface FeaturedPost {
   slug: string;
@@ -116,7 +115,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
                 src={hero.coverImage}
                 title={hero.title}
                 slug={hero.slug}
-                className={cn(COVER_ZOOM, 'duration-700')}
+                className={COVER_ZOOM_SLOW}
                 loading="eager"
                 // With secondary stories the hero is lg:col-span-7 (~60%);
                 // alone it spans the full 12-column row.

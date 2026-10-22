@@ -15,12 +15,16 @@ export const CARD_HOVER =
   'group-hover:border-accent/30 group-hover:bg-surface-soft group-hover:shadow-md group-hover:shadow-accent/5';
 
 /**
- * Cover-image zoom-on-hover. Default transition is `duration-500`; the slower
- * hero variant composes `cn(COVER_ZOOM, 'duration-700')` (tailwind-merge keeps
- * the later duration).
+ * Cover-image zoom-on-hover, with a `duration-500` transition. The homepage's
+ * larger featured covers use COVER_ZOOM_SLOW. A separate constant, not
+ * `cn(COVER_ZOOM, 'duration-700')`: cn() doesn't resolve conflicts, and two
+ * durations would be decided by stylesheet order.
  */
 export const COVER_ZOOM =
   'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105';
+
+export const COVER_ZOOM_SLOW =
+  'h-full w-full object-cover transition-transform duration-700 group-hover:scale-105';
 
 /**
  * The uppercase micro-label base styling. The `MetaLabel` primitive in

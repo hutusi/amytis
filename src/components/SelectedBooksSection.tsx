@@ -9,8 +9,7 @@ import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
 import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
-import { cn } from '@/lib/cn';
-import { COVER_ZOOM } from '@/lib/ui-classes';
+import { COVER_ZOOM_SLOW } from '@/lib/ui-classes';
 
 export interface BookItem {
   slug: string;
@@ -91,7 +90,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   src={book.coverImage}
                   title={book.title}
                   slug={book.slug}
-                  className={cn(COVER_ZOOM, 'duration-700')}
+                  className={COVER_ZOOM_SLOW}
                   sizes="(min-width: 1200px) 536px, (min-width: 768px) 50vw, 85vw"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
