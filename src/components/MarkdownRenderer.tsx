@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/cn';
 import { PROSE_CLASSES } from '@/lib/prose-classes';
 import ReactMarkdown, { Components, ExtraProps } from 'react-markdown';
 import RssFeedWidget from '@/components/RssFeedWidget';
@@ -153,8 +154,14 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // No `p` override: paragraphs take PROSE_CLASSES' styling exactly like
     // RstRenderer's sanitized HTML, so Markdown and rST posts set paragraphs
     // identically (line-height via prose-p:leading-loose, prose-lg margins).
-    // Explicitly style lists to ensure contrast
-    li: ({ children }) => <li className="text-foreground">{children}</li>,
+    // Explicitly style lists to ensure contrast, keeping the item's own
+    // attributes: GFM footnote links point at its id (#user-content-fn-1),
+    // and task-list items carry their class.
+    li: (props) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { children, node: _node, className, ...rest } = props as React.LiHTMLAttributes<HTMLLIElement> & ExtraProps;
+      return <li {...rest} className={cn('text-foreground', className)}>{children}</li>;
+    },
     // Explicitly style blockquotes
     blockquote: ({ children }) => <blockquote className="text-foreground border-l-accent italic">{children}</blockquote>,
     // Explicitly style bold text
