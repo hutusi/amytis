@@ -8,7 +8,10 @@ import { flowStreamLocaleTag } from '@/lib/flow-stream';
 
 interface FlowCalendarSidebarProps {
   entryDates: string[];
+  /** The flow day being viewed (YYYY-MM-DD): highlighted, and opens on its month. */
   currentDate?: string;
+  /** Month to open on (YYYY-MM) when no single day is current: month and year archives. */
+  initialMonth?: string;
   tags?: Record<string, number>;
   selectedTag?: string | null;
   onTagSelect?: (tag: string) => void;
@@ -30,7 +33,7 @@ function getServerTodayStr(): string | null {
   return null;
 }
 
-export default function FlowCalendarSidebar({ entryDates, currentDate, tags, selectedTag, onTagSelect, breadcrumb }: FlowCalendarSidebarProps) {
+export default function FlowCalendarSidebar({ entryDates, currentDate, initialMonth, tags, selectedTag, onTagSelect, breadcrumb }: FlowCalendarSidebarProps) {
   const { t, language } = useLanguage();
   const todayStr = useSyncExternalStore(subscribeNever, getLocalTodayStr, getServerTodayStr);
 
@@ -47,14 +50,14 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
     };
   }, [localeTag]);
 
-  // Initial month must be derived from content (currentDate, else the latest
-  // entry) so server HTML and client hydration agree — `new Date()` here
+  // Initial month must be derived from content (currentDate, else
+  // initialMonth, else the latest entry) so server HTML and client hydration agree — `new Date()` here
   // baked the build-time month into the prerender and mismatched once the
   // viewer's month drifted from it. Only a site with no flows at all falls
   // through to the viewer's month, which is null during SSR (empty grid,
   // nothing to mismatch).
   const latestEntry = entryDates.length > 0 ? entryDates.reduce((a, b) => (a > b ? a : b)) : null;
-  const monthSource = currentDate ?? latestEntry;
+  const monthSource = currentDate ?? (initialMonth ? `${initialMonth}-01` : latestEntry);
   const [view, setView] = useState<{ year: number; month: number } | null>(() => {
     if (!monthSource) return null;
     const d = new Date(monthSource + 'T00:00:00');
@@ -157,7 +160,8 @@ export default function FlowCalendarSidebar({ entryDates, currentDate, tags, sel
 
             const baseClasses = 'relative flex flex-col items-center justify-center h-8 text-xs rounded-md transition-colors';
 
-            if (isCurrent) {
+            // Only days with a flow have a page to link to.
+            if (isCurrent && hasEntry) {
               return (
                 <Link
                   prefetch={false}
