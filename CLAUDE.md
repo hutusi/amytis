@@ -14,6 +14,7 @@ bun run lint            # ESLint
 bun run test            # all tests (NOT bare `bun test` — that sweeps in Playwright e2e specs and fails)
 bun run build           # production build (image optimization + Pagefind)
 bun run build:dev       # faster build; regenerates public/pagefind/ for search-in-dev
+bun run check-links     # link report over out/ (runs in every build; linkCheck: warn|error|off)
 bun run clean           # nuke .next, out, public/posts when caches misbehave
 ```
 

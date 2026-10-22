@@ -235,6 +235,7 @@ Tests cover: no horizontal overflow, navigation (hamburger on phones, desktop na
 ```bash
 bun run build              # Production build (includes image optimization and Pagefind index)
 bun run build:dev          # Development build (faster, no image optimization; also generates Pagefind index)
+bun run check-links        # Re-run the post-build link check on out/ (--all for every finding, --mode error to fail on broken links)
 ```
 
 ## Static Export Routing Rules

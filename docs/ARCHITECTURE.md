@@ -282,14 +282,21 @@ Heading anchors: `src/lib/rehype-heading-anchors.ts` runs last in `MarkdownRende
 
 ## Build Pipeline
 
-1. `bun scripts/copy-assets.ts`: copy co-located media into `public/`
+1. `bun scripts/copy-assets.ts`: copy co-located media into `public/` (and fail on missing site assets: `ogImage`, logo, favicon)
 2. `bun run build:graph`: generate graph data
 3. `next build`: static export to `out/`
 4. Production only (`bun run build`): `next-image-export-optimizer`
-5. Pagefind indexing:
-   - Production: `pagefind --site out` (writes to `out/pagefind`)
-   - Dev build: `pagefind --site out --output-path public/pagefind`
+5. `bun scripts/fix-locale-html-lang.ts`: stamp `<html lang>` under `out/<locale>/` (must precede Pagefind, which splits its index by it)
+6. `bun scripts/check-links.ts --site out`: link check over the export (see below)
+7. Pagefind indexing (`scripts/build-pagefind.ts`):
+   - Production: writes `out/pagefind`
+   - Dev build: `--output-path public/pagefind`, so `bun dev` can search
    - Scope: only regions marked `data-pagefind-body` are indexed — the header and body of posts, static pages, notes, flow days, book chapters, and the book / series landing (page 1) headers. Pages with no marked region (home, listings, tags, archive, pagination, redirect stubs) are deliberately absent from search, and site chrome (navbar, footer, sidebars, related posts) never leaks into excerpts. Each surface's `<h1>` carries `data-pagefind-meta="title"`; dates come from `<time dateTime data-pagefind-meta="date[datetime]">`. Each surface also tags its pages with exactly one `data-pagefind-filter="type:Post|Flow|Book|Note"` (static pages and series landings count as Post). The search modal's tabs take their counts from Pagefind's per-filter counts and search within a type, so a query loads fragments only for the 8 hits shown, however many match. `tests/tooling/pagefind-surfaces.test.ts` lists the surfaces and their types.
+
+**Link check.** `scripts/check-links.ts` parses every exported page and reports internal links whose target wasn't exported, missing local images, broken wikilinks (the `wikilink--broken` spans `remark-wikilinks` renders), `#anchors` missing on their target page, and links that land on a `redirectFrom` stub (an extra hop). It checks the export rather than the sources, so every format and link source is covered after basePath, customPaths, locale prefixes and trailing slashes are applied.
+- Relative hrefs resolve against the page URL; absolute URLs on `siteConfig.baseUrl`'s host count as internal; other hosts, `mailto:` and the like are skipped (external URLs aren't checked).
+- A `nextImageExportOptimizer` variant counts as present when its original image exists, since `build:dev` generates no variants. A path missing from the exact-case file list is retried on disk, because macOS folds routes that differ only in case (`/authors/amytis/` vs `/authors/Amytis/`) into one directory. When that fold lets a legacy redirect stub overwrite the real page, the stub redirects to itself; a link to such a page is reported as broken, not as an alias hop.
+- `siteConfig.linkCheck`: `'warn'` (default) prints the report; `'error'` fails the build on broken links and missing images (wikilinks, anchors and alias hops only warn: a red link can be a deliberate placeholder); `'off'` skips it. Findings name the content file when the data layer can map the page. `bun run check-links [--all] [--mode …]` re-runs it on an existing `out/`.
 
 ## Content Frontmatter
 
@@ -517,6 +524,7 @@ Shiki code blocks deliberately keep their normal theme.
 | Field | Notes |
 | --- | --- |
 | `ogImage` | Default share image (1200×630), served from `public/`; a missing file fails the build |
+| `linkCheck` | `'warn' \| 'error' \| 'off'`: the post-export link check (see Build Pipeline); `'error'` fails the build on broken links and missing images |
 | `generateOgImages` | Generate a share card per post, note and chapter without its own cover (see Share Cards); `false` in the example config |
 | `nav` | Navigation links with weights |
 | `social` | GitHub, Twitter, email links for the footer |

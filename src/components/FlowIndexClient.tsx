@@ -20,10 +20,11 @@ interface FlowIndexClientProps {
   /** Breadcrumb node rendered at the top of the calendar sidebar (archives). */
   breadcrumb?: ReactNode;
   /** Initial month shown by the calendar (archives). */
-  currentDate?: string;
+  /** Month the calendar opens on (YYYY-MM). */
+  initialMonth?: string;
 }
 
-export default function FlowIndexClient({ allFlows, entryDates, tags, feed, breadcrumb, currentDate }: FlowIndexClientProps) {
+export default function FlowIndexClient({ allFlows, entryDates, tags, feed, breadcrumb, initialMonth }: FlowIndexClientProps) {
   const { t } = useLanguage();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -46,7 +47,7 @@ export default function FlowIndexClient({ allFlows, entryDates, tags, feed, brea
     <div className="flex gap-10">
       <FlowCalendarSidebar
         entryDates={entryDates}
-        currentDate={currentDate}
+        initialMonth={initialMonth}
         tags={tags}
         selectedTag={selectedTag}
         onTagSelect={handleTagSelect}
