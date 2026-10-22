@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Component, lazy, Suspense, useState, useEffect, useRef, useId, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '@/components/LanguageProvider';
 import { OPEN_SEARCH_EVENT } from '@/lib/search-events';
 import { searchListboxId } from '@/lib/search-ids';
@@ -184,9 +185,12 @@ export default function Search() {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
       </button>
 
-      {isOpen && (
+      {/* Portaled to <body>: the trigger lives in the navbar, which the
+          immersive reader hides with display:none, and the dialog must still
+          show (over the reader) when a shortcut opens it there. */}
+      {isOpen && createPortal(
         // Overlay: full-column on mobile, centered on desktop
-        <div className="fixed inset-0 z-50 flex flex-col sm:flex-row sm:items-start sm:justify-center sm:pt-24 sm:px-4 bg-background/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col sm:flex-row sm:items-start sm:justify-center sm:pt-24 sm:px-4 bg-background/80 backdrop-blur-sm print:hidden">
           {/* Modal: full-height on mobile, auto-height on desktop */}
           <div
             ref={searchRef}
@@ -255,7 +259,8 @@ export default function Search() {
               </Suspense>
             </PanelBoundary>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

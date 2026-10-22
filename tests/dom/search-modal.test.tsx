@@ -160,6 +160,24 @@ describe('Search modal', () => {
   });
 });
 
+describe('Search modal outside the navbar', () => {
+  test('renders into <body>, so a hidden navbar (immersive reader) does not hide it', async () => {
+    render(
+      <AppRouterContext.Provider value={stubRouter}>
+        <LanguageProvider>
+          <nav data-site-nav="true" style={{ display: 'none' }}>
+            <Search />
+          </nav>
+        </LanguageProvider>
+      </AppRouterContext.Provider>,
+    );
+    act(() => openSearch());
+    const dialog = screen.getByRole('dialog', { name: 'Search' });
+    expect(dialog.closest('[data-site-nav]')).toBeNull();
+    expect(document.activeElement === screen.getByRole('combobox', { name: 'Search' })).toBe(true);
+  });
+});
+
 describe('Search modal with results', () => {
   afterEach(() => __resetPagefindForTests());
 
