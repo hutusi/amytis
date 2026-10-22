@@ -37,19 +37,14 @@ describe('Search modal', () => {
     renderSearch();
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Search' });
-    expect(dialog).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Search' })).toBeTruthy();
 
     const input = screen.getByRole('combobox', { name: 'Search' });
-    // Focus is applied on a 100ms timer after open. Throw a plain Error
-    // instead of expect(...).toBe(element): a failing element comparison
-    // makes bun's expect serialize the whole happy-dom node per poll, which
-    // is slow enough to blow the waitFor budget.
-    await waitFor(() => {
-      if (document.activeElement !== input) {
-        throw new Error(`focus is on ${document.activeElement?.tagName ?? 'nothing'}`);
-      }
-    });
+    // Focused inside the click itself, before the lazily loaded results panel
+    // arrives: mobile Safari opens the keyboard only for a focus() made during
+    // the gesture. (Compare with === rather than expect(...).toBe(element): a
+    // failing element comparison serializes the whole happy-dom node.)
+    expect(document.activeElement === input).toBe(true);
     expect(input.getAttribute('aria-expanded')).toBe('false');
     expect(input.getAttribute('aria-activedescendant')).toBeNull();
   });

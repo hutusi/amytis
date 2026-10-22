@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Keyboard-Accessible Nav Menus**: the desktop Books/Series/More dropdowns were hover-only; they now follow the ARIA disclosure pattern (toggle with `aria-expanded`, Escape restores focus). The search modal gained the full combobox pattern (`aria-activedescendant`, roving-tabindex tabs, focus restore on close), screen-reader labels are localized instead of hardcoded English, and reduced-motion users get the knowledge graph's list view instead of the force animation.
 
 ### Performance
+- **Search Panel on Demand**: the search results UI (Pagefind client, type tabs, recent searches) now downloads on first use instead of with every page; the trigger, shortcuts and input are unchanged, and hovering or focusing the search button fetches it early.
 - **No tailwind-merge in the Browser**: `cn()` is now plain clsx. The one conflicting composition (the homepage's slower cover zoom) became its own class constant, which drops tailwind-merge's 8.6KB gzip from 346 of 394 pages.
 - **Smaller Client Bundles**: Footer/Hero/PageHeader and the homepage sections became Server Components via new `T`/`TLocale`/`TLabel` translation leaves; d3 is deferred out of the `/graph` initial chunk; KaTeX CSS no longer ships with math-free articles; the serif font ships as WOFF2 (~209 KB saved).
 
