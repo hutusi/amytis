@@ -79,6 +79,7 @@ export const SiteConfigSchema = z.object({
   baseUrl: z.string().min(1),
   ogImage: z.string(),
   generateOgImages: z.boolean(),
+  linkCheck: z.enum(['warn', 'error', 'off']),
   footerText: localeString,
 
   // ── i18n ──
