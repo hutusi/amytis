@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Generated Share Cards**: with `generateOgImages: true`, posts, notes and book chapters without a cover image of their own share a 1200×630 card (title, series or book, date, authors, site logo) instead of the one site-wide image; notes previously shared none. Cards are rendered at build time by `next/og` with bundled fonts — Chinese titles included — so the build downloads no fonts. Off by default in `site.config.example.ts`.
 - **Print Stylesheet**: printing an article gives a clean light page whatever the screen theme: no navigation, sidebars, share or comments; code wraps in its light theme; external links print their address; the immersive reader prints in full.
 - **Breadcrumbs on Posts and Chapters**: Series › series › post (or Articles › post) and Books › book › part/section › chapter, with matching BreadcrumbList structured data for search results.
 - **Back to Top**: a floating button appears once you're two screens down any page; it returns to the top and moves keyboard focus there too.

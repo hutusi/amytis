@@ -1,7 +1,6 @@
 # Amytis Roadmap
 
 ## 🚀 Priority UX & Engineering
-- [ ] **Dynamic OG**: Generate automated social cards with Satori for every post.
 - [ ] **PWA Support**: Add manifest and service worker for offline reading.
 
 ## 🌿 Digital Garden Evolution
@@ -36,6 +35,7 @@
 - [ ] **Advanced Constructs**: Evaluate the highest-value next rST features from real imported content, such as footnotes, simple tables, and selected directives.
 
 ## ✅ Completed Highlights
+- [x] **Dynamic OG**: Build-time share cards for posts, notes and book chapters without a cover, Chinese titles included (unreleased).
 - [x] **Breadcrumbs**: Posts and book chapters show a trail (with BreadcrumbList JSON-LD), alongside the flow and note breadcrumbs.
 - [x] **Image Zoom**: Content images (Markdown and rST) open in a native-`<dialog>` lightbox.
 - [x] **Immersive Reading Mode**: Fullscreen distraction-free reader for books and series with persisted preferences (1.17.0).

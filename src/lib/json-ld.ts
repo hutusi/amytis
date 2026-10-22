@@ -1,3 +1,5 @@
+import { hasOwnCover } from './image-utils';
+
 // ── Schema shape types ────────────────────────────────────────────────────────
 
 interface SchemaOrganization {
@@ -51,6 +53,7 @@ interface SchemaArticle {
   datePublished: string;
   author: SchemaPerson[];
   publisher: SchemaOrganization;
+  image?: SchemaImageObject;
   inLanguage: string | undefined;
   isPartOf: { '@type': 'Book'; '@id': string; name: string };
 }
@@ -115,7 +118,7 @@ export function resolveImageUrl(
     return `${siteUrl}${url.startsWith('/') ? url : `/${url}`}`;
   };
 
-  if (coverImage && !coverImage.startsWith('text:') && !coverImage.startsWith('./')) {
+  if (hasOwnCover(coverImage)) {
     return toAbsolute(coverImage);
   }
   return toAbsolute(defaultOgImage);
@@ -216,6 +219,8 @@ export interface BookChapterJsonLdParams {
   inLanguage?: string;
   /** The visible breadcrumb trail; adds a BreadcrumbList node. */
   breadcrumbs?: JsonLdBreadcrumb[];
+  /** Absolute share image (the page's og:image); omitted when unset. */
+  image?: string;
 }
 
 // ── Builders ──────────────────────────────────────────────────────────────────
@@ -279,7 +284,7 @@ export function buildBookJsonLd(params: BookJsonLdParams): SchemaGraph {
 }
 
 export function buildBookChapterJsonLd(params: BookChapterJsonLdParams): SchemaGraph {
-  const { chapter, book, chapterUrl, bookUrl, siteTitle, siteUrl, inLanguage, breadcrumbs = [] } = params;
+  const { chapter, book, chapterUrl, bookUrl, siteTitle, siteUrl, inLanguage, breadcrumbs = [], image } = params;
   const base = siteUrl.replace(/\/+$/, '');
 
   const node: SchemaArticle = {
@@ -290,6 +295,7 @@ export function buildBookChapterJsonLd(params: BookChapterJsonLdParams): SchemaG
     datePublished: book.date,
     author: buildAuthors(book.authors),
     publisher: buildPublisher(siteTitle, base),
+    ...(image ? { image: { '@type': 'ImageObject', url: image } } : {}),
     inLanguage: inLanguage || undefined,
     isPartOf: { '@type': 'Book', '@id': bookUrl, name: book.title },
   };

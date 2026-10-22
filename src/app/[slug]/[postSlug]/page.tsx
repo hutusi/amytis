@@ -4,6 +4,7 @@ import { siteConfig } from '../../../../site.config';
 import { resolveImageUrl } from '@/lib/json-ld';
 import { getPostUrl, getPostsBasePath, getStaticPageUrl, isNonDefaultLocale, localizeUrl, withTrailingSlash } from '@/lib/urls';
 import { buildRedirectMetadata, buildArticleMetadata, createListingMetadata, siteOpenGraph, withSiteAlternates } from '@/lib/metadata';
+import { getShareImage } from '@/lib/og-images';
 import { getTranslator, resolveLocaleValue } from '@/lib/i18n';
 import { getPageContentLocales, getPostContentLocales } from '@/lib/content/posts';
 import RedirectPage from '@/components/RedirectPage';
@@ -151,7 +152,6 @@ export async function generateMetadata({
   }
 
   const { post } = resolution;
-  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
 
   // For redirect pages, return minimal metadata pointing to the canonical URL
   if (resolution.kind === 'redirect') {
@@ -169,7 +169,7 @@ export async function generateMetadata({
     authors: post.authors,
     canonicalUrl: seo.canonicalUrl,
     languageAlternates: seo.languageAlternates,
-    ogImage: resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl),
+    ogImage: getShareImage({ kind: 'post', pagePath: getPostUrl(post), coverImage: post.coverImage }).url,
     twitterCard: 'summary_large_image',
   });
 }

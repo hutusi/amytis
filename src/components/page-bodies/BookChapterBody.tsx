@@ -5,6 +5,7 @@ import { resolveLocaleValue } from '@/lib/i18n';
 import { buildBookChapterJsonLd, serializeJsonLd } from '@/lib/json-ld';
 import { getBookUrl, getBookChapterUrl, localizeUrl, withTrailingSlash } from '@/lib/urls';
 import { getBookChapterBreadcrumbs } from '@/lib/breadcrumbs';
+import { getShareImage } from '@/lib/og-images';
 import { siteConfig } from '../../../site.config';
 
 interface BookChapterBodyProps {
@@ -25,15 +26,18 @@ export default function BookChapterBody({ locale, bookSlug, chapterId }: BookCha
 
   const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const breadcrumbs = getBookChapterBreadcrumbs(book, { id: chapterId, title: chapter.title }, locale);
+  const chapterPath = localizeUrl(getBookChapterUrl(bookSlug, chapterId), locale);
   const jsonLd = buildBookChapterJsonLd({
     chapter,
     book,
-    chapterUrl: withTrailingSlash(`${siteUrl}${localizeUrl(getBookChapterUrl(bookSlug, chapterId), locale)}`),
+    chapterUrl: withTrailingSlash(`${siteUrl}${chapterPath}`),
     bookUrl: withTrailingSlash(`${siteUrl}${localizeUrl(getBookUrl(bookSlug), locale)}`),
     siteTitle: resolveLocaleValue(siteConfig.title, locale),
     siteUrl,
     inLanguage: book.locale,
     breadcrumbs,
+    // Same image as the page's og:image.
+    image: getShareImage({ kind: 'chapter', pagePath: chapterPath, coverImage: book.coverImage }).url,
   });
 
   return (

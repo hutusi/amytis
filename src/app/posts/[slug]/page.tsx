@@ -5,8 +5,8 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { siteConfig } from '../../../../site.config';
 import { getPostsBasePath, getPostUrl } from '@/lib/urls';
-import { resolveImageUrl } from '@/lib/json-ld';
 import { buildRedirectMetadata, buildArticleMetadata } from '@/lib/metadata';
+import { getShareImage } from '@/lib/og-images';
 import RedirectPage from '@/components/RedirectPage';
 import { postsAcrossTrees } from '@/lib/route-aliases';
 import RenderPostPage from '@/components/RenderPostPage';
@@ -72,7 +72,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const siteUrl = siteConfig.baseUrl.replace(/\/+$/, '');
   const canonicalUrl = getPostUrl(post);
 
   // For redirect pages, return minimal metadata pointing to the canonical URL
@@ -91,7 +90,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     authors: post.authors,
     canonicalUrl: seo.canonicalUrl,
     languageAlternates: seo.languageAlternates,
-    ogImage: resolveImageUrl(post.coverImage, siteConfig.ogImage, siteUrl),
+    ogImage: getShareImage({ kind: 'post', pagePath: canonicalUrl, coverImage: post.coverImage }).url,
     twitterCard: 'summary_large_image',
   });
 }

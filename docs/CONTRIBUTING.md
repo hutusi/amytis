@@ -134,9 +134,14 @@ bun run clean                       # removes .next, out, public/posts
 
 # Re-subset Inter from the full upstream files (needs: python3 -m pip install fonttools brotli)
 python3 scripts/subset-inter.py <dir-with-full-Inter-Regular-and-Bold.woff2>
+
+# Rebuild the share-card fonts in src/fonts/og/ (same dependencies)
+python3 scripts/build-og-fonts.py <full-NotoSerifSC-Bold.otf>
 ```
 
 `src/fonts/Inter-*.woff2` are subsets (Latin, Latin Extended-A, pinyin, Greek, punctuation, arrows, math symbols — ~36 KB each instead of ~112 KB), because body text renders in Inter and every page preloads both weights. To cover another script, add its range to `UNICODE_RANGES` in `scripts/subset-inter.py` and re-run it against the full upstream files; `git show 95e5fb8:src/fonts/Inter-Regular.woff2` (and `-Bold`) recovers the original Inter 4.001 files.
+
+Share cards (`generateOgImages`, see "Share Cards" in `docs/ARCHITECTURE.md`) render from `src/fonts/og/`: TrueType copies of the site's Baskerville and Inter, plus Noto Serif SC Bold cut to GB2312 and the characters current titles use. Rerun `scripts/build-og-fonts.py` after re-subsetting Inter, or after adding a title with a character outside GB2312 — `tests/integration/og-images.test.ts` fails when a title would make the build fetch a font. It takes the full upstream `Serif/SubsetOTF/SC/NotoSerifSC-Bold.otf` from [notofonts/noto-cjk](https://github.com/notofonts/noto-cjk). To preview a card, run `bun dev` and open its image path, e.g. `http://localhost:3000/og/posts/<slug>.png`.
 
 ### Translating content (locale trees)
 
