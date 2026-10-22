@@ -14,10 +14,18 @@ import type { SearchPanelHandle, SearchPanelStatus } from '@/components/SearchPa
 // same input element stays mounted while the panel arrives.
 const loadPanel = () => import('@/components/SearchPanel');
 const SearchPanel = lazy(loadPanel);
+// Prefetch only: if the download fails, rendering the panel reports it.
+const prefetchPanel = () => {
+  loadPanel().catch(() => {});
+};
 
 const IDLE_STATUS: SearchPanelStatus = { hasOptions: false, isFetching: false };
 
-/** Contains a failed panel download (offline) to the dialog instead of the page. */
+/**
+ * Contains a failed panel download (offline) to the dialog instead of the
+ * page. A failed chunk stays failed until the page reloads, so the way to
+ * retry is a reload, not remounting.
+ */
 class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
 
@@ -165,9 +173,9 @@ export default function Search() {
       <button
         ref={triggerRef}
         onClick={() => setIsOpen(true)}
-        onPointerEnter={loadPanel}
-        onFocus={loadPanel}
-        onTouchStart={loadPanel}
+        onPointerEnter={prefetchPanel}
+        onFocus={prefetchPanel}
+        onTouchStart={prefetchPanel}
         className="w-8 h-8 flex items-center justify-center text-foreground/80 hover:text-heading transition-colors duration-200"
         aria-label={t('search_label')}
         aria-keyshortcuts="Meta+K Control+K /"
@@ -226,7 +234,14 @@ export default function Search() {
             </div>
 
             <PanelBoundary
-              fallback={<div className="p-8 text-center text-muted text-sm"><p>{t('search_error')}</p></div>}
+              fallback={
+                <div className="p-8 text-center text-muted text-sm space-y-3">
+                  <p>{t('search_load_failed')}</p>
+                  <button type="button" onClick={() => window.location.reload()} className="text-accent hover:underline">
+                    {t('search_reload')}
+                  </button>
+                </div>
+              }
             >
               <Suspense fallback={null}>
                 <SearchPanel
