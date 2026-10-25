@@ -19,6 +19,26 @@ export function getAuthorSlug(author: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * The /authors/[author] route params: every author's slug, plus the legacy
+ * name-form URL (/authors/Amytis%20Team) that redirects to it — except a
+ * name that differs from a route already taken only by case ("Amytis" next
+ * to the slug "amytis"). On case-insensitive filesystems (macOS, Windows)
+ * those two export to one directory and the last write wins, so the legacy
+ * redirect could replace the real page with a stub that redirects to itself.
+ */
+export function getAuthorRouteParams(authorNames: string[]): string[] {
+  const params = [...new Set(authorNames.map(getAuthorSlug))];
+  const taken = new Set(params.map((param) => param.toLowerCase()));
+  for (const name of authorNames) {
+    const key = name.toLowerCase();
+    if (taken.has(key)) continue;
+    taken.add(key);
+    params.push(name);
+  }
+  return params;
+}
+
 export function getPostsByAuthor(author: string): PostData[] {
   const allPosts = getPostsWithLocaleOriginals();
   return allPosts.filter((post) =>

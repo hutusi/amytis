@@ -1,5 +1,5 @@
 import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
-import { getAllAuthors, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
+import { getAllAuthors, getAuthorRouteParams, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
 import { resolveFromParam, safeDecodeParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
 import PostList from '@/components/PostList';
@@ -19,18 +19,11 @@ const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { t } = getTranslator(DEFAULT_LOCALE);
 
 export async function generateStaticParams() {
-  const authors = getAllAuthors();
-  const authorNames = Object.keys(authors);
+  const authorNames = Object.keys(getAllAuthors());
   if (authorNames.length === 0) return [{ author: '_' }];
-  const params = new Set<string>();
-
-  // Generate slug-based routes and keep legacy name-based routes for compatibility.
-  for (const authorName of authorNames) {
-    params.add(getAuthorSlug(authorName));
-    params.add(authorName);
-  }
-
-  return [...params].map((author) => ({ author }));
+  // Slug routes plus legacy name-form routes for compatibility (see
+  // getAuthorRouteParams for the case-only names it leaves out).
+  return getAuthorRouteParams(authorNames).map((author) => ({ author }));
 }
 
 export const dynamicParams = false;
