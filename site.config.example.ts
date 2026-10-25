@@ -47,6 +47,8 @@ export const siteConfig = {
   ogImage: "/og-image.png", // Default OG/social preview image (1200×630 PNG). A default ships in public/ — replace it with your own; a missing site-relative file fails the build
   // Render a 1200×630 share card (title, series or book, date) for every post, note and book chapter without a cover image of its own; pages with a cover keep sharing it. See docs/ARCHITECTURE.md "Share Cards".
   generateOgImages: false,
+  // After each build, report broken internal links, missing images and broken wikilinks in the export. 'error' fails the build on broken links and images; 'off' skips the check. See docs/ARCHITECTURE.md "Build Pipeline".
+  linkCheck: 'warn' as 'warn' | 'error' | 'off',
   footerText: `© ${new Date().getFullYear()} My Garden. All rights reserved.`,
 
   // ── i18n ──────────────────────────────────────────────────────────────────

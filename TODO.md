@@ -16,7 +16,7 @@
 - [ ] **Notes**: Support for un-linked mentions (searching for note titles in plain text).
 
 ## 🛠 Tooling & Maintenance
-- [ ] **Link Validator**: Script to check for broken internal wiki-links and external URLs.
+- [ ] **External Link Check**: An opt-in, networked `check-links --external` for outbound URLs (the internal link check runs after every build).
 - [ ] **Content Porter**: Tool to import/export notes from Obsidian or Notion.
 - [ ] **Optimization**: Automatically compress and resize co-located images during build.
 - [ ] **Build Performance**: Profile `build:dev`, clean stale export/search outputs before indexing, and consider a lighter local build path that skips expensive full-site indexing when not needed.
@@ -35,6 +35,7 @@
 - [ ] **Advanced Constructs**: Evaluate the highest-value next rST features from real imported content, such as footnotes, simple tables, and selected directives.
 
 ## ✅ Completed Highlights
+- [x] **Link Check**: Every build reports broken internal links, missing images, broken wikilinks and missing anchors in the export (unreleased).
 - [x] **Dynamic OG**: Build-time share cards for posts, notes and book chapters without a cover, Chinese titles included (unreleased).
 - [x] **Breadcrumbs**: Posts and book chapters show a trail (with BreadcrumbList JSON-LD), alongside the flow and note breadcrumbs.
 - [x] **Image Zoom**: Content images (Markdown and rST) open in a native-`<dialog>` lightbox.

@@ -82,4 +82,13 @@ describe("MarkdownRenderer", () => {
     expect(html).not.toMatch(/class="[^"]*\bbg-background\b[^"]*"/);
     expect(html).toContain('<p>Hello world</p>');
   });
+
+  test("list items keep their attributes: footnote ids and task-list classes", () => {
+    const content = "A claim[^1].\n\n- [x] done\n\n[^1]: The source.";
+    const html = renderToStaticMarkup(<LanguageProvider><MarkdownRenderer content={content} /></LanguageProvider>);
+    // The reference links to the footnote's <li id>; without the id the jump goes nowhere.
+    expect(html).toContain('href="#user-content-fn-1"');
+    expect(html).toMatch(/<li[^>]*id="user-content-fn-1"/);
+    expect(html).toMatch(/<li[^>]*class="text-foreground task-list-item"/);
+  });
 });

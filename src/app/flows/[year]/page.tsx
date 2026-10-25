@@ -95,7 +95,7 @@ export default async function FlowsYearPage({ params }: { params: Promise<{ year
         allFlows={toFlowIndexItems(flows)}
         entryDates={allFlows.map(f => f.date)}
         tags={tags}
-        currentDate={flows[0]?.date}
+        initialMonth={flows[0]?.date.slice(0, 7)}
         breadcrumb={breadcrumb}
         feed={<FlowStream flows={flows} slugRegistry={slugRegistry} />}
       />
