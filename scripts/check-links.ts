@@ -242,6 +242,9 @@ export function checkSite(outDir: string, options: { siteHost: string | null }):
         add('brokenLinks', page, href);
         continue;
       }
+      // A redirect stub's links back to itself (its skip link) say nothing
+      // about the site; links to the stub are checked from the pages that make them.
+      if (scan.redirectTo && target === file) continue;
       const targetScan = scans.get(target);
       if (targetScan?.redirectTo) {
         // A stub redirecting to its own URL loops forever. On case-insensitive

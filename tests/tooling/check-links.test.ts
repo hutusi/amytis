@@ -160,9 +160,10 @@ describe('checkSite: redirect loops', () => {
     // legacy stub to /authors/amytis/) overwrites /authors/amytis/.
     const dir = makeSite({
       'index.html': page('<a href="/authors/amytis/">author</a>'),
-      'authors/amytis/index.html': page('', '<meta http-equiv="refresh" content="0;url=/authors/amytis/">'),
+      'authors/amytis/index.html': page('<a href="#main-content">skip</a>', '<meta http-equiv="refresh" content="0;url=/authors/amytis/">'),
     });
     const report = checkSite(dir, { siteHost: SITE_HOST });
+    // Reported where it's linked from, not again for the stub's own skip link.
     expect(report.brokenLinks).toEqual([{ page: '/', target: '/authors/amytis/ (redirects to itself)' }]);
     expect(report.redirectLinks).toEqual([]);
   });
