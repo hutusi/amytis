@@ -114,6 +114,7 @@ describe('checkSite', () => {
         <a href="https://example.com/x">external</a><a href="mailto:a@b.c">mail</a>
         <a href="#local">same page</a><a href="#absent">same page missing</a><span id="local"></span>
         <a href="/old/">alias</a><a href="/images/">a directory with no index.html</a>
+        <a href="/feed.xml/">a path through a file</a>
         <img src="/images/a.png" alt=""><img src="/images/missing.png" alt="">
         <img src="/images/nextImageExportOptimizer/b-opt-1920.WEBP" alt="">
         <img src="/images/nextImageExportOptimizer/c-opt-640.WEBP" alt="">
@@ -124,6 +125,7 @@ describe('checkSite', () => {
       'old/index.html': page('<a href="/about/">moved</a>', '<meta http-equiv="refresh" content="0;url=/about/">'),
       'blog/index.html': page('blog'),
       'blog/x/index.html': page('<a href="../">up</a><a href="./y/">down, broken</a>'),
+      'feed.xml': '<rss/>',
       'images/a.png': 'png',
       'images/b.jpg': 'jpg',
     });
@@ -137,6 +139,7 @@ describe('checkSite', () => {
       { page: '/', target: '/missing/' },
       { page: '/', target: 'https://site.test/gone/' },
       { page: '/', target: '/images/' },
+      { page: '/', target: '/feed.xml/' },
     ]);
     expect(report.missingImages).toEqual([
       { page: '/', target: '/images/missing.png' },

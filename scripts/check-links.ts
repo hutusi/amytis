@@ -195,8 +195,17 @@ function stemsOf(files: Set<string>): Set<string> {
 export function checkSite(outDir: string, options: { siteHost: string | null }): LinkReport {
   const files = listSiteFiles(outDir);
   const stems = stemsOf(files);
-  // Regular files only: a directory without index.html is a 404 on a static host.
-  const onDisk = (file: string) => fs.statSync(path.join(outDir, file), { throwIfNoEntry: false })?.isFile() ?? false;
+  // Regular files only: a directory without index.html is a 404 on a static
+  // host. A path through a file (/feed.xml/x) is missing too: Bun's statSync
+  // throws ENOTDIR for it even with throwIfNoEntry off.
+  const onDisk = (file: string) => {
+    try {
+      return fs.statSync(path.join(outDir, file), { throwIfNoEntry: false })?.isFile() ?? false;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOTDIR') return false;
+      throw error;
+    }
+  };
   const scans = new Map<string, PageScan>();
   for (const file of files) {
     if (file.endsWith('.html')) scans.set(file, scanPage(fs.readFileSync(path.join(outDir, file), 'utf8')));
