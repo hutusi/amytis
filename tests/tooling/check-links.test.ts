@@ -113,7 +113,7 @@ describe('checkSite', () => {
         <a href="https://site.test/about/">own host</a><a href="https://site.test/gone/">own host broken</a>
         <a href="https://example.com/x">external</a><a href="mailto:a@b.c">mail</a>
         <a href="#local">same page</a><a href="#absent">same page missing</a><span id="local"></span>
-        <a href="/old/">alias</a>
+        <a href="/old/">alias</a><a href="/images/">a directory with no index.html</a>
         <img src="/images/a.png" alt=""><img src="/images/missing.png" alt="">
         <img src="/images/nextImageExportOptimizer/b-opt-1920.WEBP" alt="">
         <img src="/images/nextImageExportOptimizer/c-opt-640.WEBP" alt="">
@@ -131,10 +131,12 @@ describe('checkSite', () => {
   test('reports each category once per page and target', () => {
     const report = checkSite(site(), { siteHost: SITE_HOST });
     expect(report.pages).toBe(6);
+    // Pages are scanned in sorted file order: blog/x/index.html before index.html.
     expect(report.brokenLinks).toEqual([
+      { page: '/blog/x/', target: './y/' },
       { page: '/', target: '/missing/' },
       { page: '/', target: 'https://site.test/gone/' },
-      { page: '/blog/x/', target: './y/' },
+      { page: '/', target: '/images/' },
     ]);
     expect(report.missingImages).toEqual([
       { page: '/', target: '/images/missing.png' },

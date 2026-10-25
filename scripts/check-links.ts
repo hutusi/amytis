@@ -134,7 +134,10 @@ export function resolveInternal(
 export function listSiteFiles(outDir: string): Set<string> {
   const files = new Set<string>();
   const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    // Sorted by name: readdir order is filesystem-dependent, and the report
+    // should read the same on every machine.
+    const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    for (const entry of entries) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (entry.isFile()) files.add(path.relative(outDir, full).split(path.sep).join('/'));
@@ -192,7 +195,8 @@ function stemsOf(files: Set<string>): Set<string> {
 export function checkSite(outDir: string, options: { siteHost: string | null }): LinkReport {
   const files = listSiteFiles(outDir);
   const stems = stemsOf(files);
-  const onDisk = (file: string) => fs.existsSync(path.join(outDir, file));
+  // Regular files only: a directory without index.html is a 404 on a static host.
+  const onDisk = (file: string) => fs.statSync(path.join(outDir, file), { throwIfNoEntry: false })?.isFile() ?? false;
   const scans = new Map<string, PageScan>();
   for (const file of files) {
     if (file.endsWith('.html')) scans.set(file, scanPage(fs.readFileSync(path.join(outDir, file), 'utf8')));
