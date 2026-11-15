@@ -402,6 +402,10 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
   };
 
   const onStagePointerDown = (event: ReactPointerEvent) => {
+    if (!event.isPrimary) return;
+    // A touch swipe is followed by no click, so a stale flag would swallow
+    // the next tap: every gesture starts clean.
+    swipedRef.current = false;
     swipeRef.current = { x: event.clientX, y: event.clientY };
   };
   const onStagePointerUp = (event: ReactPointerEvent) => {
@@ -455,7 +459,13 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
           ref={stageRef}
           onPointerDown={onStagePointerDown}
           onPointerUp={onStagePointerUp}
-          className="relative flex size-full items-center justify-center bg-black p-4 sm:p-10"
+          onPointerCancel={() => {
+            swipeRef.current = null;
+          }}
+          // Horizontal touch moves are ours: with the default touch-action
+          // the browser claims the gesture and cancels the pointer before
+          // pointerup. Vertical pans and pinch-zoom stay the browser's.
+          className="relative flex size-full touch-pan-y touch-pinch-zoom items-center justify-center bg-black p-4 sm:p-10"
         >
           {presented && (
             // eslint-disable-next-line @next/next/no-img-element -- a plain <img>: the source is already optimized

@@ -247,6 +247,32 @@ describe('SlideDeck runtime', () => {
       expect(dialog.open).toBe(false);
     });
 
+    test('swipes flip slides on a stage the browser leaves horizontal moves to, and a tap still advances after one', async () => {
+      const { dialog } = await renderDeck();
+      fireEvent.click(screen.getByAltText('Title'));
+      const stage = dialog.querySelector<HTMLElement>('div')!;
+      expect(stage.className).toContain('touch-pan-y');
+      const shown = () => dialog.querySelector('img')!.getAttribute('alt');
+
+      // Swipe left: next slide. A touch swipe fires no click afterwards.
+      fireEvent.pointerDown(stage, { isPrimary: true, clientX: 600, clientY: 300 });
+      fireEvent.pointerUp(stage, { isPrimary: true, clientX: 300, clientY: 310 });
+      expect(shown()).toBe('Agenda');
+
+      // The next tap is a tap, not the tail of the swipe.
+      const img = dialog.querySelector('img')!;
+      fireEvent.pointerDown(img, { isPrimary: true, clientX: 500, clientY: 300 });
+      fireEvent.pointerUp(img, { isPrimary: true, clientX: 500, clientY: 300 });
+      fireEvent.click(img);
+      expect(shown()).toBe('Architecture');
+
+      // A cancelled gesture (the browser took over) is forgotten.
+      fireEvent.pointerDown(stage, { isPrimary: true, clientX: 600, clientY: 300 });
+      fireEvent.pointerCancel(stage, { isPrimary: true });
+      fireEvent.pointerUp(stage, { isPrimary: true, clientX: 100, clientY: 300 });
+      expect(shown()).toBe('Architecture');
+    });
+
     test('F goes fullscreen on the stage inside the dialog, and leaving fullscreen closes it', async () => {
       const { track, dialog } = await renderDeck();
       fireEvent.keyDown(track, { key: 'f' });
