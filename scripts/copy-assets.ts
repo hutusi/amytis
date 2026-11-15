@@ -203,7 +203,8 @@ function extractReferencedAssetPaths(filePath: string): string[] {
   const patterns = [
     /\!\[[^\]]*\]\(([^)]+)\)/g,
     /\[[^\]]*\]\(([^)]+)\)/g,
-    /\b(?:src|href|poster)=["']([^"']+)["']/g,
+    // `pdf` / `video`: a :::slides deck's attributes (docs/SLIDES.md).
+    /\b(?:src|href|poster|pdf|video)=["']([^"']+)["']/g,
     /^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm,
     /^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm,
   ];
@@ -490,7 +491,7 @@ export function assertSiteAssetsExist(
 export function resetAssetClaims() {
   assetDestClaims.clear();
 }
-export { claimAssetDir };
+export { claimAssetDir, extractReferencedAssetPaths };
 
 // Only run the copy when invoked as a script — importing the module (e.g. from
 // a test) must not touch the filesystem.
