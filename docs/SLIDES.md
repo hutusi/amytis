@@ -34,6 +34,30 @@ Comment a slide out with `<!-- ![…](…) -->`. Anything else inside the block 
 text, headings, lists, linked images — fails the build with the line number:
 put captions in the alt text and prose before or after the deck.
 
+## Importing slides
+
+`new-slides` copies an export next to the content and prints the block:
+
+```bash
+# Keynote / PowerPoint / Google Slides image export
+bun run new-slides ~/Desktop/XConf-Export --into content/posts/xconf-2026/ \
+  --title "Building a Digital Garden" --video https://youtu.be/…
+
+# A PDF export: pages become PNG slides, and the PDF becomes the download link
+bun run new-slides ~/Desktop/xconf.pdf --into content/flows/2026/11/15/
+```
+
+- `--into` is the content's folder (a folder post or folder flow). Slides go
+  in its `slides/` subfolder (`--dir` to change), renamed `slide-01.png`, …
+  in deck order: `Slide2.PNG` comes before `Slide10.PNG`.
+- With a PDF, pages render about 1920px wide (`--width`), the PDF is copied
+  next to the content, and its document title becomes the deck title unless
+  `--title` is given. pdf.js renders fonts and effects slightly less
+  faithfully than the app's own image export; export images when that matters.
+- `--pdf talk.pdf` adds a download link to an image export.
+- Existing slides are never replaced without `--force`.
+- Replace each "Slide N" alt text with what the slide shows.
+
 ## Reading a deck
 
 | Action | Inline deck (focused) | Fullscreen presenter |

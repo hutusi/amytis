@@ -105,6 +105,10 @@ bun run new-from-pdf doc.pdf --title "My Doc"
 # Image folder to post
 bun run new-from-images ./photos --title "Gallery"
 
+# Talk slides (image export or PDF) into a post or flow folder; prints the
+# :::slides block to paste. See docs/SLIDES.md.
+bun run new-slides ~/Desktop/XConf-Export --into content/posts/xconf-2026/ --title "My Talk"
+
 # Chat logs to flows
 bun run new-flow-from-chat
 
