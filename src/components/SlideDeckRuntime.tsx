@@ -140,6 +140,16 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
 
   const show = useCallback(
     (i: number) => {
+      // Prev unmounts on the first slide and next on the last. A focused one
+      // would drop keyboard focus to <body>, out of reach of the deck's keys,
+      // so hand it to the track (or the presenter's stage) first.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && rootRef.current?.contains(active)) {
+        const nav = active.dataset.slideNav;
+        if ((nav === 'prev' && i === 0) || (nav === 'next' && i === count - 1)) {
+          (presentingRef.current ? stageRef.current : getTrack())?.focus({ preventScroll: true });
+        }
+      }
       indexRef.current = i;
       setIndex(i);
       if (!presentingRef.current) return;
@@ -149,7 +159,7 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
         if (neighbour) new Image().src = neighbour.src;
       }
     },
-    [slideImage, slideSource],
+    [count, getTrack, slideImage, slideSource],
   );
 
   const settle = useCallback(() => {
@@ -430,12 +440,12 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
   return (
     <div ref={rootRef} data-slide-deck-controls="" className="print:hidden">
       {!atStart && (
-        <button type="button" onClick={() => step(-1)} aria-label={t('slide_prev')} className={`absolute left-2 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
+        <button type="button" data-slide-nav="prev" onClick={() => step(-1)} aria-label={t('slide_prev')} className={`absolute left-2 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
           <Chevron direction="left" />
         </button>
       )}
       {!atEnd && (
-        <button type="button" onClick={() => step(1)} aria-label={t('slide_next')} className={`absolute right-2 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
+        <button type="button" data-slide-nav="next" onClick={() => step(1)} aria-label={t('slide_next')} className={`absolute right-2 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
           <Chevron direction="right" />
         </button>
       )}
@@ -457,6 +467,8 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
       >
         <div
           ref={stageRef}
+          // Focusable so a disappearing button can hand it focus (see show).
+          tabIndex={-1}
           onPointerDown={onStagePointerDown}
           onPointerUp={onStagePointerUp}
           onPointerCancel={() => {
@@ -465,7 +477,7 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
           // Horizontal touch moves are ours: with the default touch-action
           // the browser claims the gesture and cancels the pointer before
           // pointerup. Vertical pans and pinch-zoom stay the browser's.
-          className="relative flex size-full touch-pan-y touch-pinch-zoom items-center justify-center bg-black p-4 sm:p-10"
+          className="relative flex size-full touch-pan-y touch-pinch-zoom items-center justify-center bg-black p-4 outline-none sm:p-10"
         >
           {presented && (
             // eslint-disable-next-line @next/next/no-img-element -- a plain <img>: the source is already optimized
@@ -487,12 +499,12 @@ export default function SlideDeckRuntime({ stem, count, label }: SlideDeckRuntim
             />
           )}
           {!atStart && (
-            <button type="button" onClick={() => step(-1, 'auto')} aria-label={t('slide_prev')} className={`absolute left-3 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
+            <button type="button" data-slide-nav="prev" onClick={() => step(-1, 'auto')} aria-label={t('slide_prev')} className={`absolute left-3 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
               <Chevron direction="left" />
             </button>
           )}
           {!atEnd && (
-            <button type="button" onClick={() => step(1, 'auto')} aria-label={t('slide_next')} className={`absolute right-3 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
+            <button type="button" data-slide-nav="next" onClick={() => step(1, 'auto')} aria-label={t('slide_next')} className={`absolute right-3 top-1/2 -translate-y-1/2 ${ROUND_BUTTON}`}>
               <Chevron direction="right" />
             </button>
           )}

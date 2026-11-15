@@ -147,6 +147,22 @@ describe('SlideDeck runtime', () => {
     expect(prevented).toEqual([true, true, true, true, false, false]);
   });
 
+  test('keyboard focus survives the end button disappearing', async () => {
+    const { track, slide } = await renderDeck();
+    const next = screen.getByRole('button', { name: 'Next slide' });
+    next.focus();
+    fireEvent.keyDown(next, { key: 'End' });
+    expect(screen.queryByRole('button', { name: 'Next slide' })).toBeNull();
+    expect(document.activeElement).toBe(track);
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    expect(slide()).toBe(2);
+
+    const prev = screen.getByRole('button', { name: 'Previous slide' });
+    prev.focus();
+    fireEvent.keyDown(prev, { key: 'Home' });
+    expect(document.activeElement).toBe(track);
+  });
+
   test('announces the slide and puts it in the address once the reader flips', async () => {
     const replaceState = spyOn(window.history, 'replaceState');
     try {
@@ -236,6 +252,18 @@ describe('SlideDeck runtime', () => {
       expect(slide()).toBe(1);
       expect(window.location.hash).toBe('#slides-2');
       expect(document.documentElement.style.overflow).toBe('clip');
+    });
+
+    test('keeps keyboard focus in the presenter when its end button disappears', async () => {
+      const { dialog } = await renderDeck();
+      fireEvent.click(screen.getByAltText('Thanks'));
+      const prev = dialog.querySelector<HTMLButtonElement>('button[data-slide-nav="prev"]')!;
+      prev.focus();
+      fireEvent.keyDown(prev, { key: 'Home' });
+      expect(dialog.querySelector('button[data-slide-nav="prev"]')).toBeNull();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+      fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+      expect(dialog.querySelector('img')!.getAttribute('alt')).toBe('Agenda');
     });
 
     test('a click on the shown slide advances; the close button closes', async () => {
