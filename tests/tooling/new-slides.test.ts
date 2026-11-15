@@ -3,7 +3,7 @@ import { spawnSync } from 'bun';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { formatSlidesBlock, isSlideImage, pdfRenderScale, slideFileName, sortSlideFiles } from '../../scripts/lib/slides';
+import { formatSlidesBlock, isSlideImage, linkSafeFileName, pdfRenderScale, slideFileName, sortSlideFiles } from '../../scripts/lib/slides';
 
 const SCRIPT = 'scripts/new-slides.ts';
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-new-slides-'));
@@ -63,6 +63,14 @@ describe('new-slides helpers', () => {
 
   test('accepts image files only, never dotfiles', () => {
     expect(['a.png', 'b.JPG', 'c.svg', '.DS_Store', '._a.png', 'notes.txt', 'deck.key'].filter(isSlideImage)).toEqual(['a.png', 'b.JPG', 'c.svg']);
+  });
+
+  test('names a copied PDF so its link reaches it', () => {
+    expect(linkSafeFileName('Talk #1.pdf')).toBe('Talk-1.pdf');
+    expect(linkSafeFileName('Q&A? 100%.pdf')).toBe('Q&A-100.pdf');
+    expect(linkSafeFileName('#.pdf')).toBe('deck.pdf');
+    expect(linkSafeFileName('-draft- 2026.pdf')).toBe('-draft- 2026.pdf');
+    expect(linkSafeFileName('XConf 2026 演讲.pdf')).toBe('XConf 2026 演讲.pdf');
   });
 
   test('renders PDF pages about the target width', () => {
@@ -134,6 +142,16 @@ describe('new-slides script', () => {
       '![Slide 3](./slides/slide-03.png)',
       ':::',
     ].join('\n'));
+  });
+
+  test('copies a PDF whose name would break its link under a safe name', () => {
+    const into = tempDir('post-pdf-name');
+    const pdf = path.join(tempDir('pdf-name-src'), 'Talk #1.pdf');
+    fs.writeFileSync(pdf, 'pdf');
+    const { code, stdout } = run(tempDir('pdf-name-export', ['a.png']), '--into', into, '--pdf', pdf);
+    expect(code).toBe(0);
+    expect(fs.readdirSync(into).sort()).toEqual(['Talk-1.pdf', 'slides']);
+    expect(stdout).toContain(':::slides{pdf="./Talk-1.pdf"}');
   });
 
   test('never overwrites existing slides without --force', () => {

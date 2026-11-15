@@ -48,6 +48,18 @@ export function pdfRenderScale(pageWidth: number, targetWidth: number): number {
   return Math.min(4, Math.max(0.25, targetWidth / pageWidth));
 }
 
+/**
+ * A name for a file the deck links to that works as-is in the link: `#`
+ * and `?` would cut the path short (fragment, query) and `%` start an
+ * escape, so each run of them, with spaces around it, becomes one "-".
+ * Everything else, CJK included, stays; browsers encode it.
+ */
+export function linkSafeFileName(fileName: string): string {
+  const extension = path.extname(fileName);
+  const stem = path.basename(fileName, extension).split(/\s*[#?%]+\s*/).filter(Boolean).join('-');
+  return `${stem || 'deck'}${extension}`;
+}
+
 const escapeLabel = (value: string) => value.replace(/\\/g, '\\\\').replace(/([[\]])/g, '\\$1');
 const escapeAttribute = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 

@@ -4,6 +4,7 @@ import {
   formatSlidesBlock,
   isSlideImage,
   isUnoptimizedImage,
+  linkSafeFileName,
   pdfRenderScale,
   slideFileName,
   sortSlideFiles,
@@ -92,9 +93,10 @@ if (fs.existsSync(slidesDir) && fs.readdirSync(slidesDir).length > 0 && !force) 
 }
 
 // The PDF linked as the download, --pdf or the PDF being imported, is
-// copied next to the content unless it is there already.
+// copied next to the content, under a name its link can reach, unless it
+// is there already.
 const pdfFile = pdfOption ?? (sourceIsFolder ? undefined : source);
-const pdfTarget = pdfFile ? path.join(into, path.basename(pdfFile)) : undefined;
+const pdfTarget = pdfFile ? path.join(into, linkSafeFileName(path.basename(pdfFile))) : undefined;
 const pdfCopy = pdfFile && pdfTarget && path.resolve(pdfFile) !== path.resolve(pdfTarget)
   ? { from: pdfFile, to: pdfTarget }
   : undefined;
@@ -151,7 +153,7 @@ const pdfLink = pdfTarget ? `./${path.basename(pdfTarget)}` : undefined;
 
 console.log(formatSlidesBlock({ title, dir, files: written, pdf: pdfLink, video }));
 console.error(`
-Copied ${written.length} slide(s) to ${slidesDir}${pdfLink ? ` and the PDF to ${into}` : ''}.
+Copied ${written.length} slide(s) to ${slidesDir}${pdfTarget ? ` and the PDF to ${pdfTarget}` : ''}.
 Next:
   - Paste the block above into the content, and replace each "Slide N" with
     alt text that says what the slide shows.
