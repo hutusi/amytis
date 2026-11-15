@@ -115,6 +115,23 @@ the post, so a feed item shows the deck's first slide, linked to the deck
 on the page, with the title, a "View all N slides" link and the PDF and
 video links underneath.
 
+## Gotchas
+
+- **Attributes need a bracketed title.** `:::slides My Talk {pdf=…}` fails
+  the build; write `:::slides[My Talk]{pdf=…}`.
+- **Slide ids can collide with headings.** `## Slides 2` and a first deck's
+  second slide are both `slides-2`; the build fails and `{#id}` fixes it.
+- **Printing loads every slide only with JavaScript.** Slides are lazy;
+  the runtime switches them all to eager before printing. Without
+  JavaScript, slides that never scrolled into view may print blank.
+- **No true fullscreen on iPhone.** The presenter fills the screen as an
+  overlay instead.
+- **AVIF / WebP slides** are served full size, with no smaller variants.
+- **Notes and single-file flows** don't copy assets, so a deck there shows
+  broken images (the post-build link check reports them).
+- **Left to right only.** The track scrolls left to right in every locale.
+- **rST** has no slide-deck directive.
+
 ## How it works
 
 - `src/lib/remark-slide-deck.ts` turns the block into a `<slide-deck>`

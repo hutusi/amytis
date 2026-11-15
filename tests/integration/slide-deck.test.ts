@@ -1,5 +1,8 @@
 import { describe, expect, spyOn, test } from 'bun:test';
+import fs from 'node:fs';
+import path from 'node:path';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { getPostBySlug } from '@/lib/content/posts';
 import { renderAsync } from '@/test-utils/render';
 
 const DECK = [
@@ -80,6 +83,21 @@ describe('Integration: slide decks', () => {
         .rejects.toThrow(/slide id "slides-1" is already used/);
     } finally {
       consoleError.mockRestore();
+    }
+  });
+
+  test('the showcase demo deck renders, and every slide file exists', async () => {
+    // Catches a typo in the demo without a build (check-links would only
+    // report it after export).
+    const post = getPostBySlug('multimedia-showcase');
+    expect(post).not.toBeNull();
+    const html = await renderAsync(MarkdownRenderer({ content: post!.content, slug: post!.imageBaseSlug }));
+    const sources = [...track(html).matchAll(/<img [^>]*src="([^"]+)"/g)].map((m) => m[1]);
+    expect(sources).toHaveLength(4);
+    for (const src of sources) {
+      expect(src.startsWith(`/${post!.imageBaseSlug}/`)).toBe(true);
+      const file = path.join('content/posts/multimedia-showcase', src.slice(post!.imageBaseSlug.length + 2));
+      expect(fs.existsSync(file)).toBe(true);
     }
   });
 

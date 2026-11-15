@@ -24,6 +24,10 @@ per-format fence/directive syntax, see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md)
 For GitHub-flavored alert callouts (`> [!NOTE]`, `.. note::`, etc.) and the
 five supported alert types, see [`docs/ALERTS.md`](./ALERTS.md).
 
+For talk slides (`:::slides` decks with a carousel, fullscreen presenter and
+links to single slides) and the `new-slides` import script, see
+[`docs/SLIDES.md`](./SLIDES.md).
+
 Markdown links to other hosts (anything whose host differs from
 `siteConfig.baseUrl`) automatically render with a trailing `↗` icon and
 open in a new tab — don't write `<a target="_blank">` manually. Internal
