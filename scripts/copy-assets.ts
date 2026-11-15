@@ -203,15 +203,19 @@ function extractReferencedAssetPaths(filePath: string): string[] {
   const patterns = [
     /\!\[[^\]]*\]\(([^)]+)\)/g,
     /\[[^\]]*\]\(([^)]+)\)/g,
-    // `pdf` / `video`: a :::slides deck's attributes (docs/SLIDES.md).
-    /\b(?:src|href|poster|pdf|video)=["']([^"']+)["']/g,
+    /\b(?:src|href|poster)=["']([^"']+)["']/g,
+    // A :::slides deck's `pdf` / `video` (docs/SLIDES.md), in every form
+    // remark-directive accepts: double-, single- or unquoted, with optional
+    // spaces around "=".
+    /\b(?:pdf|video)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`}]+))/g,
     /^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm,
     /^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm,
   ];
 
   for (const pattern of patterns) {
     for (const match of content.matchAll(pattern)) {
-      const candidate = normalizeReferencedAssetPath(match[1] ?? '');
+      // The first capture group that matched (the deck pattern has three).
+      const candidate = normalizeReferencedAssetPath(match.slice(1).find((group) => group !== undefined) ?? '');
       if (candidate) {
         references.add(candidate);
       }

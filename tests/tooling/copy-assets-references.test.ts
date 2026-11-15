@@ -26,6 +26,13 @@ describe('copy-assets referenced files', () => {
     expect(refs).toEqual(['./slides/slide-01.png', './slides/slide-02.png', './talk.pdf']);
   });
 
+  test('deck attributes are found in every form the directive parser accepts', () => {
+    expect(referencesOf(':::slides{pdf=./talk.pdf}\n![a](a.png)\n:::')).toEqual(['./talk.pdf', 'a.png']);
+    expect(referencesOf(':::slides[T]{pdf = "files/deck.pdf" video=media/talk.mp4}\n![a](a.png)\n:::'))
+      .toEqual(['a.png', 'files/deck.pdf', 'media/talk.mp4']);
+    expect(referencesOf(':::slides{#talk video=https://youtu.be/x pdf=deck.pdf}\n:::')).toEqual(['deck.pdf']);
+  });
+
   test('a co-located talk video is copied', () => {
     expect(referencesOf(":::slides{video='media/talk.mp4'}\n![a](a.png)\n:::")).toEqual(['a.png', 'media/talk.mp4']);
   });
