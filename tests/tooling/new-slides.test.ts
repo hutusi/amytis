@@ -125,7 +125,8 @@ describe('new-slides script', () => {
     expect(fs.readdirSync(path.join(into, 'slides')).sort()).toEqual(['slide-01.png', 'slide-02.png', 'slide-03.png']);
     // Slide10 is the third slide, not the second.
     expect(fs.readFileSync(path.join(into, 'slides', 'slide-03.png'), 'utf8')).toBe('image Slide10.PNG');
-    expect(fs.existsSync(path.join(into, 'talk.pdf'))).toBe(true);
+    // The PDF sits next to the content, and no staging folder is left.
+    expect(fs.readdirSync(into).sort()).toEqual(['slides', 'talk.pdf']);
     expect(stdout.trim()).toBe([
       ':::slides[My Talk]{pdf="./talk.pdf" video="https://youtu.be/abc"}',
       '![Slide 1](./slides/slide-01.png)',
@@ -143,6 +144,24 @@ describe('new-slides script', () => {
     expect(again.code).not.toBe(0);
     expect(again.stderr).toContain('--force');
     expect(run(source, '--into', into, '--force').code).toBe(0);
+  });
+
+  test('a failed --force import keeps the existing deck', () => {
+    const into = tempDir('post-failed-import');
+    const slides = tempDir('post-failed-import/slides', ['slide-01.png', 'slide-02.png']);
+    const broken = path.join(tempDir('broken-export'), 'broken.pdf');
+    fs.writeFileSync(broken, 'not a pdf');
+
+    const missingPdf = run(broken, '--into', into, '--pdf', path.join(root, 'missing.pdf'), '--force');
+    expect(missingPdf.code).not.toBe(0);
+    expect(missingPdf.stderr).toContain('does not exist');
+
+    const unreadable = run(broken, '--into', into, '--force');
+    expect(unreadable.code).not.toBe(0);
+    expect(unreadable.stderr).toContain('could not render');
+
+    expect(fs.readdirSync(slides).sort()).toEqual(['slide-01.png', 'slide-02.png']);
+    expect(fs.readdirSync(into)).toEqual(['slides']);
   });
 
   test('refuses to import from inside the slides folder it would replace, even with --force', () => {

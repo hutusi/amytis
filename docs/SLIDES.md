@@ -55,7 +55,8 @@ bun run new-slides ~/Desktop/xconf.pdf --into content/flows/2026/11/15/
   `--title` is given. pdf.js renders fonts and effects slightly less
   faithfully than the app's own image export; export images when that matters.
 - `--pdf talk.pdf` adds a download link to an image export.
-- Existing slides are never replaced without `--force`.
+- Existing slides are never replaced without `--force`, and an import that
+  fails part-way leaves them as they were.
 - Replace each "Slide N" alt text with what the slide shows.
 
 ## Reading a deck

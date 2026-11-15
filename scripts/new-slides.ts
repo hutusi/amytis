@@ -66,17 +66,23 @@ if (!/^[\w.-]+$/.test(dir) || dir === '.' || dir === '..') fail(`--dir "${dir}" 
 if (!(width > 0)) fail('--width must be a positive number of pixels.');
 
 const slidesDir = path.join(into, dir);
+const pdfOption = option('pdf');
+if (pdfOption !== undefined && !fs.existsSync(pdfOption)) fail(`--pdf "${pdfOption}" does not exist.`);
+const sourceIsFolder = fs.statSync(source).isDirectory();
+if (!sourceIsFolder && !source.toLowerCase().endsWith('.pdf')) {
+  fail(`"${source}" is neither a folder of slide images nor a .pdf file.`);
+}
 
-// The slides folder is emptied before the copy, so an input inside it (a
-// re-import from the destination, a PDF kept there) would be deleted first.
+// The slides folder is replaced, so an input inside it (a re-import from
+// the destination, a PDF kept there) would be deleted with the old deck.
 // Real paths, so a symlink or /tmp vs /private/tmp can't hide the overlap.
 const realSlidesDir = path.join(fs.realpathSync(into), dir);
 function isInsideSlidesDir(file: string): boolean {
   const relative = path.relative(realSlidesDir, fs.realpathSync(file));
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
-for (const input of [source, option('pdf')]) {
-  if (input && fs.existsSync(input) && isInsideSlidesDir(input)) {
+for (const input of [source, pdfOption]) {
+  if (input && isInsideSlidesDir(input)) {
     fail(`"${input}" is inside ${slidesDir}, which new-slides replaces. Move it out of that folder first.`);
   }
 }
@@ -85,45 +91,39 @@ if (fs.existsSync(slidesDir) && fs.readdirSync(slidesDir).length > 0 && !force) 
   fail(`${slidesDir} already has files. Pass --force to replace them.`);
 }
 
-/** Copies a PDF next to the content; returns its link for the block. */
-function copyPdf(pdfPath: string): string {
-  const name = path.basename(pdfPath);
-  const target = path.join(into!, name);
-  if (path.resolve(pdfPath) !== path.resolve(target)) {
-    if (fs.existsSync(target) && !force) fail(`${target} already exists. Pass --force to replace it.`);
-    fs.copyFileSync(pdfPath, target);
-  }
-  return `./${name}`;
-}
+// The PDF linked as the download, --pdf or the PDF being imported, is
+// copied next to the content unless it is there already.
+const pdfFile = pdfOption ?? (sourceIsFolder ? undefined : source);
+const pdfTarget = pdfFile ? path.join(into, path.basename(pdfFile)) : undefined;
+const pdfCopy = pdfFile && pdfTarget && path.resolve(pdfFile) !== path.resolve(pdfTarget)
+  ? { from: pdfFile, to: pdfTarget }
+  : undefined;
+if (pdfCopy && fs.existsSync(pdfCopy.to) && !force) fail(`${pdfCopy.to} already exists. Pass --force to replace it.`);
 
-function resetSlidesDir() {
-  fs.rmSync(slidesDir, { recursive: true, force: true });
-  fs.mkdirSync(slidesDir, { recursive: true });
-}
+// The new deck is built in a staging folder beside the old one and swapped
+// in only once every slide is written and the PDF copied, so a failed render
+// or copy leaves the existing deck as it was. fail() exits, and the exit
+// hook removes what is left of the staging folder.
+const stagingDir = fs.mkdtempSync(path.join(into, `.${dir}-`));
+process.on('exit', () => fs.rmSync(stagingDir, { recursive: true, force: true }));
 
 let title = option('title');
-let pdfLink: string | undefined;
 const written: string[] = [];
 
-if (fs.statSync(source).isDirectory()) {
+if (sourceIsFolder) {
   const images = sortSlideFiles(fs.readdirSync(source).filter((name) => isSlideImage(name) && fs.statSync(path.join(source, name)).isFile()));
   if (images.length === 0) fail(`No slide images found in "${source}".`);
-  const pdfOption = option('pdf');
-  if (pdfOption && !fs.existsSync(pdfOption)) fail(`--pdf "${pdfOption}" does not exist.`);
-  resetSlidesDir();
   const unoptimized = images.filter(isUnoptimizedImage);
   if (unoptimized.length > 0) {
     console.error(`Warning: ${unoptimized.length} WebP/AVIF slide(s) will be served full size, without smaller variants. Export PNG or JPEG for responsive slides.`);
   }
   images.forEach((name, i) => {
     const target = slideFileName(i, images.length, path.extname(name));
-    fs.copyFileSync(path.join(source, name), path.join(slidesDir, target));
+    fs.copyFileSync(path.join(source, name), path.join(stagingDir, target));
     written.push(target);
   });
-  if (pdfOption) pdfLink = copyPdf(pdfOption);
-} else if (source.toLowerCase().endsWith('.pdf')) {
+} else {
   const [{ pdf }, { default: sizeOf }] = await Promise.all([import('pdf-to-img'), import('image-size')]);
-  resetSlidesDir();
   try {
     const probe = await pdf(source, { scale: 1 });
     const firstPage = await probe.getPage(1);
@@ -135,18 +135,19 @@ if (fs.statSync(source).isDirectory()) {
     let i = 0;
     for await (const page of document) {
       const target = slideFileName(i++, document.length, '.png');
-      fs.writeFileSync(path.join(slidesDir, target), page);
+      fs.writeFileSync(path.join(stagingDir, target), page);
       written.push(target);
     }
   } catch (error) {
-    fs.rmSync(slidesDir, { recursive: true, force: true });
     fail(`could not render "${source}": ${error instanceof Error ? error.message : String(error)}`);
   }
   if (written.length === 0) fail(`"${source}" has no pages.`);
-  pdfLink = copyPdf(option('pdf') ?? source);
-} else {
-  fail(`"${source}" is neither a folder of slide images nor a .pdf file.`);
 }
+
+if (pdfCopy) fs.copyFileSync(pdfCopy.from, pdfCopy.to);
+fs.rmSync(slidesDir, { recursive: true, force: true });
+fs.renameSync(stagingDir, slidesDir);
+const pdfLink = pdfTarget ? `./${path.basename(pdfTarget)}` : undefined;
 
 console.log(formatSlidesBlock({ title, dir, files: written, pdf: pdfLink, video }));
 console.error(`
