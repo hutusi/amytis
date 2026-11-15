@@ -34,6 +34,23 @@ Comment a slide out with `<!-- ![…](…) -->`. Anything else inside the block 
 text, headings, lists, linked images — fails the build with the line number:
 put captions in the alt text and prose before or after the deck.
 
+## Reading a deck
+
+| Action | Inline deck (focused) | Fullscreen presenter |
+|---|---|---|
+| Next / previous slide | → / ←, the side buttons, swipe | → / ←, PageDown / PageUp (presentation clickers), Space / Shift+Space, swipe, a click on the slide |
+| First / last slide | Home / End | Home / End |
+| Open the presenter | Click a slide, the corner button, or F | — |
+| Fullscreen on / off | — | F or the corner button |
+| Close | — | Escape (once, even in fullscreen) or ✕ |
+
+The counter shows where you are ("3 / 40"), and screen readers hear the new
+position after each move. Clicking a slide opens the presenter without
+fullscreen; the corner button and F also go fullscreen where the browser
+allows it. iPhone Safari has no element fullscreen, so there the presenter
+fills the screen as an overlay instead. Closing the presenter leaves the
+deck on the slide you ended on.
+
 ## Links to a slide
 
 Every slide has an id: `slides-1`, `slides-2`, … for the first deck on a
@@ -81,3 +98,20 @@ AVIF and WebP slides are served as-is with no smaller variants (see
   request per image. `rehype-zoomable-images` skips deck images.
 - Without JavaScript the deck is a swipeable, scrollable strip, and print
   stacks every slide.
+- The controls are a client island loaded on demand. `SlideDeckControls`
+  (the only static client code, a few hundred bytes) mounts after hydration
+  and lazily imports `SlideDeckRuntime`: buttons, counter, keys, hash sync,
+  preloading and the presenter. Client components imported by
+  `MarkdownRenderer` share one chunk per route, so a static import would put
+  the runtime on every article page. `tests/tooling/client-bundle-guard.test.ts`
+  keeps it that way.
+- The runtime reads the slide from the track's scroll position and updates
+  the address with `history.replaceState` only once a scroll settles
+  (`scrollend`, or 120 ms of quiet). It switches the current slide and its
+  neighbours to eager loading once the deck nears the viewport, and every
+  slide before printing.
+- The presenter is a modal `<dialog>` (the top layer: above the immersive
+  reader, outside transformed flow cards) whose inner stage is what goes
+  fullscreen — browsers refuse fullscreen on a `<dialog>` itself. Leaving
+  fullscreen closes the presenter, so one Escape exits both. Its keys stop at
+  the dialog, so Escape doesn't also exit the immersive reader.
