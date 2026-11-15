@@ -33,6 +33,15 @@ export const COVER_ZOOM_SLOW =
  * (e.g. a `<Link>` that is itself styled as a label). Keep this the single
  * source of truth for the string.
  */
+/**
+ * One slide of a `:::slides` deck: a full-width snap point in the deck's
+ * horizontal track (remark-slide-deck stamps it on each slide wrapper).
+ * `snap-always` stops a fast swipe from skipping slides; in print the track
+ * stacks the slides, one unbroken block each.
+ */
+export const SLIDE_DECK_SLIDE =
+  'flex w-full shrink-0 snap-start snap-always items-center justify-center break-inside-avoid print:mb-4';
+
 export const META_LABEL_BASE = 'text-[10px] font-sans font-bold uppercase tracking-widest';
 
 export function metaLabel(tone: 'muted' | 'accent' = 'muted'): string {
