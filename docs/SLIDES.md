@@ -84,6 +84,13 @@ Export PNG or JPEG. The build makes responsive WebP variants of both;
 AVIF and WebP slides are served as-is with no smaller variants (see
 `docs/TROUBLESHOOTING.md`).
 
+## Feeds
+
+RSS and Atom readers run no JavaScript, and forty stacked slides would bury
+the post, so a feed item shows the deck's first slide, linked to the deck
+on the page, with the title, a "View all N slides" link and the PDF and
+video links underneath.
+
 ## How it works
 
 - `src/lib/remark-slide-deck.ts` turns the block into a `<slide-deck>`

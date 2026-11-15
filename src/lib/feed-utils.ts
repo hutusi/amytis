@@ -82,6 +82,7 @@ function itemContentHtml(
   return markdownToHtml(post.content, {
     slugRegistry,
     math: post.latex,
+    locale: post.locale,
     absoluteUrls: {
       pageUrl,
       siteUrl,
