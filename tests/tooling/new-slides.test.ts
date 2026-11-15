@@ -81,6 +81,12 @@ describe('new-slides helpers', () => {
     ].join('\n'));
     expect(formatSlidesBlock({ dir: 'deck', files: ['slide-01.png'] })).toBe(':::slides\n![Slide 1](./deck/slide-01.png)\n:::');
   });
+
+  test('keeps a multi-line title on the opener line', () => {
+    expect(formatSlidesBlock({ title: '  Talk\r\n  Subtitle\n', dir: 'slides', files: ['slide-01.png'] }))
+      .toBe(':::slides[Talk Subtitle]\n![Slide 1](./slides/slide-01.png)\n:::');
+    expect(formatSlidesBlock({ title: ' \n ', dir: 'slides', files: ['slide-01.png'] })).toStartWith(':::slides\n');
+  });
 });
 
 describe('new-slides script', () => {

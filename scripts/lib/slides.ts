@@ -62,7 +62,10 @@ export interface SlidesBlockOptions {
 
 /** The `:::slides` block for a deck (docs/SLIDES.md). */
 export function formatSlidesBlock({ title, dir, files, pdf, video }: SlidesBlockOptions): string {
-  const label = title ? `[${escapeLabel(title)}]` : '';
+  // A label must stay on the opener's line, or the block is no directive;
+  // PDF titles can hold line breaks.
+  const oneLineTitle = title?.replace(/\s+/g, ' ').trim();
+  const label = oneLineTitle ? `[${escapeLabel(oneLineTitle)}]` : '';
   const attributes = [
     pdf ? `pdf="${escapeAttribute(pdf)}"` : '',
     video ? `video="${escapeAttribute(video)}"` : '',
