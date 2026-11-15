@@ -130,6 +130,16 @@ describe('remarkSlideDeck', () => {
       expect(toHtml('## Slides 2\n\n:::slides{#talk}\n![a](a.png)\n![b](b.png)\n:::')).toContain('id="talk-2"');
     });
 
+    test('a slide id that collides with an id written in raw HTML', () => {
+      expect(() => toHtml('<h2 id="slides-2">Overview</h2>\n\n:::slides\n![a](a.png)\n![b](b.png)\n:::'))
+        .toThrow(/slide id "slides-2" is already used on this page/);
+      expect(() => toHtml("Jump <span ID='slides-1'>here</span>.\n\n:::slides\n![a](a.png)\n:::"))
+        .toThrow(/slide id "slides-1" is already used/);
+      // Look-alikes are not ids: another attribute, a commented-out tag.
+      expect(toHtml('<div data-id="slides-1"></div>\n\n<!-- <h2 id="slides-1"> -->\n\n:::slides\n![a](a.png)\n:::'))
+        .toContain('id="slides-1"');
+    });
+
     test('a plain "Slides" heading does not collide: the deck itself carries no id', () => {
       expect(toHtml('## Slides\n\n:::slides\n![a](a.png)\n:::')).toContain('<h2 id="slides">');
     });

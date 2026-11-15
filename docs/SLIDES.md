@@ -84,8 +84,8 @@ reader flips through, so they can share the slide they are on.
 
 Give a deck its own id stem with `{#id}`: `:::slides[Keynote]{#keynote}`
 makes `#keynote-1`, `#keynote-2`, …. A deck's slide id that collides with a
-heading id on the page (`## Slides 2` is `slides-2`) fails the build; an
-explicit `{#id}` fixes it.
+heading id on the page (`## Slides 2` is `slides-2`) or an id written in raw
+HTML (`<h2 id="slides-2">`) fails the build; an explicit `{#id}` fixes it.
 
 ## Where the images go
 
@@ -120,7 +120,8 @@ video links underneath.
 - **Attributes need a bracketed title.** `:::slides My Talk {pdf=…}` fails
   the build; write `:::slides[My Talk]{pdf=…}`.
 - **Slide ids can collide with headings.** `## Slides 2` and a first deck's
-  second slide are both `slides-2`; the build fails and `{#id}` fixes it.
+  second slide are both `slides-2`, and so is a raw `<h2 id="slides-2">`;
+  the build fails and `{#id}` fixes it.
 - **Printing loads every slide only with JavaScript.** Slides are lazy;
   the runtime switches them all to eager before printing. Without
   JavaScript, slides that never scrolled into view may print blank.
