@@ -139,6 +139,21 @@ describe('new-slides script', () => {
     expect(run(source, '--into', into, '--force').code).toBe(0);
   });
 
+  test('refuses to import from inside the slides folder it would replace, even with --force', () => {
+    const into = tempDir('post-reimport');
+    const slides = tempDir('post-reimport/slides', ['slide-01.png', 'slide-02.png']);
+    const { code, stderr } = run(slides, '--into', into, '--force');
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('Move it out of that folder');
+    expect(fs.readdirSync(slides).sort()).toEqual(['slide-01.png', 'slide-02.png']);
+
+    const pdf = path.join(slides, 'talk.pdf');
+    fs.writeFileSync(pdf, 'pdf');
+    expect(run(pdf, '--into', into, '--force').code).not.toBe(0);
+    expect(run(tempDir('reimport-export', ['a.png']), '--into', into, '--pdf', pdf, '--force').code).not.toBe(0);
+    expect(fs.readdirSync(slides).sort()).toEqual(['slide-01.png', 'slide-02.png', 'talk.pdf']);
+  });
+
   test('renders a PDF export to PNG slides and links the PDF', () => {
     const into = tempDir('post-pdf');
     const pdf = path.join(tempDir('pdf-export'), 'deck.pdf');

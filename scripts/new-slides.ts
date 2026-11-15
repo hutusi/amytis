@@ -66,6 +66,21 @@ if (!/^[\w.-]+$/.test(dir) || dir === '.' || dir === '..') fail(`--dir "${dir}" 
 if (!(width > 0)) fail('--width must be a positive number of pixels.');
 
 const slidesDir = path.join(into, dir);
+
+// The slides folder is emptied before the copy, so an input inside it (a
+// re-import from the destination, a PDF kept there) would be deleted first.
+// Real paths, so a symlink or /tmp vs /private/tmp can't hide the overlap.
+const realSlidesDir = path.join(fs.realpathSync(into), dir);
+function isInsideSlidesDir(file: string): boolean {
+  const relative = path.relative(realSlidesDir, fs.realpathSync(file));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+for (const input of [source, option('pdf')]) {
+  if (input && fs.existsSync(input) && isInsideSlidesDir(input)) {
+    fail(`"${input}" is inside ${slidesDir}, which new-slides replaces. Move it out of that folder first.`);
+  }
+}
+
 if (fs.existsSync(slidesDir) && fs.readdirSync(slidesDir).length > 0 && !force) {
   fail(`${slidesDir} already has files. Pass --force to replace them.`);
 }
