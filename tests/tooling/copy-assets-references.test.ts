@@ -33,6 +33,16 @@ describe('copy-assets referenced files', () => {
     expect(referencesOf(':::slides{#talk video=https://youtu.be/x pdf=deck.pdf}\n:::')).toEqual(['deck.pdf']);
   });
 
+  test('character references are decoded like the parsers decode them', () => {
+    // new-slides writes `&` and `"` in a file name as references.
+    expect(referencesOf(':::slides[T]{pdf="./R&amp;D &quot;final&quot;.pdf"}\n![a](./Q&#38;A.png)\n:::'))
+      .toEqual(['./Q&A.png', './R&D "final".pdf']);
+    expect(referencesOf(':::slides{pdf=./R&amp;D.pdf}\n![a](a.png)\n:::')).toEqual(['./R&D.pdf', 'a.png']);
+    expect(referencesOf('<img src="./R&amp;D.png">')).toEqual(['./R&D.png']);
+    // rST and YAML have no character references: names stay as written.
+    expect(referencesOf('---\ncoverImage: ./a&amp;b.png\n---\n')).toEqual(['./a&amp;b.png']);
+  });
+
   test('a co-located talk video is copied', () => {
     expect(referencesOf(":::slides{video='media/talk.mp4'}\n![a](a.png)\n:::")).toEqual(['a.png', 'media/talk.mp4']);
   });

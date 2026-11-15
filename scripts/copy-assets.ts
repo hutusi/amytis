@@ -197,25 +197,43 @@ function normalizeReferencedAssetPath(rawPath: string): string | null {
   return withoutFragment;
 }
 
+const NAMED_CHARACTER_REFERENCES: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+
+/**
+ * Decodes the character references a Markdown or HTML parser decodes in a
+ * link or an attribute: `pdf="./R&amp;D.pdf"` names the file `R&D.pdf`.
+ * Numeric references, and the named ones a file name plausibly needs.
+ */
+function decodeCharacterReferences(value: string): string {
+  return value.replace(/&(?:#(\d+)|#[xX]([\da-fA-F]+)|(amp|quot|apos|lt|gt));/g, (reference, decimal, hex, name) => {
+    if (name) return NAMED_CHARACTER_REFERENCES[name];
+    const codePoint = decimal ? Number(decimal) : parseInt(hex, 16);
+    return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : reference;
+  });
+}
+
 function extractReferencedAssetPaths(filePath: string): string[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const references = new Set<string>();
-  const patterns = [
-    /\!\[[^\]]*\]\(([^)]+)\)/g,
-    /\[[^\]]*\]\(([^)]+)\)/g,
-    /\b(?:src|href|poster)=["']([^"']+)["']/g,
+  // [pattern, whether its parser decodes character references]: Markdown
+  // and HTML do, rST and YAML frontmatter don't.
+  const patterns: Array<[RegExp, boolean]> = [
+    [/\!\[[^\]]*\]\(([^)]+)\)/g, true],
+    [/\[[^\]]*\]\(([^)]+)\)/g, true],
+    [/\b(?:src|href|poster)=["']([^"']+)["']/g, true],
     // A :::slides deck's `pdf` / `video` (docs/SLIDES.md), in every form
     // remark-directive accepts: double-, single- or unquoted, with optional
     // spaces around "=".
-    /\b(?:pdf|video)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`}]+))/g,
-    /^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm,
-    /^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm,
+    [/\b(?:pdf|video)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`}]+))/g, true],
+    [/^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm, false],
+    [/^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm, false],
   ];
 
-  for (const pattern of patterns) {
+  for (const [pattern, decodesReferences] of patterns) {
     for (const match of content.matchAll(pattern)) {
       // The first capture group that matched (the deck pattern has three).
-      const candidate = normalizeReferencedAssetPath(match.slice(1).find((group) => group !== undefined) ?? '');
+      const reference = match.slice(1).find((group) => group !== undefined) ?? '';
+      const candidate = normalizeReferencedAssetPath(decodesReferences ? decodeCharacterReferences(reference) : reference);
       if (candidate) {
         references.add(candidate);
       }
