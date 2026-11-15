@@ -18,4 +18,8 @@ describe('rehypeZoomableImages', () => {
     expect(run('<div class="mermaid"><svg><foreignObject><img src="/a.png"></foreignObject></svg></div>')).not.toContain('data-zoomable');
     expect(run('<img src="/badge.svg" style="height:20px">')).not.toContain('data-zoomable');
   });
+
+  test('leaves slide-deck images to the deck', () => {
+    expect(run('<slide-deck><div id="slides-1"><img src="/s1.png" data-slide="1"></div></slide-deck>')).not.toContain('data-zoomable');
+  });
 });
