@@ -52,6 +52,12 @@ function normalizeSitePath(sitePath: string): string | null {
 }
 
 /**
+ * Raw-HTML media elements whose `src` names a file, resolved like an image
+ * src. (A `<source>` inside `<picture>` carries srcset, never src.)
+ */
+export const MEDIA_SRC_TAGS: ReadonlySet<string> = new Set(['video', 'audio', 'source', 'track']);
+
+/**
  * Public site path ('/posts/my-post/images/x.png') for an image src as
  * authored in content, or null when the src is not a local asset (external
  * URL, data: URI, fragment) or escapes its allowed root: a relative path must
@@ -62,8 +68,9 @@ function normalizeSitePath(sitePath: string): string | null {
  * `slug` is the content's public-relative asset base (e.g. `posts/my-post`,
  * `books/my-book`, `flows/2026/01/15`): `./x.png` and bare `x.png` resolve
  * against it, `/x.png` is already site-absolute. Shared by the on-page image
- * pipeline (rehype-image-metadata) and feed rendering so a co-located image
- * resolves to the same file on both surfaces.
+ * pipeline (rehype-image-metadata), raw-HTML media (rehype-media-paths) and
+ * feed rendering so a co-located file resolves to the same URL on every
+ * surface.
  */
 export function resolveContentImagePath(src: string, slug?: string): string | null {
   if (!src) return null;

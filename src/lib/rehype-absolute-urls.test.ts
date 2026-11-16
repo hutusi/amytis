@@ -28,11 +28,25 @@ describe('rehypeAbsoluteUrls', () => {
       .toBe('<img src="https://cdn.test/posts/my-post/a.png">');
   });
 
-  test('links and other media resolve against the page URL', () => {
+  test('links resolve against the page URL', () => {
     expect(run('<a href="../other/">x</a>')).toBe('<a href="https://site.test/series-x/other/">x</a>');
     expect(run('<a href="/tags/a/">x</a>')).toBe('<a href="https://site.test/tags/a/">x</a>');
-    expect(run('<video poster="p.jpg" src="v.mp4"></video>'))
-      .toBe('<video poster="https://site.test/series-x/my-post/p.jpg" src="https://site.test/series-x/my-post/v.mp4"></video>');
+  });
+
+  test('co-located media and posters resolve against the asset base, as on the page', () => {
+    expect(run('<video poster="p.jpg" src="./v.mp4"></video>'))
+      .toBe('<video poster="https://site.test/posts/my-post/p.jpg" src="https://site.test/posts/my-post/v.mp4"></video>');
+    expect(run('<audio><source src="a.ogg"><track src="./a.vtt"></audio>'))
+      .toBe('<audio><source src="https://site.test/posts/my-post/a.ogg"><track src="https://site.test/posts/my-post/a.vtt"></audio>');
+  });
+
+  test('the CDN prefix applies to posters but not to media files', () => {
+    expect(run('<video poster="p.jpg" src="v.mp4"></video>', { ...base, cdnBaseUrl: 'https://cdn.test' }))
+      .toBe('<video poster="https://cdn.test/posts/my-post/p.jpg" src="https://site.test/posts/my-post/v.mp4"></video>');
+  });
+
+  test('media paths that escape the asset base fall back to the page URL', () => {
+    expect(run('<video src="../other/v.mp4"></video>')).toBe('<video src="https://site.test/series-x/other/v.mp4"></video>');
   });
 
   test('keeps external image URLs whatever the scheme case', () => {

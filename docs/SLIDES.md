@@ -26,7 +26,9 @@ for search.
 - **`pdf`** — a link to the full deck as a PDF ("Download PDF" under the
   deck). A path next to the content (`./talk.pdf`) or an `https://` URL.
 - **`video`** — a link to the recording ("Watch the talk"). An `https://`
-  URL or a path next to the content.
+  URL or a path next to the content. It only links; to play the recording
+  on the page, paste the site's `<iframe>` embed code under the deck (see
+  "Video and audio" in [`CONTRIBUTING.md`](./CONTRIBUTING.md#writing-content)).
 - **`{#id}`** — the deck's id stem for slide links (see below). Optional.
 
 Slides may sit on one line, on consecutive lines or in separate paragraphs.

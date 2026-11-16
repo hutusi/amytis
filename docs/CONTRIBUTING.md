@@ -37,6 +37,18 @@ Article images open in a full-screen lightbox when clicked. Linked images
 (`[![alt](img)](href)`) follow their link instead, and raw-HTML `<img>` tags
 with an inline `style` (badges, icons) never zoom.
 
+Video and audio are raw HTML in Markdown and MDX alike. Paste a site's
+`<iframe>` embed code (YouTube, Bilibili, Vimeo…) as it is: every iframe
+renders lazily in a responsive 16:9 box, so it needs no wrapper `<div>`.
+Write embed URLs with `https://` (Bilibili's share code starts with `//`,
+which feed readers can't resolve) and add `&autoplay=0` to a Bilibili
+player URL. Many feed readers drop iframes, so add a plain link to the
+video too. `<video>`, `<audio>`, `<source>` and `<track>` paths and video
+`poster`s resolve like image paths (`rehype-media-paths`): `./clip.mp4` in
+a folder post or folder flow points at the file next to it, on the page,
+in the flow stream and in feeds. `images.cdnBaseUrl` prefixes posters but
+not media files.
+
 ### Creating Posts
 
 Use the CLI to scaffold new content:

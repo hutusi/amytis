@@ -30,6 +30,7 @@ import rehypeHeadingAnchors, { HEADING_ANCHOR_CLASS } from '@/lib/rehype-heading
 import rehypeZoomableImages from '@/lib/rehype-zoomable-images';
 import rehypePrintLinkUrls from '@/lib/print-urls';
 import rehypeImageMetadata from '@/lib/rehype-image-metadata';
+import rehypeMediaPaths from '@/lib/rehype-media-paths';
 import rehypeFenceMeta from '@/lib/rehype-fence-meta';
 import { siteConfig } from '../../site.config';
 import { getTranslator } from '@/lib/i18n';
@@ -132,6 +133,7 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
     // in headings that arrive as raw HTML, unique against every existing id.
     headingIdPrefix ? [rehypeRawHeadingIds, { prefix: headingIdPrefix }] : rehypeRawHeadingIds,
     [rehypeImageMetadata, { slug, cdnBaseUrl }],
+    [rehypeMediaPaths, { slug, cdnBaseUrl }],
   ];
 
   if (slugRegistry && slugRegistry.size > 0) {

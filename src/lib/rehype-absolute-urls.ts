@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit';
 import type { Root, Element } from 'hast';
-import { getCdnImageUrl, resolveContentImagePath } from './image-utils';
+import { MEDIA_SRC_TAGS, getCdnImageUrl, resolveContentImagePath } from './image-utils';
 
 export interface AbsoluteUrlsOptions {
   /** Absolute URL of the page the HTML belongs to (trailing-slash form). */
@@ -9,9 +9,9 @@ export interface AbsoluteUrlsOptions {
   siteUrl: string;
   /**
    * Public-relative asset base of the content (`posts/my-post`,
-   * `flows/2026/01/15`). Co-located `<img>` paths resolve against it exactly
-   * as they do on the page — NOT against `pageUrl`, which differs for series
-   * posts on autoPaths/customPaths URLs and for flat root posts.
+   * `flows/2026/01/15`). Co-located `<img>` and media paths resolve against
+   * it exactly as they do on the page — NOT against `pageUrl`, which differs
+   * for series posts on autoPaths/customPaths URLs and for flat root posts.
    */
   imageBaseSlug?: string;
   cdnBaseUrl?: string;
@@ -33,20 +33,29 @@ function absolutize(url: string, base: string): string {
  * Feed readers resolve nothing relative, so rewrite every URL-bearing
  * attribute to an absolute URL. Works on the HAST tree, not on serialized
  * HTML, so text that merely looks like `src="…"` (code samples) is never
- * touched. `<img src>` and `<img>`/`<source>` srcset candidates go through
- * the same resolver as the on-page image pipeline (plus the CDN prefix);
- * every other URL resolves against the page URL, which ends in '/' so
- * `images/x.png` resolves as it does in a browser.
+ * touched. `<img src>`, `<video poster>` and `<img>`/`<source>` srcset
+ * candidates go through the same resolver as the on-page image pipeline
+ * (plus the CDN prefix), and media `src` (rehype-media-paths) through it
+ * without the prefix; every other URL resolves against the page URL, which
+ * ends in '/' so `../other/` resolves as it does in a browser.
  */
 export default function rehypeAbsoluteUrls(options: AbsoluteUrlsOptions) {
   const { pageUrl, siteUrl, imageBaseSlug, cdnBaseUrl = '' } = options;
 
-  /** An image URL resolved the way the on-page pipeline would, else null. */
-  const resolveImage = (url: string): string | null => {
+  /** A co-located file's URL resolved the way the on-page pipeline would, else null. */
+  const resolveAsset = (url: string, cdn: string): string | null => {
     const publicPath = resolveContentImagePath(url, imageBaseSlug);
     if (!publicPath) return null;
-    const resolved = getCdnImageUrl(publicPath, cdnBaseUrl);
+    const resolved = getCdnImageUrl(publicPath, cdn);
     return resolved.startsWith('/') ? `${siteUrl}${resolved}` : resolved;
+  };
+  const resolveImage = (url: string) => resolveAsset(url, cdnBaseUrl);
+
+  /** The asset-base URL for an attribute that names a co-located file, else null. */
+  const resolveAttr = (tagName: string, attr: (typeof URL_ATTRS)[number], url: string): string | null => {
+    if ((tagName === 'img' && attr === 'src') || (tagName === 'video' && attr === 'poster')) return resolveImage(url);
+    if (attr === 'src' && MEDIA_SRC_TAGS.has(tagName)) return resolveAsset(url, '');
+    return null;
   };
 
   return (tree: Root) => {
@@ -57,7 +66,7 @@ export default function rehypeAbsoluteUrls(options: AbsoluteUrlsOptions) {
       for (const attr of URL_ATTRS) {
         const value = props[attr];
         if (typeof value !== 'string') continue;
-        props[attr] = (node.tagName === 'img' && attr === 'src' && resolveImage(value)) || absolutize(value, pageUrl);
+        props[attr] = resolveAttr(node.tagName, attr, value) || absolutize(value, pageUrl);
       }
       const srcSet = props.srcSet;
       if (typeof srcSet === 'string' || Array.isArray(srcSet)) {
