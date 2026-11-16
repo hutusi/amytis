@@ -150,7 +150,7 @@ bun run new "Post Title"
 bun run new-weekly "Weekly Topic"
 bun run new-series "Series Name"
 bun run new-note "Concept"
-bun run new-flow
+bun run new-flow            # --folder: DD/index.md, for images or slides
 
 ## Import / Maintain
 bun run new-from-pdf ./doc.pdf
@@ -235,7 +235,7 @@ Create `.md` or `.mdx` files in `content/posts/`.
 
 Create daily notes in `content/flows/YYYY/MM/DD.md` or `.mdx`.
 
-- CLI: `bun run new-flow` creates today’s entry
+- CLI: `bun run new-flow` creates today’s entry; `--folder` creates `DD/index.md` instead, so images or a slide deck can sit next to it
 - Chat import: put exports in `imports/chats/` and run `bun run new-flow-from-chat`
 - Optional Title: Set `title` in frontmatter or use an `# Heading` in the content to display a title alongside the date.
 

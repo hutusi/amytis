@@ -451,7 +451,7 @@ function processFlows() {
 
       const dayItems = fs.readdirSync(monthPath, { withFileTypes: true });
       for (const dayItem of dayItems) {
-        // Only process folder-based flows (DD/ directories with index.mdx)
+        // Only folder-based flows (DD/ directories with index.md or index.mdx)
         if (!dayItem.isDirectory()) continue;
         const rawName = dayItem.name;
         if (!/^\d{2}$/.test(rawName)) continue;

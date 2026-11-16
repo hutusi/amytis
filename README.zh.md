@@ -156,7 +156,7 @@ bun run new "Post Title"
 bun run new-weekly "Weekly Topic"
 bun run new-series "Series Name"
 bun run new-note "Concept"
-bun run new-flow
+bun run new-flow            # --folder: DD/index.md，可放图片或幻灯片
 
 ## Import / Maintain
 bun run new-from-pdf ./doc.pdf
@@ -241,7 +241,7 @@ Amytis 基于 Next.js 静态导出构建，关键配置为 `output: "export"` �
 
 在 `content/flows/YYYY/MM/DD.md` 或 `.mdx` 中创建日记内容。
 
-- CLI: `bun run new-flow` 会创建今天的记录
+- CLI: `bun run new-flow` 会创建今天的记录；加 `--folder` 则创建 `DD/index.md`，图片或幻灯片可以放在它旁边
 - 聊天导入: 将导出文件放入 `imports/chats/`，然后运行 `bun run new-flow-from-chat`
 - 可选标题: 在 frontmatter 中设置 `title` 或在内容中使用 `# 标题`，即可在日期旁显示标题。
 

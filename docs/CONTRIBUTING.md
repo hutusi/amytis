@@ -64,6 +64,9 @@ Flows are organized by date (`content/flows/YYYY/MM/DD.mdx`).
 ```bash
 # Create a new flow entry for today
 bun run new-flow
+
+# Or as a folder (DD/index.md), so images or a slide deck can sit next to it
+bun run new-flow --folder
 ```
 
 ### Creating Series

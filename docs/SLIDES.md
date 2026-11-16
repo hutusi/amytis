@@ -43,7 +43,9 @@ put captions in the alt text and prose before or after the deck.
 bun run new-slides ~/Desktop/XConf-Export --into content/posts/xconf-2026/ \
   --title "Building a Digital Garden" --video https://youtu.be/…
 
-# A PDF export: pages become PNG slides, and the PDF becomes the download link
+# A PDF export into today's flow: pages become PNG slides, and the PDF
+# becomes the download link. A deck needs a folder flow; --folder makes one.
+bun run new-flow --folder
 bun run new-slides ~/Desktop/xconf.pdf --into content/flows/2026/11/15/
 ```
 
@@ -100,7 +102,7 @@ content lives:
 | Folder post | Yes | `content/posts/my-talk/index.mdx` + `content/posts/my-talk/slides/*.png` |
 | Single-file post | Yes | The build copies each file the post references |
 | Series post (folder or file) | Yes | As for posts |
-| Flow entry | Folder flows only | `content/flows/2026/11/15/index.md` + `content/flows/2026/11/15/slides/*.png` |
+| Flow entry | Folder flows only (`bun run new-flow --folder`) | `content/flows/2026/11/15/index.md` + `content/flows/2026/11/15/slides/*.png` |
 | Book chapter | Yes | Next to the chapter, like any chapter image |
 | Note | No | Notes are single files and nothing copies their images |
 
