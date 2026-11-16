@@ -29,7 +29,8 @@ checked afterwards.
 
    `TRANSLATE_REQUEST_OPTIONS` (optional) is a JSON object merged into every
    request body, for provider-specific switches such as
-   `{"enable_thinking": false}` on a reasoning model. Check your provider's
+   `{"enable_thinking": false}` on a reasoning model, or a higher
+   `{"max_tokens": 16384}` when replies get cut off. Check your provider's
    docs for what its models accept.
 
 ## Translate
@@ -45,7 +46,9 @@ bun run translate content/posts/my-post.mdx --dry-run  # print it, write nothing
 `--to <locale>` picks the target when the site has more than one other
 locale. An existing translation is skipped (or refused, for a single file)
 unless you pass `--force`, so an interrupted folder run can simply be run
-again.
+again. A translation counts as existing in any form the site treats as the
+same item (`foo.md` for `foo.mdx`, or `foo/index.md`); `--force` replaces it
+only at the same path and refuses to add a second form beside it.
 
 ## What it does for you
 
@@ -53,7 +56,8 @@ again.
   `content/zh/posts/foo.mdx`, so the two pair up for the language switch and
   `hreflang`.
 - **Frontmatter.** It translates `title`, `subtitle`, `excerpt`,
-  `description`, book `part` names and the words of a `text:` cover. It keeps
+  `description`, book `part` and `section` names and the words of a `text:`
+  cover, including values written over several lines. It keeps
   dates, tags, slugs and flags as written: tags stay in the default language,
   because tag pages are shared across languages. It drops `redirectFrom`,
   since those aliases belong to the original and a second copy fails the
@@ -62,10 +66,11 @@ again.
   They are restored byte for byte, so comments in code stay in the original
   language.
 - **Checks the reply.** If the translation lost or changed a code block, a
-  heading level, a link or image URL, a wikilink target, inline code, a `:::`
+  heading level, a link or image URL (in Markdown or in an HTML `src`,
+  `href`, `poster` or `srcset`), a wikilink target, inline code, a `:::`
   directive or an HTML tag, the file is not written and the differences are
   listed. Run it again, or pass `--force` to write it anyway and fix it by
-  hand.
+  hand. A reply the provider cut off at its output limit is never written.
 - **Files next to the content.** A folder post's files, and the local files a
   post links to, are copied into the locale tree. Files already there are kept,
   so an image you translated by hand is never overwritten.
@@ -74,7 +79,8 @@ again.
   locale series without an index doesn't appear. It warns when an index's
   `posts:` or `chapters` list names items with no translation yet: the build
   fails until they are translated or removed from the list.
-- **Long posts** go to the model in parts, split at `## ` headings.
+- **Long posts** go to the model in parts of about 6,000 characters, split at
+  `## ` headings, so each part's translation fits a typical output limit.
 
 ## Before you publish
 

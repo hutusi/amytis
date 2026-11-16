@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import matter from 'gray-matter';
 import {
   classifySource,
   compareStructure,
@@ -87,7 +88,7 @@ describe('frontmatter', () => {
       ['part', 'Part I'],
       ['title', 'Introduction'],
     ]);
-    expect(findTranslatableFields('coverImage: "./cover.jpg"\ndescription: |\n  block\n')).toEqual([]);
+    expect(findTranslatableFields('coverImage: "./cover.jpg"\ndescription: ""\n')).toEqual([]);
   });
 
   test('rewrites only those values, keeps everything else and drops redirectFrom', () => {
@@ -111,6 +112,48 @@ describe('frontmatter', () => {
     ].join('\n'));
     expect(rewriteFrontmatter('title: x\nredirectFrom: ["/a", "/b"]\ndate: "2026-01-01"\n', [], []))
       .toBe('title: x\ndate: "2026-01-01"\n');
+  });
+
+  test('reads a value over all its lines and rewrites it as one valid line', () => {
+    const fm = [
+      'title: A long title',
+      '  that continues',
+      'excerpt: >-',
+      '  A folded',
+      '',
+      '  excerpt',
+      'subtitle: "Quoted',
+      '  over lines"',
+      'chapters:',
+      '  - section: "Basics"',
+      '    items:',
+      '      - title: "Intro"',
+      '        id: "intro"',
+      'date: 2026-01-01',
+      '',
+    ].join('\n');
+    const fields = findTranslatableFields(fm);
+    expect(fields.map((f) => [f.key, f.text, f.line, f.endLine])).toEqual([
+      ['title', 'A long title that continues', 0, 1],
+      ['excerpt', 'A folded excerpt', 2, 5],
+      ['subtitle', 'Quoted over lines', 6, 7],
+      ['section', 'Basics', 9, 9],
+      ['title', 'Intro', 11, 11],
+    ]);
+    const out = rewriteFrontmatter(fm, fields, ['长标题', '摘要', '副标题', '基础', '引言']);
+    expect(matter(`---\n${out}---\n`).data).toEqual({
+      title: '长标题',
+      excerpt: '摘要',
+      subtitle: '副标题',
+      chapters: [{ section: '基础', items: [{ title: '引言', id: 'intro' }] }],
+      date: new Date('2026-01-01'),
+    });
+  });
+
+  test('leaves a mapping or sequence under a translated key alone', () => {
+    for (const fm of ['title:\n  en: A\n  zh: B\n', 'title:\n  - A\n  - B\n']) {
+      expect(findTranslatableFields(fm)).toEqual([]);
+    }
   });
 
   test('escapes quotes and backslashes in translations', () => {
@@ -156,6 +199,13 @@ describe('masking', () => {
       'Intro', '', '@@BLOCK_0@@', '', '- item', '  @@BLOCK_1@@', '', '> @@BLOCK_2@@', '', '@@BLOCK_3@@', '', '@@BLOCK_4@@', '', 'Outro',
     ].join('\n'));
     expect(unmaskBlocks(masked, blocks)).toBe(BODY);
+  });
+
+  test('masks a fence that opens on a list item line', () => {
+    const body = '- ```js\n  const a = 1;\n  ```\n\n1. ~~~\n   x\n   ~~~\n\nProse after.';
+    const { masked, blocks } = maskBlocks(body);
+    expect(masked).toBe('- @@BLOCK_0@@\n\n1. @@BLOCK_1@@\n\nProse after.');
+    expect(unmaskBlocks(masked, blocks)).toBe(body);
   });
 
   test('an unclosed fence runs to the end', () => {
@@ -241,6 +291,12 @@ describe('compareStructure', () => {
   });
 });
 
+test('compareStructure catches a changed HTML asset URL', () => {
+  expect(compareStructure('<img src="./chart.png" />', '<img src="./图表.png" />', 0))
+    .toEqual(['HTML URLs: missing src=./chart.png; unexpected src=./图表.png']);
+  expect(compareStructure('<video poster="p.jpg"></video>', '<video poster="p.jpg"></video>', 0)).toEqual([]);
+});
+
 describe('danglingAnchors', () => {
   test('lists in-page links whose heading id changed with the translation', () => {
     const source = '## Code Groups\n\nSee [groups](#code-groups) and [slide 2](#slides-2).';
@@ -269,6 +325,9 @@ describe('series and book lists', () => {
     expect(listedBookChapters({
       chapters: [{ part: 'I', chapters: [{ title: 'A', id: 'a' }, { title: 'B', id: 'b' }] }, { title: 'C', id: 'c' }],
     })).toEqual(['a', 'b', 'c']);
+    expect(listedBookChapters({
+      chapters: [{ section: 'S', items: [{ title: 'A', id: 'a' }, { section: 'T', items: [{ title: 'B', id: 'b' }] }] }],
+    })).toEqual(['a', 'b']);
     expect(seriesPostSlug('2026-01-02-hello.mdx')).toBe('hello');
     expect(seriesPostSlug('02-routing-mastery')).toBe('02-routing-mastery');
   });

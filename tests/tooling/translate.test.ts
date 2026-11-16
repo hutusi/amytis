@@ -9,7 +9,7 @@ import path from 'node:path';
 const SCRIPT = path.resolve('scripts/translate.ts');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-translate-'));
 
-type Mode = 'translate' | 'drop-placeholder' | 'fence' | 'fail-once';
+type Mode = 'translate' | 'drop-placeholder' | 'fence' | 'fail-once' | 'truncate';
 let mode: Mode = 'translate';
 let failedOnce = false;
 const requests: Array<{ auth: string | null; model: string; system: string; user: string }> = [];
@@ -42,7 +42,8 @@ const server = Bun.serve({
       if (mode === 'drop-placeholder') content = content.replace('@@BLOCK_0@@', '');
       if (mode === 'fence') content = `\`\`\`markdown\n${content}\n\`\`\``;
     }
-    return Response.json({ choices: [{ message: { content } }] });
+    const finishReason = mode === 'truncate' && !system.includes('JSON array') ? 'length' : 'stop';
+    return Response.json({ choices: [{ finish_reason: finishReason, message: { content } }] });
   },
 });
 
@@ -232,6 +233,71 @@ describe('translate script', () => {
     expect(stderr).toContain('code/math placeholders: missing @@BLOCK_0@@');
     expect(stderr).toContain('Failed: content/posts/hello.mdx.');
     expect(exists(cwd, 'zh/posts/hello.mdx')).toBe(false);
+  });
+
+  test('a reply cut off at the output limit is reported and not written', async () => {
+    mode = 'truncate';
+    const cwd = site({ 'notes/long.md': '---\ntitle: "Long"\n---\n\nText.\n' });
+    const { code, stderr } = await run(cwd, ['content/notes/long.md']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('the reply was cut off at the model\'s output limit (finish_reason: length)');
+    expect(exists(cwd, 'zh/notes/long.md')).toBe(false);
+  });
+
+  test('an existing translation in another form counts, and --force never adds a second one', async () => {
+    mode = 'translate';
+    const cwd = site({
+      ...SERIES,
+      'zh/series/garden/index.mdx': '---\ntitle: "花园"\nposts: ["01-intro", "02-next"]\n---\n',
+      'zh/series/garden/01-intro.md': '---\ntitle: "引言"\n---\n',
+    });
+    const skip = await run(cwd, ['content/series/garden/01-intro.mdx']);
+    expect(skip.code).toBe(1);
+    expect(skip.stderr).toContain('Already translated: content/zh/series/garden/01-intro.md.');
+
+    const forced = await run(cwd, ['content/series/garden/01-intro.mdx', '--force']);
+    expect(forced.code).toBe(1);
+    expect(forced.stderr).toContain('content/series/garden/01-intro.mdx is already translated as content/zh/series/garden/01-intro.md');
+    expect(exists(cwd, 'zh/series/garden/01-intro.mdx')).toBe(false);
+
+    // A folder run skips it and translates the rest.
+    const folder = await run(cwd, ['content/series/garden']);
+    expect(folder.code).toBe(0);
+    expect(exists(cwd, 'zh/series/garden/02-next.mdx')).toBe(true);
+    expect(exists(cwd, 'zh/series/garden/01-intro.mdx')).toBe(false);
+    expect(folder.stderr).toContain('Skipped 2 already translated');
+    expect(folder.stderr).not.toContain('Warning:');
+  });
+
+  test('a book chapter brings the index, section names translated, and warns about chapters in sections', async () => {
+    mode = 'translate';
+    const cwd = site({
+      'books/guide/index.mdx': [
+        '---',
+        'title: "Guide"',
+        'date: "2026-01-01"',
+        'chapters:',
+        '  - section: "Basics"',
+        '    items:',
+        '      - title: "Intro"',
+        '        id: "intro"',
+        '      - section: "Deeper"',
+        '        items:',
+        '          - title: "Setup"',
+        '            id: "setup"',
+        '---',
+        '',
+      ].join('\n'),
+      'books/guide/intro.mdx': '---\ntitle: "Intro"\n---\n\nHello.\n',
+      'books/guide/setup.mdx': '---\ntitle: "Setup"\n---\n\nSteps.\n',
+    });
+    const { code, stderr } = await run(cwd, ['content/books/guide/intro.mdx']);
+    expect(code).toBe(0);
+    const index = read(cwd, 'zh/books/guide/index.mdx');
+    expect(index).toContain('  - section: "译 Basics"');
+    expect(index).toContain('      - section: "译 Deeper"');
+    expect(index).toContain('            id: "setup"');
+    expect(stderr).toContain('content/zh/books/guide/ lists chapters with no zh version yet: setup.');
   });
 
   test('unwraps a reply wrapped in a fence, and retries once after a server error', async () => {

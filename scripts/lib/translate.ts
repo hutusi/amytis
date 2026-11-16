@@ -83,12 +83,14 @@ export function splitFrontmatter(raw: string): { frontmatter: string | null; bod
   return { frontmatter: match[1], body: raw.slice(match[0].length) };
 }
 
-const TRANSLATED_KEYS = 'title|subtitle|excerpt|description|part';
+const TRANSLATED_KEYS = 'title|subtitle|excerpt|description|part|section';
 const FIELD_RE = new RegExp(`^(\\s*(?:-\\s+)?)(${TRANSLATED_KEYS}|coverImage):[ \\t]*(.*?)[ \\t]*$`);
 
 export interface FrontmatterField {
-  /** Line index inside the frontmatter. */
+  /** First line index of the field inside the frontmatter. */
   line: number;
+  /** Last line index: a value may continue on more-indented lines. */
+  endLine: number;
   /** Indentation and list dash before the key. */
   prefix: string;
   key: string;
@@ -96,73 +98,104 @@ export interface FrontmatterField {
   text: string;
 }
 
-/** A YAML scalar as written on one line, or null when it isn't a plain one-line string. */
-function parseScalar(raw: string): string | null {
-  if (raw === '' || /^[|>]/.test(raw)) return null;
-  if (raw.startsWith('"')) {
+function indentOf(line: string): number {
+  return line.match(/^[ \t]*/)![0].length;
+}
+
+/**
+ * A YAML string scalar from its first line and its continuation lines, or
+ * null when it isn't one this can rewrite safely (a mapping, a sequence, an
+ * alias, an unparsable quote). Line breaks fold to spaces, as YAML folds a
+ * multi-line plain or quoted scalar; block scalars fold the same way, since a
+ * title or excerpt renders on one line anyway.
+ */
+function parseScalar(first: string, rest: string[]): string | null {
+  const more = rest.map((line) => line.trim()).filter(Boolean);
+  if (/^[|>][+-]?\d*[+-]?(?:\s+#.*)?$/.test(first)) return more.length > 0 ? more.join(' ') : null;
+  const joined = [first, ...more].filter(Boolean).join(' ');
+  if (joined === '') return null;
+  if (joined.startsWith('"')) {
+    const quoted = joined.match(/^"((?:[^"\\]|\\.)*)"\s*(?:#.*)?$/);
+    if (!quoted) return null;
     try {
-      const value: unknown = JSON.parse(raw);
-      return typeof value === 'string' ? value : null;
+      return JSON.parse(`"${quoted[1]}"`) as string;
     } catch {
       return null;
     }
   }
-  if (raw.startsWith("'")) {
-    return raw.endsWith("'") && raw.length >= 2 ? raw.slice(1, -1).replace(/''/g, "'") : null;
+  if (joined.startsWith("'")) {
+    const quoted = joined.match(/^'((?:[^']|'')*)'\s*(?:#.*)?$/);
+    return quoted ? quoted[1].replace(/''/g, "'") : null;
   }
-  if (/^[[{&*!]/.test(raw)) return null;
-  return raw.replace(/\s+#.*$/, '');
+  if (/^[[{&*!|>@`%]/.test(joined)) return null;
+  // A plain scalar can't hold `key: ` or start a line with `- `: lines like
+  // those make the value a nested mapping or sequence instead.
+  if (more.some((line) => /^-(?:\s|$)/.test(line) || /:(?:\s|$)/.test(line))) return null;
+  return joined.replace(/\s+#.*$/, '');
 }
 
 /**
  * The frontmatter strings a translation changes: titles, subtitles, excerpts,
- * descriptions and book `part` names at any depth, and a `text:` cover's
- * words. Everything else (dates, tags, slugs, flags) stays as written.
+ * descriptions and book `part` and `section` names at any depth, and a
+ * `text:` cover's words. Everything else (dates, tags, slugs, flags) stays as
+ * written.
  */
 export function findTranslatableFields(frontmatter: string): FrontmatterField[] {
+  const lines = frontmatter.split('\n').map((line) => line.replace(/\r$/, ''));
   const fields: FrontmatterField[] = [];
-  frontmatter.split('\n').forEach((line, index) => {
-    const match = line.replace(/\r$/, '').match(FIELD_RE);
-    if (!match) return;
-    const [, prefix, key, raw] = match;
-    const value = parseScalar(raw);
-    if (value === null || value.trim() === '') return;
-    if (key === 'coverImage') {
-      if (!value.startsWith('text:')) return;
-      const words = value.slice('text:'.length);
-      if (words.trim()) fields.push({ line: index, prefix, key, text: words });
-      return;
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(FIELD_RE);
+    if (!match) continue;
+    const [, prefix, key, first] = match;
+    // The value continues on following lines indented past the key.
+    let end = i;
+    for (let j = i + 1; j < lines.length; j++) {
+      if (lines[j].trim() === '') continue;
+      if (indentOf(lines[j]) <= prefix.length) break;
+      end = j;
     }
-    fields.push({ line: index, prefix, key, text: value });
-  });
+    const value = parseScalar(first, lines.slice(i + 1, end + 1));
+    if (value === null || value.trim() === '') continue;
+    if (key === 'coverImage') {
+      if (!value.startsWith('text:')) continue;
+      const words = value.slice('text:'.length);
+      if (words.trim()) fields.push({ line: i, endLine: end, prefix, key, text: words });
+    } else {
+      fields.push({ line: i, endLine: end, prefix, key, text: value });
+    }
+    i = end;
+  }
   return fields;
 }
 
 /**
- * The frontmatter with each field's value replaced by its translation, and
- * top-level `redirectFrom` removed: aliases belong to the original, and a
- * second copy of one fails the build. Other lines, comments included, are
- * kept as written.
+ * The frontmatter with each field's value (all its lines) replaced by its
+ * translation on one line, and top-level `redirectFrom` removed: aliases
+ * belong to the original, and a second copy of one fails the build. Other
+ * lines, comments included, are kept as written.
  */
 export function rewriteFrontmatter(frontmatter: string, fields: FrontmatterField[], translations: string[]): string {
   const lines = frontmatter.split('\n');
+  const dropped = new Set<number>();
   fields.forEach((field, i) => {
     const value = field.key === 'coverImage' ? `text:${translations[i]}` : translations[i];
     const eol = lines[field.line].endsWith('\r') ? '\r' : '';
     lines[field.line] = `${field.prefix}${field.key}: "${yamlDoubleQuoted(value)}"${eol}`;
+    for (let line = field.line + 1; line <= field.endLine; line++) dropped.add(line);
   });
   const kept: string[] = [];
   let dropping = false;
-  for (const line of lines) {
+  lines.forEach((line, index) => {
+    if (dropped.has(index)) return;
     if (/^redirectFrom\s*:/.test(line)) {
       dropping = true;
-      continue;
+      return;
     }
     // A dropped key's value continues on indented or `- ` lines.
-    if (dropping && (/^[ \t]/.test(line) || /^-\s/.test(line))) continue;
+    if (dropping && (/^[ \t]/.test(line) || /^-\s/.test(line))) return;
     dropping = false;
     kept.push(line);
-  }
+  });
   return kept.join('\n');
 }
 
@@ -174,9 +207,12 @@ export function placeholder(index: number): string {
   return `@@BLOCK_${index}@@`;
 }
 
-const FENCE_OPEN_RE = /^([ \t]*(?:>[ \t]?)*)(`{3,}|~{3,})/;
+// What may stand before a block on its first line: indentation, `>` quote
+// markers and list markers (`- ```js` opens a fence inside a list item).
+const CONTAINER_PREFIX = String.raw`((?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d{1,9}[.)])[ \t]+))*[ \t]*)`;
+const FENCE_OPEN_RE = new RegExp(`^${CONTAINER_PREFIX}(\`{3,}|~{3,})`);
 const FENCE_CLOSE_RE = /^[ \t]*(?:>[ \t]?)*(`{3,}|~{3,})[ \t]*$/;
-const MATH_RE = /^([ \t]*(?:>[ \t]?)*)\$\$[ \t]*$/;
+const MATH_RE = new RegExp(`^${CONTAINER_PREFIX}\\$\\$[ \\t]*$`);
 
 /**
  * The body with every fenced code block and `$$` math block swapped for a
@@ -220,10 +256,11 @@ export function unmaskBlocks(masked: string, blocks: string[]): string {
 
 /**
  * Splits a masked body into pieces of about `limit` characters at `## `
- * headings, so a long post goes to the model in parts. A section longer than
- * the limit stays whole.
+ * headings, so a long post goes to the model in parts and each part's
+ * translation fits a typical output limit. A section longer than the limit
+ * stays whole.
  */
-export function splitIntoChunks(masked: string, limit = 12000): string[] {
+export function splitIntoChunks(masked: string, limit = 6000): string[] {
   const sections: string[][] = [[]];
   for (const line of masked.split('\n')) {
     if (line.startsWith('## ') && sections[sections.length - 1].length > 0) sections.push([]);
@@ -287,6 +324,12 @@ function wikilinkTargets(text: string): string[] {
   return [...stripInlineCode(text).matchAll(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g)].map((m) => m[1].trim());
 }
 
+/** URL-valued HTML attributes: an asset path changed here breaks the page as surely as a Markdown link. */
+function htmlUrls(text: string): string[] {
+  return [...stripInlineCode(text).matchAll(/\b(src|href|poster|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)]
+    .map((m) => `${m[1].toLowerCase()}=${m[2] ?? m[3]}`);
+}
+
 function htmlTags(text: string): string[] {
   return [...stripInlineCode(text).matchAll(/<\/?[A-Za-z][\w.-]*(?=[\s/>])/g)].map((m) => m[0]);
 }
@@ -345,6 +388,7 @@ export function compareStructure(source: string, output: string, blockCount: num
     ['inline code', sorted(inlineCode(source)), sorted(inlineCode(output)), false],
     ['::: directives', directiveLines(source), directiveLines(output), true],
     ['HTML tags', htmlTags(source), htmlTags(output), true],
+    ['HTML URLs', sorted(htmlUrls(source)), sorted(htmlUrls(output)), false],
   ];
   for (const [name, a, b, ordered] of checks) {
     if (!sameSequence(a, b)) {
@@ -460,7 +504,10 @@ export function listedSeriesPosts(data: Record<string, unknown>): string[] {
   return Array.isArray(data.posts) ? data.posts.filter((slug): slug is string => typeof slug === 'string') : [];
 }
 
-/** The chapter ids a book index lists, flattened out of its parts. */
+/**
+ * The chapter ids a book index lists, flattened out of both table-of-contents
+ * shapes: `part` + `chapters`, and nested `section` + `items`.
+ */
 export function listedBookChapters(data: Record<string, unknown>): string[] {
   const ids: string[] = [];
   const walk = (items: unknown) => {
@@ -470,6 +517,7 @@ export function listedBookChapters(data: Record<string, unknown>): string[] {
       const record = item as Record<string, unknown>;
       if (typeof record.id === 'string') ids.push(record.id);
       walk(record.chapters);
+      walk(record.items);
     }
   };
   walk(data.chapters);

@@ -107,6 +107,22 @@ function relOf(absolute: string): string {
   return toPosix(path.relative(contentRoot, absolute));
 }
 
+/**
+ * The file in the locale tree that already holds the translation of `rel`,
+ * in any form the content layer treats as the same item: another extension,
+ * or the flat (`x.md`) and folder (`x/index.md`, `x/README.md`) forms. A
+ * second form beside the first would be a duplicate, which the build rejects.
+ */
+function existingTranslation(rel: string, locale: string): string | null {
+  const stem = rel.replace(/\.(mdx?|rst)$/, '').replace(/\/(index|README)$/, '');
+  const forms = ['.mdx', '.md', '.rst'];
+  const candidates = [
+    ...forms.map((ext) => `${stem}${ext}`),
+    ...['index', 'README'].flatMap((name) => forms.map((ext) => `${stem}/${name}${ext}`)),
+  ];
+  return candidates.find((candidate) => fs.existsSync(path.join(contentRoot, locale, candidate))) ?? null;
+}
+
 function findIndex(dir: string): string | null {
   const name = INDEX_NAMES.find((candidate) => fs.existsSync(path.join(dir, candidate)));
   return name ? path.join(dir, name) : null;
@@ -174,9 +190,10 @@ function plan(): Plan {
   if ((domain === 'series' || domain === 'books') && rel.split('/').length >= 2) {
     const container = rel.split('/').slice(0, 2).join('/');
     containers.push(container);
-    const targetIndex = findIndex(path.join(contentRoot, locale, container));
     const sourceIndex = findIndex(path.join(contentRoot, container));
-    if (!targetIndex && sourceIndex && !docs.includes(relOf(sourceIndex))) docs.unshift(relOf(sourceIndex));
+    if (sourceIndex && !existingTranslation(relOf(sourceIndex), locale) && !docs.includes(relOf(sourceIndex))) {
+      docs.unshift(relOf(sourceIndex));
+    }
   }
 
   // The series or book index first, so the log reads top-down.
@@ -195,10 +212,19 @@ try {
   fail((error as Error).message);
 }
 
-const pending = job.docs.filter((doc) => force || !fs.existsSync(path.join(contentRoot, targetPath(doc, job.locale))));
+const existing = new Map(job.docs.map((doc) => [doc, existingTranslation(doc, job.locale)]));
+const existingPath = (doc: string) => `content/${job.locale}/${existing.get(doc)}`;
+if (force) {
+  // --force replaces a translation in place; it never adds a second form of one.
+  const conflicts = job.docs.filter((doc) => existing.get(doc) && existing.get(doc) !== doc);
+  if (conflicts.length > 0) {
+    fail(`${conflicts.map((doc) => `content/${doc} is already translated as ${existingPath(doc)}`).join('; ')}. Writing content/${targetPath(conflicts[0], job.locale)} beside it would make a duplicate; delete or rename the existing file first.`);
+  }
+}
+const pending = job.docs.filter((doc) => force || !existing.get(doc));
 const skipped = job.docs.filter((doc) => !pending.includes(doc));
 if (pending.length === 0) {
-  fail(`Already translated: ${skipped.map((doc) => `content/${targetPath(doc, job.locale)}`).join(', ')}. Pass --force to translate again.`);
+  fail(`Already translated: ${skipped.map(existingPath).join(', ')}. Pass --force to translate again.`);
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -250,8 +276,15 @@ async function chat(system: string, user: string): Promise<string> {
     if (!response.ok) {
       throw new Error(`the provider answered ${response.status}: ${(await response.text()).slice(0, 300)}`);
     }
-    const data = (await response.json()) as { choices?: Array<{ message?: { content?: unknown } }> };
-    const content = data.choices?.[0]?.message?.content;
+    const data = (await response.json()) as { choices?: Array<{ finish_reason?: unknown; message?: { content?: unknown } }> };
+    const choice = data.choices?.[0];
+    if (choice?.finish_reason === 'length') {
+      throw new Error('the reply was cut off at the model\'s output limit (finish_reason: length). Raise it with TRANSLATE_REQUEST_OPTIONS, e.g. {"max_tokens": 16384}, if the model allows.');
+    }
+    if (choice?.finish_reason === 'content_filter') {
+      throw new Error('the provider withheld the reply (finish_reason: content_filter).');
+    }
+    const content = choice?.message?.content;
     if (typeof content !== 'string') throw new Error('the provider\'s reply had no message content.');
     return content;
   }
@@ -350,8 +383,7 @@ for (const asset of job.assets) {
 
 /** Whether the target tree has (or this run produced) a translation at `rel`. */
 function translated(rel: string): boolean {
-  if (fs.existsSync(path.join(contentRoot, job.locale, rel))) return true;
-  return dryRun && written.some((doc) => doc === rel);
+  return existingTranslation(rel, job.locale) !== null || (dryRun && written.includes(rel));
 }
 
 for (const container of job.containers) {
@@ -395,7 +427,7 @@ for (const container of job.containers) {
 const verb = dryRun ? 'Would write' : 'Wrote';
 console.error('');
 if (written.length > 0) console.error(`${verb} ${written.length} translation${written.length === 1 ? '' : 's'} into content/${job.locale}/.`);
-if (skipped.length > 0) console.error(`Skipped ${skipped.length} already translated (pass --force to redo): ${skipped.map((doc) => `content/${targetPath(doc, job.locale)}`).join(', ')}`);
+if (skipped.length > 0) console.error(`Skipped ${skipped.length} already translated (pass --force to redo): ${skipped.map(existingPath).join(', ')}`);
 if (copied.length > 0) {
   console.error(`${dryRun ? 'Would copy' : 'Copied'} ${copied.length} file${copied.length === 1 ? '' : 's'}: ${copied.join(', ')}`);
   console.error(`  Images with text in them are still in ${from}; replace them by hand if needed.`);
