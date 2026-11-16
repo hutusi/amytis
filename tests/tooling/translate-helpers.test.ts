@@ -295,6 +295,12 @@ test('compareStructure catches a changed HTML asset URL', () => {
   expect(compareStructure('<img src="./chart.png" />', '<img src="./图表.png" />', 0))
     .toEqual(['HTML URLs: missing src=./chart.png; unexpected src=./图表.png']);
   expect(compareStructure('<video poster="p.jpg"></video>', '<video poster="p.jpg"></video>', 0)).toEqual([]);
+  // Unquoted and single-quoted values, as in content/posts/2026-01-15-nested-image-test.
+  expect(compareStructure('<img src=./images/test.svg />', '<img src=./images/测试.svg />', 0))
+    .toEqual(['HTML URLs: missing src=./images/test.svg; unexpected src=./images/测试.svg']);
+  expect(compareStructure("<a href='./a/'>x</a>", "<a href='./b/'>x</a>", 0))
+    .toEqual(['HTML URLs: missing href=./a/; unexpected href=./b/']);
+  expect(compareStructure('<img src=./a.svg alt=A>', '<img src=./a.svg alt=甲>', 0)).toEqual([]);
 });
 
 describe('danglingAnchors', () => {

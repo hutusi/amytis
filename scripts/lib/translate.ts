@@ -324,10 +324,14 @@ function wikilinkTargets(text: string): string[] {
   return [...stripInlineCode(text).matchAll(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g)].map((m) => m[1].trim());
 }
 
-/** URL-valued HTML attributes: an asset path changed here breaks the page as surely as a Markdown link. */
+/**
+ * URL-valued HTML attributes: an asset path changed here breaks the page as
+ * surely as a Markdown link. Values may be double-, single- or unquoted
+ * (`src=./a.svg`, which runs to whitespace or `>` as in HTML).
+ */
 function htmlUrls(text: string): string[] {
-  return [...stripInlineCode(text).matchAll(/\b(src|href|poster|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)]
-    .map((m) => `${m[1].toLowerCase()}=${m[2] ?? m[3]}`);
+  return [...stripInlineCode(text).matchAll(/\b(src|href|poster|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi)]
+    .map((m) => `${m[1].toLowerCase()}=${m[2] ?? m[3] ?? m[4]}`);
 }
 
 function htmlTags(text: string): string[] {
