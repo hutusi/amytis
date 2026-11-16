@@ -43,7 +43,11 @@ renders lazily in a responsive 16:9 box, so it needs no wrapper `<div>`.
 Write embed URLs with `https://` (Bilibili's share code starts with `//`,
 which feed readers can't resolve) and add `&autoplay=0` to a Bilibili
 player URL. Many feed readers drop iframes, so add a plain link to the
-video too. `<video>`, `<audio>`, `<source>` and `<track>` paths and video
+video too. Keep a `<video>` or `<audio>` opening tag on one line, with a
+blank line before it: Markdown reads a multi-line tag as HTML only for
+block tags like `<div>` and `<iframe>`, so a `<video` whose `>` sits on its
+own line renders as text and an empty quote (wrapping it in a `<div>` also
+works). `<video>`, `<audio>`, `<source>` and `<track>` paths and video
 `poster`s resolve like image paths (`rehype-media-paths`): `./clip.mp4` in
 a folder post or folder flow points at the file next to it, on the page,
 in the flow stream and in feeds. `images.cdnBaseUrl` prefixes posters but

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { getPostBySlug } from '@/lib/content/posts';
 import { markdownToHtml } from '@/lib/markdown-to-html';
 import { renderAsync } from '@/test-utils/render';
 
@@ -28,6 +29,18 @@ describe('Integration: video and audio embeds', () => {
       expect(html).toContain('<source src="/flows/2026/11/16/clip.mp4" type="video/mp4"/>');
       expect(html).toContain('<audio src="/flows/2026/11/16/episode.mp3"');
     }
+  });
+
+  // Only block tags (div, iframe, source…) may span lines as raw HTML; a
+  // <video>/<audio> opening tag whose `>` sits on its own line falls apart
+  // into text and an empty blockquote.
+  test('the showcase post renders its HTML5 video and audio players', async () => {
+    const post = getPostBySlug('multimedia-showcase');
+    expect(post).not.toBeNull();
+    const html = await renderAsync(MarkdownRenderer({ content: post!.content, slug: post!.imageBaseSlug }));
+    expect(html).toMatch(/<video [^>]*poster="https:\/\/peach\.blender\.org\/[^"]*"[^>]*>\s*<source src="https:\/\/commondatastorage/);
+    expect(html).toMatch(/<audio [^>]*>\s*<source src="https:\/\/www\.soundhelix\.com/);
+    expect(html).not.toMatch(/<p>&lt;(video|audio)\b/);
   });
 
   test('feed items point co-located media at the asset base, not the page URL', () => {
