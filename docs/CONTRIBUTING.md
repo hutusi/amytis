@@ -196,6 +196,12 @@ Rules the build enforces (throws, not warnings):
   `content/<locale>/series/<s>/index.md` alongside the posts.
 - Flow locale trees (`content/<locale>/flows/`) are not supported yet.
 
+To write a translation with an LLM, use `bun run translate <file-or-folder>`
+(any OpenAI-compatible API, e.g. Aliyun Bailian): it places the file, keeps
+the frontmatter rules above and the code blocks intact, copies co-located
+files and checks the result. See
+[`docs/guides/translating-content.md`](./guides/translating-content.md).
+
 Locale pages generate **sparsely**: `/zh/posts/` exists only when the zh tree
 has posts; pages without a translation simply have no `/zh/` twin (the
 language switch falls back to the locale home). Moving existing published

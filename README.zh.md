@@ -168,6 +168,7 @@ bun run import-book
 bun run sync-book
 bun run series-draft "series-slug"
 bun run add-series-redirects --dry-run
+bun run translate content/posts/my-post.mdx   # 用大模型翻译到 content/zh/，见 docs/guides/translating-content.md
 ```
 
 ### 将聊天记录导入为 Flows
