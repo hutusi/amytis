@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { decodeNamedCharacterReference } from 'decode-named-character-reference';
 import { siteConfig } from '../site.config';
 import { copyKatexAssets } from './copy-vendor-assets';
 
@@ -197,16 +198,15 @@ function normalizeReferencedAssetPath(rawPath: string): string | null {
   return withoutFragment;
 }
 
-const NAMED_CHARACTER_REFERENCES: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
-
 /**
  * Decodes the character references a Markdown or HTML parser decodes in a
  * link or an attribute: `pdf="./R&amp;D.pdf"` names the file `R&D.pdf`.
- * Numeric references, and the named ones a file name plausibly needs.
+ * Named references go through micromark's own table, and the lengths
+ * follow CommonMark (7 decimal or 6 hex digits).
  */
 function decodeCharacterReferences(value: string): string {
-  return value.replace(/&(?:#(\d+)|#[xX]([\da-fA-F]+)|(amp|quot|apos|lt|gt));/g, (reference, decimal, hex, name) => {
-    if (name) return NAMED_CHARACTER_REFERENCES[name];
+  return value.replace(/&(?:#(\d{1,7})|#[xX]([\da-fA-F]{1,6})|([A-Za-z][A-Za-z\d]*));/g, (reference, decimal, hex, name) => {
+    if (name) return decodeNamedCharacterReference(name) || reference;
     const codePoint = decimal ? Number(decimal) : parseInt(hex, 16);
     return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : reference;
   });
@@ -513,7 +513,7 @@ export function assertSiteAssetsExist(
 export function resetAssetClaims() {
   assetDestClaims.clear();
 }
-export { claimAssetDir, extractReferencedAssetPaths };
+export { claimAssetDir, extractReferencedAssetPaths, syncReferencedAssets };
 
 // Only run the copy when invoked as a script — importing the module (e.g. from
 // a test) must not touch the filesystem.
