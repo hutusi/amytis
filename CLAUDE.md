@@ -28,7 +28,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 - **Top-level `[slug]` and `[slug]/[postSlug]`** resolve `redirectFrom` aliases and `series.customPaths` — highest-risk dynamic surface; touch with care.
 - **Locale URLs (`/zh/…`) ride the same `[slug]` tree** plus the `[slug]/[postSlug]/[...rest]` catch-all — a sibling `[locale]` segment is a Next build error. Dispatcher + params providers live in `src/lib/locale-routes.ts`; content trees under `content/<locale>/` mirror the root (see ARCHITECTURE.md "Locale Content Trees").
 - Feeds at `feed.xml` / `feed.atom` / `all.xml` / `all.atom` / `flows/feed.{xml,atom}`; sitemap at `sitemap.ts`; `robots.ts` points crawlers at it; search index at `search.json`; generated share cards at `og/[...path]` (`src/lib/og-images.ts` decides, `og-card.tsx` draws; fonts in `src/fonts/og/` from `scripts/build-og-fonts.py`).
-- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `rehype-fence-meta`, `rehype-image-metadata`, `rehype-heading-anchors`), the post-sanitize rST pass (`rst-enhance.ts`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
+- Rendering pipeline lives in `src/lib/`: Shiki (`shiki.ts`, `shiki-rst.ts`), remark/rehype plugins (`remark-github-alerts`, `remark-wikilinks`, `remark-code-group`, `remark-slide-deck`, `rehype-fence-meta`, `rehype-image-metadata`, `rehype-heading-anchors`), the post-sanitize rST pass (`rst-enhance.ts`), alias/redirect resolution (`route-aliases.ts`), feeds/JSON-LD (`feed-utils.ts`, `json-ld.ts`).
 
 ## Design principles
 
@@ -104,7 +104,7 @@ When compressing history, preserve in priority order:
 - `docs/ARCHITECTURE.md` — route map, content model, components, data layer, frontmatter schemas, full configuration reference
 - `docs/CONTRIBUTING.md` — full command list, test layout, content-creation scripts
 - `docs/TROUBLESHOOTING.md` — known issues (AVIF, dev-mode browser-extension CSP/SharedStorage noise)
-- `docs/ALERTS.md` / `docs/CODE-BLOCKS.md` / `docs/DIGITAL_GARDEN.md` — content-feature references (alert callouts, code-block features, garden philosophy)
+- `docs/ALERTS.md` / `docs/CODE-BLOCKS.md` / `docs/SLIDES.md` / `docs/DIGITAL_GARDEN.md` — content-feature references (alert callouts, code-block features, slide decks, garden philosophy)
 - `docs/deployment.md` — production deploy steps
 - `docs/guides/` — task-oriented walkthroughs (e.g. `importing-vuepress-books.md`)
 - `site.config.ts` — live config (read it directly; don't infer from this file)

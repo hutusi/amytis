@@ -200,6 +200,7 @@ describe("Integration: Feed Utils", () => {
         // Synthetic React-only tags must be mapped to plain HTML
         expect(item.content).not.toContain('<github-alert');
         expect(item.content).not.toContain('<code-group');
+        expect(item.content).not.toContain('<slide-deck');
       });
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
@@ -288,6 +289,46 @@ describe("Integration: Feed Utils", () => {
     expect(item).toBeDefined();
     const imgs = elementUrls(item!.content).filter((u) => u.tag === "img").map((u) => u.url);
     expect(imgs).toContain(`${siteConfig.baseUrl.replace(/\/+$/, "")}/${post!.imageBaseSlug}/assets/diagram.svg`);
+  });
+
+  describe("slide decks", () => {
+    const deck = [
+      ':::slides[XConf Keynote]{pdf="./talk.pdf" video="https://youtu.be/abc"}',
+      '![Title slide](./slides/slide-01.png)',
+      '![Agenda](./slides/slide-02.png)',
+      '![Thanks](./slides/slide-03.png)',
+      ':::',
+    ].join('\n');
+    // A series post on a custom path: the page URL differs from the asset base.
+    const absoluteUrls = {
+      pageUrl: 'https://example.com/talks/keynote/',
+      siteUrl: 'https://example.com',
+      imageBaseSlug: 'posts/keynote',
+    };
+
+    test("show the first slide, linked to the deck, with a caption of links", () => {
+      const html = markdownToHtml(deck, { absoluteUrls });
+      expect(html).not.toContain('<slide-deck');
+      expect(html.match(/<img /g)).toHaveLength(1);
+      expect(html).toContain(
+        '<figure><a href="https://example.com/talks/keynote/#slides-1">' +
+        '<img src="https://example.com/posts/keynote/slides/slide-01.png" alt="Title slide"></a>' +
+        '<figcaption><strong>XConf Keynote</strong><br>' +
+        '<a href="https://example.com/talks/keynote/#slides-1">View all 3 slides</a> · ' +
+        '<a href="https://example.com/posts/keynote/talk.pdf">Download PDF</a> · ' +
+        '<a href="https://youtu.be/abc">Watch the talk</a></figcaption></figure>',
+      );
+    });
+
+    test("leave out the parts a deck doesn't have, and localize the links", () => {
+      const html = markdownToHtml(':::slides\n![一](./s/1.png)\n![二](./s/2.png)\n:::', { absoluteUrls, locale: 'zh' });
+      expect(html).toContain('<figcaption><a href="https://example.com/talks/keynote/#slides-1">查看全部 2 张幻灯片</a></figcaption>');
+      expect(html).not.toContain('<strong>');
+    });
+
+    test("link to the deck relatively when there is no page URL", () => {
+      expect(markdownToHtml(':::slides{#talk}\n![a](a.png)\n![b](b.png)\n:::')).toContain('<a href="#talk-1">View all 2 slides</a>');
+    });
   });
 
   test("text inside code samples is never rewritten", () => {

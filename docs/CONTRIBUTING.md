@@ -24,6 +24,10 @@ per-format fence/directive syntax, see [`docs/CODE-BLOCKS.md`](./CODE-BLOCKS.md)
 For GitHub-flavored alert callouts (`> [!NOTE]`, `.. note::`, etc.) and the
 five supported alert types, see [`docs/ALERTS.md`](./ALERTS.md).
 
+For talk slides (`:::slides` decks with a carousel, fullscreen presenter and
+links to single slides) and the `new-slides` import script, see
+[`docs/SLIDES.md`](./SLIDES.md).
+
 Markdown links to other hosts (anything whose host differs from
 `siteConfig.baseUrl`) automatically render with a trailing `↗` icon and
 open in a new tab — don't write `<a target="_blank">` manually. Internal
@@ -104,6 +108,10 @@ bun run new-from-pdf doc.pdf --title "My Doc"
 
 # Image folder to post
 bun run new-from-images ./photos --title "Gallery"
+
+# Talk slides (image export or PDF) into a post or flow folder; prints the
+# :::slides block to paste. See docs/SLIDES.md.
+bun run new-slides ~/Desktop/XConf-Export --into content/posts/xconf-2026/ --title "My Talk"
 
 # Chat logs to flows
 bun run new-flow-from-chat

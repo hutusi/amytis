@@ -30,6 +30,24 @@ describe('client bundle guards', () => {
     },
   );
 
+  test('slide decks load their interactive runtime only on demand', () => {
+    // Client components imported by MarkdownRenderer share one chunk per
+    // route, so a static import would ship the runtime to every article
+    // page; only pages that render a deck should fetch it (docs/SLIDES.md).
+    const deck = fs.readFileSync('src/components/SlideDeck.tsx', 'utf8');
+    expect(deck).not.toMatch(/^['"]use client['"]/m);
+    const gate = fs.readFileSync('src/components/SlideDeckControls.tsx', 'utf8');
+    expect(gate).toContain("import('@/components/SlideDeckRuntime')");
+    for (const file of ['src/components/MarkdownRenderer.tsx', 'src/components/SlideDeck.tsx', 'src/components/SlideDeckControls.tsx']) {
+      expect(staticValueImports(fs.readFileSync(file, 'utf8'))).not.toContain('@/components/SlideDeckRuntime');
+    }
+    // A CSS import anywhere in the article module graph is linked on every
+    // article page (the KaTeX lesson in CLAUDE.md).
+    for (const file of ['src/components/SlideDeck.tsx', 'src/components/SlideDeckControls.tsx', 'src/components/SlideDeckRuntime.tsx']) {
+      expect(fs.readFileSync(file, 'utf8')).not.toMatch(/^import\s+[^;]*['"][^'"]+\.css['"]/m);
+    }
+  });
+
   test('the import scan sees value imports and skips type-only ones', () => {
     expect(staticValueImports(`import SearchPanel from '@/components/SearchPanel';`)).toEqual(['@/components/SearchPanel']);
     expect(staticValueImports(`import { usePagefind } from '@/hooks/usePagefind';`)).toEqual(['@/hooks/usePagefind']);

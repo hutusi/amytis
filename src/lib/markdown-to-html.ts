@@ -11,10 +11,13 @@ import { visit } from 'unist-util-visit';
 import type { Root, Element, ElementContent } from 'hast';
 import remarkGithubAlerts from './remark-github-alerts';
 import remarkCodeGroup from './remark-code-group';
+import remarkSlideDeck from './remark-slide-deck';
 import remarkVuepressContainers, { normalizeVuepressContainerSyntax } from './remark-vuepress-containers';
 import remarkWikilinks from './remark-wikilinks';
 import { normalizeVuepressBlockMath } from './normalize-vuepress-math';
 import rehypeAbsoluteUrls, { type AbsoluteUrlsOptions } from './rehype-absolute-urls';
+import { getTranslator } from './i18n';
+import { siteConfig } from '../../site.config';
 import type { SlugRegistryEntry } from './content/discovery';
 
 export interface MarkdownToHtmlOptions {
@@ -31,6 +34,8 @@ export interface MarkdownToHtmlOptions {
    * relative). Runs on the HAST, so code samples are never rewritten.
    */
   absoluteUrls?: AbsoluteUrlsOptions;
+  /** Content locale, for generated text (a slide deck's links). Defaults to the site locale. */
+  locale?: string;
 }
 
 const ALERT_TITLES: Record<string, string> = {
@@ -51,6 +56,20 @@ function getDataProp(node: Element, kebab: string, camel: string): string | unde
   return value == null ? undefined : String(value);
 }
 
+function element(tagName: string, properties: Element['properties'], children: ElementContent[]): Element {
+  return { type: 'element', tagName, properties, children };
+}
+
+function findFirstImage(node: Element): Element | undefined {
+  for (const child of node.children) {
+    if (child.type !== 'element') continue;
+    if (child.tagName === 'img') return child;
+    const nested = findFirstImage(child);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
 function labeledParagraph(label: string): ElementContent {
   return {
     type: 'element',
@@ -62,13 +81,24 @@ function labeledParagraph(label: string): ElementContent {
   };
 }
 
+interface PlainComponentsOptions {
+  /** The item's page, for the "view all slides" link; relative `#…` without it. */
+  pageUrl?: string;
+  locale: string;
+}
+
 /**
- * The site pipeline emits synthetic `<github-alert>` / `<code-group>` elements
- * that only exist as React component overrides. Feed readers know neither, so
- * rewrite them into plain semantic HTML: alerts become a blockquote with a
- * bold title line, code groups become sequential label + <pre> pairs.
+ * The site pipeline emits synthetic `<github-alert>` / `<code-group>` /
+ * `<slide-deck>` elements that only exist as React component overrides. Feed
+ * readers know none of them, so rewrite them into plain semantic HTML:
+ * alerts become a blockquote with a bold title line, code groups become
+ * sequential label + <pre> pairs, and a slide deck becomes its first slide
+ * linked to the deck on the page, captioned with the title, a "View all N
+ * slides" link and the talk links. Readers run no JavaScript, and forty
+ * stacked slides would bury the post.
  */
-function rehypePlainComponents() {
+function rehypePlainComponents({ pageUrl, locale }: PlainComponentsOptions) {
+  const { t, tWith } = getTranslator(locale);
   return (tree: Root) => {
     visit(tree, 'element', (node: Element) => {
       if (node.tagName === 'github-alert') {
@@ -98,6 +128,36 @@ function rehypePlainComponents() {
         node.tagName = 'div';
         node.properties = {};
         node.children = children;
+      } else if (node.tagName === 'slide-deck') {
+        const stem = getDataProp(node, 'data-base', 'dataBase') ?? 'slides';
+        const count = getDataProp(node, 'data-count', 'dataCount') ?? '';
+        const title = getDataProp(node, 'data-title', 'dataTitle');
+        const pdf = getDataProp(node, 'data-pdf', 'dataPdf');
+        const video = getDataProp(node, 'data-video', 'dataVideo');
+        // rehype-absolute-urls leaves `#…` alone, so anchor it to the page here.
+        const deckHref = `${pageUrl ?? ''}#${stem}-1`;
+        const first = findFirstImage(node);
+
+        const links: Array<[string, string]> = [[deckHref, tWith('slides_view_all', { total: count })]];
+        if (pdf) links.push([pdf, t('slides_pdf')]);
+        if (video) links.push([video, t('slides_video')]);
+        const caption: ElementContent[] = [];
+        if (title) {
+          caption.push(element('strong', {}, [{ type: 'text', value: title }]), element('br', {}, []));
+        }
+        links.forEach(([href, label], i) => {
+          if (i > 0) caption.push({ type: 'text', value: ' · ' });
+          caption.push(element('a', { href }, [{ type: 'text', value: label }]));
+        });
+
+        node.tagName = 'figure';
+        node.properties = {};
+        node.children = [
+          ...(first
+            ? [element('a', { href: deckHref }, [element('img', { src: first.properties.src, alt: first.properties.alt ?? '' }, [])])]
+            : []),
+          element('figcaption', {}, caption),
+        ];
       }
     });
   };
@@ -106,7 +166,7 @@ function rehypePlainComponents() {
 /**
  * Build-time markdown → HTML string for non-React surfaces (feeds). Runs the
  * same author-facing syntax set as `MarkdownRenderer` — GFM, GitHub alerts,
- * VuePress containers, code groups, wikilinks, math — so extended syntax
+ * VuePress containers, code groups, slide decks, wikilinks, math — so extended syntax
  * renders instead of leaking as literal text. Deliberately skipped: Shiki
  * (readers don't load our CSS; plain <pre><code> is correct), rehype-slug
  * (heading anchors are meaningless in a feed), and rehype-image-metadata
@@ -118,7 +178,7 @@ function rehypePlainComponents() {
  * KaTeX stylesheet, and bare MathML renders natively in modern engines.
  */
 export function markdownToHtml(markdown: string, options: MarkdownToHtmlOptions = {}): string {
-  const { slugRegistry, math = false, absoluteUrls } = options;
+  const { slugRegistry, math = false, absoluteUrls, locale = siteConfig.i18n.defaultLocale } = options;
 
   const source = math
     ? normalizeVuepressBlockMath(normalizeVuepressContainerSyntax(markdown))
@@ -130,6 +190,7 @@ export function markdownToHtml(markdown: string, options: MarkdownToHtmlOptions 
     .use(remarkGithubAlerts)
     .use(remarkDirective)
     .use(remarkCodeGroup)
+    .use(remarkSlideDeck, { assetBase: absoluteUrls?.imageBaseSlug })
     .use(remarkVuepressContainers);
   if (slugRegistry && slugRegistry.size > 0) {
     processor.use(remarkWikilinks, { slugRegistry });
@@ -140,7 +201,7 @@ export function markdownToHtml(markdown: string, options: MarkdownToHtmlOptions 
   processor
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypePlainComponents);
+    .use(rehypePlainComponents, { pageUrl: absoluteUrls?.pageUrl, locale });
   if (math) {
     processor.use(rehypeKatex, {
       output: 'mathml',

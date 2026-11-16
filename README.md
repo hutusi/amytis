@@ -155,6 +155,7 @@ bun run new-flow
 ## Import / Maintain
 bun run new-from-pdf ./doc.pdf
 bun run new-from-images ./photos
+bun run new-slides ./talk.pdf --into content/posts/my-talk/
 bun run new-flow-from-chat
 bun run import-obsidian
 bun run import-book

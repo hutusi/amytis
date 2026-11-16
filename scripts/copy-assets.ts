@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { decodeNamedCharacterReference } from 'decode-named-character-reference';
 import { siteConfig } from '../site.config';
 import { copyKatexAssets } from './copy-vendor-assets';
 
@@ -197,20 +198,42 @@ function normalizeReferencedAssetPath(rawPath: string): string | null {
   return withoutFragment;
 }
 
+/**
+ * Decodes the character references a Markdown or HTML parser decodes in a
+ * link or an attribute: `pdf="./R&amp;D.pdf"` names the file `R&D.pdf`.
+ * Named references go through micromark's own table, and the lengths
+ * follow CommonMark (7 decimal or 6 hex digits).
+ */
+function decodeCharacterReferences(value: string): string {
+  return value.replace(/&(?:#(\d{1,7})|#[xX]([\da-fA-F]{1,6})|([A-Za-z][A-Za-z\d]*));/g, (reference, decimal, hex, name) => {
+    if (name) return decodeNamedCharacterReference(name) || reference;
+    const codePoint = decimal ? Number(decimal) : parseInt(hex, 16);
+    return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : reference;
+  });
+}
+
 function extractReferencedAssetPaths(filePath: string): string[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const references = new Set<string>();
-  const patterns = [
-    /\!\[[^\]]*\]\(([^)]+)\)/g,
-    /\[[^\]]*\]\(([^)]+)\)/g,
-    /\b(?:src|href|poster)=["']([^"']+)["']/g,
-    /^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm,
-    /^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm,
+  // [pattern, whether its parser decodes character references]: Markdown
+  // and HTML do, rST and YAML frontmatter don't.
+  const patterns: Array<[RegExp, boolean]> = [
+    [/\!\[[^\]]*\]\(([^)]+)\)/g, true],
+    [/\[[^\]]*\]\(([^)]+)\)/g, true],
+    [/\b(?:src|href|poster)=["']([^"']+)["']/g, true],
+    // A :::slides deck's `pdf` / `video` (docs/SLIDES.md), in every form
+    // remark-directive accepts: double-, single- or unquoted, with optional
+    // spaces around "=".
+    [/\b(?:pdf|video)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`}]+))/g, true],
+    [/^\s*\.\.\s+(?:image|figure)::\s+(.+)$/gm, false],
+    [/^coverImage:\s*['"]?([^'"\n]+)['"]?$/gm, false],
   ];
 
-  for (const pattern of patterns) {
+  for (const [pattern, decodesReferences] of patterns) {
     for (const match of content.matchAll(pattern)) {
-      const candidate = normalizeReferencedAssetPath(match[1] ?? '');
+      // The first capture group that matched (the deck pattern has three).
+      const reference = match.slice(1).find((group) => group !== undefined) ?? '';
+      const candidate = normalizeReferencedAssetPath(decodesReferences ? decodeCharacterReferences(reference) : reference);
       if (candidate) {
         references.add(candidate);
       }
@@ -490,7 +513,7 @@ export function assertSiteAssetsExist(
 export function resetAssetClaims() {
   assetDestClaims.clear();
 }
-export { claimAssetDir };
+export { claimAssetDir, extractReferencedAssetPaths, syncReferencedAssets };
 
 // Only run the copy when invoked as a script — importing the module (e.g. from
 // a test) must not touch the filesystem.

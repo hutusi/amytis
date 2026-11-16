@@ -30,6 +30,7 @@ const PRINT_HIDDEN = [
   'src/components/ImageZoom.tsx',
   'src/components/Breadcrumbs.tsx',
   'src/components/Search.tsx',
+  'src/components/SlideDeckRuntime.tsx',
 ];
 
 describe('print hides page chrome', () => {

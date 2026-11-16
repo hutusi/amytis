@@ -10,13 +10,14 @@ function hasClass(node: Element, name: string): boolean {
 /**
  * Marks content images `data-zoomable="true"` for the ImageZoom lightbox.
  * Not marked: images inside a link (the click follows the link), anything
- * inside a Mermaid diagram, and images with an inline `style` (raw-HTML
- * badges and icons, which Markdown `![]()` images never carry).
+ * inside a Mermaid diagram or a slide deck (which opens its own presenter),
+ * and images with an inline `style` (raw-HTML badges and icons, which
+ * Markdown `![]()` images never carry).
  */
 export default function rehypeZoomableImages() {
   return (tree: Root) => {
     visit(tree, 'element', (node) => {
-      if (node.tagName === 'a' || hasClass(node, 'mermaid')) return SKIP;
+      if (node.tagName === 'a' || node.tagName === 'slide-deck' || hasClass(node, 'mermaid')) return SKIP;
       if (node.tagName !== 'img' || node.properties?.style) return;
       node.properties = { ...node.properties, dataZoomable: 'true' };
     });
