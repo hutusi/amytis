@@ -45,6 +45,11 @@ describe('rehypeAbsoluteUrls', () => {
       .toBe('<video poster="https://cdn.test/posts/my-post/p.jpg" src="https://site.test/posts/my-post/v.mp4"></video>');
   });
 
+  test('media keep their query or fragment as written', () => {
+    expect(run('<video src="/media/clip.mp4?token=ab//cd"></video>')).toBe('<video src="https://site.test/media/clip.mp4?token=ab//cd"></video>');
+    expect(run('<video src="./v.mp4?sig=a/../b#t=5"></video>')).toBe('<video src="https://site.test/posts/my-post/v.mp4?sig=a/../b#t=5"></video>');
+  });
+
   test('media paths that escape the asset base fall back to the page URL', () => {
     expect(run('<video src="../other/v.mp4"></video>')).toBe('<video src="https://site.test/series-x/other/v.mp4"></video>');
   });

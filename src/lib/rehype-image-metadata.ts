@@ -28,9 +28,11 @@ export default function rehypeImageMetadata(options: Options) {
         // so that images hosted only on CDN still get the correct URL.
         node.properties.src = getCdnImageUrl(publicPath, options.cdnBaseUrl ?? '');
 
-        // Enrich with dimensions only when the file is available locally
+        // Enrich with dimensions only when the file is available locally. A
+        // query or fragment names no file, and path.resolve would read a `..`
+        // inside it as a directory step, so such a src is never measured.
         try {
-          if (imagePath && fs.existsSync(/* turbopackIgnore: true */ imagePath)) {
+          if (imagePath && !/[?#]/.test(publicPath) && fs.existsSync(/* turbopackIgnore: true */ imagePath)) {
             const buffer = fs.readFileSync(/* turbopackIgnore: true */ imagePath);
             const dimensions = sizeOf(buffer);
             if (dimensions) {

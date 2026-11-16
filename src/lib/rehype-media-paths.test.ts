@@ -24,6 +24,11 @@ describe('rehypeMediaPaths', () => {
       .toBe('<video poster="https://cdn.test/posts/talk/clip.jpg" src="/posts/talk/clip.mp4"></video>');
   });
 
+  test('keeps a query or fragment as written', () => {
+    expect(run('<video src="/media/clip.mp4?token=ab//cd"></video>')).toBe('<video src="/media/clip.mp4?token=ab//cd"></video>');
+    expect(run('<video src="./clip.mp4#t=10,20"></video>')).toBe('<video src="/flows/2026/11/16/clip.mp4#t=10,20"></video>');
+  });
+
   test('leaves external, site-absolute and escaping paths as written', () => {
     for (const html of [
       '<video src="https://cdn.test/clip.mp4" poster="//cdn.test/clip.jpg"></video>',

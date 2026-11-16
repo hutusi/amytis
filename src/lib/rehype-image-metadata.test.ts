@@ -102,6 +102,19 @@ describe('rehype-image-metadata', () => {
     });
   });
 
+  describe('query and fragment', () => {
+    test('keeps them as written and never measures a file through them', () => {
+      // Read as a file path, the query would step out of public/ to a real
+      // SVG in the repo (content/posts/multimedia-showcase/slides/).
+      const src = './a.png?x=/../../../../content/posts/multimedia-showcase/slides/slide-01.svg';
+      const tree = makeTree(src);
+      rehypeImageMetadata({ slug: 'posts/x' })(tree);
+      const props = (tree.children[0] as Element).properties;
+      expect(props.src).toBe('/posts/x/a.png?x=/../../../../content/posts/multimedia-showcase/slides/slide-01.svg');
+      expect(props.width).toBeUndefined();
+    });
+  });
+
   describe('CDN prefix', () => {
     test('prepends CDN base URL to resolved relative path', () => {
       const tree = makeTree('./images/photo.png');

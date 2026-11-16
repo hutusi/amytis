@@ -43,6 +43,20 @@ describe('resolveContentImagePath', () => {
     expect(resolveContentImagePath('/images/./a.png', 'posts/x')).toBe('/images/a.png');
   });
 
+  test('normalizes only the path, keeping a query or fragment verbatim', () => {
+    expect(resolveContentImagePath('/media/clip.mp4?token=ab//cd', 'posts/x')).toBe('/media/clip.mp4?token=ab//cd');
+    expect(resolveContentImagePath('./clip.mp4?sig=a/../b', 'posts/x')).toBe('/posts/x/clip.mp4?sig=a/../b');
+    expect(resolveContentImagePath('./clip.mp4#t=10,20', 'posts/x')).toBe('/posts/x/clip.mp4#t=10,20');
+    expect(resolveContentImagePath('./a/../b.png?v=2', 'posts/x')).toBe('/posts/x/b.png?v=2');
+    expect(resolveContentImagePath('a.png?p=..\\x', 'posts/x')).toBe('/posts/x/a.png?p=..\\x');
+  });
+
+  test('a query or fragment neither hides nor causes an escape', () => {
+    expect(resolveContentImagePath('../other/a.png?x=/posts/x/', 'posts/x')).toBeNull();
+    expect(resolveContentImagePath('./a.png?x=/../../..', 'posts/x')).toBe('/posts/x/a.png?x=/../../..');
+    expect(resolveContentImagePath('?v=2', 'posts/x')).toBeNull();
+  });
+
   test('treats backslashes as separators and keeps http-prefixed local filenames', () => {
     expect(resolveContentImagePath('images\\a.png', 'posts/x')).toBe('/posts/x/images/a.png');
     expect(resolveContentImagePath('http-flow.png', 'posts/x')).toBe('/posts/x/http-flow.png');

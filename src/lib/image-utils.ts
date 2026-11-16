@@ -59,11 +59,13 @@ export const MEDIA_SRC_TAGS: ReadonlySet<string> = new Set(['video', 'audio', 's
 
 /**
  * Public site path ('/posts/my-post/images/x.png') for an image src as
- * authored in content, or null when the src is not a local asset (external
- * URL, data: URI, fragment) or escapes its allowed root: a relative path must
- * stay inside the content's asset base, a site-absolute one inside the site.
- * The on-page pipeline resolves the result against public/ and reads the
- * file, so an escaping path would read outside public/.
+ * authored in content, with any query or fragment kept as written, or null
+ * when the src is not a local asset (external URL, data: URI, fragment) or
+ * its path escapes its allowed root: a relative path must stay inside the
+ * content's asset base, a site-absolute one inside the site. The on-page
+ * pipeline resolves the result against public/ and reads the file, so an
+ * escaping path would read outside public/ (it skips a result with a query
+ * or fragment, which names no file).
  *
  * `slug` is the content's public-relative asset base (e.g. `posts/my-post`,
  * `books/my-book`, `flows/2026/01/15`): `./x.png` and bare `x.png` resolve
@@ -73,19 +75,27 @@ export const MEDIA_SRC_TAGS: ReadonlySet<string> = new Set(['video', 'audio', 's
  * surface.
  */
 export function resolveContentImagePath(src: string, slug?: string): string | null {
-  if (!src) return null;
-  // A browser's URL parser treats `\` as `/`, so the containment check must
-  // too (`..\other-post\a.png` would otherwise pass it and still escape).
-  const path = src.replace(/\\/g, '/');
+  if (!src || src.startsWith('#')) return null;
+  // Only the path is normalized. A query or fragment (`?v=2`, `#t=10`, a
+  // signed token holding `//` or `../`) is kept verbatim after it.
+  const suffixStart = src.search(/[?#]/);
+  const suffix = suffixStart === -1 ? '' : src.slice(suffixStart);
+  // A browser's URL parser treats `\` as `/` in a path, so the containment
+  // check must too (`..\other-post\a.png` would otherwise pass it and still
+  // escape).
+  const path = (suffixStart === -1 ? src : src.slice(0, suffixStart)).replace(/\\/g, '/');
   // Any URL scheme (case-insensitive: `HTTPS://…`, `data:`, `mailto:`) or a
   // protocol-relative URL is not a local asset. A filename that merely starts
   // with "http" (`http-flow.png`) is.
-  if (URL_SCHEME_RE.test(path) || path.startsWith('//') || path.startsWith('#')) return null;
-  if (path.startsWith('/')) return normalizeSitePath(path);
+  if (URL_SCHEME_RE.test(path) || path.startsWith('//')) return null;
+  if (path.startsWith('/')) {
+    const resolved = normalizeSitePath(path);
+    return resolved && resolved + suffix;
+  }
   if (!slug) return null;
   const relative = path.startsWith('./') ? path.substring(2) : path;
   const base = normalizeSitePath(`/${slug}`);
   const resolved = normalizeSitePath(`/${slug}/${relative}`);
   if (!base || !resolved || !resolved.startsWith(`${base}/`)) return null;
-  return resolved;
+  return resolved + suffix;
 }
