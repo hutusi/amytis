@@ -9,7 +9,7 @@ import path from 'node:path';
 const SCRIPT = path.resolve('scripts/translate.ts');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-translate-'));
 
-type Mode = 'translate' | 'drop-placeholder' | 'fence' | 'fail-once' | 'truncate';
+type Mode = 'translate' | 'drop-placeholder' | 'fence' | 'fail-once' | 'truncate' | 'empty';
 let mode: Mode = 'translate';
 let failedOnce = false;
 const requests: Array<{ auth: string | null; model: string; system: string; user: string }> = [];
@@ -41,6 +41,7 @@ const server = Bun.serve({
       content = fakeTranslate(user);
       if (mode === 'drop-placeholder') content = content.replace('@@BLOCK_0@@', '');
       if (mode === 'fence') content = `\`\`\`markdown\n${content}\n\`\`\``;
+      if (mode === 'empty') content = '';
     }
     const finishReason = mode === 'truncate' && !system.includes('JSON array') ? 'length' : 'stop';
     return Response.json({ choices: [{ finish_reason: finishReason, message: { content } }] });
@@ -242,6 +243,15 @@ describe('translate script', () => {
     expect(code).toBe(1);
     expect(stderr).toContain('the reply was cut off at the model\'s output limit (finish_reason: length)');
     expect(exists(cwd, 'zh/notes/long.md')).toBe(false);
+  });
+
+  test('an empty reply is reported and not written', async () => {
+    mode = 'empty';
+    const cwd = site({ 'notes/plain.md': '---\ntitle: "Plain"\n---\n\nHello.\n' });
+    const { code, stderr } = await run(cwd, ['content/notes/plain.md']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('the provider returned an empty translation.');
+    expect(exists(cwd, 'zh/notes/plain.md')).toBe(false);
   });
 
   test('an existing translation in another form counts, and --force never adds a second one', async () => {

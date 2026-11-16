@@ -185,17 +185,30 @@ export function rewriteFrontmatter(frontmatter: string, fields: FrontmatterField
   });
   const kept: string[] = [];
   let dropping = false;
+  // Blank and comment lines met while dropping: part of the dropped value if
+  // more of it follows, kept if the next key comes first.
+  let held: string[] = [];
   lines.forEach((line, index) => {
     if (dropped.has(index)) return;
     if (/^redirectFrom\s*:/.test(line)) {
       dropping = true;
+      held = [];
+      return;
+    }
+    if (dropping && /^\s*(?:#.*)?\r?$/.test(line)) {
+      held.push(line);
       return;
     }
     // A dropped key's value continues on indented or `- ` lines.
-    if (dropping && (/^[ \t]/.test(line) || /^-\s/.test(line))) return;
+    if (dropping && (/^[ \t]/.test(line) || /^-\s/.test(line))) {
+      held = [];
+      return;
+    }
     dropping = false;
-    kept.push(line);
+    kept.push(...held, line);
+    held = [];
   });
+  kept.push(...held);
   return kept.join('\n');
 }
 
@@ -211,8 +224,9 @@ export function placeholder(index: number): string {
 // markers and list markers (`- ```js` opens a fence inside a list item).
 const CONTAINER_PREFIX = String.raw`((?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d{1,9}[.)])[ \t]+))*[ \t]*)`;
 const FENCE_OPEN_RE = new RegExp(`^${CONTAINER_PREFIX}(\`{3,}|~{3,})`);
-const FENCE_CLOSE_RE = /^[ \t]*(?:>[ \t]?)*(`{3,}|~{3,})[ \t]*$/;
-const MATH_RE = new RegExp(`^${CONTAINER_PREFIX}\\$\\$[ \\t]*$`);
+// Closing lines may end in `\r` (CRLF files); the block text keeps it.
+const FENCE_CLOSE_RE = /^[ \t]*(?:>[ \t]?)*(`{3,}|~{3,})[ \t]*\r?$/;
+const MATH_RE = new RegExp(`^${CONTAINER_PREFIX}\\$\\$[ \\t]*\\r?$`);
 
 /**
  * The body with every fenced code block and `$$` math block swapped for a
@@ -320,8 +334,9 @@ function linkUrls(text: string): string[] {
   return [...inline, ...definitions];
 }
 
+/** All of a wikilink before `|`, `#` included, as remark-wikilinks looks it up. */
 function wikilinkTargets(text: string): string[] {
-  return [...stripInlineCode(text).matchAll(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g)].map((m) => m[1].trim());
+  return [...stripInlineCode(text).matchAll(/\[\[([^\]|]+?)(?:\|[^\]]*)?\]\]/g)].map((m) => m[1].trim());
 }
 
 /**
@@ -348,6 +363,15 @@ function directiveLines(text: string): string[] {
 
 function placeholders(text: string): string[] {
   return [...text.matchAll(PLACEHOLDER_RE)].map((m) => m[0]);
+}
+
+/** What stands before each placeholder on its line: the list or quote it sits in. */
+function placeholderPrefixes(text: string): Map<string, string> {
+  const prefixes = new Map<string, string>();
+  for (const line of text.split('\n')) {
+    for (const match of line.matchAll(PLACEHOLDER_RE)) prefixes.set(match[0], line.slice(0, match.index));
+  }
+  return prefixes;
 }
 
 function sameSequence(a: string[], b: string[]): boolean {
@@ -384,6 +408,16 @@ export function compareStructure(source: string, output: string, blockCount: num
   const found = placeholders(output);
   if (!sameSequence(expected, found)) {
     problems.push(`code/math placeholders: ${describeDifference(expected, found)}`);
+  } else {
+    // A block's own lines keep their container prefix; only its first line's
+    // prefix is outside the placeholder, so it must survive too.
+    const before = placeholderPrefixes(source);
+    const after = placeholderPrefixes(output);
+    const moved = expected.filter((token) => before.get(token) !== after.get(token));
+    if (moved.length > 0) {
+      const changes = moved.slice(0, 5).map((token) => `${token} ${JSON.stringify(before.get(token))} → ${JSON.stringify(after.get(token))}`);
+      problems.push(`code/math placeholders: list or quote prefix changed: ${changes.join(', ')}`);
+    }
   }
   const checks: Array<[string, string[], string[], boolean]> = [
     ['headings', headingLevels(source), headingLevels(output), true],
@@ -490,8 +524,9 @@ export function parseFieldTranslations(reply: string, count: number): string[] {
       value = null;
     }
   }
-  if (!Array.isArray(value) || value.length !== count || value.some((item) => typeof item !== 'string')) {
-    throw new Error(`the frontmatter reply was not a JSON array of ${count} string${count === 1 ? '' : 's'}`);
+  // Every field sent had a value, so an empty item is a lost translation.
+  if (!Array.isArray(value) || value.length !== count || value.some((item) => typeof item !== 'string' || !item.trim())) {
+    throw new Error(`the frontmatter reply was not a JSON array of ${count} nonempty string${count === 1 ? '' : 's'}`);
   }
   return value.map((item: string) => item.replace(/[\r\n]+/g, ' ').trim());
 }

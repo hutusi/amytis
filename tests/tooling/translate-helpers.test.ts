@@ -112,6 +112,9 @@ describe('frontmatter', () => {
     ].join('\n'));
     expect(rewriteFrontmatter('title: x\nredirectFrom: ["/a", "/b"]\ndate: "2026-01-01"\n', [], []))
       .toBe('title: x\ndate: "2026-01-01"\n');
+    // Blank and comment lines inside the list don't end it; one before the next key stays.
+    expect(rewriteFrontmatter('title: x\nredirectFrom:\n  - /a\n\n# old URL\n  - /b\n\n# Dates\ndate: "2026-01-01"\n', [], []))
+      .toBe('title: x\n\n# Dates\ndate: "2026-01-01"\n');
   });
 
   test('reads a value over all its lines and rewrites it as one valid line', () => {
@@ -208,6 +211,13 @@ describe('masking', () => {
     expect(unmaskBlocks(masked, blocks)).toBe(body);
   });
 
+  test('closes blocks in a CRLF file, so the prose after them is translated', () => {
+    const body = 'Intro\r\n\r\n```js\r\ncode\r\n```\r\n\r\n$$\r\nx\r\n$$\r\n\r\nHello.\r\n';
+    const { masked, blocks } = maskBlocks(body);
+    expect(masked).toBe('Intro\r\n\r\n@@BLOCK_0@@\n\r\n@@BLOCK_1@@\n\r\nHello.\r\n');
+    expect(unmaskBlocks(masked, blocks)).toBe(body);
+  });
+
   test('an unclosed fence runs to the end', () => {
     const { masked, blocks } = maskBlocks('Text\n\n```\ncode\nmore');
     expect(masked).toBe('Text\n\n@@BLOCK_0@@');
@@ -281,6 +291,7 @@ describe('compareStructure', () => {
       [GOOD.replace('## 设置', '### 设置'), 'headings: missing h2; unexpected h3'],
       [GOOD.replace('./guide/', './指南/'), 'link and image URLs: missing ./guide/; unexpected ./指南/'],
       [GOOD.replace('getting-started|', '入门指南|'), 'wikilink targets: missing getting-started; unexpected 入门指南'],
+      [GOOD.replace('getting-started|', 'getting-started#安装|'), 'wikilink targets: missing getting-started; unexpected getting-started#安装'],
       [GOOD.replace('`bun dev`', '`bun 开发`'), 'inline code: missing `bun dev`; unexpected `bun 开发`'],
       [GOOD.replace('{video="https://youtu.be/x"}', ''), '::: directives: missing :::slides{video="https://youtu.be/x"}; unexpected :::slides'],
       [GOOD.replace('<kbd>F</kbd>', 'F'), 'HTML tags: missing <kbd, </kbd'],
@@ -289,6 +300,11 @@ describe('compareStructure', () => {
       expect(compareStructure(SOURCE, output, 1)).toEqual([problem]);
     }
   });
+});
+
+test('compareStructure catches a block moved out of its list or quote', () => {
+  expect(compareStructure('- @@BLOCK_0@@\n\n> @@BLOCK_1@@', '@@BLOCK_0@@\n\n> @@BLOCK_1@@', 2))
+    .toEqual(['code/math placeholders: list or quote prefix changed: @@BLOCK_0@@ "- " → ""']);
 });
 
 test('compareStructure catches a changed HTML asset URL', () => {
@@ -319,8 +335,9 @@ describe('parseFieldTranslations', () => {
   });
 
   test('refuses anything else', () => {
-    expect(() => parseFieldTranslations('["标题"]', 2)).toThrow('JSON array of 2 strings');
-    expect(() => parseFieldTranslations('标题', 1)).toThrow('JSON array of 1 string');
+    expect(() => parseFieldTranslations('["标题"]', 2)).toThrow('JSON array of 2 nonempty strings');
+    expect(() => parseFieldTranslations('标题', 1)).toThrow('JSON array of 1 nonempty string');
+    expect(() => parseFieldTranslations('["标题", " "]', 2)).toThrow('JSON array of 2 nonempty strings');
   });
 });
 

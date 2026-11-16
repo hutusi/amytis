@@ -316,9 +316,14 @@ async function translateDocument(raw: string): Promise<Result> {
   const { masked, blocks } = maskBlocks(body.trim());
   const parts: string[] = [];
   for (const chunk of splitIntoChunks(masked)) {
-    parts.push(chunk.trim() ? unwrapModelOutput(await chat(bodyPrompt(from, to), chunk)) : chunk);
+    if (!chunk.trim()) continue;
+    const reply = unwrapModelOutput(await chat(bodyPrompt(from, to), chunk));
+    // Prose with no code, links or headings leaves the structure check
+    // nothing to compare, so an empty reply would pass it.
+    if (!reply.trim()) throw new Error('the provider returned an empty translation.');
+    parts.push(reply);
   }
-  const output = parts.map((part) => part.trim()).filter(Boolean).join('\n\n');
+  const output = parts.map((part) => part.trim()).join('\n\n');
   return {
     text: `${head}${leading}${unmaskBlocks(output, blocks)}\n`,
     problems: compareStructure(masked, output, blocks.length),
