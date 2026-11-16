@@ -33,7 +33,6 @@ const ALLOWED_ATTRIBUTES = new Set(['id', 'pdf', 'video']);
 const HTML_COMMENT_RE = /^<!--[\s\S]*-->$/;
 const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
 const HTTP_URL_RE = /^https?:\/\//i;
-const HTML_ID_RE = /\sid\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
 
 function isSlidesDirective(node: unknown): node is SlidesDirective {
   const candidate = node as { type?: string; name?: string };
@@ -82,9 +81,10 @@ function isHtmlComment(node: Nodes): boolean {
  * Misauthored decks fail the build instead of degrading silently: content
  * other than images (HTML comments excepted, so a slide can be commented
  * out), an empty deck, an unknown attribute, a malformed or duplicate id, a
- * slide id that collides with a heading id or an id in raw HTML, a `pdf` /
- * `video` that isn't an http(s) URL or a path inside the content's folder,
- * and an opener that didn't parse as a directive at all.
+ * slide id that collides with a heading id, a `pdf` / `video` that isn't
+ * an http(s) URL or a path inside the content's folder, and an opener that
+ * didn't parse as a directive at all. Ids in raw HTML exist only once
+ * rehype-raw has parsed it; rehypeSlideDeckIds checks those.
  *
  * `remark-directive` must run first; `remarkHeadingIds` too, when heading
  * collisions should be caught (the on-page renderer).
@@ -105,16 +105,6 @@ export default function remarkSlideDeck(options: RemarkSlideDeckOptions = {}) {
       if (node.type === 'heading') {
         const id = (node.data?.hProperties as Record<string, unknown> | undefined)?.id;
         if (typeof id === 'string' && id) takenIds.add(id);
-        return;
-      }
-      // Raw HTML can set ids too (`<h2 id="slides-2">`), and rehype-raw keeps
-      // them as written. Headings without one get theirs later, deduplicated
-      // against every id in the tree (rehypeRawHeadingIds).
-      if (node.type === 'html' && !isHtmlComment(node)) {
-        for (const match of node.value.matchAll(HTML_ID_RE)) {
-          const id = match[1] ?? match[2] ?? match[3];
-          if (id) takenIds.add(id);
-        }
         return;
       }
       // `:::slides My Talk {pdf=…}` is rewritten to a label by the VuePress
@@ -230,7 +220,7 @@ export default function remarkSlideDeck(options: RemarkSlideDeckOptions = {}) {
       const slideIds = slides.map((_, i) => slideId(stem, i + 1));
       for (const id of slideIds) {
         if (takenIds.has(id)) {
-          fail(`slide id "${id}" is already used on this page (a heading, an HTML id or another deck). Give the deck its own {#id}.`);
+          fail(`slide id "${id}" is already used on this page (a heading or another deck). Give the deck its own {#id}.`);
         }
       }
       slideIds.forEach((id) => takenIds.add(id));

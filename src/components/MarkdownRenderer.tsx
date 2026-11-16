@@ -25,6 +25,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRawHeadingIds from '@/lib/rehype-heading-ids';
+import rehypeSlideDeckIds from '@/lib/rehype-slide-deck-ids';
 import rehypeHeadingAnchors, { HEADING_ANCHOR_CLASS } from '@/lib/rehype-heading-anchors';
 import rehypeZoomableImages from '@/lib/rehype-zoomable-images';
 import rehypePrintLinkUrls from '@/lib/print-urls';
@@ -125,6 +126,8 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
   const rehypePlugins: PluggableList = [
     rehypeFenceMeta,
     rehypeRaw,
+    // Ids written in raw HTML exist only now; a slide id among them fails the build.
+    rehypeSlideDeckIds,
     // Markdown headings already carry ids (remarkHeadingIds); this only fills
     // in headings that arrive as raw HTML, unique against every existing id.
     headingIdPrefix ? [rehypeRawHeadingIds, { prefix: headingIdPrefix }] : rehypeRawHeadingIds,

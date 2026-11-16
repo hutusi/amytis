@@ -141,8 +141,10 @@ video links underneath.
 - `src/lib/remark-slide-deck.ts` turns the block into a `<slide-deck>`
   element, wraps each image in a `div#<stem>-<n>` and tags it `data-slide`.
   It resolves `pdf` / `video` paths against the content's asset base, like
-  images, and holds the strict-build checks. Id helpers shared with the
-  client live in `src/lib/slide-deck.ts`.
+  images, and holds the strict-build checks. Ids written in raw HTML exist
+  only after `rehype-raw`, so `src/lib/rehype-slide-deck-ids.ts` checks
+  those against the slide ids. Id helpers shared with the client live in
+  `src/lib/slide-deck.ts`.
 - `MarkdownRenderer` maps `slide-deck` to `src/components/SlideDeck.tsx`, a
   Server Component: a focusable horizontal scroll-snap track with one
   full-width slide per snap point, and a caption. Its `img` override renders

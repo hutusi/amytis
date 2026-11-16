@@ -81,6 +81,8 @@ describe('Integration: slide decks', () => {
         .rejects.toThrow(/Slide deck "Talk".*only images can go inside a deck/);
       await expect(renderAsync(MarkdownRenderer({ content: '## Slides 1\n\n:::slides\n![a](a.png)\n:::' })))
         .rejects.toThrow(/slide id "slides-1" is already used/);
+      await expect(renderAsync(MarkdownRenderer({ content: '<h2 id="slides-1">Intro</h2>\n\n:::slides\n![a](a.png)\n:::' })))
+        .rejects.toThrow(/slide id "slides-1" is already used on this page, by a <h2> in raw HTML/);
     } finally {
       consoleError.mockRestore();
     }
