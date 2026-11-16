@@ -5,6 +5,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { getFlowBySlug } from '@/lib/content/flows';
 import { getPostBySlug } from '@/lib/content/posts';
 import { renderAsync } from '@/test-utils/render';
+import { siteConfig } from '../../site.config';
 
 const DECK = [
   ':::slides[Building a Digital Garden]{pdf="./talk.pdf" video="https://youtu.be/abc"}',
@@ -118,6 +119,30 @@ describe('Integration: slide decks', () => {
     for (const src of sources) {
       expect(src.startsWith(`/${base}/`)).toBe(true);
       expect(fs.existsSync(path.join('content', src))).toBe(true);
+    }
+  });
+
+  test('CDN slides reserve their box before loading: 16:9 for a full URL, the measured size via cdnBaseUrl', async () => {
+    const external = await renderAsync(MarkdownRenderer({
+      content: ':::slides\n![One](https://cdn.example.com/talk/slide-01.png)\n:::',
+      slug: 'flows/2026/03/10',
+    }));
+    expect(track(external)).toMatch(/<img src="https:\/\/cdn\.example\.com\/talk\/slide-01\.png"[^>]* width="1600" height="900"/);
+
+    // cdnBaseUrl rewrites a local slide to the CDN; its size is still read
+    // from the copied file under public/.
+    const dir = path.join('public', 'posts', 'zz-cdn-slide-test');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'slide.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900"></svg>');
+    const images = siteConfig.images as { cdnBaseUrl?: string };
+    const previous = images.cdnBaseUrl;
+    images.cdnBaseUrl = 'https://cdn.example.com';
+    try {
+      const rewritten = await renderAsync(MarkdownRenderer({ content: ':::slides\n![One](./slide.svg)\n:::', slug: 'posts/zz-cdn-slide-test' }));
+      expect(track(rewritten)).toMatch(/<img src="https:\/\/cdn\.example\.com\/posts\/zz-cdn-slide-test\/slide\.svg"[^>]* width="1200" height="900"/);
+    } finally {
+      images.cdnBaseUrl = previous;
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 

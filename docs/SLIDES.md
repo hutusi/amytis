@@ -104,7 +104,7 @@ content lives:
 | Series post (folder or file) | Yes | As for posts |
 | Flow entry | Folder flows only (`bun run new-flow --folder`) | `content/flows/2026/11/15/index.md` + `content/flows/2026/11/15/slides/*.png` |
 | Book chapter | Yes | Next to the chapter, like any chapter image |
-| Note | No | Notes are single files and nothing copies their images |
+| Note | CDN slides only | Notes are single files and nothing copies their images |
 
 `bun dev` does not copy content assets: run `bun scripts/copy-assets.ts`
 once after adding slides to see them in development.
@@ -112,6 +112,29 @@ once after adding slides to see them in development.
 Export PNG or JPEG. The build makes responsive WebP variants of both;
 AVIF and WebP slides are served as-is with no smaller variants (see
 `docs/TROUBLESHOOTING.md`).
+
+### Slides on a CDN
+
+A slide can also be a full URL, mixed freely with local ones:
+
+```markdown
+:::slides[My Talk]
+![Title slide](https://cdn.example.com/talks/xconf/slide-01.png)
+![Agenda](https://cdn.example.com/talks/xconf/slide-02.png)
+:::
+```
+
+Nothing is copied, so this also works in notes and single-file flows and
+posts. The trade-offs: CDN slides are served as uploaded, with no smaller
+variants (size them before uploading, or use the CDN's own resizing in
+the URL); the post-build link check only checks this site, so a mistyped
+URL shows a broken slide instead of failing the build; `new-slides`
+copies files and doesn't upload; and the URLs must be `https://`. Until
+a CDN slide loads, the deck reserves a 16:9 box for it.
+
+With `images.cdnBaseUrl` set in `site.config.ts`, co-located slides are
+served from the CDN under the same path instead (upload them there; the
+build doesn't). They keep the size the build measured.
 
 ## Feeds
 
@@ -134,7 +157,8 @@ video links underneath.
   overlay instead.
 - **AVIF / WebP slides** are served full size, with no smaller variants.
 - **Notes and single-file flows** don't copy assets, so a deck there shows
-  broken images (the post-build link check reports them).
+  broken images (the post-build link check reports them), unless its
+  slides are CDN URLs.
 - **Left to right only.** The track scrolls left to right in every locale.
 - **rST** has no slide-deck directive.
 

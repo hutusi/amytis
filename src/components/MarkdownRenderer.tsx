@@ -326,8 +326,12 @@ export default function MarkdownRenderer({ content, latex = false, slug, slugReg
       const slideNumber = (props as unknown as Record<string, unknown>)['data-slide'];
       if (slideNumber !== undefined) {
         if (isExternal) {
+          // A CDN slide: a full URL, or a local one images.cdnBaseUrl
+          // rewrote (which keeps the measured size). width/height reserve its
+          // box before it loads, as for local slides; the browser corrects
+          // the ratio once it arrives.
           // eslint-disable-next-line @next/next/no-img-element
-          return <img src={imageSrc} alt={alt || ''} loading="lazy" decoding="async" fetchPriority="low" data-slide={String(slideNumber)} className="block h-auto w-full" />;
+          return <img src={imageSrc} alt={alt || ''} width={width ? Number(width) : 1600} height={height ? Number(height) : 900} loading="lazy" decoding="async" fetchPriority="low" data-slide={String(slideNumber)} className="block h-auto w-full" />;
         }
         return (
           <ExportedImage
