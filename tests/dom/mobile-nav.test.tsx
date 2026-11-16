@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 
 const stubRouter: AppRouterInstance = {
   push: () => {}, replace: () => {}, prefetch: () => Promise.resolve(), back: () => {}, forward: () => {}, refresh: () => {},
+  bfcacheId: 'test',
 };
 
 function Page({ pathname }: { pathname: string }) {
