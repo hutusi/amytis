@@ -154,6 +154,19 @@ describe('new-slides script', () => {
     expect(stdout).toContain(':::slides{pdf="./Talk-1.pdf"}');
   });
 
+  test('refuses a --pdf that is a folder or would land on the slides folder', () => {
+    const into = tempDir('post-pdf-collision');
+    const source = tempDir('pdf-collision-export', ['a.png']);
+    expect(run(source, '--into', into, '--pdf', tempDir('not-a-pdf')).stderr).toContain('is not a file');
+    // An extensionless file named like the slides folder.
+    const named = path.join(tempDir('pdf-collision-src'), 'slides');
+    fs.writeFileSync(named, 'pdf');
+    const { code, stderr } = run(source, '--into', into, '--pdf', named);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('which is the slides folder');
+    expect(fs.readdirSync(into)).toEqual([]);
+  });
+
   test('never overwrites existing slides without --force', () => {
     const into = tempDir('post-existing');
     const source = tempDir('export-twice', ['a.png', 'b.png']);

@@ -68,7 +68,10 @@ if (!(width > 0)) fail('--width must be a positive number of pixels.');
 
 const slidesDir = path.join(into, dir);
 const pdfOption = option('pdf');
-if (pdfOption !== undefined && !fs.existsSync(pdfOption)) fail(`--pdf "${pdfOption}" does not exist.`);
+if (pdfOption !== undefined) {
+  if (!fs.existsSync(pdfOption)) fail(`--pdf "${pdfOption}" does not exist.`);
+  if (!fs.statSync(pdfOption).isFile()) fail(`--pdf "${pdfOption}" is not a file.`);
+}
 const sourceIsFolder = fs.statSync(source).isDirectory();
 if (!sourceIsFolder && !source.toLowerCase().endsWith('.pdf')) {
   fail(`"${source}" is neither a folder of slide images nor a .pdf file.`);
@@ -100,6 +103,9 @@ const pdfTarget = pdfFile ? path.join(into, linkSafeFileName(path.basename(pdfFi
 const pdfCopy = pdfFile && pdfTarget && path.resolve(pdfFile) !== path.resolve(pdfTarget)
   ? { from: pdfFile, to: pdfTarget }
   : undefined;
+if (pdfTarget && path.resolve(pdfTarget) === path.resolve(slidesDir)) {
+  fail(`The PDF would be copied to ${pdfTarget}, which is the slides folder. Rename the PDF or pass another --dir.`);
+}
 if (pdfCopy && fs.existsSync(pdfCopy.to) && !force) fail(`${pdfCopy.to} already exists. Pass --force to replace it.`);
 
 // The new deck is built in a staging folder beside the old one and swapped
