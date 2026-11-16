@@ -102,7 +102,10 @@ jobs:
 
   mobile-e2e:
     name: Mobile e2e (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest became 26.04, where Playwright 1.60 refuses to
+    # install its browsers. Back to ubuntu-latest once Playwright is upgraded
+    # to a release that supports it.
+    runs-on: ubuntu-24.04
     # The 16-device mobile-compat matrix previously only ran manually, so
     # mobile regressions shipped unnoticed. Kept off the PR loop (browser
     # downloads + 16 projects are slow); runs on main pushes, manual
