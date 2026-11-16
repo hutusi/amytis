@@ -146,7 +146,7 @@ export const siteConfig = {
   // ── Homepage ──────────────────────────────────────────────────────────────
   hero: {
     tagline: "My Personal Digital Garden",
-    title: "A place for ideas to grow.",
+    title: "A place for ideas to grow",
     subtitle: "Notes, articles, and explorations — written for curiosity, shared for connection.",
   },
   homepage: {
