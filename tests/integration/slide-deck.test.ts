@@ -2,6 +2,7 @@ import { describe, expect, spyOn, test } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { getFlowBySlug } from '@/lib/content/flows';
 import { getPostBySlug } from '@/lib/content/posts';
 import { renderAsync } from '@/test-utils/render';
 
@@ -100,6 +101,23 @@ describe('Integration: slide decks', () => {
       expect(src.startsWith(`/${post!.imageBaseSlug}/`)).toBe(true);
       const file = path.join('content/posts/multimedia-showcase', src.slice(post!.imageBaseSlug.length + 2));
       expect(fs.existsSync(file)).toBe(true);
+    }
+  });
+
+  test('the sample folder flow renders its deck on its page and in the stream, and every slide file exists', async () => {
+    const flow = getFlowBySlug('2026/03/10');
+    expect(flow).not.toBeNull();
+    const base = 'flows/2026/03/10';
+    // As the flow's own page renders it, then as the flow stream does.
+    const page = await renderAsync(MarkdownRenderer({ content: flow!.content, slug: base }));
+    const stream = await renderAsync(MarkdownRenderer({ content: flow!.content, slug: base, headingIdPrefix: 'f-2026-03-10-' }));
+    expect(page).toContain('id="slides-4"');
+    expect(stream).toContain('id="f-2026-03-10-slides-4"');
+    const sources = [...track(page).matchAll(/<img [^>]*src="([^"]+)"/g)].map((m) => m[1]);
+    expect(sources).toHaveLength(4);
+    for (const src of sources) {
+      expect(src.startsWith(`/${base}/`)).toBe(true);
+      expect(fs.existsSync(path.join('content', src))).toBe(true);
     }
   });
 
