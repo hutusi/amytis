@@ -20,6 +20,7 @@ const stubRouter: AppRouterInstance = {
   back: () => {},
   forward: () => {},
   refresh: () => {},
+  bfcacheId: 'test',
 };
 
 function renderSearch() {

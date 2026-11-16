@@ -11,6 +11,7 @@ const stubRouter: AppRouterInstance = {
   back: () => {},
   forward: () => {},
   refresh: () => {},
+  bfcacheId: 'test',
 };
 
 function renderCalendar(props: { currentDate?: string; initialMonth?: string }) {
