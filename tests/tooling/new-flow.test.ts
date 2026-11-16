@@ -10,8 +10,12 @@ const SCRIPT = path.resolve('scripts/new-flow.ts');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amytis-new-flow-'));
 afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 
+// bun test runs this process in UTC, but a spawned script gets the machine's
+// zone; pass ours along so both agree on today's date at any hour.
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 function run(cwd: string, ...args: string[]) {
-  const result = spawnSync(['bun', SCRIPT, ...args], { cwd });
+  const result = spawnSync(['bun', SCRIPT, ...args], { cwd, env: { ...process.env, TZ } });
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
