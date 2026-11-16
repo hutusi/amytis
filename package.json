@@ -31,6 +31,7 @@
     "new-from-pdf": "bun scripts/new-from-pdf.ts",
     "new-from-images": "bun scripts/new-from-images.ts",
     "new-slides": "bun scripts/new-slides.ts",
+    "translate": "bun scripts/translate.ts",
     "new-flow": "bun scripts/new-flow.ts",
     "new-flow-from-chat": "bun scripts/new-flow-from-chat.ts",
     "new-note": "bun scripts/new-note.ts",
