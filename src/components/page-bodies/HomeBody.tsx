@@ -12,7 +12,8 @@ import SelectedBooksSection, { BookItem } from '@/components/SelectedBooksSectio
 import LatestWritingSection from '@/components/LatestWritingSection';
 import RecentNotesSection, { RecentNoteItem } from '@/components/RecentNotesSection';
 import { getTranslator } from '@/lib/i18n';
-import { getSeriesUrl, localizeUrl } from '@/lib/urls';
+import { hasLocaleContent } from '@/lib/locale-routes';
+import { getPostsListUrl, getSeriesUrl, localizeUrl } from '@/lib/urls';
 
 type HomepageSection = {
   id: string;
@@ -26,13 +27,13 @@ type HomepageSection = {
 export default function HomeBody({ locale }: { locale: string }) {
   const { t } = getTranslator(locale);
   const features = siteConfig.features;
-  // Locale trees hold no flows, so a locale home has no flows section.
-  const hasFlows = locale === siteConfig.i18n.defaultLocale;
+  const isDefaultLocale = locale === siteConfig.i18n.defaultLocale;
 
   // Resolve ordered, enabled homepage sections from config
   const sections = ([...(siteConfig.homepage?.sections as HomepageSection[] ?? [])])
     .filter(s => s.enabled !== false)
-    .filter(s => hasFlows || s.id !== 'recent-flows')
+    // Locale trees hold no flows, so a locale home has no flows section.
+    .filter(s => isDefaultLocale || s.id !== 'recent-flows')
     .sort((a, b) => a.weight - b.weight);
 
   const has = (id: string) => sections.some(s => s.id === id);
@@ -52,6 +53,12 @@ export default function HomeBody({ locale }: { locale: string }) {
   const featuredPosts = has('featured-posts') && isFeatureEnabled('posts') ? getFeaturedPosts(locale) : [];
 
   const posts = allPosts.slice(0, latestPostsMax);
+  // The home lists every post, but a locale tree generates its posts listing
+  // only for posts outside posts.excludeFromListing, so it may have none.
+  // The default listing always exists.
+  const allPostsUrl = isDefaultLocale || hasLocaleContent(locale, 'posts')
+    ? localizeUrl(getPostsListUrl(), locale)
+    : null;
 
   // Prepare serializable data for client components
   const seriesItems: SeriesItem[] = has('featured-series') && isFeatureEnabled('series')
@@ -155,7 +162,7 @@ export default function HomeBody({ locale }: { locale: string }) {
         );
       case 'latest-posts':
         if (!isFeatureEnabled('posts')) return null;
-        return <div key="latest-posts" className="mb-12 sm:mb-24"><LatestWritingSection posts={posts} locale={locale} /></div>;
+        return <div key="latest-posts" className="mb-12 sm:mb-24"><LatestWritingSection posts={posts} locale={locale} allPostsUrl={allPostsUrl} /></div>;
       case 'recent-flows':
         if (!isFeatureEnabled('flow')) return null;
         return <div key="recent-flows" className="mb-12 sm:mb-24"><RecentNotesSection notes={recentNoteItems} /></div>;
@@ -191,7 +198,7 @@ export default function HomeBody({ locale }: { locale: string }) {
           <div key="latest-flows-combined" className={`grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 ${divideBeforeSeries ? 'mb-8 sm:mb-16' : 'mb-12 sm:mb-24'}`}>
             {showLatest && (
               <div className="lg:col-span-7">
-                <LatestWritingSection posts={posts} locale={locale} />
+                <LatestWritingSection posts={posts} locale={locale} allPostsUrl={allPostsUrl} />
               </div>
             )}
             {showFlows && (

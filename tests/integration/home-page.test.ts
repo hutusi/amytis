@@ -8,6 +8,7 @@ import FeaturedStoriesSection from '../../src/components/FeaturedStoriesSection'
 import LatestWritingSection from '../../src/components/LatestWritingSection';
 import SelectedBooksSection from '../../src/components/SelectedBooksSection';
 import { getAllPosts } from '../../src/lib/content/posts';
+import { getPostUrl } from '../../src/lib/urls';
 
 // The default home and the locale homes share HomeBody; the sections link
 // into the home's own tree.
@@ -70,18 +71,26 @@ describe('home sections link into their locale tree', () => {
     expect(html).toContain('href="/zh/books/handbook/intro"');
   });
 
-  test('featured and latest posts', async () => {
+  test('featured posts', async () => {
     const featured = await render(createElement(FeaturedStoriesSection, {
       allFeatured: [{ slug: 'hello', title: '你好', excerpt: '摘要', date: '2026-01-01', category: 'Notes', readingMinutes: 1 }],
       maxItems: 4,
       locale: 'zh',
     }));
     expect(featured).toContain('href="/zh/posts/hello"');
-    const latest = await render(createElement(LatestWritingSection, { posts: getAllPosts('zh').slice(0, 1), locale: 'zh' }));
-    expect(latest).toContain('href="/zh/posts"');
   });
 
-  test('a locale without posts gets no latest section, so no link to a listing it lacks', async () => {
-    expect(await render(createElement(LatestWritingSection, { posts: [], locale: 'zh' }))).toBe('');
+  test('the latest section shows its posts, and links to a listing only when one exists', async () => {
+    const posts = getAllPosts('zh').slice(0, 1);
+    const postLink = `href="${getPostUrl(posts[0])}`;
+    const linked = await render(createElement(LatestWritingSection, { posts, locale: 'zh', allPostsUrl: '/zh/posts' }));
+    expect(linked).toContain('href="/zh/posts"');
+    expect(linked).toContain(postLink);
+    // Every home post in an excluded series: listed here, but no /zh/posts/.
+    const unlinked = await render(createElement(LatestWritingSection, { posts, locale: 'zh', allPostsUrl: null }));
+    expect(unlinked).not.toContain('href="/zh/posts"');
+    expect(unlinked).toContain(postLink);
+    // No posts at all: no section.
+    expect(await render(createElement(LatestWritingSection, { posts: [], locale: 'zh', allPostsUrl: null }))).toBe('');
   });
 });
