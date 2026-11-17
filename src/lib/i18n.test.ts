@@ -85,35 +85,39 @@ describe('getTranslator tWith', () => {
 });
 
 describe('buildFeatureOverrides', () => {
+  // The demo config names features with { en, zh } maps and the starter with
+  // plain strings; writing through this type compiles against either.
+  const seriesFeature = siteConfig.features.series as { name: string | Record<string, string> };
+
   test('no override when the configured name equals the default translation', () => {
-    const original = siteConfig.features.series.name;
+    const original = seriesFeature.name;
     try {
-      siteConfig.features.series.name = {
+      seriesFeature.name = {
         en: translations.en.series,
         zh: translations.zh.series,
       };
       expect('series' in buildFeatureOverrides('en')).toBe(false);
       expect('series' in buildFeatureOverrides('zh')).toBe(false);
     } finally {
-      siteConfig.features.series.name = original;
+      seriesFeature.name = original;
     }
   });
 
   test('a renamed feature overrides its simple keys', () => {
-    const original = siteConfig.features.series.name;
+    const original = seriesFeature.name;
     try {
-      siteConfig.features.series.name = { en: 'Collections', zh: '合集' };
+      seriesFeature.name = { en: 'Collections', zh: '合集' };
       expect(buildFeatureOverrides('en').series).toBe('Collections');
       expect(buildFeatureOverrides('zh').series).toBe('合集');
     } finally {
-      siteConfig.features.series.name = original;
+      seriesFeature.name = original;
     }
   });
 
   test('a renamed feature substitutes into compound keys', () => {
-    const original = siteConfig.features.series.name;
+    const original = seriesFeature.name;
     try {
-      siteConfig.features.series.name = { en: 'Collections', zh: '合集' };
+      seriesFeature.name = { en: 'Collections', zh: '合集' };
 
       const en = buildFeatureOverrides('en');
       for (const key of ['curated_series', 'all_series', 'view_full_series'] as const) {
@@ -127,18 +131,29 @@ describe('buildFeatureOverrides', () => {
       expect(zh.all_series).toContain('合集');
       expect(zh.all_series).not.toContain('系列');
     } finally {
-      siteConfig.features.series.name = original;
+      seriesFeature.name = original;
+    }
+  });
+
+  test('a plain-string name (single-language config) applies in every language', () => {
+    const original = seriesFeature.name;
+    try {
+      seriesFeature.name = 'Collections';
+      expect(buildFeatureOverrides('en').series).toBe('Collections');
+      expect(buildFeatureOverrides('zh').series).toBe('Collections');
+    } finally {
+      seriesFeature.name = original;
     }
   });
 
   test('falls back to the en feature name for a locale without one', () => {
-    const original = siteConfig.features.series.name;
+    const original = seriesFeature.name;
     try {
       // Missing zh: the zh overrides should use the en name
-      siteConfig.features.series.name = { en: 'Collections' } as { en: string; zh: string };
+      seriesFeature.name = { en: 'Collections' };
       expect(buildFeatureOverrides('zh').series).toBe('Collections');
     } finally {
-      siteConfig.features.series.name = original;
+      seriesFeature.name = original;
     }
   });
 
