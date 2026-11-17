@@ -59,6 +59,8 @@ next-env.d.ts
 /public/series/
 /public/flows/
 /public/notes/
+# locale trees mirror to public/<locale>/ (one line per locale in site.config.ts)
+/public/zh/
 
 # pagefind index (generated after build)
 /public/pagefind/
