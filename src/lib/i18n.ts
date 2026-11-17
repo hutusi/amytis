@@ -24,11 +24,13 @@ const FEATURE_COMPOUND_KEYS: Record<string, TranslationKey[]> = {
 };
 
 function substituteInTranslation(original: string, from: string, to: string): string | null {
-  if (original.includes(from)) return original.replaceAll(from, to);
+  // Function replacers insert `to` literally: as a plain string, a `$$` or `$&`
+  // in a configured name would act as a replacement pattern.
+  if (original.includes(from)) return original.replaceAll(from, () => to);
   // Case-insensitive fallback for languages like English
   if (original.toLowerCase().includes(from.toLowerCase())) {
     const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return original.replace(new RegExp(escaped, 'gi'), to);
+    return original.replace(new RegExp(escaped, 'gi'), () => to);
   }
   return null;
 }
@@ -39,12 +41,14 @@ function substituteInTranslation(original: string, from: string, to: string): st
  */
 export function buildFeatureOverrides(lang: string): Partial<Record<TranslationKey, string>> {
   const overrides: Partial<Record<TranslationKey, string>> = {};
-  const features = siteConfig.features as Record<string, { name?: Record<string, string> } | undefined>;
+  // A feature name is a plain string (single-language config) or a per-locale map.
+  const features = siteConfig.features as Record<string, { name?: string | Record<string, string> } | undefined>;
   const langT = translations[lang as Language] ?? translations.en;
 
   for (const [featureKey, featureConfig] of Object.entries(features)) {
     if (!featureConfig?.name) continue;
-    const configuredName = featureConfig.name[lang] ?? featureConfig.name['en'];
+    const { name } = featureConfig;
+    const configuredName = typeof name === 'string' ? name : name[lang] ?? name['en'];
     if (!configuredName) continue;
 
     const simpleKeys = FEATURE_SIMPLE_KEYS[featureKey] ?? [];

@@ -47,6 +47,8 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 `site.config.ts` (this repo — i18n object form, `{ en, zh }`) and `site.config.example.ts` (shipped via `create-amytis` — plain strings, single-locale, optional features default disabled) must stay in sync. Any schema change to one must be mirrored in the other.
 
+The code must also type-check and build against the example: `create-amytis` makes it the new site's `site.config.ts` (and drops `content/<locale>/` trees), and CI's **Starter site** job builds the repo that way. Give an empty array in it a type (`[] as Foo[]`, or TypeScript infers `never[]`), and read a locale-aware field as `string | Record<string, string>`, never as a map.
+
 ## Gotchas (things Claude will get wrong on first try)
 
 Feature-local gotchas live in path-scoped rules under `.claude/rules/` and auto-load when you touch matching files: `rst.md` (docutils setup, sanitize-html allowlist, disk-cache version) and `immersive-reading.md` (chrome-hiding hooks, provider boundaries, prefs persistence).

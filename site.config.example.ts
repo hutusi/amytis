@@ -102,7 +102,7 @@ export const siteConfig = {
     // bottomLinks: [
     //   { text: '京ICP备12345678号', url: 'https://beian.miit.gov.cn/' },
     // ],
-    bottomLinks: [],
+    bottomLinks: [] as { text: string; url?: string }[],
   },
 
   // ── Social & sharing ──────────────────────────────────────────────────────
@@ -229,7 +229,7 @@ export const siteConfig = {
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   analytics: {
-    providers: [], // enable one or many: 'umami' | 'plausible' | 'google'
+    providers: [] as ('umami' | 'plausible' | 'google')[], // enable one or many; [] disables analytics
     umami: {
       websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '', // Your Umami Website ID
       src: process.env.NEXT_PUBLIC_UMAMI_URL || 'https://us.umami.is/script.js', // Default or self-hosted URL
