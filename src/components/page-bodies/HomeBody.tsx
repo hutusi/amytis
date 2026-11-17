@@ -13,7 +13,7 @@ import LatestWritingSection from '@/components/LatestWritingSection';
 import RecentNotesSection, { RecentNoteItem } from '@/components/RecentNotesSection';
 import { getTranslator } from '@/lib/i18n';
 import { hasLocaleContent } from '@/lib/locale-routes';
-import { getPostsListUrl, getSeriesUrl, localizeUrl } from '@/lib/urls';
+import { getPostUrl, getPostUrlInCollection, getPostsListUrl, getSeriesUrl, localizeUrl } from '@/lib/urls';
 
 type HomepageSection = {
   id: string;
@@ -73,7 +73,13 @@ export default function HomeBody({ locale }: { locale: string }) {
           coverImage: seriesData?.coverImage,
           url: localizeUrl(getSeriesUrl(slug), locale),
           postCount: seriesPosts.length,
-          topPosts: seriesPosts.slice(0, 3).map(p => ({ slug: p.slug, title: p.title })),
+          // A collection's posts belong to other series (or none): link them as
+          // the collection page does, not as /<collection>/<slug>.
+          topPosts: seriesPosts.slice(0, 3).map(p => ({
+            slug: p.slug,
+            title: p.title,
+            url: seriesData?.type === 'collection' ? getPostUrlInCollection(p, slug) : getPostUrl(p),
+          })),
           date: seriesData?.date ?? seriesPosts[0]?.date ?? '',
         };
       })

@@ -27,6 +27,14 @@ describe('home pages', () => {
     expect(danglingFragments(html)).toEqual([]);
   });
 
+  test('a collection card links its posts where they live, in the collection\'s context', async () => {
+    const html = await renderAsync(Home());
+    // modern-web-dev is a featured collection: its items belong to other series
+    // or none, so /modern-web-dev/<slug> would only reach a redirect alias.
+    expect(html).toContain('href="/digital-garden/02-architecture?collection=modern-web-dev"');
+    expect(html).not.toMatch(/href="\/modern-web-dev\/[^"]/);
+  });
+
   test('/zh/ shows the zh tree\'s featured posts, series and books, without flows', async () => {
     const html = await renderAsync(LocaleRootPage({ params: Promise.resolve({ slug: 'zh' }) }), { locale: 'zh' });
     for (const id of ['featured-posts', 'latest-posts', 'featured-series', 'featured-books']) {
@@ -51,7 +59,7 @@ describe('home sections link into their locale tree', () => {
     const html = await render(createElement(CuratedSeriesSection, {
       allSeries: [{
         name: 'garden', title: '花园', excerpt: '摘要', url: '/zh/series/garden', postCount: 1,
-        topPosts: [{ slug: 'first', title: '第一篇' }], date: '2026-01-01',
+        topPosts: [{ slug: 'first', title: '第一篇', url: '/zh/garden/first' }], date: '2026-01-01',
       }],
       maxItems: 6,
       locale: 'zh',

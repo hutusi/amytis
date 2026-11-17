@@ -8,7 +8,7 @@ import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
-import { getPostUrl, getSeriesListUrl, localizeUrl } from '@/lib/urls';
+import { getSeriesListUrl, localizeUrl } from '@/lib/urls';
 import { COVER_ZOOM_SLOW } from '@/lib/ui-classes';
 
 export interface SeriesItem {
@@ -18,7 +18,8 @@ export interface SeriesItem {
   coverImage?: string;
   url: string;
   postCount: number;
-  topPosts: { slug: string; title: string }[];
+  /** Each link is built by the caller: a collection's posts keep their own URLs. */
+  topPosts: { slug: string; title: string; url: string }[];
   date: string;
 }
 
@@ -116,7 +117,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                     {series.topPosts.map((p, idx) => (
                       <Link
                         key={p.slug}
-                        href={getPostUrl({ slug: p.slug, series: series.name, locale })}
+                        href={p.url}
                         className="flex items-center gap-3 group/link no-underline"
                       >
                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-soft text-[10px] flex items-center justify-center font-mono text-muted group-hover/link:bg-accent/10 group-hover/link:text-accent transition-colors">
