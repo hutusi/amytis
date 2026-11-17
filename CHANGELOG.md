@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.1] - 2026-11-17
 
 ### Fixed
 - **New Sites Start From the Starter Config**: `bun create amytis` gave every new site this repo's own `site.config.ts` (the demo author's social links, domain and two-language setup). It now uses the single-language `site.config.example.ts`, as documented, and drops the demo's Chinese translations, which a single-language site can't build. Needs `create-amytis` 0.1.3.

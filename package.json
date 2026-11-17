@@ -1,6 +1,6 @@
 {
   "name": "@hutusi/amytis",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A high-performance digital garden and blog engine with Next.js 16 and Tailwind CSS v4",
   "repository": {
     "type": "git",
