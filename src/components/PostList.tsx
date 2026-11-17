@@ -3,7 +3,7 @@ import type { PostData } from '@/lib/content/types';
 import CoverImage from './CoverImage';
 import Tag from './Tag';
 import { getPostUrl } from '@/lib/urls';
-import { getTranslator } from '@/lib/i18n';
+import { categoryLabel, getTranslator } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
 import { CARD_HOVER, COVER_ZOOM } from '@/lib/ui-classes';
 
@@ -64,7 +64,7 @@ export default function PostList({
                 <div className="flex items-center gap-x-2 text-xs font-mono text-muted mb-2 sm:mb-3 overflow-hidden">
                   {post.category && (
                     <>
-                      <span className="text-accent uppercase tracking-wider truncate max-w-[4rem]">{post.category}</span>
+                      <span className="text-accent uppercase tracking-wider truncate max-w-[4rem]">{categoryLabel(post.category, locale)}</span>
                       <span className="shrink-0">·</span>
                     </>
                   )}

@@ -7,6 +7,13 @@ import type { Heading } from '../text-metrics';
 
 export type { Heading };
 
+/**
+ * The category a post gets when its frontmatter names none. It is stored as
+ * this English sentinel in every tree; pages show it through
+ * `categoryLabel()` so a locale tree reads it in its own language.
+ */
+export const DEFAULT_CATEGORY = 'Uncategorized';
+
 export interface ExternalLink {
   name: string;
   url: string;

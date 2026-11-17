@@ -11,7 +11,7 @@ import FeaturedStoriesSection, { FeaturedPost } from '@/components/FeaturedStori
 import SelectedBooksSection, { BookItem } from '@/components/SelectedBooksSection';
 import LatestWritingSection from '@/components/LatestWritingSection';
 import RecentNotesSection, { RecentNoteItem } from '@/components/RecentNotesSection';
-import { getTranslator } from '@/lib/i18n';
+import { categoryLabel, getTranslator } from '@/lib/i18n';
 import { hasLocaleContent } from '@/lib/locale-routes';
 import { getPostUrl, getPostUrlInCollection, getPostsListUrl, getSeriesUrl, localizeUrl } from '@/lib/urls';
 
@@ -114,7 +114,7 @@ export default function HomeBody({ locale }: { locale: string }) {
         subtitle: p.subtitle,
         excerpt: p.excerpt,
         date: p.date,
-        category: p.category,
+        category: categoryLabel(p.category, locale),
         readingMinutes: p.readingMinutes,
         coverImage: p.coverImage,
         series: p.series,

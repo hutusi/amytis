@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { PostData } from '@/lib/content/types';
-import { getTranslator } from '@/lib/i18n';
+import { categoryLabel, getTranslator } from '@/lib/i18n';
 import { getPostUrl } from '@/lib/urls';
 import MetaDot from './ui/MetaDot';
 
@@ -19,7 +19,7 @@ export default function RelatedPosts({ posts, locale }: { posts: PostData[]; loc
                  <time className="font-mono">{post.date}</time>
                  <MetaDot />
                  <span className="uppercase tracking-widest text-[0.6rem] font-semibold text-accent/80">
-                   {post.category}
+                   {categoryLabel(post.category, locale)}
                  </span>
                </div>
                <h4 className="text-lg font-serif font-bold text-heading group-hover:text-accent transition-colors duration-200 mb-2 line-clamp-2">

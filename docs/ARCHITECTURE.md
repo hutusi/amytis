@@ -320,7 +320,7 @@ title: "Post Title"
 subtitle: "Optional subtitle line"  # Rendered below the title in italic
 date: "2026-01-01"
 excerpt: "Optional summary (auto-generated if omitted)"
-category: "Category Name"
+category: "Category Name"          # Default "Uncategorized", shown translated (未分类 on /zh/)
 tags: ["tag1", "tag2"]
 authors: ["Author Name"]
 series: "series-slug"             # Link to a series

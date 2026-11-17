@@ -46,6 +46,9 @@ describe('home pages', () => {
     expect(html).not.toContain('id="recent-flows"');
     expect(html).not.toContain('href="#recent-flows"');
     expect(danglingFragments(html)).toEqual([]);
+    // A post with no category (the i18n routing post) shows the default in Chinese.
+    expect(html).toContain('未分类');
+    expect(html).not.toContain('Uncategorized');
     // Every content link stays in the zh tree.
     const unprefixed = [...html.matchAll(/href="(\/(?:posts|series|books)[^"]*)"/g)].map((m) => m[1]);
     expect(unprefixed).toEqual([]);

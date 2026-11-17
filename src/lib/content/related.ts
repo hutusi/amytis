@@ -1,4 +1,4 @@
-import type { PostData, PostNavItem } from './types';
+import { DEFAULT_CATEGORY, type PostData, type PostNavItem } from './types';
 import { createKeyedMemo } from './cache';
 import { getAllPosts } from './posts';
 import { getSeriesData, getSeriesPosts, toPostNavItems } from './series';
@@ -28,7 +28,7 @@ export function getRelatedPosts(currentPost: PostData, limit: number = 3): PostD
         const commonTags = post.tags.filter(tag => currentPost.tags.includes(tag));
         score += commonTags.length * 2;
 
-        if (post.category === currentPost.category && post.category !== 'Uncategorized') {
+        if (post.category === currentPost.category && post.category !== DEFAULT_CATEGORY) {
           score += 1;
         }
 

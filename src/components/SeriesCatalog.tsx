@@ -4,7 +4,7 @@ import CoverImage from './CoverImage';
 import Tag from './Tag';
 import { getPostUrl, getPostUrlInCollection } from '@/lib/urls';
 import { padNumber } from '@/lib/format-utils';
-import { getTranslator } from '@/lib/i18n';
+import { categoryLabel, getTranslator } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
 import { CARD_HOVER, COVER_ZOOM } from '@/lib/ui-classes';
 
@@ -78,7 +78,7 @@ export default function SeriesCatalog({ posts, locale, startIndex = 0, totalPost
                       {post.category && (
                         <>
                           <span className="hidden sm:inline">•</span>
-                          <span className="uppercase tracking-wider">{post.category}</span>
+                          <span className="uppercase tracking-wider">{categoryLabel(post.category, locale)}</span>
                         </>
                       )}
                     </div>

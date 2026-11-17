@@ -47,6 +47,8 @@ describe('locale route rendering', () => {
     );
     expect(html).toContain('静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由');
     expect(html).toContain('默认语言前缀问题'); // body content from the zh tree
+    expect(html).toContain('未分类'); // no category: the default reads in Chinese
+    expect(html).not.toContain('Uncategorized');
   });
 
   test('/zh/series/zh-demo-series/ renders the zh series landing', async () => {

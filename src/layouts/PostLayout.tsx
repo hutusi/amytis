@@ -24,7 +24,7 @@ import PostReadingShell from '@/components/PostReadingShell';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import type { BreadcrumbItem } from '@/lib/breadcrumbs';
 import { siteConfig } from '../../site.config';
-import { getTranslator } from '@/lib/i18n';
+import { categoryLabel, getTranslator } from '@/lib/i18n';
 import { getPostUrl, getStaticPageUrl } from '@/lib/urls';
 
 interface PostLayoutProps {
@@ -79,7 +79,7 @@ export default function PostLayout({ post, locale, relatedPosts, seriesPosts, se
           still captured (data-pagefind-ignore's default keeps metadata). */}
       <div data-pagefind-ignore className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-sans text-muted mb-6">
         <span className="uppercase tracking-widest font-semibold text-accent">
-          {post.category}
+          {categoryLabel(post.category, locale)}
         </span>
         <span className="w-1 h-1 rounded-full bg-surface-raised" />
         <time className="font-mono" dateTime={post.date} data-pagefind-meta="date[datetime]">{post.date}</time>

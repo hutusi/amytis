@@ -6,7 +6,7 @@ import { siteConfig } from '../../../site.config';
 import { extractContentMetrics } from '../text-metrics';
 import { parseRstDocument, RstParseError } from '../rst';
 import { renderRstFile, renderRstFilesBatch, type RenderedRstDocument } from '../rst-renderer';
-import type { PostData, CollectionItem, Heading } from './types';
+import { DEFAULT_CATEGORY, type PostData, type CollectionItem, type Heading } from './types';
 import { domainDir, treePathFor, readUtf8File } from './io';
 import { getSeriesAuthors, getSeriesTitle } from './series-metadata';
 import { normalizeCoverImage } from './cover-image';
@@ -41,7 +41,7 @@ export const PostSchema = z.object({
   date: dateField.optional(),
   subtitle: z.string().optional(),
   excerpt: z.string().optional(),
-  category: z.string().optional().default('Uncategorized'),
+  category: z.string().optional().default(DEFAULT_CATEGORY),
   tags: tagsField,
   authors: z.array(z.string()).optional(),
   author: z.string().optional(),
@@ -376,7 +376,7 @@ export function parseRstFile(
       subtitle: data.subtitle,
       date,
       excerpt: data.excerpt || parsedExcerpt,
-      category: data.category ?? 'Uncategorized',
+      category: data.category ?? DEFAULT_CATEGORY,
       tags: data.tags ?? [],
       authors,
       layout: data.layout ?? 'post',

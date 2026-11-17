@@ -1,5 +1,6 @@
 import { translations, Language, TranslationKey } from '@/i18n/translations';
 import { siteConfig } from '../../site.config';
+import { DEFAULT_CATEGORY } from './content/types';
 
 // ── Feature name overrides ────────────────────────────────────────────────
 //
@@ -102,6 +103,11 @@ export function getTranslator(locale: string): Translator {
   };
   _translatorCache[locale] = { t, tWith };
   return _translatorCache[locale];
+}
+
+/** A post's category as shown: the default category reads in the page's language. */
+export function categoryLabel(category: string, locale: string): string {
+  return category === DEFAULT_CATEGORY ? getTranslator(locale).t('uncategorized') : category;
 }
 
 /**
