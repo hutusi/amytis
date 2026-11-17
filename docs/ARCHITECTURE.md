@@ -565,6 +565,13 @@ default disabled) must stay in sync. Any schema change to one must be mirrored
 in the other. Locale-aware fields use `{ en, zh }` in `site.config.ts` and
 plain strings in the example.
 
+`create-amytis` copies the example over `site.config.ts` in a new site and
+removes the locale trees (`content/<locale>/`), which a single-language config
+can't build. CI's Starter site job does the same to the checkout and runs
+`typecheck` and `build:dev`, so the code has to work with both configs: type
+the example's empty arrays, and treat locale-aware fields as
+`string | Record<string, string>`.
+
 ### Config validation
 
 `src/lib/config-schema.ts` holds a Zod `SiteConfigSchema` that validates
