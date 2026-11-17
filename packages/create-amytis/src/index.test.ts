@@ -341,6 +341,14 @@ describe("sync with the real repo files", () => {
     expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name).toBe("sync-check");
   });
 
+  test("create-amytis names the repository that publishes it", () => {
+    // npm checks a Trusted Publishing provenance statement against
+    // repository.url and refuses the publish when it is missing or differs.
+    const own = JSON.parse(fs.readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8"));
+    const root = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+    expect(own.repository).toEqual({ ...root.repository, directory: "packages/create-amytis" });
+  });
+
   test("patchPackageJson patches the real package.json", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
