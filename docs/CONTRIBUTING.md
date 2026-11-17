@@ -296,3 +296,23 @@ Amytis relies on static export (`output: "export"`) with `trailingSlash: true`.
 - **TypeScript:** Use strict types.
 - **Tailwind:** Use utility classes.
 - **Localization:** Use `t()` helper for UI strings.
+
+## Releasing
+
+Both packages publish to npm from GitHub Actions with npm Trusted Publishing, so nobody types a token or a 2FA code.
+
+**Amytis** (`@hutusi/amytis`):
+
+1. Bring `## [Unreleased]` in `CHANGELOG.md` up to date.
+2. Commit `release: prepare X.Y.Z`: rename that heading to `## [X.Y.Z] - <date>` and set the version in `package.json`.
+3. Tag it: `git tag -a vX.Y.Z -m "Release X.Y.Z"`, then push `main` and the tag.
+4. `gh release create vX.Y.Z --title vX.Y.Z --notes-file <that changelog section>`. Creating the release runs `.github/workflows/publish.yml`, which publishes to npm and GitHub Packages. `bun create amytis` makes new sites from the latest release.
+
+**create-amytis** (`packages/create-amytis`):
+
+1. Commit `release: prepare create-amytis X.Y.Z`, setting the version in `packages/create-amytis/package.json`.
+2. Push a tag `create-amytis-vX.Y.Z` on that commit. `.github/workflows/publish-create-amytis.yml` checks that the tag matches the version, runs the package's tests, builds it and publishes it.
+
+Don't create a GitHub release for a `create-amytis-v*` tag: it would run `publish.yml` and become the latest release that new sites are made from.
+
+The workflow can only publish once npm trusts it. In the package's settings on npmjs.com, under **Trusted Publisher**, add GitHub Actions with the repository `hutusi/amytis` and the workflow `publish-create-amytis.yml`.
