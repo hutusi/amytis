@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **New Sites Start From the Starter Config**: `bun create amytis` gave every new site this repo's own `site.config.ts` (the demo author's social links, domain and two-language setup). It now uses the single-language `site.config.example.ts`, as documented, and drops the demo's Chinese translations, which a single-language site can't build. Needs `create-amytis` 0.1.3.
+- **Starter Config Builds**: the code now type-checks against `site.config.example.ts` (its empty `analytics.providers` and `footer.bottomLinks` were inferred as `never[]`), and a CI job builds the site with it.
+- **Feature Names in a Single-Language Config**: a plain-string `features.*.name` (e.g. `name: "Articles"`) was ignored, because it was read as a per-locale map; it now renames the feature in every language.
+
 ## [2.0.0] - 2026-11-17
 
 Translations now live in locale content trees with their own URLs (`/zh/…`), replacing 1.x's sibling translation files. That breaks sites that have translations, which is why this is a major release; see **Upgrading from 1.x**.
