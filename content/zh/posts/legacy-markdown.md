@@ -34,7 +34,7 @@ console.log("Hello from .md file!");
 
 ## 引用
 
-这是一个[指向 Markdown 指南的链接][md-guide]。
+这是一个[指向 Markdown 指南的链接][guide]。
 
 内部链接：[首页](/zh/)和[归档](/archive)。
 

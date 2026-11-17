@@ -5,6 +5,9 @@ excerpt: "深入探讨在静态导出的 Next.js 数字花园中，客户端语�
 tags: ["nextjs", "i18n", "seo", "static-site"]
 ---
 
+> [!NOTE]
+> 本文写于 2026 年 2 月，早于 Amytis 实现多语言路由。最终的实现是基于 URL 的路由加语言内容树：译文放在 `content/zh/` 下的相同路径（`.zh.mdx` 同级文件现在会导致构建失败）；没有译文的页面不会生成 `/zh/` URL，也没有回退横幅。详见 [Translating content](https://github.com/hutusi/amytis/blob/main/docs/CONTRIBUTING.md#translating-content-locale-trees)。
+
 在使用 Next.js 构建多语言静态博客时，国际化有两种根本不同的实现方式。在两者之间做选择，需要在 SEO、开发者体验、内容策略和托管复杂度等多个方面进行权衡。
 
 ## 客户端切换方案
@@ -83,7 +86,8 @@ const label = t('about'); // "About" or "关于"
 #### Nginx
 
 ```nginx
-location ~ ^/en(/.*)?$ { return 301 ${1:-/}; }
+location = /en { return 301 /; }
+location ~ ^/en(/.*)$ { return 301 $1; }
 location /zh/ { try_files $uri $uri/index.html =404; }
 location / { try_files /en$uri /en$uri/index.html =404; }
 ```
