@@ -184,7 +184,7 @@ export default function HomeBody({ locale }: { locale: string }) {
 
     if (pairLatestFlows && (section.id === 'latest-posts' || section.id === 'recent-flows')) {
       skippedIds.add(section.id === 'latest-posts' ? 'recent-flows' : 'latest-posts');
-      const showLatest = isFeatureEnabled('posts');
+      const showLatest = isFeatureEnabled('posts') && posts.length > 0;
       const showFlows = isFeatureEnabled('flow') && recentNoteItems.length > 0;
       if (showLatest || showFlows) {
         renderList.push(

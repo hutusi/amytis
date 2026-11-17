@@ -7,6 +7,7 @@ import CuratedSeriesSection from '../../src/components/CuratedSeriesSection';
 import FeaturedStoriesSection from '../../src/components/FeaturedStoriesSection';
 import LatestWritingSection from '../../src/components/LatestWritingSection';
 import SelectedBooksSection from '../../src/components/SelectedBooksSection';
+import { getAllPosts } from '../../src/lib/content/posts';
 
 // The default home and the locale homes share HomeBody; the sections link
 // into the home's own tree.
@@ -76,7 +77,11 @@ describe('home sections link into their locale tree', () => {
       locale: 'zh',
     }));
     expect(featured).toContain('href="/zh/posts/hello"');
-    const latest = await render(createElement(LatestWritingSection, { posts: [], locale: 'zh' }));
+    const latest = await render(createElement(LatestWritingSection, { posts: getAllPosts('zh').slice(0, 1), locale: 'zh' }));
     expect(latest).toContain('href="/zh/posts"');
+  });
+
+  test('a locale without posts gets no latest section, so no link to a listing it lacks', async () => {
+    expect(await render(createElement(LatestWritingSection, { posts: [], locale: 'zh' }))).toBe('');
   });
 });

@@ -124,7 +124,8 @@ and keeps its unprefixed URLs.
   locale, so a locale home has the same `homepage.sections` filled from its
   own tree and linking into it. It drops `recent-flows` (locale trees hold no
   flows); an empty section renders nothing, and a hero chip shows only when
-  the section it jumps to is on the page.
+  the section it jumps to is on the page. As on the default home, latest
+  posts ignore `posts.excludeFromListing`, which covers `/posts` listings only.
 - **Reserved segments**: locale codes (including the default) join
   `getReservedRouteSegments()`; a series/page/alias/basePath named like a
   locale code fails the build.

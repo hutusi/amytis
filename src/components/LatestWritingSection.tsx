@@ -11,6 +11,10 @@ interface LatestWritingSectionProps {
 }
 
 export default function LatestWritingSection({ posts, locale }: LatestWritingSectionProps) {
+  // Like the other home sections, nothing to show renders nothing. A locale
+  // tree without posts also has no posts listing for "all posts" to link to.
+  if (posts.length === 0) return null;
+
   return (
     <section id="latest-posts">
       <div className="flex items-center justify-between mb-8">
