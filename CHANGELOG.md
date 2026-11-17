@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2026-11-17
 
 Translations now live in locale content trees with their own URLs (`/zh/…`), replacing 1.x's sibling translation files. That breaks sites that have translations, which is why this is a major release; see **Upgrading from 1.x**.
 
