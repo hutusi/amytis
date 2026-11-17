@@ -1,0 +1,19 @@
+---
+title: "系统架构 101"
+date: "2026-02-12"
+category: "Engineering"
+tags: ["architecture", "nextjs"]
+authors: ["Amytis Team"]
+---
+
+构建一个健壮的数字花园需要灵活的架构。Amytis 采用静态生成与动态客户端增强相结合的方式。
+
+## 技术栈
+
+- **Next.js 16**：路由与静态生成的骨干。
+- **Tailwind CSS v4**：用于实现简约而优雅的样式。
+- **Unified/Remark/Rehype**：将 MDX 转换为交互式内容的引擎。
+
+### 资源管线
+
+我们自定义的 `copy-assets.ts` 脚本可确保在构建过程中，与 markdown 文件同目录的图片被正确映射到 public 目录。这使得图片与文本存放在一起，带来整洁的开发体验。

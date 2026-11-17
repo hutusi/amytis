@@ -5,6 +5,13 @@ excerpt: "A deep dive into the trade-offs between client-side language switching
 tags: ["nextjs", "i18n", "seo", "static-site"]
 ---
 
+> [!NOTE]
+> Written in February 2026, before Amytis implemented locale routing. Amytis
+> went with URL-based routing on locale content trees: a translation sits at
+> the same path under `content/zh/` (a `.zh.mdx` sibling now fails the build),
+> and a page without a translation has no `/zh/` URL instead of a fallback
+> banner. See [Translating content](https://github.com/hutusi/amytis/blob/main/docs/CONTRIBUTING.md#translating-content-locale-trees).
+
 When building a multilingual static blog with Next.js, there are two fundamentally different approaches to internationalisation. Choosing between them involves trade-offs across SEO, developer experience, content strategy, and hosting complexity.
 
 ## The Client-Side Toggle Approach
@@ -83,7 +90,8 @@ The `200` status is a **silent rewrite** — the user sees `/about` in the URL b
 #### Nginx
 
 ```nginx
-location ~ ^/en(/.*)?$ { return 301 ${1:-/}; }
+location = /en { return 301 /; }
+location ~ ^/en(/.*)$ { return 301 $1; }
 location /zh/ { try_files $uri $uri/index.html =404; }
 location / { try_files /en$uri /en$uri/index.html =404; }
 ```

@@ -196,6 +196,10 @@ Rules the build enforces (throws, not warnings):
   `content/<locale>/series/<s>/index.md` alongside the posts.
 - Flow locale trees (`content/<locale>/flows/`) are not supported yet.
 
+The build copies a locale tree's images and other files to
+`public/<locale>/`. That folder is generated: when you add a locale, add
+`/public/<locale>/` to `.gitignore` (this repo lists `/public/zh/`).
+
 To write a translation with an LLM, use `bun run translate <file-or-folder>`
 (any OpenAI-compatible API, e.g. Aliyun Bailian): it places the file, keeps
 the frontmatter rules above and the code blocks intact, copies co-located

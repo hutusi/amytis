@@ -8,8 +8,11 @@ import {
   resolveLocalizedPath,
 } from '../../src/lib/locale-routes';
 
-// Relies on the tracked zh fixtures (see locale-trees.test.ts): a twin post,
-// the zh-original post, the zh-only series, and the migrated zh pages.
+// Relies on the tracked zh fixtures (see locale-trees.test.ts): translated
+// posts, series and the sample book, the zh-original post, the zh-only series,
+// and the migrated zh pages. What the zh tree still lacks (notes, the
+// nextjs-deep-dive series, the other books, the subscribe page) pins sparse
+// generation.
 
 describe('resolveLocalizedPath grammar', () => {
   test('locale root → localeHome', () => {
@@ -19,7 +22,7 @@ describe('resolveLocalizedPath grammar', () => {
   test('section listings exist only for kinds the tree holds', () => {
     expect(resolveLocalizedPath('zh', ['posts'])).toMatchObject({ kind: 'postsListing', page: 1 });
     expect(resolveLocalizedPath('zh', ['series'])).toMatchObject({ kind: 'seriesIndexListing' });
-    expect(resolveLocalizedPath('zh', ['books'])).toBeNull();
+    expect(resolveLocalizedPath('zh', ['books'])).toMatchObject({ kind: 'booksListing' });
     expect(resolveLocalizedPath('zh', ['notes'])).toBeNull();
     expect(resolveLocalizedPath('zh', ['flows'])).toBeNull();
   });
@@ -29,7 +32,7 @@ describe('resolveLocalizedPath grammar', () => {
     expect(twin).toMatchObject({ kind: 'post' });
     if (twin?.kind === 'post') {
       expect(twin.post.locale).toBe('zh');
-      expect(twin.post.title).toBe('静态导出下的多语言路由考量');
+      expect(twin.post.title).toBe('静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由');
     }
     expect(resolveLocalizedPath('zh', ['posts', 'zh-original-demo'])).toMatchObject({ kind: 'post' });
     expect(resolveLocalizedPath('zh', ['posts', 'no-such-post'])).toBeNull();
@@ -43,8 +46,9 @@ describe('resolveLocalizedPath grammar', () => {
       kind: 'seriesPrefixListing', seriesSlug: 'zh-demo-series', page: 1,
     });
     expect(resolveLocalizedPath('zh', ['zh-demo-series', 'di-yi-pian'])).toMatchObject({ kind: 'post' });
-    // A default-tree-only series does not exist in the zh mirror.
-    expect(resolveLocalizedPath('zh', ['series', 'markdown-showcase'])).toBeNull();
+    // A translated series exists in the mirror; a default-tree-only one does not.
+    expect(resolveLocalizedPath('zh', ['series', 'markdown-showcase'])).toMatchObject({ kind: 'seriesPage' });
+    expect(resolveLocalizedPath('zh', ['series', 'nextjs-deep-dive'])).toBeNull();
   });
 
   test('pages resolve from the locale tree', () => {
@@ -81,11 +85,12 @@ describe('locale params providers', () => {
   test('second-level params cover pages, section roots, and series prefixes — sparsely', () => {
     const params = localeSecondLevelParams();
     const zhPairs = params.filter(p => p.slug === 'zh').map(p => p.postSlug);
-    for (const expected of ['about', 'links', 'privacy', 'posts', 'series', 'zh-demo-series']) {
+    for (const expected of ['about', 'links', 'privacy', 'posts', 'series', 'books', 'zh-demo-series', 'markdown-showcase']) {
       expect(zhPairs).toContain(expected);
     }
-    expect(zhPairs).not.toContain('books');
     expect(zhPairs).not.toContain('notes');
+    expect(zhPairs).not.toContain('nextjs-deep-dive');
+    expect(zhPairs).not.toContain('subscribe');
     expect(params.every(p => p.slug === 'zh')).toBe(true); // never the default locale
   });
 
@@ -96,9 +101,11 @@ describe('locale params providers', () => {
     expect(paths).toContain('/zh/posts/zh-original-demo');
     expect(paths).toContain('/zh/zh-demo-series/di-yi-pian');
     expect(paths).toContain('/zh/series/zh-demo-series');
-    // Tiny tree: no pagination pages, no books, no notes.
-    expect(paths.some(p => p.includes('/page/'))).toBe(false);
-    expect(paths.some(p => p.includes('/books/'))).toBe(false);
+    expect(paths).toContain('/zh/posts/page/2');
+    expect(paths).toContain('/zh/books/sample-book');
+    expect(paths).toContain('/zh/books/sample-book/introduction');
+    // Only what the tree holds: one translated book, no notes.
+    expect(paths.some(p => p.includes('/books/') && !p.includes('/books/sample-book'))).toBe(false);
     expect(paths.some(p => p.includes('/notes/'))).toBe(false);
   });
 
@@ -117,7 +124,7 @@ describe('hasLocaleContent gates', () => {
     expect(hasLocaleContent('zh', 'posts')).toBe(true);
     expect(hasLocaleContent('zh', 'pages')).toBe(true);
     expect(hasLocaleContent('zh', 'series')).toBe(true);
-    expect(hasLocaleContent('zh', 'books')).toBe(false);
+    expect(hasLocaleContent('zh', 'books')).toBe(true);
     expect(hasLocaleContent('zh', 'notes')).toBe(false);
     expect(hasLocaleContent('zh', 'any')).toBe(true);
   });
@@ -136,8 +143,9 @@ describe('getTwinnedPathManifest', () => {
     ]) {
       expect(zh).toContain(expected);
     }
+    expect(zh).toContain('/books/sample-book/');
     // Nothing the zh tree lacks.
-    expect(zh).not.toContain('/books/');
+    expect(zh).not.toContain('/books/notes-on-thinking/');
     expect(zh).not.toContain('/notes/');
     expect(zh).not.toContain('/subscribe/');
   });

@@ -1,0 +1,123 @@
+---
+title: "语法高亮"
+date: '2026-02-15'
+category: Engineering
+tags:
+  - code
+  - typescript
+featured: true
+coverImage: /images/vibrant-waves.jpg
+---
+
+Amytis 为数十种编程语言提供了精美的语法高亮。下面是结合本系列内容的一些示例。
+
+> 如需涵盖 11+ 种语言的完整展示，请参阅独立的[语法高亮展示](/zh/posts/syntax-highlighting-showcase)一文。
+
+## TypeScript
+
+```typescript
+interface Post {
+  title: string;
+  date: string;
+  featured: boolean;
+}
+
+function getFeatured(posts: Post[]): Post[] {
+  return posts.filter(p => p.featured);
+}
+```
+
+## Python
+
+```python
+from pathlib import Path
+from dataclasses import dataclass
+
+@dataclass
+class Post:
+    title: str
+    slug: str
+    featured: bool = False
+
+    @property
+    def url(self) -> str:
+        return f"/posts/{self.slug}"
+
+def load_posts(directory: Path) -> list[Post]:
+    return [
+        Post(title=f.stem.replace("-", " ").title(), slug=f.stem)
+        for f in directory.glob("*.md")
+    ]
+```
+
+## Rust
+
+```rust
+use std::fs;
+
+struct Post {
+    title: String,
+    slug: String,
+    featured: bool,
+}
+
+fn load_posts(dir: &str) -> Vec<Post> {
+    fs::read_dir(dir)
+        .expect("Failed to read directory")
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            let slug = path.file_stem()?.to_str()?.to_string();
+            Some(Post {
+                title: slug.replace('-', " "),
+                slug,
+                featured: false,
+            })
+        })
+        .collect()
+}
+```
+
+## Go
+
+```go
+package blog
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+type Post struct {
+	Title    string
+	Slug     string
+	Featured bool
+}
+
+func LoadPosts(dir string) ([]Post, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var posts []Post
+	for _, e := range entries {
+		if filepath.Ext(e.Name()) == ".md" {
+			slug := strings.TrimSuffix(e.Name(), ".md")
+			posts = append(posts, Post{
+				Title: strings.ReplaceAll(slug, "-", " "),
+				Slug:  slug,
+			})
+		}
+	}
+	return posts, nil
+}
+```
+
+## CSS / Tailwind
+
+```css
+.card-base {
+  @apply relative overflow-hidden rounded-2xl border border-muted/20 bg-muted/5 p-8 transition-all hover:border-accent/30;
+}
+```

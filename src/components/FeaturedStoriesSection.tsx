@@ -29,6 +29,8 @@ interface FeaturedStoriesSectionProps {
   allFeatured: FeaturedPost[];
   maxItems: number;
   order?: PostOrder;
+  /** The home's locale: links point into its content tree. */
+  locale: string;
 }
 
 // For 'shuffle', a seeded permutation keyed off the content so server and client
@@ -58,7 +60,7 @@ function buildDisplayed(allFeatured: FeaturedPost[], maxItems: number, orderedNo
   return [hero, ...fixedSecondaries, ...fillSlice];
 }
 
-export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 'shuffle' }: FeaturedStoriesSectionProps) {
+export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 'shuffle', locale }: FeaturedStoriesSectionProps) {
   const { t } = useLanguage();
 
   const nonPinned = allFeatured.filter(p => !p.pinned);
@@ -109,7 +111,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         {/* Hero card — full image with obi (belly band) text overlay */}
         <div className={secondary.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}>
-          <Link href={getPostUrl(hero)} className={`group block no-underline${secondary.length > 0 ? ' h-full' : ''}`}>
+          <Link href={getPostUrl({ ...hero, locale })} className={`group block no-underline${secondary.length > 0 ? ' h-full' : ''}`}>
             <div className={`relative overflow-hidden rounded-2xl bg-surface-soft ${secondary.length > 0 ? 'aspect-[16/9] lg:aspect-auto lg:h-full' : 'aspect-[16/9]'}`}>
               <CoverImage
                 src={hero.coverImage}
@@ -151,7 +153,7 @@ export default function FeaturedStoriesSection({ allFeatured, maxItems, order = 
             {secondary.map(post => (
               <Link
                 key={post.slug}
-                href={getPostUrl(post)}
+                href={getPostUrl({ ...post, locale })}
                 className="group flex no-underline ink-card overflow-hidden hover:border-accent/30 hover:bg-surface-soft hover:shadow-md hover:shadow-accent/5 transition-all duration-300 h-32"
               >
                 {/* Text content */}

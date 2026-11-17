@@ -34,7 +34,7 @@ console.log("Hello from .md file!");
 
 ## References
 
-This is a [link to markdown guide][md-guide].
+This is a [link to markdown guide][guide].
 
 Internal links: [Home](/) and [Archives](/archive).
 

@@ -1,22 +1,154 @@
 ---
-title: "静态导出下的多语言路由考量"
-excerpt: "在纯静态导出的站点上，基于 URL 的语言路由与客户端切换方案的取舍。"
+title: "静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由"
 date: "2026-02-20"
-category: "Engineering"
-tags: ["i18n", "nextjs"]
+excerpt: "深入探讨在静态导出的 Next.js 数字花园中，客户端语言切换与规范的基于 URL 的语言环境路由之间的权衡。"
+tags: ["nextjs", "i18n", "seo", "static-site"]
 ---
 
-# 静态导出下的多语言路由考量
+> [!NOTE]
+> 本文写于 2026 年 2 月，早于 Amytis 实现多语言路由。最终的实现是基于 URL 的路由加语言内容树：译文放在 `content/zh/` 下的相同路径（`.zh.mdx` 同级文件现在会导致构建失败）；没有译文的页面不会生成 `/zh/` URL，也没有回退横幅。详见 [Translating content](https://github.com/hutusi/amytis/blob/main/docs/CONTRIBUTING.md#translating-content-locale-trees)。
 
-这是 `i18n-routing-considerations` 的中文译文，与英文原文位于相同的树内相对路径，
-因此构成一对 twin：`content/posts/…` ↔ `content/zh/posts/…`。
+在使用 Next.js 构建多语言静态博客时，国际化有两种根本不同的实现方式。在两者之间做选择，需要在 SEO、开发者体验、内容策略和托管复杂度等多个方面进行权衡。
 
-## 为什么选择 URL 路由
+## 客户端切换方案
 
-客户端语言切换在水合后才生效，会带来闪烁与 hydration 告警；把语言编码进 URL
-之后，服务端在构建期就知道该渲染哪种语言。
+最简单的做法是把语言偏好存储在客户端状态中，并在水合（hydration）之后解析翻译：
 
-## 稀疏镜像
+```tsx
+// Language stored in context, resolved on the client
+const { t, language } = useLanguage();
+const label = t('about'); // "About" or "关于"
+```
 
-只有存在中文内容的页面才会生成 `/zh/` 路由 —— 没有译文的页面不会凭空多出一个
-中文外壳的副本。
+对于存在语言变体的页面内容，所有版本都会被服务端渲染进 HTML，再由一个轻量的客户端包装组件来切换可见性：
+
+```tsx
+// LocaleSwitch: shows/hides [data-locale] divs via useEffect
+<LocaleSwitch>
+  <div data-locale="en"><MarkdownRenderer content={enContent} /></div>
+  <div data-locale="zh" style={{ display: 'none' }}><MarkdownRenderer content={zhContent} /></div>
+</LocaleSwitch>
+```
+
+这种方案可行，而且零配置——不需要改动路由。但它确实存在一些实际的局限。
+
+### SEO 问题
+
+- **爬虫永远只能看到默认语言。** Googlebot 不会执行 `localStorage` 读取，因此它始终只索引默认语言的内容。
+- **`display:none` 的内容存在风险。** Google 可能只部分索引隐藏的语言变体，也可能完全忽略它们。
+- **没有 `hreflang` 信号。** 搜索引擎无法发现页面的其他语言版本。
+- **`<html lang>` 不会更新。** 无障碍工具和搜索引擎工具都依赖这个属性。
+
+---
+
+## 基于 URL 的语言路由
+
+正确的解决方案是让每个语言变体拥有自己的 URL：
+
+```
+/about        → English (default, no prefix)
+/zh/about     → Chinese
+```
+
+在 Next.js App Router 下，这意味着将所有路由移入 `app/[locale]/` 段，并在构建时使用 `generateStaticParams` 为每种语言预渲染每条路由。
+
+由于 Amytis 使用 `output: "export"`，这是纯粹的**静态站点生成**——HTML 会按语言完整地预先构建。爬虫无需执行 JavaScript 就能获得完整的 HTML，而且每种语言都可以被独立索引。
+
+### 默认语言前缀问题
+
+大多数网站都希望默认语言拥有干净的 URL（`/about`，而不是 `/en/about`）。在运行时服务器上，中间件可以透明地处理这件事；而在静态导出模式下，你需要让**托管层**来完成重写。
+
+#### Netlify / Cloudflare Pages
+
+在 `public/` 目录下放一个 `_redirects` 文件：
+
+```
+/en              /            301
+/en/*            /:splat      301
+/*               /en/:splat   200
+```
+
+`200` 状态码表示**静默重写**——用户在地址栏看到的是 `/about`，但服务器实际提供的是 `out/en/about/index.html`。
+
+#### Vercel
+
+```json
+{
+  "redirects": [
+    { "source": "/en/:path*", "destination": "/:path*", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/((?!zh/).*)", "destination": "/en/$1" }
+  ]
+}
+```
+
+#### Nginx
+
+```nginx
+location = /en { return 301 /; }
+location ~ ^/en(/.*)$ { return 301 $1; }
+location /zh/ { try_files $uri $uri/index.html =404; }
+location / { try_files /en$uri /en$uri/index.html =404; }
+```
+
+#### GitHub Pages
+
+GitHub Pages 原生不支持重写。最简单的变通办法是在根目录放一个带 JS 语言检测的 `index.html`：
+
+```html
+<script>
+  const lang = navigator.language.startsWith('zh') ? 'zh' : 'en';
+  window.location.replace('/' + lang + '/');
+</script>
+```
+
+或者干脆接受所有语言都带 `/en/` 这样的前缀。
+
+---
+
+## 内容策略
+
+基于 URL 的路由改变的不仅仅是 URL——它还会改变你思考内容的方式。
+
+对于个人数字花园而言，大部分内容只用一种语言撰写，也不会被完整翻译。现实可行的范围是：
+
+| 内容类型 | 是否翻译？ | 方案 |
+|---|---|---|
+| 静态页面（关于、隐私） | 是 | 可选的 `.zh.mdx` 变体文件 |
+| 文章 | 很少 | 回退到原文并显示提示 |
+| 系列描述 | 视情况 | 可选的 `index.zh.mdx` |
+| 书籍 | 不太可能 | 回退 |
+| 随笔（日常笔记） | 否 | 仅 UI 层面国际化，URL 中不含语言标识 |
+
+`.{locale}.mdx` 这一约定——Amytis 已经在静态页面中使用——可以自然地扩展到文章和系列：
+
+```
+content/posts/my-post.mdx           # default locale
+content/posts/my-post.zh.mdx        # optional Chinese translation
+content/series/my-series/index.zh.mdx
+```
+
+在构建时，`generateStaticParams` 会生成 `/en/my-post` 和 `/zh/my-post`。如果 `.zh.mdx` 文件不存在，中文 URL 会回退到英文内容，并显示一条小小的“该语言暂未提供”横幅。
+
+---
+
+## 权衡一览
+
+| 方面 | 客户端切换 | 基于 URL 的路由 |
+|---|---|---|
+| SEO | 爬虫只能看到默认语言 | 每种语言均被完整索引 |
+| 默认语言前缀 | 无前缀 | 需要 CDN 重写 |
+| 构建产物大小 | 相同 | 约 2 倍 |
+| 重构范围 | 无 | 大 |
+| 内容策略 | 仅页面使用 `.zh.mdx` | 所有内容类型均使用 `.zh.mdx` |
+
+---
+
+## 结论
+
+对于第二语言的 SEO 并不重要的个人博客来说，客户端切换方案务实且够用。UI 字符串可以翻译，页面内容可以有可选的语言变体，而且没有托管上的复杂性。
+
+对于双语 SEO 至关重要的项目——如果你确实希望中文内容被索引在中文 URL 下——基于 URL 的路由才是正确的架构。CDN 配置只需一次性设置，而用于内容的 `.{locale}.mdx` 约定也已经实现了一半。
+
+好消息是：两种方案共享相同的内容文件约定。从客户端切换迁移到基于 URL 的路由，只是路由和构建层面的改动，无需重构内容。

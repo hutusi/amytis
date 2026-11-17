@@ -8,7 +8,7 @@ import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
-import { getBooksListUrl, getBookUrl, getBookChapterUrl } from '@/lib/urls';
+import { getBooksListUrl, getBookUrl, getBookChapterUrl, localizeUrl } from '@/lib/urls';
 import { COVER_ZOOM_SLOW } from '@/lib/ui-classes';
 
 export interface BookItem {
@@ -28,6 +28,8 @@ interface SelectedBooksSectionProps {
   books: BookItem[];
   maxItems?: number;
   order?: BookOrder;
+  /** The home's locale: links point into its content tree. */
+  locale: string;
 }
 
 // For 'shuffle', a seeded permutation keyed off the content so server and client
@@ -39,7 +41,7 @@ function initialOrder(books: BookItem[], order: BookOrder): BookItem[] {
   return shuffleSeeded(books, seedFromKeys(books.map(b => b.slug)));
 }
 
-export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle' }: SelectedBooksSectionProps) {
+export default function SelectedBooksSection({ books, maxItems = 4, order = 'shuffle', locale }: SelectedBooksSectionProps) {
   const { t } = useLanguage();
   // Seeded shuffle is stable across the SSR/hydration boundary, so the initial
   // order is computed once and never swapped after mount.
@@ -68,7 +70,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
               </svg>
             </button>
           )}
-          <Link href={getBooksListUrl()} className="text-sm text-muted hover:text-accent transition-colors no-underline">
+          <Link href={localizeUrl(getBooksListUrl(), locale)} className="text-sm text-muted hover:text-accent transition-colors no-underline">
             {t('all_books')} →
           </Link>
         </div>
@@ -85,7 +87,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
               }`}
             >
               {/* Duplicate of the title link below: kept out of the Tab order and the a11y tree. */}
-              <Link href={getBookUrl(book.slug)} tabIndex={-1} aria-hidden="true" className="relative h-44 w-full overflow-hidden bg-surface-soft block">
+              <Link href={localizeUrl(getBookUrl(book.slug), locale)} tabIndex={-1} aria-hidden="true" className="relative h-44 w-full overflow-hidden bg-surface-soft block">
                 <CoverImage
                   src={book.coverImage}
                   title={book.title}
@@ -102,7 +104,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                   </span>
                 </div>
                 <h3 className="mb-2 font-serif text-2xl font-bold text-heading group-hover:text-accent transition-colors line-clamp-2">
-                  <Link href={getBookUrl(book.slug)} className="no-underline focus-visible:text-accent">
+                  <Link href={localizeUrl(getBookUrl(book.slug), locale)} className="no-underline focus-visible:text-accent">
                     {book.title}
                   </Link>
                 </h3>
@@ -119,7 +121,7 @@ export default function SelectedBooksSection({ books, maxItems = 4, order = 'shu
                 {book.firstChapter && (
                   <div className="mt-auto pt-6 border-t border-line">
                     <Link
-                      href={getBookChapterUrl(book.slug, book.firstChapter)}
+                      href={localizeUrl(getBookChapterUrl(book.slug, book.firstChapter), locale)}
                       className="text-sm font-sans font-bold text-accent flex items-center gap-1.5 no-underline hover:gap-2.5 transition-all"
                     >
                       {t('start_reading')}

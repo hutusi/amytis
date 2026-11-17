@@ -8,7 +8,8 @@ import { getAllBooks } from '../../src/lib/content/books';
 import { siteConfig } from '../../site.config';
 
 // Relies on the tracked zh fixtures: the twin post i18n-routing-considerations
-// (en+zh), the zh-original zh-original-demo, and the migrated zh pages.
+// (en+zh), the zh-original zh-original-demo, the migrated zh pages, and the
+// translated sample-book.
 
 const base = siteConfig.baseUrl.replace(/\/+$/, '');
 
@@ -124,9 +125,14 @@ describe('localized detail pages carry entity-specific OpenGraph', () => {
   });
 });
 
-describe('book/chapter locale sets (no zh book fixtures: single-locale)', () => {
-  test('default-tree books resolve to a single-locale set → no languages block', () => {
-    const books = getAllBooks();
+describe('book/chapter locale sets', () => {
+  test('a translated book and its chapters list both locales', () => {
+    expect(bookContentLocales('sample-book')).toEqual([siteConfig.i18n.defaultLocale, 'zh']);
+    expect(chapterContentLocales('sample-book', 'introduction')).toEqual([siteConfig.i18n.defaultLocale, 'zh']);
+  });
+
+  test('untranslated books resolve to a single-locale set → no languages block', () => {
+    const books = getAllBooks().filter((book) => book.slug !== 'sample-book');
     expect(books.length).toBeGreaterThan(0);
     for (const book of books) {
       expect(bookContentLocales(book.slug)).toEqual([siteConfig.i18n.defaultLocale]);
