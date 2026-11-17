@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New Sites Start From the Starter Config**: `bun create amytis` gave every new site this repo's own `site.config.ts` (the demo author's social links, domain and two-language setup). It now uses the single-language `site.config.example.ts`, as documented, and drops the demo's Chinese translations, which a single-language site can't build. Needs `create-amytis` 0.1.3.
 - **Starter Config Builds**: the code now type-checks against `site.config.example.ts` (its empty `analytics.providers` and `footer.bottomLinks` were inferred as `never[]`), and a CI job builds the site with it.
 - **Feature Names in a Single-Language Config**: a plain-string `features.*.name` (e.g. `name: "Articles"`) was ignored, because it was read as a per-locale map; it now renames the feature in every language.
+- **Feature Names With `$`**: a `$&` or `$$` in a configured feature name acted as a replacement pattern in the labels built from it ("All Series", "Curated Series"); it is now kept as written.
 
 ## [2.0.0] - 2026-11-17
 
