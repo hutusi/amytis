@@ -24,11 +24,13 @@ const FEATURE_COMPOUND_KEYS: Record<string, TranslationKey[]> = {
 };
 
 function substituteInTranslation(original: string, from: string, to: string): string | null {
-  if (original.includes(from)) return original.replaceAll(from, to);
+  // Function replacers insert `to` literally: as a plain string, a `$$` or `$&`
+  // in a configured name would act as a replacement pattern.
+  if (original.includes(from)) return original.replaceAll(from, () => to);
   // Case-insensitive fallback for languages like English
   if (original.toLowerCase().includes(from.toLowerCase())) {
     const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return original.replace(new RegExp(escaped, 'gi'), to);
+    return original.replace(new RegExp(escaped, 'gi'), () => to);
   }
   return null;
 }

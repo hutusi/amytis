@@ -146,6 +146,19 @@ describe('buildFeatureOverrides', () => {
     }
   });
 
+  test('a name with $ patterns goes into compound labels literally', () => {
+    const original = seriesFeature.name;
+    try {
+      seriesFeature.name = 'Research $$ & $&';
+      const en = buildFeatureOverrides('en');
+      expect(en.curated_series).toBe('Curated Research $$ & $&'); // exact-case match
+      expect(en.view_full_series).toBe('View full Research $$ & $&'); // case-insensitive match
+      expect(buildFeatureOverrides('zh').all_series).toBe('所有Research $$ & $&');
+    } finally {
+      seriesFeature.name = original;
+    }
+  });
+
   test('falls back to the en feature name for a locale without one', () => {
     const original = seriesFeature.name;
     try {
