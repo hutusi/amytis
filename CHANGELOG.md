@@ -7,51 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Translations now live in locale content trees with their own URLs (`/zh/…`), replacing 1.x's sibling translation files. That breaks sites that have translations, which is why this is a major release; see **Upgrading from 1.x**.
+
+### Upgrading from 1.x
+- **Move translations into a locale tree.** A sibling translation such as `content/about.zh.mdx` now fails the build with a migration hint. Move it to the same path under `content/<locale>/`, e.g. `content/zh/about.mdx`. Content in another language that was published at unprefixed URLs can move under its prefix and keep its old URLs as `redirectFrom` aliases: see `docs/guides/migrating-content-to-locale-trees.md`.
+- **Locale codes are reserved.** While i18n is enabled, a series, page, alias or `posts.basePath` named after a locale (`en`, `zh`, …) fails the build.
+- **Add the new config fields.** Copy `generateOgImages` and `linkCheck` from `site.config.example.ts` into your `site.config.ts`; the build's type-check fails without them. A site-relative `ogImage`, logo or favicon that doesn't exist now fails the build too (a default `public/og-image.png` ships).
+- **Ignore the generated folders.** Add `/public/vendor/` and, for each locale tree, `/public/<locale>/` to `.gitignore`; the build copies files there.
+- **Reinstall dependencies** with `bun install` (Next.js 16.4, React 19.3, KaTeX 0.19).
+- **What readers notice:** the language comes from the URL instead of a setting remembered in the browser, and the language switch opens the page's translation (or the locale home). Feed item ids change once, to the trailing-slash URLs the site serves, so some feed readers show recent items again. The light palettes' accent colors are a shade darker, to meet AA contrast.
+
 ### Added
+- **Locale URL routing**: `content/<locale>/` mirrors `content/`, and the file's location is its language. `content/zh/posts/foo.md` is served at `/zh/posts/foo/` and pairs with `content/posts/foo.md` as its translation; default-language URLs don't change. A `/zh/` page exists only for content that has a translation. Translations get reciprocal `hreflang` with `x-default`, each page gets the right `<html lang>`, the search index is split by language (with CJK word segmentation), and sitemap, search and graph cover every tree. Works with any `defaultLocale`. This also ends the hydration errors and flash of English that the old client-side language switch caused on every link click.
+- **Full Locale Home Pages**: `/zh/` shows the same sections as the default home (featured posts, latest posts, series, books) from its own tree; flows, which locale trees don't have yet, are left out.
+- **`bun run translate`**: translates a post, page, note, series or book into a locale tree with any OpenAI-compatible chat API, such as Aliyun Bailian. Code blocks and math never reach the model and are restored byte for byte; titles, excerpts and book chapter names are translated while dates, tags and slugs are kept. A reply that lost a code block, link, heading or directive is not written (`--write-anyway` writes it for fixing by hand); `--force` translates again over an existing translation. Guide: `docs/guides/translating-content.md`.
+- **Chinese Sample Content**: the welcome post, the Markdown, code-block, syntax-highlighting and multimedia showcases (slide deck included), the Digital Garden and Markdown Showcase series and the sample handbook now have Chinese versions under `content/zh/`.
+- **Slide Decks**: a `:::slides` block of ordinary Markdown images becomes a carousel with a presenter view (fullscreen where the browser allows it, clicker keys), `#slides-N` links to a slide, a swipeable strip without JavaScript, and a first-slide preview in feeds. `bun run new-slides` copies a Keynote/PowerPoint/Google Slides export or a PDF into place. Reference: `docs/SLIDES.md`.
 - **Link Check After Every Build**: the export is scanned for internal links to pages that weren't built, missing images, broken wikilinks, missing `#anchors` and links through redirect aliases, with each finding traced to its content file. `linkCheck: 'error'` fails the build on broken links and images; the default only reports.
 - **Generated Share Cards**: with `generateOgImages: true`, posts, notes and book chapters without a cover image of their own share a 1200×630 card (title, series or book, date, authors, site logo) instead of the one site-wide image; notes previously shared none. Cards are rendered at build time by `next/og` with bundled fonts — Chinese titles included — so the build downloads no fonts. Off by default in `site.config.example.ts`.
+- **Flow Card Feed**: The flow index now renders as a full-content card feed with a month timeline rail (month/year anchors linking to flow archives), scroll-driven card reveal, and flow archive pages aligned with the homepage feed. Notes and Graph moved into a navbar "More" menu.
+- **Flows with Files**: `bun run new-flow --folder` writes `DD/index.md`, so a flow can keep images or slides next to it.
 - **Print Stylesheet**: printing an article gives a clean light page whatever the screen theme: no navigation, sidebars, share or comments; code wraps in its light theme; external links print their address; the immersive reader prints in full.
 - **Breadcrumbs on Posts and Chapters**: Series › series › post (or Articles › post) and Books › book › part/section › chapter, with matching BreadcrumbList structured data for search results.
 - **Back to Top**: a floating button appears once you're two screens down any page; it returns to the top and moves keyboard focus there too.
 - **Image Zoom**: clicking an article image opens it full size in a lightbox (Escape, a click or ✕ closes it); linked images and inline icons are left alone.
 - **Heading Anchors**: h2–h4 headings in articles, chapters, notes and rST pages get a `#` link (on hover or keyboard focus, faint on touch screens) to link straight to a section.
-- **Branded 404 and Error Pages**: localized `not-found` / client error boundary replace Next's default unbranded pages.
+- **Branded 404 and Error Pages**: localized `not-found` / client error boundary replace Next's default unbranded pages; the 404 offers search, the archive and tags.
+- **Crawler Basics**: `robots.txt` pointing at the sitemap, a `theme-color` and an apple touch icon; the sitemap now includes the posts and series-prefix listings, dated by their newest content.
 - **DOM Behavior Tests**: happy-dom + React Testing Library behind `bun run test:dom`, with first tests for the theme toggle, language provider, scroll/heading hooks, immersive-reading provider, nav dropdowns, and the search modal.
 - **CI**: Windows production build and the Playwright mobile matrix now run on main pushes, manual dispatch, and a weekly schedule; `typecheck` joined `bun run validate`.
 
+### Changed
+- **Search Scope**: only content bodies are indexed, so excerpts no longer contain site chrome or header meta, and tag, listing and redirect pages no longer show up; results carry their dates. `/` opens search and Enter opens the top hit.
+- **Ink Design System**: A shared "ink" token system (card surfaces, hairlines, an `ink-alpha` opacity scale) unifies posts, series, notes, tags, books, search, and reader surfaces, replacing per-component ad-hoc colors.
+- **Design-System Primitives**: `cn()` class-composition helper, shared class constants, an extracted `ContentCard`, a unified `Tag` pill, and centralized listing-route metadata via `createListingMetadata` — with a guard test that prevents re-inlining the centralized classes.
+- **Content Architecture**: The monolithic `markdown.ts` was split into domain modules under `src/lib/content/` (`posts`, `series`, `books`, `flows`, `notes`, `authors`, `related`, `discovery`) with an acyclic dependency graph enforced by a test.
+- **Immersive Reader**: Width options widened and re-spaced for widescreen displays.
+- **Dependencies**: Next.js 16.2 → 16.4, which clears Dependabot's Next.js advisories (most target server features a static export never runs, but `bun dev` does run a server); React 19.3, KaTeX 0.19, Playwright 1.65 and in-range updates.
+
 ### Accessibility
 - **Keyboard-Accessible Nav Menus**: the desktop Books/Series/More dropdowns were hover-only; they now follow the ARIA disclosure pattern (toggle with `aria-expanded`, Escape restores focus). The search modal gained the full combobox pattern (`aria-activedescendant`, roving-tabindex tabs, focus restore on close), screen-reader labels are localized instead of hardcoded English, and reduced-motion users get the knowledge graph's list view instead of the force animation.
+- **AA Contrast**: light accents move to the 700 shades, a new `--accent-contrast` token covers text on accent fills, and faint informational text uses `text-muted`. The remaining hard-coded English accessible names and visible text are translated, including footnote labels per content language.
+- **Reduced Motion**: `prefers-reduced-motion` is respected for animations and scrolling.
 
 ### Performance
+- **Navigation in the Static HTML**: the table of contents, series navigation and previous/next links were missing from the exported HTML on about 266 pages and appeared only after hydration; they are now prerendered.
 - **Search Panel on Demand**: the search results UI (Pagefind client, type tabs, recent searches) now downloads on first use instead of with every page; the trigger, shortcuts and input are unchanged, and hovering or focusing the search button fetches it early.
 - **No tailwind-merge in the Browser**: `cn()` is now plain clsx. The one conflicting composition (the homepage's slower cover zoom) became its own class constant, which drops tailwind-merge's 8.6KB gzip from 346 of 394 pages.
 - **Smaller Client Bundles**: Footer/Hero/PageHeader and the homepage sections became Server Components via new `T`/`TLocale`/`TLabel` translation leaves; d3 is deferred out of the `/graph` initial chunk; KaTeX CSS no longer ships with math-free articles; the serif font ships as WOFF2 (~209 KB saved).
-
-### Fixed
-- **Search in the Immersive Reader**: `/` and Cmd/Ctrl+K opened an invisible search dialog there, because it rendered inside the navbar that immersive mode hides; it now renders over the reader, and Escape still closes only the search.
-- **Breadcrumbs on Phones**: note pages with a sidebar and flow day pages only showed their breadcrumb in a desktop-only sidebar; phones now get it above the article.
-- **Inline Code on a Theme Opposite the OS**: `dark:` utilities followed the OS color scheme while the theme tokens follow the site toggle, so inline code turned white on the light theme under a dark OS (and near-black on the dark theme under a light one). They now follow the toggle; the immersive reader's light and sepia themes stay light on a dark site.
-- **Canonical URLs for Crawlers**: sitemap entries, RSS/Atom item links/guids, JSON-LD, and canonical alternates now use the trailing-slash form the static export actually serves (feed guids change once as a result).
-- **OpenGraph Images on Prefixed Post Routes**: were emitted site-relative (rejected by OG consumers); now absolute.
-- **Strict Build for Static Pages**: malformed frontmatter in an optional page (e.g. `content/about.md`) now fails the build instead of silently 404ing; invalid-frontmatter errors embed the field details in the thrown message.
-- **Scaffolder Sync**: `create-amytis` config patches fail loudly on shape drift and are tested against the real `site.config.ts`/`package.json`; a structural key-parity test keeps `site.config.example.ts` mirrored.
-- **Flow Card Feed**: The flow index now renders as a full-content card feed with a month timeline rail (month/year anchors linking to flow archives), scroll-driven card reveal, and flow archive pages aligned with the homepage feed. Notes and Graph moved into a navbar "More" menu.
-- **Ink Design System**: A shared "ink" token system (card surfaces, hairlines, an `ink-alpha` opacity scale) unifies posts, series, notes, tags, books, search, and reader surfaces, replacing per-component ad-hoc colors.
-- **Design-System Primitives**: `cn()` class-composition helper, shared class constants, an extracted `ContentCard`, a unified `Tag` pill, and centralized listing-route metadata via `createListingMetadata` — with a guard test that prevents re-inlining the centralized classes.
-
-### Changed
-- **Content Architecture**: The monolithic `markdown.ts` was split into domain modules under `src/lib/content/` (`posts`, `series`, `books`, `flows`, `notes`, `authors`, `related`, `discovery`) with an acyclic dependency graph enforced by a test.
+- **Lighter Math and CSS**: each KaTeX formula is one HTML string instead of thousands of hydrated nodes; code-group icons moved from inlined data URIs (~44% of the global CSS) to files fetched only when a tab uses them; Inter is subset to the scripts the site renders.
 - **Build Performance**: `getAllBooks`, `getAllFlows`, and `resolveSeriesIndexInfo` are memoized; the rST disk cache auto-invalidates when `render-rst.py` changes; Mermaid loads on demand instead of on every post page.
-- **Immersive Reader**: Width options widened and re-spaced for widescreen displays.
-- **CI**: typecheck and e2e gates added to the pipeline.
-- **Dependencies**: routine refresh across Next.js, ESLint, and type packages.
 
 ### Fixed
-- **Windows Builds**: `bun run build` works on Windows — the stale `.next/dev/types` validator is excluded from the build type-check, and an npm-install workflow is documented for the bun symlink-layout issue.
-- **Vercel Deploys**: served as a true static export instead of a Next.js server build (`framework: null`).
-- **Strict-Build Semantics**: content-layer misconfiguration consistently fails the build instead of warning.
-- **Accessibility/Motion**: `prefers-reduced-motion` is respected for animations and scrolling.
+- **Frontmatter Dates**: in UTC+ time zones, quoted datetimes and single-digit days (`"2025-11-5"`) were shown, sorted, fed and future-gated a day early.
+- **Table of Contents Links**: TOC ids now match the page's heading ids for headings with links, a closing `##` or inline HTML.
+- **Draft Pages**: draft static pages were published and listed in the sitemap; production builds now leave them out.
+- **Full-Content Feeds**: feeds render the same extended Markdown syntax as pages, sanitize rST, resolve co-located images for series posts served under a series path, and strip markup from excerpts.
+- **Search**: dates are indexed; a build race that sometimes wrote empty Pagefind runtime files (search returned nothing) is fixed; every advertised tab hotkey works, not just Alt+1–4.
+- **Search in the Immersive Reader**: `/` and Cmd/Ctrl+K opened an invisible search dialog there, because it rendered inside the navbar that immersive mode hides; it now renders over the reader, and Escape still closes only the search.
+- **RSS Links and Twitter Handle**: pages that set a canonical URL dropped the RSS/Atom autodiscovery links and `twitter:site`; every page now has them. Redirect stubs are `noindex,follow` with a canonical pointing at their target, redirect without JavaScript, and keep the `#hash`.
+- **Canonical URLs for Crawlers**: sitemap entries, RSS/Atom item links/guids, JSON-LD, and canonical alternates now use the trailing-slash form the static export actually serves (feed guids change once as a result).
+- **OpenGraph Images**: emitted site-relative on prefixed post routes (rejected by OG consumers), and the default `og-image.png` didn't exist; both fixed.
+- **Sticky Sidebars and Dark Palettes**: `overflow-x: hidden` on the page had stopped sidebars from sticking, and the color palettes didn't apply in dark mode.
+- **Inline Code on a Theme Opposite the OS**: `dark:` utilities followed the OS color scheme while the theme tokens follow the site toggle, so inline code turned white on the light theme under a dark OS (and near-black on the dark theme under a light one). They now follow the toggle; the immersive reader's light and sepia themes stay light on a dark site.
+- **Breadcrumbs on Phones**: note pages with a sidebar and flow day pages only showed their breadcrumb in a desktop-only sidebar; phones now get it above the article.
+- **Archive on Tablets**: the timeline column can shrink, so the archive no longer overflows on iPad widths.
+- **Media in Content**: co-located video and audio files resolve like images, the showcase's HTML5 players render, and query strings and fragments in content URLs are kept verbatim.
+- **Collections**: membership is matched by series and slug, so a post is no longer listed in a collection that holds its same-named twin from another series; on the home page, a collection card links its posts to their real URLs instead of redirect aliases.
+- **Default Category**: a post without a category shows "未分类" on Chinese pages instead of "Uncategorized".
+- **Strict Build**: malformed frontmatter in an optional page (e.g. `content/about.md`) fails the build instead of silently 404ing, invalid-frontmatter errors include the field details, and content-layer misconfiguration consistently fails the build instead of warning.
 - **Rendering**: over-wide centered KaTeX formulas scroll instead of clipping; no-space VuePress container openers with titles are normalized; author route params resolve through the shared param helpers.
+- **Windows Builds**: `bun run build` works on Windows — the stale `.next/dev/types` validator is excluded from the build type-check, and an npm-install workflow is documented for the bun symlink-layout issue.
+- **Builds in Copied Projects**: `bun run build` type-checks without `@types/bun`, and file traces no longer pull in the whole project.
+- **Vercel Deploys**: served as a true static export instead of a Next.js server build (`framework: null`).
+- **Scaffolder Sync**: `create-amytis` config patches fail loudly on shape drift and are tested against the real `site.config.ts`/`package.json`; a structural key-parity test keeps `site.config.example.ts` mirrored.
 - **Source Hygiene**: a guard test rejects NUL bytes / non-UTF-8 in tracked source (a literal NUL had made a `.tsx` file invisible to grep).
 
 ## [1.17.0] - 2026-06-11
