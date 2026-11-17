@@ -95,7 +95,7 @@ cd my-garden
 bun dev
 ```
 
-脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts` 并移除示例站点的中文翻译（`content/zh/`），填入站点标题和描述，修改包名，并安装依赖。
+脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts` 并移除示例站点的中文翻译（`content/zh/`），填入站点标题和描述，修改包名，并安装依赖。只有 Amytis 仓库自己用到的内容不会带进新站点：测试（它们测试的是示例站点）、CI 工作流和脚手架自身的源码；在新站点里运行 `bun run validate` 会依次做代码检查、类型检查和构建。
 
 ### 克隆并运行
 

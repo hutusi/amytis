@@ -232,6 +232,10 @@ does this automatically after the build, and fails if the server doesn't come up
 CI also runs `bun run typecheck`; the full production build (`bun run build`) is a
 manual `workflow_dispatch` job.
 
+New sites made with `bun create amytis` don't get the tests or their scripts
+(see "Config sync" in `docs/ARCHITECTURE.md`): they test this repo's demo
+content. CI's Starter site job checks the code still builds without them.
+
 `tests/dom/` holds client-behavior tests (state, events, keyboard interaction).
 They run with happy-dom registered via `--preload ./tests/dom/setup.ts` — only
 through `bun run test:dom`, so the DOM globals never leak into the SSR-oriented

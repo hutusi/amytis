@@ -91,16 +91,19 @@ jobs:
 
       - name: Set up the checkout as create-amytis sets up a new site
         run: >-
-          bun -e "import { applyStarterConfig, patchSiteConfig, removeLocaleTrees } from './packages/create-amytis/src/index.ts';
-          if (!applyStarterConfig('.')) throw new Error('site.config.example.ts is missing');
-          console.log('removed', removeLocaleTrees('.'));
-          patchSiteConfig('.', 'Starter Check', 'A new Amytis site');"
+          bun -e "import { setUpNewSite } from './packages/create-amytis/src/index.ts';
+          const result = setUpNewSite('.', { projectName: 'starter-check', title: 'Starter Check', description: 'A new Amytis site' });
+          console.log(result);
+          if (!result.starter) throw new Error('site.config.example.ts is missing');"
 
-      - name: Typecheck
-        run: bun run typecheck
+      # The new site's own validate: lint, typecheck and build, without the
+      # engine's tests, which setUpNewSite removed.
+      - name: Validate
+        run: bun run validate
 
-      - name: Build
-        run: bun run build:dev
+      # The starter reports broken links as warnings; a new site should have none.
+      - name: No broken links
+        run: bun scripts/check-links.ts --site out --mode error
 
   windows-build:
     name: Windows build

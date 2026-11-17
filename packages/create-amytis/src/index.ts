@@ -250,6 +250,42 @@ export function removeLocaleTrees(projectDir: string): string[] {
   return removed;
 }
 
+// What only the Amytis repo itself uses: its tests check the demo site's
+// content and two-language config, so they fail in a new site; its workflows
+// run them and publish the amytis package; packages/ is this CLI's source;
+// TODO.md is the project's roadmap.
+const ENGINE_ONLY_PATHS = [".github", ".entire", "packages", "tests", "src/test-utils", "playwright.config.ts", "TODO.md"];
+const TEST_FILE = /\.test\.tsx?$/;
+
+function removeTestFiles(dir: string): number {
+  let count = 0;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) count += removeTestFiles(full);
+    else if (TEST_FILE.test(entry.name)) {
+      fs.unlinkSync(full);
+      count++;
+    }
+  }
+  return count;
+}
+
+// Removes the engine's own tests, CI and tooling. Returns what was removed.
+export function removeEngineFiles(projectDir: string): string[] {
+  const removed: string[] = [];
+  for (const rel of ENGINE_ONLY_PATHS) {
+    const target = path.join(projectDir, rel);
+    if (!fs.existsSync(target)) continue;
+    const isDir = fs.statSync(target).isDirectory();
+    fs.rmSync(target, { recursive: true, force: true });
+    removed.push(isDir ? `${rel}/` : rel);
+  }
+  const srcDir = path.join(projectDir, "src");
+  const testFiles = fs.existsSync(srcDir) ? removeTestFiles(srcDir) : 0;
+  if (testFiles > 0) removed.push(`src/**/*.test.ts(x) (${testFiles} files)`);
+  return removed;
+}
+
 // Patches the top-level title, description and footer. Each is either a plain
 // string (the starter config) or an { en, zh } map (a multi-language config);
 // the `^  ` anchor skips nested fields such as the hero's title.
@@ -301,7 +337,38 @@ export function patchPackageJson(projectDir: string, projectName: string): void 
   delete pkg["bugs"];
   delete pkg["homepage"];
 
+  // The engine's tests aren't part of a new site (removeEngineFiles), so
+  // neither are the scripts that run them.
+  const scripts = pkg["scripts"] as Record<string, string> | undefined;
+  if (scripts) {
+    for (const name of Object.keys(scripts)) {
+      if (name === "test" || name.startsWith("test:")) delete scripts[name];
+    }
+    if (scripts["validate"]) {
+      scripts["validate"] = scripts["validate"]
+        .split("&&")
+        .map((step) => step.trim())
+        .filter((step) => !/^bun run test(:|\s|$)/.test(step))
+        .join(" && ");
+    }
+  }
+
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+}
+
+// Everything that turns the downloaded release into a new site, after the
+// download and the prompts. CI's "Starter site" job runs this on a checkout
+// and builds the result, so it stays buildable.
+export function setUpNewSite(
+  projectDir: string,
+  site: { projectName: string; title: string; description: string },
+): { starter: boolean; localeTrees: string[]; engineFiles: string[] } {
+  const starter = applyStarterConfig(projectDir);
+  const localeTrees = starter ? removeLocaleTrees(projectDir) : [];
+  const engineFiles = removeEngineFiles(projectDir);
+  patchSiteConfig(projectDir, site.title, site.description);
+  patchPackageJson(projectDir, site.projectName);
+  return { starter, localeTrees, engineFiles };
 }
 
 // ---------------------------------------------------------------------------
@@ -346,25 +413,25 @@ async function main(): Promise<void> {
     "My digital garden"
   );
 
-  // 7. Start from the starter config and patch it
-  console.log("\nPatching site.config.ts...");
-  if (applyStarterConfig(targetDir)) {
-    const removed = removeLocaleTrees(targetDir);
-    if (removed.length > 0) console.log(`  Removed the demo's translations: ${removed.join(", ")}`);
-  } else {
+  // 7. Start from the starter config, remove what only the Amytis repo uses,
+  // and patch site.config.ts and package.json
+  console.log("\nSetting up the site...");
+  const setup = setUpNewSite(targetDir, { projectName, title: siteTitle, description: siteDescription });
+  if (!setup.starter) {
     console.warn("  Warning: site.config.example.ts not found, keeping the release's site.config.ts");
   }
-  patchSiteConfig(targetDir, siteTitle, siteDescription);
+  if (setup.localeTrees.length > 0) {
+    console.log(`  Removed the demo's translations: ${setup.localeTrees.join(", ")}`);
+  }
+  if (setup.engineFiles.length > 0) {
+    console.log(`  Removed the Amytis repo's own tests and CI: ${setup.engineFiles.join(", ")}`);
+  }
 
-  // 8. Patch package.json
-  console.log("Patching package.json...");
-  patchPackageJson(targetDir, projectName);
-
-  // 9. Run bun install
+  // 8. Run bun install
   console.log("Installing dependencies (bun install)...");
   execSync("bun install", { cwd: targetDir, stdio: "inherit" });
 
-  // 10. Success message
+  // 9. Success message
   console.log(`
 Done! Your new Amytis site is ready.
 
