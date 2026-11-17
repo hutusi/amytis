@@ -14,7 +14,7 @@ import { getPageContentLocales } from '@/lib/content/posts';
 import { getStaticPageUrl, isNonDefaultLocale, localizeUrl } from '@/lib/urls';
 import { safeDecodeParam } from '@/lib/route-params';
 import RedirectPage from '@/components/RedirectPage';
-import LocaleHomeBody from '@/components/page-bodies/LocaleHomeBody';
+import HomeBody from '@/components/page-bodies/HomeBody';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 const { t } = getTranslator(DEFAULT_LOCALE);
@@ -94,7 +94,7 @@ export default async function Page({
   const localeSlug = safeDecodeParam(rawSlug);
   if (isNonDefaultLocale(localeSlug)) {
     if (!resolveLocalizedPath(localeSlug, [])) notFound();
-    return <LocaleHomeBody locale={localeSlug} />;
+    return <HomeBody locale={localeSlug} />;
   }
 
   const resolution = resolveTopLevelSlug(rawSlug);

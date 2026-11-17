@@ -8,7 +8,7 @@ import SectionHeading from './ui/SectionHeading';
 import { useLanguage } from './LanguageProvider';
 import { shuffle, shuffleSeeded, seedFromKeys } from '@/lib/shuffle';
 import { byDateAsc, byDateDesc } from '@/lib/sort';
-import { getPostUrl, getSeriesListUrl } from '@/lib/urls';
+import { getPostUrl, getSeriesListUrl, localizeUrl } from '@/lib/urls';
 import { COVER_ZOOM_SLOW } from '@/lib/ui-classes';
 
 export interface SeriesItem {
@@ -28,6 +28,8 @@ interface CuratedSeriesSectionProps {
   allSeries: SeriesItem[];
   maxItems: number;
   order?: SeriesOrder;
+  /** The home's locale: links point into its content tree. */
+  locale: string;
 }
 
 // For 'shuffle', a seeded permutation keyed off the content so server and client
@@ -39,7 +41,7 @@ function initialOrder(series: SeriesItem[], order: SeriesOrder): SeriesItem[] {
   return shuffleSeeded(series, seedFromKeys(series.map(s => s.name)));
 }
 
-export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shuffle' }: CuratedSeriesSectionProps) {
+export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shuffle', locale }: CuratedSeriesSectionProps) {
   const { t } = useLanguage();
   // Seeded shuffle is stable across the SSR/hydration boundary, so the initial
   // order is computed once and never swapped after mount.
@@ -68,7 +70,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
               </svg>
             </button>
           )}
-          <Link href={getSeriesListUrl()} className="text-sm text-muted hover:text-accent transition-colors no-underline">
+          <Link href={localizeUrl(getSeriesListUrl(), locale)} className="text-sm text-muted hover:text-accent transition-colors no-underline">
             {t('all_series')} →
           </Link>
         </div>
@@ -114,7 +116,7 @@ export default function CuratedSeriesSection({ allSeries, maxItems, order = 'shu
                     {series.topPosts.map((p, idx) => (
                       <Link
                         key={p.slug}
-                        href={getPostUrl({ slug: p.slug, series: series.name })}
+                        href={getPostUrl({ slug: p.slug, series: series.name, locale })}
                         className="flex items-center gap-3 group/link no-underline"
                       >
                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-soft text-[10px] flex items-center justify-center font-mono text-muted group-hover/link:bg-accent/10 group-hover/link:text-accent transition-colors">

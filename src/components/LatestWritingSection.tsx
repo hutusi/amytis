@@ -3,7 +3,7 @@ import PostList from './PostList';
 import SectionHeading from './ui/SectionHeading';
 import { T } from './T';
 import type { PostData } from '@/lib/content/types';
-import { getPostsListUrl } from '@/lib/urls';
+import { getPostsListUrl, localizeUrl } from '@/lib/urls';
 
 interface LatestWritingSectionProps {
   posts: PostData[];
@@ -16,7 +16,7 @@ export default function LatestWritingSection({ posts, locale }: LatestWritingSec
       <div className="flex items-center justify-between mb-8">
         <SectionHeading><T k="latest_writing" /></SectionHeading>
         <Link
-          href={getPostsListUrl()}
+          href={localizeUrl(getPostsListUrl(), locale)}
           className="text-sm text-muted hover:text-accent transition-colors no-underline"
         >
           <T k="all_posts" /> →

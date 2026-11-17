@@ -26,10 +26,13 @@ type HomepageSection = {
 export default function HomeBody({ locale }: { locale: string }) {
   const { t } = getTranslator(locale);
   const features = siteConfig.features;
+  // Locale trees hold no flows, so a locale home has no flows section.
+  const hasFlows = locale === siteConfig.i18n.defaultLocale;
 
   // Resolve ordered, enabled homepage sections from config
   const sections = ([...(siteConfig.homepage?.sections as HomepageSection[] ?? [])])
     .filter(s => s.enabled !== false)
+    .filter(s => hasFlows || s.id !== 'recent-flows')
     .sort((a, b) => a.weight - b.weight);
 
   const has = (id: string) => sections.some(s => s.id === id);
@@ -106,13 +109,14 @@ export default function HomeBody({ locale }: { locale: string }) {
       }))
     : [];
 
-  // Stats for hero navigation chips
-  const heroPostCount = has('hero') && isFeatureEnabled('posts')
+  // Stats for hero navigation chips. Each chip jumps to its section, so it
+  // shows only when that section has something to show.
+  const heroPostCount = has('hero') && featuredItems.length > 0
     ? (needsPosts ? allPosts : getAllPosts(locale)).length
     : undefined;
-  const heroSeriesCount = has('hero') && isFeatureEnabled('series') ? Object.keys(getAllSeries(locale)).length : undefined;
-  const heroBookCount = has('hero') && isFeatureEnabled('books') ? getAllBooks(locale).length : undefined;
-  const heroFlowCount = has('hero') && isFeatureEnabled('flow') ? getAllFlows().length : undefined;
+  const heroSeriesCount = has('hero') && seriesItems.length > 0 ? Object.keys(getAllSeries(locale)).length : undefined;
+  const heroBookCount = has('hero') && bookItems.length > 0 ? getAllBooks(locale).length : undefined;
+  const heroFlowCount = has('hero') && recentNoteItems.length > 0 ? getAllFlows().length : undefined;
 
   const renderSection = (section: HomepageSection) => {
     switch (section.id) {
@@ -124,6 +128,7 @@ export default function HomeBody({ locale }: { locale: string }) {
             allSeries={seriesItems}
             maxItems={section.maxItems ?? 6}
             order={section.order ?? 'shuffle'}
+            locale={locale}
           />
         );
       case 'featured-books':
@@ -134,6 +139,7 @@ export default function HomeBody({ locale }: { locale: string }) {
             books={bookItems}
             maxItems={section.maxItems ?? 4}
             order={section.order ?? 'shuffle'}
+            locale={locale}
           />
         );
       case 'featured-posts':
@@ -144,6 +150,7 @@ export default function HomeBody({ locale }: { locale: string }) {
             allFeatured={featuredItems}
             maxItems={section.maxItems ?? 4}
             order={section.order ?? 'shuffle'}
+            locale={locale}
           />
         );
       case 'latest-posts':
