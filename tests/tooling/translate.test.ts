@@ -236,6 +236,20 @@ describe('translate script', () => {
     expect(exists(cwd, 'zh/posts/hello.mdx')).toBe(false);
   });
 
+  test('--force only replaces; --write-anyway is what keeps a reply that failed the check', async () => {
+    mode = 'drop-placeholder';
+    const cwd = site({ 'posts/hello.mdx': POST, 'posts/images/cover.png': 'c', 'posts/images/diagram.png': 'd' });
+    const forced = await run(cwd, ['content/posts/hello.mdx', '--force']);
+    expect(forced.code).toBe(1);
+    expect(forced.stderr).toContain('pass --write-anyway to write it');
+    expect(exists(cwd, 'zh/posts/hello.mdx')).toBe(false);
+
+    const kept = await run(cwd, ['content/posts/hello.mdx', '--write-anyway']);
+    expect(kept.code).toBe(0);
+    expect(kept.stderr).toContain('Warning: content/zh/posts/hello.mdx: has the structure problems listed above');
+    expect(exists(cwd, 'zh/posts/hello.mdx')).toBe(true);
+  });
+
   test('a reply cut off at the output limit is reported and not written', async () => {
     mode = 'truncate';
     const cwd = site({ 'notes/long.md': '---\ntitle: "Long"\n---\n\nText.\n' });

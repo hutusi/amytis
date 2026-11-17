@@ -27,19 +27,20 @@ import {
   type SourceDomain,
 } from './lib/translate';
 
-// bun run translate <path> [--to <locale>] [--force] [--dry-run]
+// bun run translate <path> [--to <locale>] [--force] [--write-anyway] [--dry-run]
 //
 // Translates a post, page, note, series or book into a locale tree
 // (content/<locale>/, same relative path) with any OpenAI-compatible chat
 // API. See docs/guides/translating-content.md.
 
-const USAGE = `Usage: bun run translate <file-or-folder> [--to <locale>] [--force] [--dry-run]
+const USAGE = `Usage: bun run translate <file-or-folder> [--to <locale>] [--force] [--write-anyway] [--dry-run]
 
   <file-or-folder>  a post, page or note file, a folder post, or a whole
                     series or book folder under content/
   --to <locale>     target locale (default: the only non-default locale)
-  --force           overwrite existing translations, and write even when
-                    the structure check fails
+  --force           translate again and replace existing translations
+  --write-anyway    write a translation even when the structure check
+                    fails, to fix it by hand
   --dry-run         print the translations instead of writing them
 
 Provider settings (flags win over .env.local, which Bun loads):
@@ -69,6 +70,7 @@ const argv = process.argv.slice(2);
 const positional: string[] = [];
 let requestedLocale: string | undefined;
 let force = false;
+let writeAnyway = false;
 let dryRun = false;
 for (let i = 0; i < argv.length; i++) {
   const arg = argv[i];
@@ -77,6 +79,8 @@ for (let i = 0; i < argv.length; i++) {
     if (!requestedLocale || requestedLocale.startsWith('--')) fail(`--to needs a locale.\n\n${USAGE}`);
   } else if (arg === '--force') {
     force = true;
+  } else if (arg === '--write-anyway') {
+    writeAnyway = true;
   } else if (arg === '--dry-run') {
     dryRun = true;
   } else if (arg === '--help' || arg === '-h') {
@@ -348,11 +352,12 @@ for (const doc of pending) {
   }
   if (result.problems.length > 0) {
     console.error(`  the translation changed the document's structure:\n${result.problems.map((p) => `    - ${p}`).join('\n')}`);
-    if (!force) {
-      console.error('  not written. Run it again, or pass --force to write it anyway and fix it by hand.');
+    if (!writeAnyway) {
+      console.error('  not written. Run it again, or pass --write-anyway to write it and fix it by hand.');
       failed.push(doc);
       continue;
     }
+    warnings.push(`${target}: has the structure problems listed above; fix them by hand before publishing.`);
   }
   if (result.anchors.length > 0) {
     warnings.push(`${target}: links to ${result.anchors.map((a) => `#${a}`).join(', ')} point at headings whose ids changed with their text; update them to the new ids.`);

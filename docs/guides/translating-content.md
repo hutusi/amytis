@@ -69,7 +69,7 @@ only at the same path and refuses to add a second form beside it.
   heading level, a link or image URL (in Markdown or in an HTML `src`,
   `href`, `poster` or `srcset`), a wikilink target, inline code, a `:::`
   directive or an HTML tag, the file is not written and the differences are
-  listed. Run it again, or pass `--force` to write it anyway and fix it by
+  listed. Run it again, or pass `--write-anyway` to write it and fix it by
   hand. A reply the provider cut off at its output limit is never written.
 - **Files next to the content.** A folder post's files, and the local files a
   post links to, are copied into the locale tree. Files already there are kept,
