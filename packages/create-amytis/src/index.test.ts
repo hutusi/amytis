@@ -9,6 +9,7 @@ import {
   patchPackageJson,
   patchSiteConfig,
   removeLocaleTrees,
+  tagFromReleaseUrl,
 } from "./index";
 
 // Minimal site.config.ts that mirrors the real file's patchable fields.
@@ -198,6 +199,27 @@ describe("applyStarterConfig", () => {
     fs.writeFileSync(path.join(dir, "site.config.ts"), SAMPLE_CONFIG);
     expect(applyStarterConfig(dir)).toBe(false);
     expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toBe(SAMPLE_CONFIG);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// tagFromReleaseUrl
+// ---------------------------------------------------------------------------
+
+describe("tagFromReleaseUrl", () => {
+  test("reads the tag from the /releases/latest redirect", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v2.0.1")).toBe("v2.0.1");
+    expect(tagFromReleaseUrl("/hutusi/amytis/releases/tag/v2.1.0-beta.1/")).toBe("v2.1.0-beta.1");
+  });
+
+  test("is null for a repo without releases, which redirects to /releases", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases")).toBeNull();
+  });
+
+  test("refuses a tag that could leave the download folder or break the URL", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/..")).toBeNull();
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v1%2F..%2Fx")).toBeNull();
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v1?x=1")).toBeNull();
   });
 });
 
