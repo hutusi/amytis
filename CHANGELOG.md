@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **No Links to Disabled Features**: with books, series or flows (and so notes) turned off, as in the starter config, the author page, "linked from" backlinks, wikilinks, the knowledge graph and `search.json` no longer list content whose pages aren't built. A new site's build now reports no broken links.
+- **New Sites Without the Repo's Tests**: `bun create amytis` no longer copies the repo's test suite, which tests the demo site and failed in a new site, its CI workflows or the scaffolder's own source; `bun run validate` in a new site runs lint, the type check and a build. `tsconfig.json` now names Bun's types, which TypeScript 6 doesn't load by itself and which only the tests used to bring in. Needs `create-amytis` 0.1.4.
+- **Scaffolding Behind a Shared IP Address**: `create-amytis` finds the latest release through github.com instead of the GitHub API, whose hourly limit for requests without a token could make it fail. Needs `create-amytis` 0.1.4.
+
 ## [2.0.1] - 2026-11-17
 
 ### Fixed
