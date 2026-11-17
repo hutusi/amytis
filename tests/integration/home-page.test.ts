@@ -25,12 +25,20 @@ describe('home pages', () => {
     expect(danglingFragments(html)).toEqual([]);
   });
 
-  test('/zh/ has no flows section, and no hero chip points at a missing section', async () => {
+  test('/zh/ shows the zh tree\'s featured posts, series and books, without flows', async () => {
     const html = await renderAsync(LocaleRootPage({ params: Promise.resolve({ slug: 'zh' }) }), { locale: 'zh' });
+    for (const id of ['featured-posts', 'latest-posts', 'featured-series', 'featured-books']) {
+      expect(html).toContain(`id="${id}"`);
+    }
+    expect(html).toContain('href="/zh/series/digital-garden"');
+    expect(html).toContain('href="/zh/books/sample-book"');
+    expect(html).toContain('href="/zh/posts"'); // the latest section's "all posts" link
     expect(html).not.toContain('id="recent-flows"');
     expect(html).not.toContain('href="#recent-flows"');
     expect(danglingFragments(html)).toEqual([]);
-    expect(html).toContain('href="/zh/posts"'); // the latest section's "all posts" link
+    // Every content link stays in the zh tree.
+    const unprefixed = [...html.matchAll(/href="(\/(?:posts|series|books)[^"]*)"/g)].map((m) => m[1]);
+    expect(unprefixed).toEqual([]);
   });
 });
 

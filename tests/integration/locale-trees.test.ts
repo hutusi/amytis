@@ -66,7 +66,7 @@ describe('locale content trees', () => {
 
     const twin = getTwinPost(enPost!, 'zh');
     expect(twin).not.toBeNull();
-    expect(twin!.title).toBe('静态导出下的多语言路由考量');
+    expect(twin!.title).toBe('静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由');
     expect(twin!.treePath).toBe(enPost!.treePath);
     expect(getPostUrl(twin!)).toBe(`/zh${getPostUrl(enPost!)}`);
   });

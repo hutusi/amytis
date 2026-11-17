@@ -1,0 +1,25 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" rx="12" fill="#f0fdf4"/>
+  <rect x="1" y="1" width="798" height="398" rx="12" fill="none" stroke="#86efac" stroke-width="2"/>
+
+  <!-- Decorative circles -->
+  <circle cx="120" cy="200" r="60" fill="#bbf7d0" opacity="0.6"/>
+  <circle cx="680" cy="200" r="60" fill="#bbf7d0" opacity="0.6"/>
+  <circle cx="400" cy="100" r="40" fill="#86efac" opacity="0.4"/>
+
+  <!-- Simple tree/plant shapes -->
+  <polygon points="120,220 95,270 145,270" fill="#4ade80"/>
+  <rect x="113" y="268" width="14" height="20" fill="#166534"/>
+  <polygon points="120,190 90,240 150,240" fill="#22c55e"/>
+
+  <polygon points="680,220 655,270 705,270" fill="#4ade80"/>
+  <rect x="673" y="268" width="14" height="20" fill="#166534"/>
+  <polygon points="680,190 650,240 710,240" fill="#22c55e"/>
+
+  <!-- Title text -->
+  <text x="400" y="175" text-anchor="middle" font-family="Georgia, serif" font-size="42" font-weight="bold" fill="#14532d">The Digital Garden</text>
+  <text x="400" y="225" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-style="italic" fill="#166534">A place for ideas to grow</text>
+
+  <!-- Subtitle -->
+  <text x="400" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#4ade80">✦ cultivate · connect · contribute ✦</text>
+</svg>

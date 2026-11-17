@@ -34,7 +34,7 @@ describe('locale route rendering', () => {
       SecondLevelPage({ params: Promise.resolve({ slug: 'zh', postSlug: 'posts' }) }),
       { locale: 'zh' },
     );
-    expect(html).toContain('静态导出下的多语言路由考量'); // the twin post
+    expect(html).toContain('静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由'); // the twin post
     expect(html).toContain('第一篇：系列内的中文文章'); // the zh series child
   });
 
@@ -45,8 +45,8 @@ describe('locale route rendering', () => {
       createElement(ImmersiveReadingProvider, null, page),
       { locale: 'zh' },
     );
-    expect(html).toContain('静态导出下的多语言路由考量');
-    expect(html).toContain('稀疏镜像'); // body content from the zh tree
+    expect(html).toContain('静态 Next.js 博客中的 i18n：客户端切换 vs 基于 URL 的路由');
+    expect(html).toContain('默认语言前缀问题'); // body content from the zh tree
   });
 
   test('/zh/series/zh-demo-series/ renders the zh series landing', async () => {

@@ -1,0 +1,529 @@
+---
+title: "语法高亮展示"
+date: "2026-02-11"
+excerpt: "对多种编程语言语法高亮的全面测试。"
+category: "Showcase"
+tags: ["test", "code", "syntax-highlighting"]
+authors: ["Amytis Team"]
+featured: true
+coverImage: "/images/antelope-canyon.jpg"
+toc: true
+externalLinks:
+  - name: "Prism.js"
+    url: "https://prismjs.com/"
+  - name: "GitHub 讨论区"
+    url: "https://github.com/hutusi/amytis/discussions"
+---
+
+## JavaScript
+
+```javascript
+async function fetchUserData(userId) {
+  const response = await fetch(`/api/users/${userId}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  const data = await response.json();
+  return { ...data, fetchedAt: Date.now() };
+}
+
+// Destructuring, template literals, arrow functions
+const formatUser = ({ name, email, roles = [] }) =>
+  `${name} <${email}> [${roles.join(', ')}]`;
+
+class EventEmitter {
+  #listeners = new Map();
+
+  on(event, callback) {
+    if (!this.#listeners.has(event)) {
+      this.#listeners.set(event, []);
+    }
+    this.#listeners.get(event).push(callback);
+    return this;
+  }
+
+  emit(event, ...args) {
+    for (const cb of this.#listeners.get(event) ?? []) {
+      cb(...args);
+    }
+  }
+}
+```
+
+## TypeScript
+
+```typescript
+interface Repository<T extends { id: string }> {
+  findById(id: string): Promise<T | null>;
+  findAll(filter?: Partial<T>): Promise<T[]>;
+  create(data: Omit<T, 'id'>): Promise<T>;
+  update(id: string, data: Partial<T>): Promise<T>;
+  delete(id: string): Promise<void>;
+}
+
+type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+async function tryCatch<T>(fn: () => Promise<T>): Promise<Result<T>> {
+  try {
+    return { ok: true, value: await fn() };
+  } catch (error) {
+    return { ok: false, error: error as Error };
+  }
+}
+
+// Mapped type with conditional
+type ReadonlyDeep<T> = {
+  readonly [K in keyof T]: T[K] extends object ? ReadonlyDeep<T[K]> : T[K];
+};
+```
+
+## Python
+
+```python
+from dataclasses import dataclass, field
+from typing import Generator
+import asyncio
+
+@dataclass
+class TreeNode:
+    value: int
+    left: "TreeNode | None" = None
+    right: "TreeNode | None" = None
+
+    def inorder(self) -> Generator[int, None, None]:
+        if self.left:
+            yield from self.left.inorder()
+        yield self.value
+        if self.right:
+            yield from self.right.inorder()
+
+async def fetch_all(urls: list[str]) -> list[dict]:
+    async with aiohttp.ClientSession() as session:
+        tasks = [session.get(url) for url in urls]
+        responses = await asyncio.gather(*tasks)
+        return [await r.json() for r in responses]
+
+# List comprehension with walrus operator
+results = [
+    cleaned
+    for raw in data
+    if (cleaned := raw.strip().lower()) and len(cleaned) > 3
+]
+```
+
+## Rust
+
+```rust
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+struct LRUCache<K: Eq + std::hash::Hash + Clone, V: Clone> {
+    capacity: usize,
+    map: HashMap<K, (V, usize)>,
+    counter: usize,
+}
+
+impl<K: Eq + std::hash::Hash + Clone, V: Clone> LRUCache<K, V> {
+    fn new(capacity: usize) -> Self {
+        Self {
+            capacity,
+            map: HashMap::with_capacity(capacity),
+            counter: 0,
+        }
+    }
+
+    fn get(&mut self, key: &K) -> Option<&V> {
+        self.counter += 1;
+        if let Some(entry) = self.map.get_mut(key) {
+            entry.1 = self.counter;
+            Some(&entry.0)
+        } else {
+            None
+        }
+    }
+
+    fn put(&mut self, key: K, value: V) {
+        if self.map.len() >= self.capacity && !self.map.contains_key(&key) {
+            let oldest = self.map.iter()
+                .min_by_key(|(_, (_, ts))| ts)
+                .map(|(k, _)| k.clone());
+            if let Some(k) = oldest {
+                self.map.remove(&k);
+            }
+        }
+        self.counter += 1;
+        self.map.insert(key, (value, self.counter));
+    }
+}
+```
+
+## Go
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+type WorkerPool struct {
+	workers int
+	jobs    chan func() error
+	wg      sync.WaitGroup
+}
+
+func NewWorkerPool(workers int) *WorkerPool {
+	return &WorkerPool{
+		workers: workers,
+		jobs:    make(chan func() error, workers*2),
+	}
+}
+
+func (p *WorkerPool) Start(ctx context.Context) <-chan error {
+	errs := make(chan error, p.workers)
+
+	for i := 0; i < p.workers; i++ {
+		p.wg.Add(1)
+		go func(id int) {
+			defer p.wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case job, ok := <-p.jobs:
+					if !ok {
+						return
+					}
+					if err := job(); err != nil {
+						errs <- fmt.Errorf("worker %d: %w", id, err)
+					}
+				}
+			}
+		}(i)
+	}
+
+	go func() {
+		p.wg.Wait()
+		close(errs)
+	}()
+
+	return errs
+}
+```
+
+## Java
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+public sealed interface Either<L, R> permits Either.Left, Either.Right {
+
+    record Left<L, R>(L value) implements Either<L, R> {}
+    record Right<L, R>(R value) implements Either<L, R> {}
+
+    static <L, R> Either<L, R> left(L value) {
+        return new Left<>(value);
+    }
+
+    static <L, R> Either<L, R> right(R value) {
+        return new Right<>(value);
+    }
+
+    default <T> T fold(Function<L, T> onLeft, Function<R, T> onRight) {
+        return switch (this) {
+            case Left<L, R> l -> onLeft.apply(l.value());
+            case Right<L, R> r -> onRight.apply(r.value());
+        };
+    }
+
+    default <T> Either<L, T> map(Function<R, T> f) {
+        return switch (this) {
+            case Left<L, R> l -> Either.left(l.value());
+            case Right<L, R> r -> Either.right(f.apply(r.value()));
+        };
+    }
+}
+```
+
+## C / C++
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Node {
+    void *data;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *head;
+    size_t size;
+    size_t elem_size;
+} LinkedList;
+
+LinkedList *list_create(size_t elem_size) {
+    LinkedList *list = malloc(sizeof(LinkedList));
+    list->head = NULL;
+    list->size = 0;
+    list->elem_size = elem_size;
+    return list;
+}
+
+void list_push(LinkedList *list, const void *data) {
+    Node *node = malloc(sizeof(Node));
+    node->data = malloc(list->elem_size);
+    memcpy(node->data, data, list->elem_size);
+    node->next = list->head;
+    list->head = node;
+    list->size++;
+}
+```
+
+## Ruby
+
+```ruby
+module Enumerable
+  def lazy_map(&block)
+    Enumerator::Lazy.new(self) do |yielder, value|
+      yielder << block.call(value)
+    end
+  end
+end
+
+class Router
+  attr_reader :routes
+
+  def initialize(&block)
+    @routes = []
+    instance_eval(&block) if block_given?
+  end
+
+  %i[get post put patch delete].each do |method|
+    define_method(method) do |path, **opts, &handler|
+      @routes << {
+        method: method.upcase,
+        pattern: compile_pattern(path),
+        handler: handler,
+        **opts
+      }
+    end
+  end
+
+  private
+
+  def compile_pattern(path)
+    regex = path.gsub(/:(\w+)/) { "(?<#{$1}>[^/]+)" }
+    Regexp.new("\\A#{regex}\\z")
+  end
+end
+```
+
+## SQL
+
+```sql
+WITH monthly_revenue AS (
+    SELECT
+        date_trunc('month', o.created_at) AS month,
+        p.category,
+        SUM(oi.quantity * oi.unit_price) AS revenue,
+        COUNT(DISTINCT o.customer_id) AS unique_customers
+    FROM orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.id
+    WHERE o.status = 'completed'
+        AND o.created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY 1, 2
+),
+ranked AS (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY month ORDER BY revenue DESC
+        ) AS rank,
+        LAG(revenue) OVER (
+            PARTITION BY category ORDER BY month
+        ) AS prev_month_revenue
+    FROM monthly_revenue
+)
+SELECT
+    month,
+    category,
+    revenue,
+    unique_customers,
+    ROUND(
+        (revenue - prev_month_revenue) / NULLIF(prev_month_revenue, 0) * 100,
+        2
+    ) AS growth_pct
+FROM ranked
+WHERE rank <= 5
+ORDER BY month DESC, revenue DESC;
+```
+
+## Shell / Bash
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly LOG_FILE="/var/log/deploy.log"
+readonly LOCK_FILE="/tmp/deploy.lock"
+
+log() {
+  local level="$1"; shift
+  printf "[%s] [%s] %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$level" "$*" \
+    | tee -a "$LOG_FILE"
+}
+
+cleanup() {
+  rm -f "$LOCK_FILE"
+  log INFO "Lock released"
+}
+trap cleanup EXIT
+
+deploy() {
+  local env="${1:?Environment required}"
+  local version="${2:-latest}"
+
+  if [[ -f "$LOCK_FILE" ]]; then
+    log ERROR "Deployment already in progress"
+    return 1
+  fi
+  echo $$ > "$LOCK_FILE"
+
+  log INFO "Deploying version=$version to env=$env"
+
+  docker pull "app:${version}" \
+    && docker compose -f "docker-compose.${env}.yml" up -d \
+    && log INFO "Deployment successful" \
+    || { log ERROR "Deployment failed"; return 1; }
+}
+
+deploy "$@"
+```
+
+## HTML / CSS
+
+```html
+<dialog id="modal" class="backdrop:bg-black/50">
+  <form method="dialog">
+    <header>
+      <h2>Confirm Action</h2>
+      <button type="submit" value="cancel" aria-label="Close">
+        &times;
+      </button>
+    </header>
+    <p>Are you sure you want to proceed?</p>
+    <footer>
+      <button type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="confirm" autofocus>Confirm</button>
+    </footer>
+  </form>
+</dialog>
+```
+
+```css
+@layer components {
+  .card {
+    --card-padding: clamp(1rem, 3vw, 2rem);
+
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: var(--card-padding);
+    border-radius: 0.75rem;
+    background: light-dark(white, oklch(0.25 0.01 260));
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.12);
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 8px 24px oklch(0 0 0 / 0.15);
+    }
+
+    & > img {
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 0.5rem;
+    }
+  }
+}
+```
+
+## JSON / YAML
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"]
+    },
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+```
+
+```yaml
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      retries: 3
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+volumes:
+  pgdata:
+```
+
+## Diff
+
+```diff
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -12,8 +12,10 @@ export const config = {
+   pagination: {
+     posts: 10,
+-    series: 5,
++    series: 12,
+   },
++  features: {
++    darkMode: true,
++    search: true,
++  },
+ };
+```
+
+## 行内代码
+
+行内代码同样会渲染并高亮显示：`const x: number = 42`、像 `background-color: oklch(0.5 0.2 240)` 这样的 CSS 属性，或者 `git rebase -i HEAD~3` 这样的 shell 命令。

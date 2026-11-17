@@ -1,0 +1,34 @@
+---
+title: "数学符号"
+date: '2026-02-14'
+category: Science
+tags:
+  - math
+  - latex
+latex: true
+---
+
+Amytis 使用 `rehype-katex` 来渲染精美的数学公式。
+
+## 行内公式
+
+勾股定理是 $a^2 + b^2 = c^2$。我们还可以表示复数，例如 $e^{i\pi} + 1 = 0$。
+
+## 块级公式
+
+对于更复杂的方程，请使用块级公式：
+
+$$
+I = \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+或者麦克斯韦方程组：
+
+$$
+\begin{aligned}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0\left(\mathbf{J} + \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}\right)
+\end{aligned}
+$$
