@@ -17,9 +17,9 @@
   <polygon points="680,190 650,240 710,240" fill="#22c55e"/>
 
   <!-- Title text -->
-  <text x="400" y="175" text-anchor="middle" font-family="Georgia, serif" font-size="42" font-weight="bold" fill="#14532d">The Digital Garden</text>
-  <text x="400" y="225" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-style="italic" fill="#166534">A place for ideas to grow</text>
+  <text x="400" y="175" text-anchor="middle" font-family="Georgia, 'Songti SC', 'Noto Serif CJK SC', SimSun, serif" font-size="42" font-weight="bold" fill="#14532d">数字花园</text>
+  <text x="400" y="225" text-anchor="middle" font-family="Georgia, 'Songti SC', 'Noto Serif CJK SC', SimSun, serif" font-size="22" fill="#166534">让想法生长的地方</text>
 
   <!-- Subtitle -->
-  <text x="400" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#4ade80">✦ cultivate · connect · contribute ✦</text>
+  <text x="400" y="310" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif" font-size="16" fill="#4ade80">✦ 培育 · 连接 · 贡献 ✦</text>
 </svg>
