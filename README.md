@@ -162,6 +162,7 @@ bun run import-book
 bun run sync-book
 bun run series-draft "series-slug"
 bun run add-series-redirects --dry-run
+bun run translate content/posts/my-post.mdx   # into content/zh/, see docs/guides/translating-content.md
 ```
 
 ### Importing Chat Logs to Flows
