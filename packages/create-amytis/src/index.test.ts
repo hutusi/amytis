@@ -2,7 +2,14 @@ import { describe, test, expect, afterAll } from "bun:test";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { buildExtractCommand, getArchiveMetadata, patchSiteConfig, patchPackageJson } from "./index";
+import {
+  applyStarterConfig,
+  buildExtractCommand,
+  getArchiveMetadata,
+  patchPackageJson,
+  patchSiteConfig,
+  removeLocaleTrees,
+} from "./index";
 
 // Minimal site.config.ts that mirrors the real file's patchable fields.
 // Inner backticks and `${` are escaped so they appear literally in the string.
@@ -14,6 +21,19 @@ const siteConfig = {
   nav: [],
 };
 export default siteConfig;
+`;
+
+// The starter's shape (site.config.example.ts): plain strings, plus a nested
+// hero title that must not be mistaken for the site title.
+const SAMPLE_STARTER = `\
+export const siteConfig = {
+  title: "My Garden",
+  description: "A personal digital garden — notes, articles, and ideas.",
+  footerText: \`© \${new Date().getFullYear()} My Garden. All rights reserved.\`,
+  hero: {
+    title: "A place for ideas to grow",
+  },
+};
 `;
 
 const SAMPLE_PKG = JSON.stringify(
@@ -117,13 +137,67 @@ describe("patchSiteConfig", () => {
   test("throws loudly when the config shape has drifted from the patch patterns", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
-    // A plain-string (single-locale) title — the shape site.config.example.ts
-    // uses — must not be silently skipped.
+    // A shape the patcher doesn't know must not be silently skipped.
     fs.writeFileSync(
       path.join(dir, "site.config.ts"),
-      `const siteConfig = { title: "Amytis" };\nexport default siteConfig;\n`
+      `const siteTitle = "Amytis";\nexport const siteConfig = {\n  title: siteTitle,\n};\n`
     );
     expect(() => patchSiteConfig(dir, "Title", "Desc")).toThrow(/out of sync/);
+  });
+
+  test("patches the starter's plain-string fields and leaves the hero title alone", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.writeFileSync(path.join(dir, "site.config.ts"), SAMPLE_STARTER);
+    patchSiteConfig(dir, "Tom $& Jerry", "Notes on $1");
+    const result = fs.readFileSync(path.join(dir, "site.config.ts"), "utf8");
+    expect(result).toContain(`  title: "Tom $& Jerry",`);
+    expect(result).toContain(`  description: "Notes on $1",`);
+    expect(result).toContain("  footerText: `© ${new Date().getFullYear()} Tom $& Jerry. All rights reserved.`,");
+    expect(result).toContain(`    title: "A place for ideas to grow",`);
+    expect(result).not.toContain("My Garden");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyStarterConfig
+// ---------------------------------------------------------------------------
+
+describe("applyStarterConfig", () => {
+  const tmpDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tmpDirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("replaces the demo site's config with the starter, keeping the starter", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.writeFileSync(path.join(dir, "site.config.ts"), SAMPLE_CONFIG);
+    fs.writeFileSync(path.join(dir, "site.config.example.ts"), SAMPLE_STARTER);
+    expect(applyStarterConfig(dir)).toBe(true);
+    expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toBe(SAMPLE_STARTER);
+    expect(fs.existsSync(path.join(dir, "site.config.example.ts"))).toBe(true);
+  });
+
+  test("removes locale trees, which a single-language site can't build", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    for (const sub of ["posts", "series", "zh/posts", "pt-BR/posts", "images"]) {
+      fs.mkdirSync(path.join(dir, "content", sub), { recursive: true });
+    }
+    expect(removeLocaleTrees(dir).sort()).toEqual(["content/pt-BR/", "content/zh/"]);
+    expect(fs.readdirSync(path.join(dir, "content")).sort()).toEqual(["images", "posts", "series"]);
+  });
+
+  test("leaves site.config.ts as it is when there is no starter", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.writeFileSync(path.join(dir, "site.config.ts"), SAMPLE_CONFIG);
+    expect(applyStarterConfig(dir)).toBe(false);
+    expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toBe(SAMPLE_CONFIG);
   });
 });
 
@@ -147,20 +221,26 @@ describe("sync with the real repo files", () => {
     }
   });
 
-  test("patchSiteConfig patches the real site.config.ts", () => {
+  test("a new site gets the real starter config, patched", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
+    // The release ships both files; the demo site's own config must not survive.
     fs.copyFileSync(path.join(repoRoot, "site.config.ts"), path.join(dir, "site.config.ts"));
+    fs.copyFileSync(path.join(repoRoot, "site.config.example.ts"), path.join(dir, "site.config.example.ts"));
 
+    expect(applyStarterConfig(dir)).toBe(true);
     patchSiteConfig(dir, "Sync Check Garden", "A sync-check description");
 
     const result = fs.readFileSync(path.join(dir, "site.config.ts"), "utf8");
-    expect(result).toContain(`title: { en: "Sync Check Garden", zh: "Sync Check Garden" }`);
-    expect(result).toContain(
-      `description: { en: "A sync-check description", zh: "A sync-check description" }`
-    );
+    expect(result).toContain(`  title: "Sync Check Garden",`);
+    expect(result).toContain(`  description: "A sync-check description",`);
     expect(result).toContain("Sync Check Garden. All rights reserved.");
-    expect(result).toContain("Sync Check Garden. 保留所有权利。");
+    // removeLocaleTrees relies on the starter being single-language.
+    expect(result).toMatch(/enabled: false,\s*defaultLocale: 'en',\s*locales: \['en'\],/);
+    expect(result).not.toContain("amytis.vercel.app");
+    // Placeholder social links, not the demo site author's.
+    expect(result).toContain(`github: "https://github.com/your-username"`);
+    expect(result).not.toContain("twitter.com/hutusi");
   });
 
   test("patchPackageJson patches the real package.json", () => {

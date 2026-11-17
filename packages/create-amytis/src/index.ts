@@ -158,24 +158,56 @@ function escapeTemplateLiteral(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
 }
 
-// Replace `pattern` in `src`, failing loudly when the pattern no longer
-// matches — a silent miss here means the downloaded site.config.ts shape
+// Replace the first of `shapes` whose pattern matches `src`, failing loudly
+// when none does: a silent miss means the downloaded site.config.ts shape
 // drifted from what this CLI knows how to patch, and the user would get an
 // unpatched site with no hint why.
-function mustReplace(src: string, pattern: RegExp, replacement: string, field: string): string {
-  if (!pattern.test(src)) {
-    throw new Error(
-      `create-amytis is out of sync with the downloaded site.config.ts: ` +
-      `could not find the "${field}" block to patch. Edit site.config.ts manually, ` +
-      `and please report this at https://github.com/hutusi/amytis/issues`
-    );
+function patchField(src: string, shapes: Array<[RegExp, string]>, field: string): string {
+  for (const [pattern, replacement] of shapes) {
+    // Function replacer: a plain-string replacement would give `$&`/`$$`/`` $` ``
+    // in user-supplied titles special String.replace semantics and corrupt the
+    // generated config.
+    if (pattern.test(src)) return src.replace(pattern, () => replacement);
   }
-  // Function replacer: a plain-string replacement would give `$&`/`$$`/`` $` ``
-  // in user-supplied titles special String.replace semantics and corrupt the
-  // generated config.
-  return src.replace(pattern, () => replacement);
+  throw new Error(
+    `create-amytis is out of sync with the downloaded site.config.ts: ` +
+    `could not find the "${field}" field to patch. Edit site.config.ts manually, ` +
+    `and please report this at https://github.com/hutusi/amytis/issues`
+  );
 }
 
+// New sites start from the single-language starter, not from the demo site's
+// own config (its author's links, domain and two-language setup). Returns
+// whether a starter was found.
+export function applyStarterConfig(projectDir: string): boolean {
+  const starterPath = path.join(projectDir, "site.config.example.ts");
+  if (!fs.existsSync(starterPath)) return false;
+  fs.copyFileSync(starterPath, path.join(projectDir, "site.config.ts"));
+  return true;
+}
+
+// Same shape test the build applies to directories under content/
+// (src/lib/content/io.ts): a locale-shaped directory must be a configured
+// locale, or the build fails.
+const LOCALE_DIR_SHAPE = /^[a-z]{2}(-[A-Z]{2})?$/;
+
+// The starter config is single-language, so the demo site's translations
+// (content/zh/ and the like) would fail its build. Returns what was removed.
+export function removeLocaleTrees(projectDir: string): string[] {
+  const contentDir = path.join(projectDir, "content");
+  if (!fs.existsSync(contentDir)) return [];
+  const removed: string[] = [];
+  for (const entry of fs.readdirSync(contentDir, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !LOCALE_DIR_SHAPE.test(entry.name)) continue;
+    fs.rmSync(path.join(contentDir, entry.name), { recursive: true, force: true });
+    removed.push(`content/${entry.name}/`);
+  }
+  return removed;
+}
+
+// Patches the top-level title, description and footer. Each is either a plain
+// string (the starter config) or an { en, zh } map (a multi-language config);
+// the `^  ` anchor skips nested fields such as the hero's title.
 export function patchSiteConfig(projectDir: string, title: string, description: string): void {
   const configPath = path.join(projectDir, "site.config.ts");
   if (!fs.existsSync(configPath)) {
@@ -184,31 +216,27 @@ export function patchSiteConfig(projectDir: string, title: string, description: 
   }
 
   let src = fs.readFileSync(configPath, "utf8");
-
-  // title: { en: "...", zh: "..." }
-  src = mustReplace(
-    src,
-    /title:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/,
-    `title: { en: ${JSON.stringify(title)}, zh: ${JSON.stringify(title)} }`,
-    "title"
-  );
-
-  // description: { en: "...", zh: "..." }
-  src = mustReplace(
-    src,
-    /description:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/,
-    `description: { en: ${JSON.stringify(description)}, zh: ${JSON.stringify(description)} }`,
-    "description"
-  );
-
-  // footerText — replace "Amytis" occurrences in template literals with project title
+  const quotedTitle = JSON.stringify(title);
+  const quotedDescription = JSON.stringify(description);
   const safeTitle = escapeTemplateLiteral(title);
-  src = mustReplace(
-    src,
-    /footerText:\s*\{\s*en:\s*`[^`]*`,\s*zh:\s*`[^`]*`\s*\}/,
-    `footerText: { en: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\`, zh: \`© \${new Date().getFullYear()} ${safeTitle}. 保留所有权利。\` }`,
-    "footerText"
-  );
+
+  src = patchField(src, [
+    [/^ {2}title:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/m, `  title: { en: ${quotedTitle}, zh: ${quotedTitle} }`],
+    [/^ {2}title:\s*"[^"]*"/m, `  title: ${quotedTitle}`],
+  ], "title");
+
+  src = patchField(src, [
+    [/^ {2}description:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/m, `  description: { en: ${quotedDescription}, zh: ${quotedDescription} }`],
+    [/^ {2}description:\s*"[^"]*"/m, `  description: ${quotedDescription}`],
+  ], "description");
+
+  src = patchField(src, [
+    [
+      /^ {2}footerText:\s*\{\s*en:\s*`[^`]*`,\s*zh:\s*`[^`]*`\s*\}/m,
+      `  footerText: { en: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\`, zh: \`© \${new Date().getFullYear()} ${safeTitle}. 保留所有权利。\` }`,
+    ],
+    [/^ {2}footerText:\s*`[^`]*`/m, `  footerText: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\``],
+  ], "footerText");
 
   fs.writeFileSync(configPath, src, "utf8");
 }
@@ -277,8 +305,14 @@ async function main(): Promise<void> {
     "My digital garden"
   );
 
-  // 7. Patch site.config.ts
+  // 7. Start from the starter config and patch it
   console.log("\nPatching site.config.ts...");
+  if (applyStarterConfig(targetDir)) {
+    const removed = removeLocaleTrees(targetDir);
+    if (removed.length > 0) console.log(`  Removed the demo's translations: ${removed.join(", ")}`);
+  } else {
+    console.warn("  Warning: site.config.example.ts not found, keeping the release's site.config.ts");
+  }
   patchSiteConfig(targetDir, siteTitle, siteDescription);
 
   // 8. Patch package.json

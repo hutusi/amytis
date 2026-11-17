@@ -95,7 +95,7 @@ cd my-garden
 bun dev
 ```
 
-The scaffold command downloads the latest tagged Amytis release, installs dependencies, and patches `site.config.ts` and `package.json` with your project metadata.
+The scaffold command downloads the latest tagged Amytis release, starts your `site.config.ts` from the single-language starter (`site.config.example.ts`) and drops the demo's Chinese translations (`content/zh/`), fills in your site title and description, renames the package and installs dependencies.
 
 ### Clone & Run
 

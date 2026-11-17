@@ -95,7 +95,7 @@ cd my-garden
 bun dev
 ```
 
-脚手架命令会下载最新打标签发布的 Amytis 版本，安装依赖，并根据你的项目信息更新 `site.config.ts` 和 `package.json`。
+脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts` 并移除示例站点的中文翻译（`content/zh/`），填入站点标题和描述，修改包名，并安装依赖。
 
 ### 克隆并运行
 
