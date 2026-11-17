@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { getAllTags, buildSlugRegistry, getBacklinks } from '../../src/lib/content/discovery';
 import { getAggregatedPostsByTag, getAllPosts, getPostsByTag } from '../../src/lib/content/posts';
 import { getAggregatedNotesByTag, getAllNotes, getNotesByTag } from '../../src/lib/content/notes';
@@ -192,5 +192,35 @@ describe('Integration: discovery (slug registry, backlinks, tags)', () => {
         expect(getNotesByTag(tag).length).toBeGreaterThan(0);
       }
     });
+  });
+});
+
+describe('Integration: discovery — flow feature disabled', () => {
+  // Notes and flows aren't built when `flow` is off, so nothing may link to
+  // them: not a wikilink, not a "linked from" backlink on a post. The registry
+  // and backlink index rebuild per call outside production (no memo to reset).
+  test('notes and flows leave the wikilink registry and the backlinks', async () => {
+    const features = await import('@/lib/features');
+    const realFeatures = { ...features };
+    // Non-vacuous: with the feature on, some post is backlinked from a note.
+    const postSlugs = getAllPosts().map(p => p.slug);
+    expect(postSlugs.some(slug => getBacklinks(slug).some(b => b.type === 'note'))).toBe(true);
+
+    mock.module('@/lib/features', () => ({
+      ...realFeatures,
+      isFeatureEnabled: (feature: string) => feature !== 'flow' && realFeatures.isFeatureEnabled(feature as never),
+    }));
+    try {
+      const types = new Set([...buildSlugRegistry().values()].map(e => e.type));
+      expect(types.has('note')).toBe(false);
+      expect(types.has('flow')).toBe(false);
+      expect(types.has('post')).toBe(true);
+
+      for (const slug of postSlugs) {
+        expect(getBacklinks(slug).filter(b => b.type !== 'post')).toEqual([]);
+      }
+    } finally {
+      mock.module('@/lib/features', () => realFeatures);
+    }
   });
 });
