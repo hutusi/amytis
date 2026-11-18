@@ -2,62 +2,77 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import * as http from "http";
 import * as https from "https";
 import { execFileSync } from "child_process";
+import { pipeline } from "stream/promises";
 
 export const REPO = "hutusi/amytis";
 
-function fetchJson(url: string): Promise<Record<string, unknown>> {
+// A connection that sends nothing for this long fails instead of hanging.
+const IDLE_TIMEOUT_MS = 60_000;
+
+// GET with the CLI's User-Agent and an idle timeout. GitHub is https; the
+// tests use a local http server.
+function get(url: string, onResponse: (res: http.IncomingMessage) => void): http.ClientRequest {
+  const client = url.startsWith("http:") ? http : https;
+  const req = client.get(url, { headers: { "User-Agent": "create-amytis-cli" } }, onResponse);
+  req.setTimeout(IDLE_TIMEOUT_MS, () => req.destroy(new Error(`No response from ${url} for ${IDLE_TIMEOUT_MS / 1000}s`)));
+  return req;
+}
+
+export function fetchJson(url: string): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, { headers: { "User-Agent": "create-amytis-cli" } }, (res) => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-          fetchJson(res.headers.location!).then(resolve).catch(reject);
-          return;
+    get(url, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        res.resume();
+        fetchJson(res.headers.location!).then(resolve).catch(reject);
+        return;
+      }
+      if (res.statusCode !== 200) {
+        res.resume();
+        const hint = res.statusCode === 403 || res.statusCode === 429
+          ? " (usually its hourly limit for requests without a token; try again later)"
+          : "";
+        reject(new Error(`GitHub API returned ${res.statusCode} for ${url}${hint}`));
+        return;
+      }
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      // A connection that breaks off mid-body fails here, not on the request.
+      res.on("error", reject);
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(data) as Record<string, unknown>);
+        } catch {
+          reject(new Error("Failed to parse GitHub API response"));
         }
-        if (res.statusCode !== 200) {
-          const hint = res.statusCode === 403 || res.statusCode === 429
-            ? " (usually its hourly limit for requests without a token; try again later)"
-            : "";
-          reject(new Error(`GitHub API returned ${res.statusCode} for ${url}${hint}`));
-          return;
-        }
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data) as Record<string, unknown>);
-          } catch {
-            reject(new Error("Failed to parse GitHub API response"));
-          }
-        });
-      })
-      .on("error", reject);
+      });
+    }).on("error", reject);
   });
 }
 
+// Downloads url to dest. A download that fails part way removes the partial
+// file, so nothing half-written is unpacked.
 export function downloadFile(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const doGet = (targetUrl: string) => {
-      https
-        .get(targetUrl, { headers: { "User-Agent": "create-amytis-cli" } }, (res) => {
-          if (res.statusCode === 301 || res.statusCode === 302) {
-            doGet(res.headers.location!);
-            return;
-          }
-          if (res.statusCode !== 200) {
-            reject(new Error(`Download failed with status ${res.statusCode}`));
-            return;
-          }
-          const file = fs.createWriteStream(dest);
-          res.pipe(file);
-          file.on("finish", () => file.close(() => resolve()));
-          file.on("error", (err) => {
-            fs.unlink(dest, () => {});
-            reject(err);
-          });
-        })
-        .on("error", reject);
+      get(targetUrl, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          res.resume();
+          doGet(res.headers.location!);
+          return;
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          reject(new Error(`Download failed with status ${res.statusCode}`));
+          return;
+        }
+        pipeline(res, fs.createWriteStream(dest)).then(resolve, (err: Error) => {
+          fs.rmSync(dest, { force: true });
+          reject(err);
+        });
+      }).on("error", reject);
     };
     doGet(url);
   });
