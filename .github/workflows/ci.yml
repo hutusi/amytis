@@ -129,7 +129,11 @@ jobs:
       # git archive gives the same files as a release's download. The release
       # is the last one before this commit, so a release commit is checked
       # against the one before it. The site is made by the scaffolder that
-      # release shipped, as the sites people have were, not by this commit's.
+      # release shipped, as the sites people have were, not by this commit's,
+      # and installed before its first commit, as `bun create amytis` does: the
+      # install renames the package in bun.lock, so the lockfile takes the
+      # kept-lockfile path real sites take, and the site has its dependencies
+      # even when the upgrade changes nothing and installs nothing.
       - name: Make a site from the last release
         run: |
           base=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)
@@ -141,6 +145,7 @@ jobs:
           SITE="$RUNNER_TEMP/site" bun -e "import { setUpNewSite } from '$RUNNER_TEMP/base/packages/create-amytis/src/index.ts';
             setUpNewSite(process.env.SITE, { projectName: 'upgrade-check', title: 'Upgrade Check', description: 'A site from the last release' });"
           cd "$RUNNER_TEMP/site"
+          bun install
           git init -q
           git add -A
           git -c user.name=ci -c user.email=ci@localhost commit -qm "Site made from $base"
@@ -152,17 +157,11 @@ jobs:
         run: bun "$GITHUB_WORKSPACE/packages/create-amytis/src/index.ts" upgrade --base-dir "$RUNNER_TEMP/base" --target-dir "$RUNNER_TEMP/target"
 
       # Every upgraded site has `bun run upgrade`, including ones made before
-      # create-amytis added it.
+      # create-amytis added it, and this site never changed it.
       - name: The site can upgrade again
         working-directory: ${{ runner.temp }}/site
         run: |
-          node -e "const s = require('./package.json').scripts; if (!s.upgrade) throw new Error('package.json has no upgrade script: ' + JSON.stringify(s));"
-
-      # The upgrade installs only when it changed something, and this site
-      # was never installed.
-      - name: Install dependencies
-        working-directory: ${{ runner.temp }}/site
-        run: bun install
+          node -e "const s = require('./package.json').scripts; if (s.upgrade !== 'bunx create-amytis@latest upgrade') throw new Error('unexpected upgrade script: ' + JSON.stringify(s.upgrade));"
 
       - name: Validate
         working-directory: ${{ runner.temp }}/site
