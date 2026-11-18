@@ -18,6 +18,7 @@ import {
   releaseNotes,
   shareUnchanged,
   type FileVersions,
+  type UpgradePlan,
 } from "./upgrade";
 
 const tmpDirs: string[] = [];
@@ -479,6 +480,60 @@ describe("a site with CRLF line endings", () => {
     expect(config).toContain("  linkCheck: 'warn',\r\n");
     expect(config).not.toMatch(/[^\r]\n/);
     expect(read(site, "package.json")).toContain(`"version": "2.0.1",\r\n`);
+  });
+});
+
+describe.skipIf(process.platform === "win32")("symbolic links in the site", () => {
+  test("are never written or deleted through", () => {
+    const { base, target } = makeReleases();
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "linked", title: "Linked", description: "Links." });
+    const outside = makeTmpDir();
+    // A file linked from outside the site, which the release changed...
+    fs.writeFileSync(path.join(outside, "untouched.ts"), "a\n");
+    fs.rmSync(path.join(site, "src", "untouched.ts"));
+    fs.symlinkSync(path.join(outside, "untouched.ts"), path.join(site, "src", "untouched.ts"));
+    // ...and a linked folder with a file the release removed.
+    fs.cpSync(path.join(site, "src", "legacy"), path.join(outside, "legacy"), { recursive: true });
+    fs.rmSync(path.join(site, "src", "legacy"), { recursive: true });
+    fs.symlinkSync(path.join(outside, "legacy"), path.join(site, "src", "legacy"));
+
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    const byPath = Object.fromEntries(plan.changes.map((c) => [c.path, c]));
+    expect(byPath["src/untouched.ts"]).toEqual({
+      path: "src/untouched.ts",
+      kind: "kept",
+      reason: expect.stringContaining("it is a symbolic link"),
+    });
+    expect(byPath["src/legacy/old.ts"]).toEqual({
+      path: "src/legacy/old.ts",
+      kind: "kept",
+      reason: expect.stringContaining("src/legacy is a symbolic link"),
+    });
+
+    applyPlan(site, plan);
+    expect(read(outside, "untouched.ts")).toBe("a\n");
+    expect(read(outside, "legacy/old.ts")).toBe("old\n");
+    // The rest of the upgrade went ahead.
+    expect(read(site, "src/added.ts")).toBe("new\n");
+  });
+
+  test("applyPlan checks every path before it writes any", () => {
+    const site = makeTmpDir();
+    const outside = makeTmpDir();
+    fs.mkdirSync(path.join(site, "src"));
+    fs.symlinkSync(outside, path.join(site, "src", "linked"));
+    const plan: UpgradePlan = {
+      changes: [
+        { path: "src/first.ts", kind: "add", write: Buffer.from("1\n") },
+        { path: "src/linked/out.ts", kind: "add", write: Buffer.from("2\n") },
+      ],
+      packageConflicts: [],
+    };
+    expect(() => applyPlan(site, plan)).toThrow("src/linked in the site is a symbolic link");
+    expect(read(site, "src/first.ts")).toBeUndefined();
+    expect(fs.readdirSync(outside)).toEqual([]);
   });
 });
 

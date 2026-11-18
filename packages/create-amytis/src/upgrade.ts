@@ -143,6 +143,28 @@ function withCrlf(buf: Buffer, crlf: boolean): Buffer {
   return crlf ? Buffer.from(buf.toString("latin1").replace(/\r?\n/g, "\r\n"), "latin1") : buf;
 }
 
+// The first part of rel, itself or a folder it's in, that is a symbolic link
+// in the site; null if none is. The upgrade never writes through a link: it
+// can lead out of the site, where git can't undo the change. `seen` caches
+// what was looked up, as files share folders.
+function linkOnPath(root: string, rel: string, seen: Map<string, boolean>): string | null {
+  const parts = rel.split("/");
+  for (let i = 1; i <= parts.length; i++) {
+    const prefix = parts.slice(0, i).join("/");
+    let isLink = seen.get(prefix);
+    if (isLink === undefined) {
+      try {
+        isLink = fs.lstatSync(path.join(root, ...parts.slice(0, i))).isSymbolicLink();
+      } catch {
+        return null; // Doesn't exist (yet), so nothing below it does either.
+      }
+      seen.set(prefix, isLink);
+    }
+    if (isLink) return prefix;
+  }
+  return null;
+}
+
 export interface MergeLabels {
   site: string;
   base: string;
@@ -458,7 +480,25 @@ export function planUpgrade(options: {
   const config = planSiteConfig(siteDir, baseDir, targetDir, labels, scratchDir);
   if (config.change) changes.push(config.change);
 
-  return { changes, packageConflicts: pkg.conflicts, configNote: config.note };
+  // A change that would write or delete through a symbolic link is left to
+  // the site's owner instead.
+  const seen = new Map<string, boolean>();
+  const guarded = changes.map((change): Change => {
+    const link = writtenPaths(change).map((rel) => linkOnPath(siteDir, rel, seen)).find((l) => l !== null);
+    if (!link) return change;
+    const what = link === change.path ? "it is a symbolic link" : `${link} is a symbolic link`;
+    return { path: change.path, kind: "kept", reason: `${what}, and the upgrade doesn't write through links; Amytis changed it, so update it by hand` };
+  });
+
+  return { changes: guarded, packageConflicts: pkg.conflicts, configNote: config.note };
+}
+
+// The paths in the site a change writes or deletes.
+function writtenPaths(change: Change): string[] {
+  const paths: string[] = [];
+  if (change.kind === "delete" || change.write) paths.push(change.path);
+  if (change.newCopy) paths.push(change.path + NEW_COPY_SUFFIX);
+  return paths;
 }
 
 function removeEmptyDirs(dir: string, stopAt: string): void {
@@ -470,6 +510,14 @@ function removeEmptyDirs(dir: string, stopAt: string): void {
 
 export function applyPlan(siteDir: string, plan: UpgradePlan): void {
   const root = path.resolve(siteDir);
+  // planUpgrade already leaves out changes through links. Checking again here,
+  // before anything is written, keeps a plan made earlier, or by hand, from
+  // writing out of the site.
+  const seen = new Map<string, boolean>();
+  for (const rel of plan.changes.flatMap(writtenPaths)) {
+    const link = linkOnPath(root, rel, seen);
+    if (link) throw new Error(`${link} in the site is a symbolic link; the upgrade won't write through it. Nothing was changed.`);
+  }
   for (const change of plan.changes) {
     const file = path.join(root, ...change.path.split("/"));
     if (change.kind === "delete") {

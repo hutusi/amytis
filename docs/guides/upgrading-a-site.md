@@ -60,6 +60,10 @@ Some files have their own rules:
 - **Line endings don't count as changes.** A site cloned on Windows, where git
   turns line endings into CRLF by default, is compared with the release as if
   it had LF, and its files keep CRLF.
+- **Symbolic links are never written through.** A link can lead out of the
+  site, where git can't undo a change. So when a file the release changed is
+  a link, or is in a linked folder, the upgrade lists it for you to update by
+  hand.
 - **The Amytis repo's own tests and CI** (`tests/`, `.github/`, `packages/`)
   aren't part of a site. Sites made before create-amytis 0.1.4 still have
   them; the upgrade removes them if you haven't changed them.
