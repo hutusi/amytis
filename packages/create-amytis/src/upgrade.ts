@@ -520,12 +520,23 @@ export function planUpgrade(options: {
   // So is one where a release turned a file into a folder, or the other way
   // round, and the site has something of its own in the way.
   const deleted = deletedPaths(guarded);
+  const blockedFolders: string[] = [];
   const placed = guarded.map((change): Change => {
     const clash = pathClash(siteDir, change, deleted);
-    return clash ? { path: change.path, kind: "kept", reason: `${clash}, so it was left as it is; sort it out by hand` } : change;
+    if (!clash) return change;
+    if (clash.blockedFolder) blockedFolders.push(clash.blockedFolder);
+    return { path: change.path, kind: "kept", reason: `${clash.message}, so it was left as it is; sort it out by hand` };
+  });
+  // When a folder can't become a file, the old files in it stay too, so the
+  // owner finds the old tree whole rather than half removed.
+  const coupled = placed.map((change): Change => {
+    const folder = blockedFolders.find((f) => change.kind === "delete" && change.path.startsWith(`${f}/`));
+    return folder
+      ? { path: change.path, kind: "kept", reason: `kept with ${folder}, which the new release turns into a file` }
+      : change;
   });
 
-  return { changes: placed, packageConflicts: pkg.conflicts, configNote: config.note };
+  return { changes: coupled, packageConflicts: pkg.conflicts, configNote: config.note };
 }
 
 function deletedPaths(changes: Change[]): Set<string> {
@@ -533,20 +544,31 @@ function deletedPaths(changes: Change[]): Set<string> {
 }
 
 // Every file and link under dir, relative to the site.
+// An empty folder counts as an entry ("<path>/"), since removing files
+// doesn't remove it.
 function filesUnder(siteDir: string, rel: string): string[] {
   const found: string[] = [];
   for (const entry of fs.readdirSync(path.join(siteDir, ...rel.split("/")), { withFileTypes: true })) {
     const child = `${rel}/${entry.name}`;
-    if (entry.isDirectory()) found.push(...filesUnder(siteDir, child));
-    else found.push(child);
+    if (entry.isDirectory()) {
+      const inside = filesUnder(siteDir, child);
+      found.push(...(inside.length > 0 ? inside : [`${child}/`]));
+    } else {
+      found.push(child);
+    }
   }
   return found;
 }
 
 // Why a change can't be written where the site has a file in place of a
 // folder the release needs, or a folder in place of a file; null if it can.
-// Deletions happen first, so a folder the plan empties is no obstacle.
-function pathClash(siteDir: string, change: Change, deleted: Set<string>): string | null {
+// Deletions happen first, so a folder the plan empties is no obstacle, but an
+// empty folder from the start, or one with anything else left in it, is.
+function pathClash(
+  siteDir: string,
+  change: Change,
+  deleted: Set<string>,
+): { message: string; blockedFolder?: string } | null {
   for (const rel of writtenPaths(change)) {
     if (change.kind === "delete" && rel === change.path) continue;
     const parts = rel.split("/");
@@ -559,20 +581,25 @@ function pathClash(siteDir: string, change: Change, deleted: Set<string>): strin
         break; // Doesn't exist, so neither does anything below it.
       }
       if (!stat.isDirectory() && !deleted.has(folder)) {
-        return `${folder} is a file in your site, where the new release has a folder`;
+        return { message: `${folder} is a file in your site, where the new release has a folder` };
       }
     }
-    let stat: fs.Stats | null = null;
-    try {
-      stat = fs.lstatSync(path.join(siteDir, ...parts));
-    } catch {
-      // Doesn't exist: nothing in the way.
-    }
-    if (stat?.isDirectory() && filesUnder(siteDir, rel).some((file) => !deleted.has(file))) {
-      return `${rel} is a folder in your site, where the new release has a file`;
+    if (isDirectory(path.join(siteDir, ...parts))) {
+      const inside = filesUnder(siteDir, rel);
+      if (inside.length === 0 || inside.some((file) => !deleted.has(file))) {
+        return { message: `${rel} is a folder in your site, where the new release has a file`, blockedFolder: rel };
+      }
     }
   }
   return null;
+}
+
+function isDirectory(file: string): boolean {
+  try {
+    return fs.lstatSync(file).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function exists(file: string): boolean {
@@ -633,7 +660,7 @@ export function applyPlan(siteDir: string, plan: UpgradePlan): void {
   const deleted = deletedPaths(plan.changes);
   for (const change of plan.changes) {
     const clash = pathClash(root, change, deleted);
-    if (clash) throw new Error(`${change.path}: ${clash}. Nothing was changed.`);
+    if (clash) throw new Error(`${change.path}: ${clash.message}. Nothing was changed.`);
   }
 
   // Deletions first, so a folder the release replaced with a file is gone
@@ -761,9 +788,14 @@ export function undoProblem(siteDir: string, plan: UpgradePlan): UndoProblem | n
   const listed = spawnSync("git", ["ls-files", "-z", "--", "."], { cwd: siteDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   if (listed.error || listed.status !== 0) return { kind: "no-repo" };
   const tracked = new Set(listed.stdout.split("\0").filter(Boolean));
+  // A folder in a write's way is never listed by git ls-files, which lists
+  // files. The planner lets a file replace a folder only when every file in it
+  // is deleted, and each of those deletions is checked here on its own.
   const paths = plan.changes
     .flatMap(writtenPaths)
-    .filter((rel) => !tracked.has(rel) && exists(path.join(siteDir, ...rel.split("/"))));
+    .map((rel) => ({ rel, file: path.join(siteDir, ...rel.split("/")) }))
+    .filter(({ rel, file }) => !tracked.has(rel) && exists(file) && !isDirectory(file))
+    .map(({ rel }) => rel);
   return paths.length > 0 ? { kind: "untracked", paths } : null;
 }
 

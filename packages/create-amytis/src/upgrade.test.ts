@@ -660,9 +660,43 @@ describe("a release that turns a folder into a file, or a file into a folder", (
       kind: "kept",
       reason: expect.stringContaining("src/thing is a file in your site, where the new release has a folder"),
     });
+    // The old file in the folder stays too, so the site isn't left half way.
+    expect(byPath["src/widget/index.ts"]).toEqual({
+      path: "src/widget/index.ts",
+      kind: "kept",
+      reason: "kept with src/widget, which the new release turns into a file",
+    });
     applyPlan(site, plan);
     expect(read(site, "src/widget/mine.ts")).toBe("mine\n");
+    expect(read(site, "src/widget/index.ts")).toBe("folder\n");
     expect(read(site, "src/thing")).toBe("changed\n");
+  });
+
+  test("counts an empty folder inside as something in the way", () => {
+    const { base, target } = releases();
+    const site = siteFrom(base);
+    fs.mkdirSync(path.join(site, "src", "widget", "cache"));
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    expect(plan.changes.find((c) => c.path === "src/widget")?.kind).toBe("kept");
+    expect(plan.changes.find((c) => c.path === "src/widget/index.ts")?.kind).toBe("kept");
+    applyPlan(site, plan);
+    expect(read(site, "src/widget/index.ts")).toBe("folder\n");
+    expect(fs.existsSync(path.join(site, "src", "widget", "cache"))).toBe(true);
+  });
+
+  test("a committed site swaps them without --force", () => {
+    // git ls-files lists the folder's files, not the folder, which mustn't
+    // make the folder look untracked.
+    const { base, target } = releases();
+    const site = siteFrom(base);
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    const result = spawnSync(process.execPath, [path.join(import.meta.dir, "index.ts"), "upgrade", "--base-dir", base, "--target-dir", target, "--no-install"], { cwd: site, encoding: "utf8" });
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
+    expect(read(site, "src/widget")).toBe("now a file\n");
+    expect(read(site, "src/thing/index.ts")).toBe("now a folder\n");
   });
 
   test("applyPlan refuses a plan that would, before it writes anything", () => {
