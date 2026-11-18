@@ -267,6 +267,13 @@ describe("releaseNotes", () => {
     });
   });
 
+  test("reads a changelog with bare CR line endings", () => {
+    expect(releaseNotes(changelog.replace(/\n/g, "\r"), [2, 0, 0], [2, 1, 0])[0]).toEqual({
+      version: "2.1.0",
+      upgrading: "- Rename `foo` to `bar` in site.config.ts.",
+    });
+  });
+
   test("reads the last section to the end of the file", () => {
     expect(releaseNotes(changelog, [1, 17, 0], [2, 0, 0])).toEqual([{ version: "2.0.0", upgrading: "- Move translations." }]);
   });
@@ -891,6 +898,8 @@ describe("create-amytis upgrade", () => {
     expect(result.stdout).toContain("Upgrading from Amytis v2.0.0 to v2.0.1");
     expect(result.stdout).toContain("Upgrading to 2.0.1, from CHANGELOG.md:\n\n- Run bun install.");
     // git status wouldn't show an added file the site ignores, so they're listed.
+    // Staged changes too: plain `git restore .` would keep them.
+    expect(result.stdout).toContain("To undo the upgrade: git restore --staged --worktree ., delete the files it created");
     expect(result.stdout).toContain("delete the files it created, then run bun install. It created:\n  src/added.ts");
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
     expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");

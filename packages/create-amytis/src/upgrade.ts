@@ -707,8 +707,9 @@ export function needsAttention(plan: UpgradePlan): boolean {
 // with each one's "### Upgrading…" section, if it has one.
 export function releaseNotes(changelog: string, from: Version, to: Version): Array<{ version: string; upgrading?: string }> {
   const notes: Array<{ version: string; upgrading?: string }> = [];
-  // A changelog from a Windows checkout (--target-dir) can have CRLF.
-  const sections = changelog.replace(/\r\n/g, "\n").split(/^(?=## \[)/m);
+  // A changelog in a local --target-dir can end its lines with CRLF, or even
+  // a bare CR; each becomes one LF.
+  const sections = changelog.replace(/\r\n?/g, "\n").split(/^(?=## \[)/m);
   for (const section of sections) {
     const heading = /^## \[([^\]]+)\]/.exec(section);
     const version = heading ? parseVersion(heading[1]) : null;
@@ -895,6 +896,10 @@ function printPlan(plan: UpgradePlan, verbose: boolean): void {
   }
 }
 
+// Restores both the staged and the working copy from HEAD: plain
+// `git restore .` would keep anything staged since the upgrade.
+const UNDO_RESTORE = "git restore --staged --worktree .";
+
 export const UPGRADE_USAGE = `Upgrade the Amytis site in this folder to a newer release:
 
   bunx create-amytis@latest upgrade [options]     (or: bun run upgrade)
@@ -1055,8 +1060,8 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
         ...(c.newCopy ? [sidecarOf(c)] : []),
       ]);
       console.log(created.length > 0
-        ? `To undo the upgrade: git restore ., delete the files it created, then run bun install. It created:\n  ${created.join("\n  ")}`
-        : "To undo the upgrade: git restore ., then run bun install.");
+        ? `To undo the upgrade: ${UNDO_RESTORE}, delete the files it created, then run bun install. It created:\n  ${created.join("\n  ")}`
+        : `To undo the upgrade: ${UNDO_RESTORE}, then run bun install.`);
     }
     return attention || installFailed ? 1 : 0;
   } finally {
