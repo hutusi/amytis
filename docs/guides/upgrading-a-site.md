@@ -87,9 +87,14 @@ Some files have their own rules:
 6. Commit.
 
 The upgrade exits with status 1 when it leaves conflicts or kept files to look
-at, or when `bun install` fails, so a script can tell. To undo the upgrade
-before you commit, run `git restore .`, delete the new files `git status`
-lists, then run `bun install` to put back the dependencies you had.
+at, or when `bun install` fails, so a script can tell.
+
+To undo an upgrade before you commit it, run `git restore .`, delete the files
+it says it created (`git status` doesn't show one your `.gitignore` covers),
+then run `bun install` to put back the dependencies you had. That only works
+for an upgrade that ran without `--force`. After a `--force` run over
+uncommitted changes, `git restore .` would throw those changes away too, so
+undo it by hand, from the list of files the upgrade printed.
 
 ## When it can't tell which release you started from
 

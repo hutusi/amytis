@@ -592,10 +592,12 @@ other, and a step owners must take by hand belongs in the changelog's
 job makes a site from the last release tag (`git describe … HEAD^`) with the
 scaffolder that release shipped, upgrades it to the checkout, checks that it
 gained the `upgrade` script, then runs its `validate` and an error-mode link
-check. The upgrade only writes what git can undo: it stops on uncommitted
-changes (checked again just before writing) and on existing files git doesn't
-track, never writes through a symbolic link, and never overwrites a
-`*.amytis-new` copy.
+check. By default the upgrade only writes what git can undo: it stops outside
+git, on uncommitted changes (checked again just before writing) and on
+existing files git doesn't track. `--force` skips those git checks, but not the
+others: it still stops if the site gets a new commit or version while the
+upgrade downloads, never writes through a symbolic link, and never overwrites
+a `*.amytis-new` copy.
 
 ### Config validation
 
