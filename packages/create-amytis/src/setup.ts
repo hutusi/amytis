@@ -105,23 +105,34 @@ export function patchSiteConfigSource(src: string, title: string, description: s
   const quotedTitle = JSON.stringify(title);
   const quotedDescription = JSON.stringify(description);
   const safeTitle = escapeTemplateLiteral(title);
+  // A whole string or template literal, escaped quotes included: stopping at
+  // the first quote would leave the rest of the old value behind.
+  const str = String.raw`"(?:[^"\\]|\\.)*"`;
+  const tpl = "`(?:[^`\\\\]|\\\\.)*`";
+  const field = (name: string, literal: string) => [
+    new RegExp(String.raw`^ {2}${name}:\s*\{\s*en:\s*${literal},\s*zh:\s*${literal}\s*\}`, "m"),
+    new RegExp(String.raw`^ {2}${name}:\s*${literal}`, "m"),
+  ];
 
+  const [titleMap, titlePlain] = field("title", str);
   src = patchField(src, [
-    [/^ {2}title:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/m, `  title: { en: ${quotedTitle}, zh: ${quotedTitle} }`],
-    [/^ {2}title:\s*"[^"]*"/m, `  title: ${quotedTitle}`],
+    [titleMap, `  title: { en: ${quotedTitle}, zh: ${quotedTitle} }`],
+    [titlePlain, `  title: ${quotedTitle}`],
   ], "title");
 
+  const [descriptionMap, descriptionPlain] = field("description", str);
   src = patchField(src, [
-    [/^ {2}description:\s*\{\s*en:\s*"[^"]*",\s*zh:\s*"[^"]*"\s*\}/m, `  description: { en: ${quotedDescription}, zh: ${quotedDescription} }`],
-    [/^ {2}description:\s*"[^"]*"/m, `  description: ${quotedDescription}`],
+    [descriptionMap, `  description: { en: ${quotedDescription}, zh: ${quotedDescription} }`],
+    [descriptionPlain, `  description: ${quotedDescription}`],
   ], "description");
 
+  const [footerMap, footerPlain] = field("footerText", tpl);
   src = patchField(src, [
     [
-      /^ {2}footerText:\s*\{\s*en:\s*`[^`]*`,\s*zh:\s*`[^`]*`\s*\}/m,
+      footerMap,
       `  footerText: { en: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\`, zh: \`© \${new Date().getFullYear()} ${safeTitle}. 保留所有权利。\` }`,
     ],
-    [/^ {2}footerText:\s*`[^`]*`/m, `  footerText: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\``],
+    [footerPlain, `  footerText: \`© \${new Date().getFullYear()} ${safeTitle}. All rights reserved.\``],
   ], "footerText");
 
   return src;

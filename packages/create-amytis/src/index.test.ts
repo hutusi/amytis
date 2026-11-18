@@ -8,6 +8,7 @@ import {
   getArchiveMetadata,
   patchPackageJson,
   patchSiteConfig,
+  patchSiteConfigSource,
   removeEngineFiles,
   removeLocaleTrees,
   setUpNewSite,
@@ -159,6 +160,22 @@ describe("patchSiteConfig", () => {
     expect(result).toContain("  footerText: `© ${new Date().getFullYear()} Tom $& Jerry. All rights reserved.`,");
     expect(result).toContain(`    title: "A place for ideas to grow",`);
     expect(result).not.toContain("My Garden");
+  });
+
+  test("replaces a whole starter value, escaped quotes included", () => {
+    const starter = `export const siteConfig = {
+  title: "Ada's \\"Garden\\"",
+  description: { en: "Say \\"hi\\"", zh: "说 \\"你好\\"" },
+  footerText: \`© \\\`Ada\\\` \${new Date().getFullYear()}\`,
+};
+`;
+    const result = patchSiteConfigSource(starter, "New", "Fresh");
+    expect(result).toBe(`export const siteConfig = {
+  title: "New",
+  description: { en: "Fresh", zh: "Fresh" },
+  footerText: \`© \${new Date().getFullYear()} New. All rights reserved.\`,
+};
+`);
   });
 });
 
