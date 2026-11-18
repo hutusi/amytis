@@ -162,6 +162,14 @@ describe("patchSiteConfig", () => {
     expect(result).not.toContain("My Garden");
   });
 
+  test("replaces a starter value that continues on the next line", () => {
+    const starter = 'export const siteConfig = {\n  title: "My \\\nGarden",\n  description: "A garden.",\n  footerText: `Mine \\\r\n${new Date().getFullYear()}`,\n};\n';
+    const result = patchSiteConfigSource(starter, "New", "Fresh");
+    expect(result).toContain('  title: "New",\n  description: "Fresh",\n');
+    expect(result).not.toContain("Garden");
+    expect(result).not.toContain("Mine");
+  });
+
   test("replaces a whole starter value, escaped quotes included", () => {
     const starter = `export const siteConfig = {
   title: "Ada's \\"Garden\\"",

@@ -106,9 +106,10 @@ export function patchSiteConfigSource(src: string, title: string, description: s
   const quotedDescription = JSON.stringify(description);
   const safeTitle = escapeTemplateLiteral(title);
   // A whole string or template literal, escaped quotes included: stopping at
-  // the first quote would leave the rest of the old value behind.
-  const str = String.raw`"(?:[^"\\]|\\.)*"`;
-  const tpl = "`(?:[^`\\\\]|\\\\.)*`";
+  // the first quote would leave the rest of the old value behind. An escape
+  // can also be a backslash at the end of a line, which continues the string.
+  const str = String.raw`"(?:[^"\\]|\\[\s\S])*"`;
+  const tpl = "`(?:[^`\\\\]|\\\\[\\s\\S])*`";
   const field = (name: string, literal: string) => [
     new RegExp(String.raw`^ {2}${name}:\s*\{\s*en:\s*${literal},\s*zh:\s*${literal}\s*\}`, "m"),
     new RegExp(String.raw`^ {2}${name}:\s*${literal}`, "m"),

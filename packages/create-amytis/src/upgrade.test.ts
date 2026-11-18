@@ -259,6 +259,13 @@ describe("releaseNotes", () => {
     ]);
   });
 
+  test("reads a changelog with CRLF line endings", () => {
+    expect(releaseNotes(changelog.replace(/\n/g, "\r\n"), [2, 0, 0], [2, 1, 0])[0]).toEqual({
+      version: "2.1.0",
+      upgrading: "- Rename `foo` to `bar` in site.config.ts.",
+    });
+  });
+
   test("reads the last section to the end of the file", () => {
     expect(releaseNotes(changelog, [1, 17, 0], [2, 0, 0])).toEqual([{ version: "2.0.0", upgrading: "- Move translations." }]);
   });
@@ -269,6 +276,12 @@ describe("listFiles", () => {
     const dir = makeTmpDir();
     writeTree(dir, { ".git": "gitdir: /somewhere/.git/worktrees/x\n", "src/a.ts": "a\n", "sub/.git/config": "x\n", "node_modules/x/i.js": "x\n" });
     expect(listFiles(dir)).toEqual(["src/a.ts"]);
+  });
+
+  test("skips build folders, but not files with their names", () => {
+    const dir = makeTmpDir();
+    writeTree(dir, { "out/index.html": "x", ".next/cache": "x", "public/out": "a file\n", "docs/node_modules": "a file\n" });
+    expect(listFiles(dir)).toEqual(["docs/node_modules", "public/out"]);
   });
 });
 
@@ -728,6 +741,17 @@ describe("the release's copy of a kept file", () => {
     expect(read(site, "README.md.2.amytis-new")).toBe("# Amytis 2\n");
   });
 
+  test("doesn't take a name the release itself writes", () => {
+    const { base, target } = makeReleases();
+    writeTree(target, { "README.md.amytis-new": "shipped by the release\n" });
+    const site = makeSite(base);
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    expect(plan.changes.find((c) => c.path === "README.md")?.newCopyPath).toBe("README.md.2.amytis-new");
+    applyPlan(site, plan);
+    expect(read(site, "README.md.amytis-new")).toBe("shipped by the release\n");
+    expect(read(site, "README.md.2.amytis-new")).toBe("# Amytis 2\n");
+  });
+
   test("is never written over an existing file", () => {
     const site = makeTmpDir();
     writeTree(site, { "README.md.amytis-new": "mine\n" });
@@ -863,6 +887,8 @@ describe("create-amytis upgrade", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Upgrading from Amytis v2.0.0 to v2.0.1");
     expect(result.stdout).toContain("Upgrading to 2.0.1, from CHANGELOG.md:\n\n- Run bun install.");
+    // git status wouldn't show an added file the site ignores, so they're listed.
+    expect(result.stdout).toContain("delete the files it created, then run bun install. It created:\n  src/added.ts");
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
     expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");
   });

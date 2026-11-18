@@ -51,9 +51,9 @@ const LOCKFILE_KEPT = "bun install updates it";
 // A site usually rewrites its README as its own, so a line-by-line merge with
 // the Amytis README would only make noise.
 const KEEP_YOURS = new Set(["README.md", "README.zh.md"]);
-// Never part of a release. Skipped by name, whatever they are: in a linked
-// git worktree, .git is a file.
-const SKIP_NAMES = new Set([".git", "node_modules", ".next", "out"]);
+// Never part of a release: .git whatever it is (in a linked git worktree it is
+// a file), and these folders. A plain file with one of these names is kept.
+const SKIP_DIRS = new Set(["node_modules", ".next", "out"]);
 
 function isSiteOwned(rel: string): boolean {
   return SITE_OWNED_DIRS.some((dir) => rel.startsWith(dir)) || SITE_OWNED_FILES.has(rel);
@@ -65,9 +65,9 @@ export function listFiles(root: string): string[] {
   const walk = (dir: string, prefix: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const rel = prefix + entry.name;
-      if (SKIP_NAMES.has(entry.name)) continue;
+      if (entry.name === ".git") continue;
       if (entry.isDirectory()) {
-        walk(path.join(dir, entry.name), `${rel}/`);
+        if (!SKIP_DIRS.has(entry.name)) walk(path.join(dir, entry.name), `${rel}/`);
       } else if (entry.isFile()) {
         files.push(rel);
       }
@@ -501,10 +501,14 @@ export function planUpgrade(options: {
   const config = planSiteConfig(siteDir, baseDir, targetDir, labels, scratchDir);
   if (config.change) changes.push(config.change);
 
-  // The release's copy of a kept file goes beside it under a name the site
-  // doesn't have yet, so an earlier upgrade's copy isn't overwritten.
+  // The release's copy of a kept file goes beside it under a name that
+  // nothing has: not the site, so an earlier upgrade's copy isn't overwritten,
+  // and not a file this plan writes or another copy it places.
+  const taken = new Set(changes.filter((c) => c.write).map((c) => c.path));
   for (const change of changes) {
-    if (change.newCopy) change.newCopyPath = freeSidecar(siteDir, change.path);
+    if (!change.newCopy) continue;
+    change.newCopyPath = freeSidecar(siteDir, change.path, taken);
+    taken.add(change.newCopyPath);
   }
 
   // A change that would write or delete through a symbolic link is left to
@@ -613,10 +617,10 @@ function exists(file: string): boolean {
 
 // <rel>.amytis-new, or <rel>.2.amytis-new and so on if that is taken. Every
 // name ends in .amytis-new, so they are easy to find and delete.
-function freeSidecar(siteDir: string, rel: string): string {
+function freeSidecar(siteDir: string, rel: string, taken: Set<string>): string {
   for (let n = 1; ; n++) {
     const candidate = n === 1 ? `${rel}${NEW_COPY_SUFFIX}` : `${rel}.${n}${NEW_COPY_SUFFIX}`;
-    if (!exists(path.join(siteDir, ...candidate.split("/")))) return candidate;
+    if (!taken.has(candidate) && !exists(path.join(siteDir, ...candidate.split("/")))) return candidate;
   }
 }
 
@@ -703,7 +707,8 @@ export function needsAttention(plan: UpgradePlan): boolean {
 // with each one's "### Upgrading…" section, if it has one.
 export function releaseNotes(changelog: string, from: Version, to: Version): Array<{ version: string; upgrading?: string }> {
   const notes: Array<{ version: string; upgrading?: string }> = [];
-  const sections = changelog.split(/^(?=## \[)/m);
+  // A changelog from a Windows checkout (--target-dir) can have CRLF.
+  const sections = changelog.replace(/\r\n/g, "\n").split(/^(?=## \[)/m);
   for (const section of sections) {
     const heading = /^## \[([^\]]+)\]/.exec(section);
     const version = heading ? parseVersion(heading[1]) : null;
@@ -1033,7 +1038,15 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     if (problem) {
       console.log("Git can't undo this upgrade by itself (it ran with --force); the files it changed are listed above.");
     } else {
-      console.log("To undo the upgrade: git restore . and delete the new files git status lists, then run bun install.");
+      // Listed here rather than left to git status, which doesn't show an
+      // ignored file the upgrade added.
+      const created = plan.changes.flatMap((c) => [
+        ...(c.kind === "add" ? [c.path] : []),
+        ...(c.newCopy ? [sidecarOf(c)] : []),
+      ]);
+      console.log(created.length > 0
+        ? `To undo the upgrade: git restore ., delete the files it created, then run bun install. It created:\n  ${created.join("\n  ")}`
+        : "To undo the upgrade: git restore ., then run bun install.");
     }
     return attention || installFailed ? 1 : 0;
   } finally {
