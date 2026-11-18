@@ -413,13 +413,18 @@ function makeSite(base: string): string {
 }
 
 describe("planUpgrade and applyPlan", () => {
+  // Planned and applied once, here, so each test below can run on its own or
+  // in any order.
   const { base, target } = makeReleases();
   const site = makeSite(base);
-  const before = Object.fromEntries(listFiles(site).map((rel) => [rel, read(site, rel)]));
+  const snapshot = () => Object.fromEntries(listFiles(site).map((rel) => [rel, read(site, rel)]));
+  const before = snapshot();
   const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+  const afterPlanning = snapshot();
+  applyPlan(site, plan);
 
   test("planning changes nothing", () => {
-    expect(Object.fromEntries(listFiles(site).map((rel) => [rel, read(site, rel)]))).toEqual(before);
+    expect(afterPlanning).toEqual(before);
   });
 
   test("decides each file by comparing the two releases and the site", () => {
@@ -446,8 +451,6 @@ describe("planUpgrade and applyPlan", () => {
   });
 
   test("applying it upgrades the site and keeps what is the site's own", () => {
-    applyPlan(site, plan);
-
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
     expect(read(site, "src/added.ts")).toBe("new\n");
     expect(read(site, "src/yours.ts")).toBe("y mine\n");
@@ -510,19 +513,25 @@ function toCrlf(root: string): void {
 }
 
 describe("a site with CRLF line endings", () => {
-  const { base, target } = makeReleases();
-  const site = makeTmpDir();
-  fs.cpSync(base, site, { recursive: true });
-  setUpNewSite(site, { projectName: "windows", title: "Windows Site", description: "CRLF." });
-  writeTree(site, { "src/both.ts": NINE_LINES("one", "9") });
-  toCrlf(site);
+  // Each test gets its own site, as one of them upgrades it.
+  function crlfSite(): { site: string; base: string; target: string } {
+    const { base, target } = makeReleases();
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "windows", title: "Windows Site", description: "CRLF." });
+    writeTree(site, { "src/both.ts": NINE_LINES("one", "9") });
+    toCrlf(site);
+    return { site, base, target };
+  }
 
   test("counts files that differ only in line endings as unchanged", () => {
+    const { site, base } = crlfSite();
     // Every file in src/ but the one the site edited.
     expect(shareUnchanged(site, base)).toBe(6 / 7);
   });
 
   test("is compared and merged with LF, and keeps its line endings", () => {
+    const { site, base, target } = crlfSite();
     const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
     const kinds = Object.fromEntries(plan.changes.map((c) => [c.path, c.kind]));
     expect(kinds["src/yours.ts"]).toBeUndefined();
