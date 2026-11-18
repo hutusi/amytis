@@ -73,7 +73,7 @@ Some files have their own rules:
 5. Commit.
 
 The upgrade exits with status 1 when it leaves conflicts or kept files to look
-at, so a script can tell. To undo the upgrade before you commit, run
+at, or when `bun install` fails, so a script can tell. To undo the upgrade before you commit, run
 `git restore .`, then delete the new files `git status` lists.
 
 ## When it can't tell which release you started from

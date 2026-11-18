@@ -507,6 +507,24 @@ describe("create-amytis upgrade", () => {
     expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");
   });
 
+  test.skipIf(process.platform === "win32")("fails when bun install does, after upgrading the files", () => {
+    const { site, base, target } = cleanSite();
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    const fakeBin = makeTmpDir();
+    fs.writeFileSync(path.join(fakeBin, "bun"), "#!/bin/sh\nexit 42\n", { mode: 0o755 });
+    const result = spawnSync(process.execPath, [cli, "upgrade", "--base-dir", base, "--target-dir", target], {
+      cwd: site,
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${fakeBin}${path.delimiter}${process.env.PATH}` },
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("bun install failed (exit status 42)");
+    expect(result.stdout).toContain("1. Install the new dependencies: bun install");
+    expect(read(site, "src/untouched.ts")).toBe("a2\n");
+  });
+
   test("says so when the release changed nothing the site has", () => {
     const { site, base } = cleanSite();
     const result = run(site, "--base-dir", base, "--target-dir", base, "--dry-run");

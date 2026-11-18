@@ -605,7 +605,7 @@ Options:
 `;
 
 // Returns the exit code: 0 when the upgrade went through cleanly, 1 when it
-// left conflicts or kept files to look at.
+// left conflicts or kept files to look at, or bun install failed.
 export async function upgrade(siteDir: string, options: UpgradeOptions): Promise<number> {
   if (options.help) {
     console.log(UPGRADE_USAGE);
@@ -708,19 +708,25 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
       console.log(`\nWhat's new in ${notes.map((n) => n.version).reverse().join(", ")}: see CHANGELOG.md.`);
     }
 
+    let installFailed = false;
     if (options.install && plan.changes.length > 0) {
       console.log("\nInstalling dependencies (bun install)...");
       const install = spawnSync("bun", ["install"], { cwd: siteDir, stdio: "inherit" });
-      if (install.status !== 0) console.warn("bun install failed; run it again once you've looked at package.json.");
+      if (install.error || install.status !== 0) {
+        installFailed = true;
+        const why = install.error ? install.error.message : `exit status ${install.status}`;
+        console.error(`\nbun install failed (${why}). The files are upgraded, but the dependencies aren't.`);
+      }
     }
 
     const attention = needsAttention(plan);
     const steps = ["Review the changes: git diff"];
+    if (installFailed) steps.unshift("Install the new dependencies: bun install");
     if (attention) steps.push(`Resolve what's listed above, and delete the *${NEW_COPY_SUFFIX} files when done.`);
     steps.push("Check that the site still builds: bun run validate");
     console.log(`\nNext:\n${steps.map((step, i) => `  ${i + 1}. ${step}`).join("\n")}`);
     console.log("To undo the upgrade: git restore . and delete the new files git status lists.");
-    return attention ? 1 : 0;
+    return attention || installFailed ? 1 : 0;
   } finally {
     fs.rmSync(scratchDir, { recursive: true, force: true });
   }
