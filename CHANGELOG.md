@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.2] - 2026-11-18
 
 ### Fixed
 - **No Links to Disabled Features**: with books, series or flows (and so notes) turned off, as in the starter config, the author page, "linked from" backlinks, wikilinks (to notes, flows and series), the knowledge graph and `search.json` no longer list content whose pages aren't built. A new site's build now reports no broken links.
