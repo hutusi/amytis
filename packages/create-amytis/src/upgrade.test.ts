@@ -17,6 +17,7 @@ import {
   readConfigString,
   releaseNotes,
   shareUnchanged,
+  siteState,
   undoProblem,
   type FileVersions,
   type UpgradePlan,
@@ -771,6 +772,23 @@ describe("undoProblem", () => {
     // Ignored, so git status shows nothing, and git restore can't bring it back.
     const { site, plan } = committedSite("src/untouched.ts\n");
     expect(undoProblem(site, plan)).toEqual({ kind: "untracked", paths: ["src/untouched.ts"] });
+  });
+
+  test("siteState changes with a new commit, which leaves the tree clean", () => {
+    const { site } = committedSite();
+    const before = siteState(site);
+    fs.writeFileSync(path.join(site, "src", "yours.ts"), "committed while downloading\n");
+    git(site, "commit", "-qam", "meanwhile");
+    expect(siteState(site)).not.toBe(before);
+  });
+
+  test("siteState changes with package.json's version, in or out of git", () => {
+    const site = makeTmpDir();
+    writeTree(site, { "package.json": JSON.stringify({ version: "2.0.0" }) });
+    const before = siteState(site);
+    expect(siteState(site)).toBe(before);
+    writeTree(site, { "package.json": JSON.stringify({ version: "2.0.2" }) });
+    expect(siteState(site)).not.toBe(before);
   });
 
   test("is no-repo outside git", () => {

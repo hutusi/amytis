@@ -765,6 +765,22 @@ function readVersion(dir: string): Version {
   return requireVersion(String(pkg["version"]), `The version in ${path.join(dir, PACKAGE_JSON)}`);
 }
 
+// What the plan is built on: the site's commit and the release its
+// package.json names. If either changes while the upgrade downloads (a commit,
+// say, or another upgrade finishing), the plan's base no longer matches the
+// site, even when the work tree is clean again.
+export function siteState(siteDir: string): string {
+  const head = spawnSync("git", ["rev-parse", "--verify", "-q", "HEAD"], { cwd: siteDir, encoding: "utf8" });
+  const commit = head.status === 0 ? head.stdout.trim() : null;
+  let version: unknown = null;
+  try {
+    version = (JSON.parse(fs.readFileSync(path.join(siteDir, PACKAGE_JSON), "utf8")) as JsonObject)["version"];
+  } catch {
+    // Unreadable now; that counts as a change, as it differs from before.
+  }
+  return JSON.stringify({ commit, version });
+}
+
 type GitState = "clean" | "dirty" | "no-repo";
 
 function gitState(dir: string): GitState {
@@ -893,6 +909,7 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     }
   }
 
+  const startState = siteState(siteDir);
   const sitePkg = JSON.parse(fs.readFileSync(path.join(siteDir, PACKAGE_JSON), "utf8")) as JsonObject;
   const baseVersion = options.from
     ? requireVersion(options.from, "--from")
@@ -968,7 +985,14 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
       return 0;
     }
     // Checked again now, not only at the start: the downloads take a while,
-    // and the site may have changed meanwhile.
+    // and the site may have changed meanwhile. A new commit or version makes
+    // the plan's base wrong, so that stops the upgrade even with --force.
+    if (!options.dryRun && siteState(siteDir) !== startState) {
+      throw new Error(
+        "The site got a new commit, or its package.json version changed, while the upgrade was getting ready, " +
+        "so nothing was changed. Run the upgrade again.",
+      );
+    }
     const problem = options.dryRun ? null : undoProblem(siteDir, plan);
     if (problem && !options.force) throw undoProblemError(problem);
     // When git can't undo it, list every file the upgrade touches.
