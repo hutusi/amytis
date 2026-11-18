@@ -596,8 +596,8 @@ check. By default the upgrade only writes what git can undo: it stops outside
 git, on uncommitted changes (checked again just before writing) and on
 existing files git doesn't track. `--force` skips those git checks, but not the
 others: it still stops if the site gets a new commit or version while the
-upgrade downloads, never writes through a symbolic link, and never overwrites
-a `*.amytis-new` copy.
+upgrade downloads, never writes through a symbolic link, and never writes a
+new `*.amytis-new` copy over an existing file.
 
 ### Config validation
 
