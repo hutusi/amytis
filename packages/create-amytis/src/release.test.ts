@@ -9,11 +9,13 @@ import { downloadFile, fetchJson } from "./release";
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-amytis-release-"));
 afterAll(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
-// A server that promises 1000 bytes, sends a few, then drops the connection.
+// A server that promises 1000 bytes, sends fewer, then drops the connection.
+// What it sends is complete JSON, so a client that took the drop for a normal
+// end would succeed, and the tests would catch it, rather than fail to parse.
 function brokenServer(): Promise<{ url: string; close: () => void }> {
   const server = http.createServer((_req, res) => {
     res.writeHead(200, { "Content-Length": "1000", "Content-Type": "application/json" });
-    res.write('{"tag_name": "v2');
+    res.write('{"tag_name": "v2.0.2"}');
     setTimeout(() => res.socket?.destroy(), 20);
   });
   return new Promise((resolve) => {

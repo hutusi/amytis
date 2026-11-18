@@ -69,8 +69,13 @@ export function downloadFile(url: string, dest: string): Promise<void> {
           return;
         }
         pipeline(res, fs.createWriteStream(dest)).then(resolve, (err: Error) => {
-          fs.rmSync(dest, { force: true });
-          reject(err);
+          // The download's error is the one to report, even if cleanup fails.
+          try {
+            fs.rmSync(dest, { force: true });
+            reject(err);
+          } catch (cleanup) {
+            reject(new Error(`${err.message} (the partial file ${dest} couldn't be removed: ${(cleanup as Error).message})`));
+          }
         });
       }).on("error", reject);
     };
