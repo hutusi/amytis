@@ -508,12 +508,19 @@ describe("buildExtractCommand", () => {
       "-ExecutionPolicy",
       "Bypass",
       "-Command",
-      "Expand-Archive",
-      "-LiteralPath",
-      "C:\\tmp\\amytis-v1.13.0.zip",
-      "-DestinationPath",
-      "C:\\tmp\\my-garden.__tmp__",
-      "-Force",
+      "Expand-Archive -LiteralPath 'C:\\tmp\\amytis-v1.13.0.zip' -DestinationPath 'C:\\tmp\\my-garden.__tmp__' -Force",
+    ]);
+  });
+
+  test("keeps Windows paths with spaces and quotes as one PowerShell literal each", () => {
+    // PowerShell joins the arguments after -Command once Windows has removed
+    // their quotes, so the whole command must be one argument.
+    const archive = "C:\\Users\\Jane Doe\\AppData\\Local\\Temp\\amytis-v2.0.2.zip";
+    const out = "C:\\Users\\Jane Doe\\O'Brien’s sites\\my-garden.__tmp__";
+    const command = buildExtractCommand(archive, out, "zip", "win32");
+    expect(command.args.slice(5)).toEqual([
+      "Expand-Archive -LiteralPath 'C:\\Users\\Jane Doe\\AppData\\Local\\Temp\\amytis-v2.0.2.zip' " +
+        "-DestinationPath 'C:\\Users\\Jane Doe\\O''Brien’’s sites\\my-garden.__tmp__' -Force",
     ]);
   });
 

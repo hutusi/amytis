@@ -138,6 +138,13 @@ export function getArchiveMetadata(tag: string, platform: NodeJS.Platform = proc
   };
 }
 
+// A single-quoted PowerShell string, in which nothing is expanded. PowerShell
+// also reads the typographic quotes ‘ ’ ‚ ‛ as single quotes, so each of
+// those is doubled too.
+export function powerShellLiteral(text: string): string {
+  return `'${text.replace(/['‘’‚‛]/g, "$&$&")}'`;
+}
+
 export function buildExtractCommand(
   archivePath: string,
   tmpDir: string,
@@ -149,6 +156,10 @@ export function buildExtractCommand(
       throw new Error("ZIP extraction is only supported on Windows in create-amytis");
     }
 
+    // PowerShell joins everything after -Command into one command, after
+    // Windows has stripped the quotes Node puts around an argument with a
+    // space. A path like C:\Users\Jane Doe\... would split in two, so the
+    // whole command is one argument, with each path a single-quoted literal.
     return {
       command: "powershell.exe",
       args: [
@@ -157,12 +168,7 @@ export function buildExtractCommand(
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        "Expand-Archive",
-        "-LiteralPath",
-        archivePath,
-        "-DestinationPath",
-        tmpDir,
-        "-Force",
+        `Expand-Archive -LiteralPath ${powerShellLiteral(archivePath)} -DestinationPath ${powerShellLiteral(tmpDir)} -Force`,
       ],
     };
   }
