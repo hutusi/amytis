@@ -343,7 +343,8 @@ export interface Change {
   path: string;
   kind: "add" | "update" | "delete" | "merged" | "conflict" | "kept";
   write?: Buffer;     // the file's new content
-  newCopy?: Buffer;   // the release's version, written beside it as <path>.amytis-new
+  newCopy?: Buffer;   // the release's version, written beside it (see newCopyPath)
+  newCopyPath?: string; // where: <path>.amytis-new, or <path>.2.amytis-new if that is taken
   conflicts?: number; // kind "conflict": how many
   reason?: string;    // kind "kept": why
 }
@@ -496,6 +497,12 @@ export function planUpgrade(options: {
   const config = planSiteConfig(siteDir, baseDir, targetDir, labels, scratchDir);
   if (config.change) changes.push(config.change);
 
+  // The release's copy of a kept file goes beside it under a name the site
+  // doesn't have yet, so an earlier upgrade's copy isn't overwritten.
+  for (const change of changes) {
+    if (change.newCopy) change.newCopyPath = freeSidecar(siteDir, change.path);
+  }
+
   // A change that would write or delete through a symbolic link is left to
   // the site's owner instead.
   const seen = new Map<string, boolean>();
@@ -509,11 +516,33 @@ export function planUpgrade(options: {
   return { changes: guarded, packageConflicts: pkg.conflicts, configNote: config.note };
 }
 
+function exists(file: string): boolean {
+  try {
+    fs.lstatSync(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// <rel>.amytis-new, or <rel>.2.amytis-new and so on if that is taken. Every
+// name ends in .amytis-new, so they are easy to find and delete.
+function freeSidecar(siteDir: string, rel: string): string {
+  for (let n = 1; ; n++) {
+    const candidate = n === 1 ? `${rel}${NEW_COPY_SUFFIX}` : `${rel}.${n}${NEW_COPY_SUFFIX}`;
+    if (!exists(path.join(siteDir, ...candidate.split("/")))) return candidate;
+  }
+}
+
+function sidecarOf(change: Change): string {
+  return change.newCopyPath ?? `${change.path}${NEW_COPY_SUFFIX}`;
+}
+
 // The paths in the site a change writes or deletes.
 function writtenPaths(change: Change): string[] {
   const paths: string[] = [];
   if (change.kind === "delete" || change.write) paths.push(change.path);
-  if (change.newCopy) paths.push(change.path + NEW_COPY_SUFFIX);
+  if (change.newCopy) paths.push(sidecarOf(change));
   return paths;
 }
 
@@ -534,6 +563,12 @@ export function applyPlan(siteDir: string, plan: UpgradePlan): void {
     const link = linkOnPath(root, rel, seen);
     if (link) throw new Error(`${link} in the site is a symbolic link; the upgrade won't write through it. Nothing was changed.`);
   }
+  // A copy of the release's version never replaces a file.
+  for (const change of plan.changes) {
+    if (change.newCopy && exists(path.join(root, ...sidecarOf(change).split("/")))) {
+      throw new Error(`${sidecarOf(change)} exists already, and the upgrade won't overwrite it. Nothing was changed.`);
+    }
+  }
   for (const change of plan.changes) {
     const file = path.join(root, ...change.path.split("/"));
     if (change.kind === "delete") {
@@ -546,8 +581,9 @@ export function applyPlan(siteDir: string, plan: UpgradePlan): void {
       fs.writeFileSync(file, change.write);
     }
     if (change.newCopy) {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file + NEW_COPY_SUFFIX, change.newCopy);
+      const sidecar = path.join(root, ...sidecarOf(change).split("/"));
+      fs.mkdirSync(path.dirname(sidecar), { recursive: true });
+      fs.writeFileSync(sidecar, change.newCopy, { flag: "wx" });
     }
   }
 }
@@ -636,6 +672,42 @@ function gitState(dir: string): GitState {
   return result.stdout.trim() ? "dirty" : "clean";
 }
 
+// Why git couldn't undo the plan by itself: the site isn't in git, has
+// uncommitted changes, or the plan changes files that exist but that git
+// doesn't track, such as ignored ones, which `git status` doesn't show.
+// Files that don't exist yet are fine: undoing deletes them.
+export type UndoProblem =
+  | { kind: "no-repo" }
+  | { kind: "dirty" }
+  | { kind: "untracked"; paths: string[] };
+
+export function undoProblem(siteDir: string, plan: UpgradePlan): UndoProblem | null {
+  const state = gitState(siteDir);
+  if (state !== "clean") return { kind: state };
+  const listed = spawnSync("git", ["ls-files", "-z", "--", "."], { cwd: siteDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  if (listed.error || listed.status !== 0) return { kind: "no-repo" };
+  const tracked = new Set(listed.stdout.split("\0").filter(Boolean));
+  const paths = plan.changes
+    .flatMap(writtenPaths)
+    .filter((rel) => !tracked.has(rel) && exists(path.join(siteDir, ...rel.split("/"))));
+  return paths.length > 0 ? { kind: "untracked", paths } : null;
+}
+
+function undoProblemError(problem: UndoProblem): Error {
+  switch (problem.kind) {
+    case "no-repo":
+      return new Error("This site isn't in a git repository, so the upgrade couldn't be undone. Commit it to git first (recommended), or pass --force.");
+    case "dirty":
+      return new Error("The site changed while the upgrade was getting ready, so nothing was changed. Commit, then run the upgrade again.");
+    case "untracked":
+      return new Error(
+        "These files are in the site, but git doesn't track them (they may be ignored), so git couldn't undo " +
+        `the upgrade's changes to them:\n  ${problem.paths.join("\n  ")}\n` +
+        "Nothing was changed. Commit them or move them away, then run the upgrade again. Or pass --force.",
+      );
+  }
+}
+
 // How much of the base release's src/ the site has unchanged. A site made
 // from that release keeps most of it even when customized; a low share means
 // package.json's version isn't the release the site was made from.
@@ -670,7 +742,7 @@ function printPlan(plan: UpgradePlan, verbose: boolean): void {
   if (kept.length > 0) {
     console.log("\n  Kept as you have them:");
     for (const change of kept) {
-      const copy = change.newCopy ? `; the release's version is in ${change.path}${NEW_COPY_SUFFIX}` : "";
+      const copy = change.newCopy ? `; the release's version is in ${sidecarOf(change)}` : "";
       console.log(`    ${change.path}: ${change.reason}${copy}`);
     }
   }
@@ -786,7 +858,12 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
       console.log("  Nothing to change: the site has everything the release changed.");
       return 0;
     }
-    printPlan(plan, options.dryRun);
+    // Checked again now, not only at the start: the downloads take a while,
+    // and the site may have changed meanwhile.
+    const problem = options.dryRun ? null : undoProblem(siteDir, plan);
+    if (problem && !options.force) throw undoProblemError(problem);
+    // When git can't undo it, list every file the upgrade touches.
+    printPlan(plan, options.dryRun || problem !== null);
 
     if (options.dryRun) {
       console.log("\nDry run: nothing was changed.");
@@ -820,7 +897,11 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     if (attention) steps.push(`Resolve what's listed above, and delete the *${NEW_COPY_SUFFIX} files when done.`);
     steps.push("Check that the site still builds: bun run validate");
     console.log(`\nNext:\n${steps.map((step, i) => `  ${i + 1}. ${step}`).join("\n")}`);
-    console.log("To undo the upgrade: git restore . and delete the new files git status lists.");
+    if (problem) {
+      console.log("Git can't undo this upgrade by itself (it ran with --force); the files it changed are listed above.");
+    } else {
+      console.log("To undo the upgrade: git restore . and delete the new files git status lists, then run bun install.");
+    }
     return attention || installFailed ? 1 : 0;
   } finally {
     fs.rmSync(scratchDir, { recursive: true, force: true });

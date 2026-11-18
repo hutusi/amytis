@@ -17,6 +17,7 @@ import {
   readConfigString,
   releaseNotes,
   shareUnchanged,
+  undoProblem,
   type FileVersions,
   type UpgradePlan,
 } from "./upgrade";
@@ -560,6 +561,71 @@ describe.skipIf(process.platform === "win32")("symbolic links in the site", () =
   });
 });
 
+describe("the release's copy of a kept file", () => {
+  test("goes under a free name, so an earlier copy isn't overwritten", () => {
+    const { base, target } = makeReleases();
+    const site = makeSite(base);
+    writeTree(site, { "README.md.amytis-new": "an earlier upgrade's copy\n" });
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    expect(plan.changes.find((c) => c.path === "README.md")?.newCopyPath).toBe("README.md.2.amytis-new");
+    expect(plan.changes.find((c) => c.path === "src/dropped.ts")?.newCopyPath).toBe("src/dropped.ts.amytis-new");
+    applyPlan(site, plan);
+    expect(read(site, "README.md.amytis-new")).toBe("an earlier upgrade's copy\n");
+    expect(read(site, "README.md.2.amytis-new")).toBe("# Amytis 2\n");
+  });
+
+  test("is never written over an existing file", () => {
+    const site = makeTmpDir();
+    writeTree(site, { "README.md.amytis-new": "mine\n" });
+    const plan: UpgradePlan = {
+      changes: [
+        { path: "src/first.ts", kind: "add", write: Buffer.from("1\n") },
+        { path: "README.md", kind: "kept", newCopy: Buffer.from("theirs\n"), newCopyPath: "README.md.amytis-new" },
+      ],
+      packageConflicts: [],
+    };
+    expect(() => applyPlan(site, plan)).toThrow("README.md.amytis-new exists already");
+    expect(read(site, "README.md.amytis-new")).toBe("mine\n");
+    expect(read(site, "src/first.ts")).toBeUndefined();
+  });
+});
+
+describe("undoProblem", () => {
+  function committedSite(gitignore = ""): { site: string; plan: UpgradePlan } {
+    const { base, target } = makeReleases();
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "undo", title: "Undo", description: "Undo." });
+    if (gitignore) fs.appendFileSync(path.join(site, ".gitignore"), gitignore);
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    return { site, plan: planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() }) };
+  }
+
+  test("is null for a committed site", () => {
+    const { site, plan } = committedSite();
+    expect(undoProblem(site, plan)).toBeNull();
+  });
+
+  test("finds changes made after the upgrade started", () => {
+    const { site, plan } = committedSite();
+    fs.writeFileSync(path.join(site, "src", "yours.ts"), "edited while downloading\n");
+    expect(undoProblem(site, plan)).toEqual({ kind: "dirty" });
+  });
+
+  test("finds files the plan changes that git doesn't track", () => {
+    // Ignored, so git status shows nothing, and git restore can't bring it back.
+    const { site, plan } = committedSite("src/untouched.ts\n");
+    expect(undoProblem(site, plan)).toEqual({ kind: "untracked", paths: ["src/untouched.ts"] });
+  });
+
+  test("is no-repo outside git", () => {
+    const site = makeTmpDir();
+    expect(undoProblem(site, { changes: [], packageConflicts: [] })).toEqual({ kind: "no-repo" });
+  });
+});
+
 describe("site.config.ts made from the demo site's own config", () => {
   test("is left alone, with a note", () => {
     const { base, target } = makeReleases();
@@ -646,6 +712,34 @@ describe("create-amytis upgrade", () => {
     expect(result.stderr).toContain("bun install failed (exit status 42)");
     expect(result.stdout).toContain("1. Install the new dependencies: bun install");
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
+  });
+
+  test("won't change a file git doesn't track", () => {
+    const { site, base, target } = cleanSite();
+    fs.appendFileSync(path.join(site, ".gitignore"), "src/untouched.ts\n");
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--no-install");
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("git doesn't track them");
+    expect(result.stderr).toContain("src/untouched.ts");
+    expect(read(site, "src/untouched.ts")).toBe("a\n");
+    expect(read(site, "src/added.ts")).toBeUndefined();
+  });
+
+  test("with --force over uncommitted changes, lists every file instead of git's undo", () => {
+    const { site, base, target } = cleanSite();
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    fs.writeFileSync(path.join(site, "src", "yours.ts"), "unsaved\n");
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--no-install", "--force");
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("update   src/untouched.ts");
+    expect(result.stdout).toContain("Git can't undo this upgrade by itself");
+    expect(result.stdout).not.toContain("git restore");
+    expect(read(site, "src/yours.ts")).toBe("unsaved\n");
   });
 
   test("says so when the release changed nothing the site has", () => {
