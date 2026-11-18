@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Upgrading a Site**: `bun run upgrade` brings a newer release into a site made with `bun create amytis` (sites made before it run `bunx create-amytis@latest upgrade`). It merges file by file, the way git would. Files you never changed take the new release's version, and your changes stay. Only files both of you changed are merged, with conflict markers where the edits overlap. Your content is never touched, `package.json` keeps the dependencies you added, and `site.config.ts` gains new config fields. It prints the upgrade notes of every release in between. Guide: `docs/guides/upgrading-a-site.md`. Needs `create-amytis` 0.2.0.
+- **CI**: an Upgrade check job makes a site from the last release, upgrades it to each change and builds it, so a change existing sites can't take fails before it is released.
+
 ## [2.0.2] - 2026-11-18
 
 ### Fixed
