@@ -241,8 +241,45 @@ describe("releaseNotes", () => {
     ]);
   });
 
+  test("keeps deeper headings inside the upgrade notes", () => {
+    const nested = `## [2.1.0] - 2026-12-01
+
+### Upgrading from 2.0
+- Rename \`foo\`.
+
+#### If you use books
+- Move \`books/\`.
+
+### Added
+- Something.
+`;
+    expect(releaseNotes(nested, [2, 0, 0], [2, 1, 0])).toEqual([
+      { version: "2.1.0", upgrading: "- Rename `foo`.\n\n#### If you use books\n- Move `books/`." },
+    ]);
+  });
+
   test("reads the last section to the end of the file", () => {
     expect(releaseNotes(changelog, [1, 17, 0], [2, 0, 0])).toEqual([{ version: "2.0.0", upgrading: "- Move translations." }]);
+  });
+});
+
+describe("listFiles", () => {
+  test("skips .git whether it is a folder or, in a linked worktree, a file", () => {
+    const dir = makeTmpDir();
+    writeTree(dir, { ".git": "gitdir: /somewhere/.git/worktrees/x\n", "src/a.ts": "a\n", "sub/.git/config": "x\n", "node_modules/x/i.js": "x\n" });
+    expect(listFiles(dir)).toEqual(["src/a.ts"]);
+  });
+});
+
+describe("needsAttention", () => {
+  const plan = (reason: string): UpgradePlan => ({ changes: [{ path: "bun.lock", kind: "kept", reason }], packageConflicts: [] });
+
+  test("leaves out a lockfile kept for bun install to update", () => {
+    expect(needsAttention(plan("bun install updates it"))).toBe(false);
+  });
+
+  test("counts a lockfile kept for any other reason", () => {
+    expect(needsAttention(plan("it is a symbolic link, and the upgrade doesn't write through links"))).toBe(true);
   });
 });
 
@@ -835,5 +872,7 @@ describe("create-amytis upgrade", () => {
     const result = run(makeTmpDir(), "--dry-run");
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("There's no package.json here");
+    // `bun create amytis upgrade` runs the upgrade now, so say how to get that name.
+    expect(result.stderr).toContain(`To create a site named "upgrade"`);
   });
 });
