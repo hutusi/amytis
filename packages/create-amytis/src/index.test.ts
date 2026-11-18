@@ -374,6 +374,8 @@ describe("sync with the real repo files", () => {
       expect({ name, command }).toEqual({ name, command: expect.not.stringMatching(/\btests\/|packages\/|playwright|bun run test/) });
     }
     expect(scripts.validate).toBe("bun run lint && bun run typecheck && bun run build:dev");
+    // ...and gain the one that brings in a newer release.
+    expect(scripts.upgrade).toBe("bunx create-amytis@latest upgrade");
   });
 });
 
@@ -457,7 +459,7 @@ describe("patchPackageJson", () => {
     expect(() => patchPackageJson(dir, "my-garden")).not.toThrow();
   });
 
-  test("drops the test scripts and the test step of validate", () => {
+  test("drops the test scripts and the test step of validate, and adds upgrade", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
     fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
@@ -475,6 +477,7 @@ describe("patchPackageJson", () => {
       build: "next build",
       testing: "kept: only test and test:* are the engine's",
       validate: "bun run lint && bun run build:dev",
+      upgrade: "bunx create-amytis@latest upgrade",
     });
   });
 });

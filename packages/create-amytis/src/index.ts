@@ -6,11 +6,13 @@ import * as readline from "readline";
 import { execSync } from "child_process";
 import { downloadFile, extractArchive, getArchiveMetadata, getLatestReleaseTag } from "./release.js";
 import { setUpNewSite } from "./setup.js";
+import { UPGRADE_USAGE, parseUpgradeArgs, upgrade } from "./upgrade.js";
 
 // The tests, and CI's Starter site job, import these from here.
 export { buildExtractCommand, getArchiveMetadata, tagFromReleaseUrl } from "./release.js";
 export {
   applyStarterConfig,
+  isEngineOnlyPath,
   patchPackageJson,
   patchSiteConfig,
   patchSiteConfigSource,
@@ -42,11 +44,33 @@ function prompt(question: string, defaultVal: string = ""): Promise<string> {
 // Main
 // ---------------------------------------------------------------------------
 
+const USAGE = `Create a new Amytis site:
+
+  bun create amytis [project-name]
+
+${UPGRADE_USAGE}`;
+
 async function main(): Promise<void> {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command === "--help" || command === "-h") {
+    console.log(USAGE);
+    return;
+  }
+  if (command === "upgrade") {
+    process.exitCode = await upgrade(process.cwd(), parseUpgradeArgs(rest));
+    return;
+  }
+  if (command?.startsWith("-")) {
+    throw new Error(`Unknown option: ${command}\n\n${USAGE}`);
+  }
+  await createSite(command ?? "");
+}
+
+async function createSite(nameArg: string): Promise<void> {
   console.log("\nCreate Amytis — scaffold a new digital garden\n");
 
   // 1. Project name
-  let projectName = process.argv[2] ?? "";
+  let projectName = nameArg;
   if (!projectName) {
     projectName = await prompt("Project name", "my-blog");
   }
@@ -105,6 +129,7 @@ Done! Your new Amytis site is ready.
   cd ${projectName}
   bun dev          # start the dev server at http://localhost:3000
   bun run build    # production build
+  bun run upgrade  # later: bring in a newer Amytis release
 
 Edit site.config.ts to customise navigation, themes, and more.
 Happy gardening!

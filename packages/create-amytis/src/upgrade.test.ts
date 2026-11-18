@@ -1,0 +1,531 @@
+import { describe, test, expect, afterAll } from "bun:test";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { spawnSync } from "child_process";
+import { isEngineOnlyPath, removeEngineFiles, setUpNewSite } from "./setup";
+import {
+  applyPlan,
+  compareVersions,
+  decideFile,
+  listFiles,
+  mergePackageJson,
+  needsAttention,
+  parseUpgradeArgs,
+  parseVersion,
+  planUpgrade,
+  readConfigString,
+  releaseNotes,
+  type FileVersions,
+} from "./upgrade";
+
+const tmpDirs: string[] = [];
+afterAll(() => {
+  for (const dir of tmpDirs) fs.rmSync(dir, { recursive: true, force: true });
+});
+
+function makeTmpDir(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "create-amytis-upgrade-"));
+  tmpDirs.push(dir);
+  return dir;
+}
+
+function writeTree(root: string, files: Record<string, string | Buffer>): void {
+  for (const [rel, content] of Object.entries(files)) {
+    const file = path.join(root, ...rel.split("/"));
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, content);
+  }
+}
+
+function read(root: string, rel: string): string | undefined {
+  const file = path.join(root, ...rel.split("/"));
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined;
+}
+
+function git(dir: string, ...args: string[]): string {
+  const result = spawnSync("git", ["-c", "user.name=test", "-c", "user.email=test@localhost", ...args], { cwd: dir, encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+  return result.stdout;
+}
+
+const labels = { site: "your site", base: "Amytis v2.0.0", target: "Amytis v2.0.1" };
+
+// ---------------------------------------------------------------------------
+
+describe("versions", () => {
+  test("parses release tags and versions", () => {
+    expect(parseVersion("v2.0.2")).toEqual([2, 0, 2]);
+    expect(parseVersion("2.10.0")).toEqual([2, 10, 0]);
+    expect(parseVersion("2.0")).toBeNull();
+    expect(parseVersion("create-amytis-v0.1.4")).toBeNull();
+    expect(parseVersion("1.0.0-beta")).toBeNull();
+  });
+
+  test("compares numerically, not as text", () => {
+    expect(compareVersions([2, 10, 0], [2, 9, 9])).toBeGreaterThan(0);
+    expect(compareVersions([2, 0, 2], [2, 0, 2])).toBe(0);
+    expect(compareVersions([1, 17, 0], [2, 0, 0])).toBeLessThan(0);
+  });
+});
+
+describe("decideFile", () => {
+  const b = (s: string) => Buffer.from(s);
+  const decide = (v: FileVersions, mergeable = true) => decideFile(v, mergeable);
+
+  test("takes the release's version of a file the site never changed", () => {
+    expect(decide({ base: b("1"), cleanBase: b("1"), site: b("1"), target: b("2") })).toBe("take");
+    // ...including adding and deleting it.
+    expect(decide({ target: b("new") })).toBe("take");
+    expect(decide({ base: b("1"), cleanBase: b("1"), site: b("1") })).toBe("take");
+  });
+
+  test("keeps the site's version of a file the release never changed", () => {
+    expect(decide({ base: b("1"), cleanBase: b("1"), site: b("mine"), target: b("1") })).toBe("none");
+    expect(decide({ base: b("1"), cleanBase: b("1"), target: b("1") })).toBe("none");
+  });
+
+  test("does nothing when the site already matches the release", () => {
+    expect(decide({ base: b("1"), cleanBase: b("1"), site: b("2"), target: b("2") })).toBe("none");
+  });
+
+  test("merges a text file both changed, and keeps a binary one", () => {
+    const both = { base: b("1"), cleanBase: b("1"), site: b("mine"), target: b("2") };
+    expect(decide(both)).toBe("merge");
+    expect(decide(both, false)).toBe("keep-yours");
+  });
+
+  test("keeps a file the release removed but the site changed, and leaves one the site removed", () => {
+    expect(decide({ base: b("1"), cleanBase: b("1"), site: b("mine") })).toBe("release-deleted");
+    expect(decide({ base: b("1"), cleanBase: b("1"), target: b("2") })).toBe("you-deleted");
+  });
+
+  test("an engine test a new site never got counts as unchanged when missing, and is removed when unchanged", () => {
+    // Made by create-amytis 0.1.4, which leaves the engine's tests out.
+    expect(decide({ base: b("t"), site: undefined, target: undefined })).toBe("none");
+    // Made by an older create-amytis, which kept them.
+    expect(decide({ base: b("t"), site: b("t"), target: undefined })).toBe("take");
+    // ...unless the site made it its own.
+    expect(decide({ base: b("t"), site: b("mine"), target: undefined })).toBe("none");
+  });
+});
+
+describe("mergePackageJson", () => {
+  const base = {
+    name: "@hutusi/amytis",
+    version: "2.0.0",
+    private: false,
+    repository: { type: "git", url: "git+https://github.com/hutusi/amytis.git" },
+    scripts: { dev: "next dev", test: "bun test src", validate: "bun run lint && bun run test && bun run build:dev" },
+    dependencies: { next: "16.0.0", react: "19.0.0" },
+  };
+  const target = {
+    ...base,
+    version: "2.0.1",
+    scripts: { ...base.scripts, check: "bun scripts/check.ts" },
+    dependencies: { next: "16.1.0", react: "19.0.0", katex: "0.19.0" },
+  };
+  // A site from create-amytis 0.1.4, with a dependency of its own.
+  const site = {
+    name: "my-garden",
+    version: "2.0.0",
+    private: true,
+    scripts: { dev: "next dev", validate: "bun run lint && bun run build:dev", upgrade: "bunx create-amytis@latest upgrade" },
+    dependencies: { next: "16.0.0", react: "19.0.0", "left-pad": "^1.3.0" },
+  };
+
+  test("takes the release's changes and keeps the site's own", () => {
+    const { merged, conflicts } = mergePackageJson(base, site, target);
+    expect(conflicts).toEqual([]);
+    expect(merged).toEqual({
+      name: "my-garden",
+      version: "2.0.1",
+      private: true,
+      scripts: { dev: "next dev", validate: "bun run lint && bun run build:dev", upgrade: "bunx create-amytis@latest upgrade", check: "bun scripts/check.ts" },
+      dependencies: { next: "16.1.0", react: "19.0.0", "left-pad": "^1.3.0", katex: "0.19.0" },
+    });
+  });
+
+  test("keeps the site's value where both changed it, and reports it", () => {
+    const pinned = { ...site, dependencies: { ...site.dependencies, next: "16.0.5" } };
+    const { merged, conflicts } = mergePackageJson(base, pinned, target);
+    expect((merged.dependencies as Record<string, string>).next).toBe("16.0.5");
+    expect(conflicts).toEqual([{ key: "dependencies.next", yours: "16.0.5", release: "16.1.0" }]);
+  });
+
+  test("drops the engine's test scripts from a site made before create-amytis left them out", () => {
+    const old = { ...base, name: "old-site", private: true, repository: undefined, scripts: { ...base.scripts } };
+    delete old.repository;
+    const { merged, conflicts } = mergePackageJson(base, old, target);
+    expect(conflicts).toEqual([]);
+    expect(merged.scripts).toEqual({
+      dev: "next dev",
+      validate: "bun run lint && bun run build:dev",
+      check: "bun scripts/check.ts",
+      upgrade: "bunx create-amytis@latest upgrade",
+    });
+  });
+
+  test("records the target's version even when the site changed its own", () => {
+    const { merged, conflicts } = mergePackageJson(base, { ...site, version: "9.9.9" }, target);
+    expect(merged.version).toBe("2.0.1");
+    expect(conflicts).toEqual([]);
+  });
+});
+
+describe("readConfigString", () => {
+  test("reads a plain string or the en value of a map", () => {
+    expect(readConfigString(`export const c = {\n  title: "My \\"Garden\\"",\n};`, "title")).toBe(`My "Garden"`);
+    expect(readConfigString(`  description: { en: "English", zh: "中文" },`, "description")).toBe("English");
+  });
+
+  test("skips nested fields of the same name", () => {
+    expect(readConfigString(`  hero: {\n    title: "Nested",\n  },`, "title")).toBeNull();
+  });
+});
+
+describe("releaseNotes", () => {
+  const changelog = `# Changelog
+
+## [Unreleased]
+
+## [2.1.0] - 2026-12-01
+
+### Upgrading from 2.0
+- Rename \`foo\` to \`bar\` in site.config.ts.
+
+### Added
+- Something.
+
+## [2.0.1] - 2026-11-20
+
+### Fixed
+- A bug.
+
+## [2.0.0] - 2026-11-17
+
+### Upgrading from 1.x
+- Move translations.
+`;
+
+  test("lists the versions after the site's, up to the target, with their upgrade notes", () => {
+    expect(releaseNotes(changelog, [2, 0, 0], [2, 1, 0])).toEqual([
+      { version: "2.1.0", upgrading: "- Rename `foo` to `bar` in site.config.ts." },
+      { version: "2.0.1", upgrading: undefined },
+    ]);
+  });
+
+  test("reads the last section to the end of the file", () => {
+    expect(releaseNotes(changelog, [1, 17, 0], [2, 0, 0])).toEqual([{ version: "2.0.0", upgrading: "- Move translations." }]);
+  });
+});
+
+describe("isEngineOnlyPath", () => {
+  test("names exactly what removeEngineFiles removes", () => {
+    const dir = makeTmpDir();
+    const files = [
+      ".github/workflows/ci.yml",
+      "packages/create-amytis/src/index.ts",
+      "tests/unit/a.test.ts",
+      "src/test-utils/render.tsx",
+      "src/lib/urls.test.ts",
+      "src/components/Nav.test.tsx",
+      "playwright.config.ts",
+      "TODO.md",
+      "src/lib/urls.ts",
+      "src/lib/testing.ts",
+      "scripts/check.test.ts",
+      "docs/tests.md",
+      "README.md",
+    ];
+    writeTree(dir, Object.fromEntries(files.map((f) => [f, "x"])));
+    removeEngineFiles(dir);
+    const kept = new Set(listFiles(dir));
+    for (const file of files) expect({ file, engineOnly: isEngineOnlyPath(file) }).toEqual({ file, engineOnly: !kept.has(file) });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A whole upgrade, on two made-up releases
+// ---------------------------------------------------------------------------
+
+const STARTER = (extra: string) => `export const siteConfig = {
+  title: "My Garden",
+  description: "A personal digital garden.",
+  footerText: \`© \${new Date().getFullYear()} My Garden. All rights reserved.\`,
+
+  nav: [],
+
+  features: {
+    books: { enabled: false },
+    flow: { enabled: false },
+  },
+${extra}};
+`;
+
+const PKG = (version: string, deps: Record<string, string>, scripts: Record<string, string> = {}) =>
+  JSON.stringify({
+    name: "@hutusi/amytis",
+    version,
+    private: false,
+    repository: { type: "git", url: "git+https://github.com/hutusi/amytis.git" },
+    scripts: { dev: "next dev", test: "bun test src", validate: "bun run lint && bun run test && bun run build:dev", ...scripts },
+    dependencies: deps,
+  }, null, 2) + "\n";
+
+const NINE_LINES = (first: string, last: string) => [first, "2", "3", "4", "5", "6", "7", "8", last].join("\n") + "\n";
+
+function makeReleases(): { base: string; target: string } {
+  const root = makeTmpDir();
+  const base = path.join(root, "base");
+  const target = path.join(root, "target");
+  writeTree(base, {
+    "package.json": PKG("2.0.0", { next: "16.0.0" }),
+    "site.config.example.ts": STARTER(""),
+    "site.config.ts": "export const siteConfig = { title: { en: \"Amytis\", zh: \"Amytis\" } };\n",
+    "bun.lock": "lock 1\n",
+    "README.md": "# Amytis\n",
+    "src/untouched.ts": "a\n",
+    "src/yours.ts": "y\n",
+    "src/both.ts": NINE_LINES("1", "9"),
+    "src/clash.ts": "x = 1\n",
+    "src/legacy/old.ts": "old\n",
+    "src/gone.ts": "g\n",
+    "src/dropped.ts": "d\n",
+    "src/lib/x.test.ts": "t\n",
+    "public/logo.png": Buffer.from([0x89, 0x50, 0x00, 0x01]),
+    "public/images/avatar.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x01]),
+    "content/posts/hello.md": "hi\n",
+    "content/zh/posts/hello.md": "你好\n",
+    "tests/engine.test.ts": "t\n",
+    "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
+  });
+  writeTree(target, {
+    "package.json": PKG("2.0.1", { next: "16.1.0" }, { check: "bun scripts/check.ts" }),
+    "site.config.example.ts": STARTER("\n  linkCheck: 'warn',\n"),
+    "site.config.ts": "export const siteConfig = { title: { en: \"Amytis\", zh: \"Amytis\" }, linkCheck: 'error' };\n",
+    "bun.lock": "lock 2\n",
+    "README.md": "# Amytis 2\n",
+    "src/untouched.ts": "a2\n",
+    "src/yours.ts": "y\n",
+    "src/both.ts": NINE_LINES("1", "nine"),
+    "src/clash.ts": "x = 3\n",
+    "src/dropped.ts": "d2\n",
+    "src/added.ts": "new\n",
+    "src/lib/x.test.ts": "t2\n",
+    "public/logo.png": Buffer.from([0x89, 0x50, 0x00, 0x02]),
+    "public/images/avatar.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x02]),
+    "content/posts/hello.md": "hi 2\n",
+    "content/zh/posts/hello.md": "你好 2\n",
+    "tests/engine.test.ts": "t2\n",
+    "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
+  });
+  return { base, target };
+}
+
+// A site made from the base release, then made its own.
+function makeSite(base: string): string {
+  const site = makeTmpDir();
+  fs.cpSync(base, site, { recursive: true });
+  setUpNewSite(site, { projectName: "my-garden", title: "Test Site", description: "Mine." });
+  const config = read(site, "site.config.ts")!.replace(`  title: "Test Site",\n`, `  title: "Test Site",\n  // mine\n`);
+  const pkg = JSON.parse(read(site, "package.json")!);
+  pkg.dependencies["left-pad"] = "^1.3.0";
+  writeTree(site, {
+    "site.config.ts": config,
+    "package.json": JSON.stringify(pkg, null, 2) + "\n",
+    "bun.lock": "lock mine\n",
+    "README.md": "# My site\n",
+    "src/yours.ts": "y mine\n",
+    "src/both.ts": NINE_LINES("one", "9"),
+    "src/clash.ts": "x = 2\n",
+    "src/gone.ts": "g mine\n",
+    "src/mine.ts": "only mine\n",
+    "public/logo.png": Buffer.from([0x89, 0x50, 0x00, 0x03]),
+    // Made by an older create-amytis, which kept the engine's tests.
+    "tests/engine.test.ts": "t\n",
+  });
+  fs.rmSync(path.join(site, "src", "dropped.ts"));
+  return site;
+}
+
+describe("planUpgrade and applyPlan", () => {
+  const { base, target } = makeReleases();
+  const site = makeSite(base);
+  const before = Object.fromEntries(listFiles(site).map((rel) => [rel, read(site, rel)]));
+  const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+
+  test("planning changes nothing", () => {
+    expect(Object.fromEntries(listFiles(site).map((rel) => [rel, read(site, rel)]))).toEqual(before);
+  });
+
+  test("decides each file by comparing the two releases and the site", () => {
+    const kinds = Object.fromEntries(plan.changes.map((c) => [c.path, c.kind]));
+    expect(kinds).toEqual({
+      "README.md": "kept",
+      "bun.lock": "kept",
+      "package.json": "merged",
+      "public/logo.png": "kept",
+      "site.config.example.ts": "update",
+      "site.config.ts": "merged",
+      "src/added.ts": "add",
+      "src/both.ts": "merged",
+      "src/clash.ts": "conflict",
+      "src/dropped.ts": "kept",
+      "src/gone.ts": "kept",
+      "src/legacy/old.ts": "delete",
+      "src/untouched.ts": "update",
+      "tests/engine.test.ts": "delete",
+    });
+    expect(plan.packageConflicts).toEqual([]);
+    expect(plan.configNote).toBeUndefined();
+    expect(needsAttention(plan)).toBe(true);
+  });
+
+  test("applying it upgrades the site and keeps what is the site's own", () => {
+    applyPlan(site, plan);
+
+    expect(read(site, "src/untouched.ts")).toBe("a2\n");
+    expect(read(site, "src/added.ts")).toBe("new\n");
+    expect(read(site, "src/yours.ts")).toBe("y mine\n");
+    expect(read(site, "src/both.ts")).toBe(NINE_LINES("one", "nine"));
+    expect(read(site, "src/clash.ts")).toBe("<<<<<<< your site\nx = 2\n=======\nx = 3\n>>>>>>> Amytis v2.0.1\n");
+    expect(read(site, "src/mine.ts")).toBe("only mine\n");
+
+    // Removed by the release: gone, with its empty folder, unless the site changed it.
+    expect(fs.existsSync(path.join(site, "src", "legacy"))).toBe(false);
+    expect(read(site, "src/gone.ts")).toBe("g mine\n");
+    // Removed by the site: left removed, with the release's version beside it.
+    expect(read(site, "src/dropped.ts")).toBeUndefined();
+    expect(read(site, "src/dropped.ts.amytis-new")).toBe("d2\n");
+
+    // The engine's own tests stay out of the site.
+    expect(fs.existsSync(path.join(site, "tests"))).toBe(false);
+    expect(read(site, "src/lib/x.test.ts")).toBeUndefined();
+
+    // Binary files and READMEs aren't merged line by line.
+    expect([...fs.readFileSync(path.join(site, "public", "logo.png"))]).toEqual([0x89, 0x50, 0x00, 0x03]);
+    expect([...fs.readFileSync(path.join(site, "public", "logo.png.amytis-new"))]).toEqual([0x89, 0x50, 0x00, 0x02]);
+    expect(read(site, "README.md")).toBe("# My site\n");
+    expect(read(site, "README.md.amytis-new")).toBe("# Amytis 2\n");
+    // bun install regenerates the lockfile from the merged package.json.
+    expect(read(site, "bun.lock")).toBe("lock mine\n");
+    expect(read(site, "bun.lock.amytis-new")).toBeUndefined();
+
+    // Content and images are never touched.
+    expect(read(site, "content/posts/hello.md")).toBe("hi\n");
+    expect(fs.existsSync(path.join(site, "content", "zh"))).toBe(false);
+    expect([...fs.readFileSync(path.join(site, "public", "images", "avatar.jpg"))]).toEqual([0xff, 0xd8, 0x00, 0x01]);
+  });
+
+  test("the site's config gains the new starter fields and keeps its own settings", () => {
+    const config = read(site, "site.config.ts")!;
+    expect(config).toContain(`  title: "Test Site",\n  // mine\n`);
+    expect(config).toContain(`  description: "Mine.",`);
+    expect(config).toContain("  linkCheck: 'warn',");
+    expect(config).not.toContain("<<<<<<<");
+  });
+
+  test("package.json gets the release's dependencies and scripts, and the new version", () => {
+    const pkg = JSON.parse(read(site, "package.json")!);
+    expect(pkg.name).toBe("my-garden");
+    expect(pkg.version).toBe("2.0.1");
+    expect(pkg.dependencies).toEqual({ next: "16.1.0", "left-pad": "^1.3.0" });
+    expect(pkg.scripts.check).toBe("bun scripts/check.ts");
+    expect(pkg.scripts.test).toBeUndefined();
+    expect(pkg.scripts.upgrade).toBe("bunx create-amytis@latest upgrade");
+  });
+});
+
+describe("site.config.ts made from the demo site's own config", () => {
+  test("is left alone, with a note", () => {
+    const { base, target } = makeReleases();
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    const demo = read(site, "site.config.ts");
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    expect(plan.changes.find((c) => c.path === "site.config.ts")).toBeUndefined();
+    expect(plan.configNote).toContain("demo site's own config");
+    applyPlan(site, plan);
+    expect(read(site, "site.config.ts")).toBe(demo);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The command
+// ---------------------------------------------------------------------------
+
+describe("create-amytis upgrade", () => {
+  const cli = path.join(import.meta.dir, "index.ts");
+  const run = (cwd: string, ...args: string[]) =>
+    spawnSync(process.execPath, [cli, "upgrade", ...args], { cwd, encoding: "utf8" });
+
+  function cleanSite(): { site: string; base: string; target: string } {
+    const { base, target } = makeReleases();
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "fresh", title: "Fresh", description: "New." });
+    return { site, base, target };
+  }
+
+  test("parses its options", () => {
+    expect(parseUpgradeArgs(["--to", "v2.0.3", "--dry-run", "--no-install"])).toMatchObject({ to: "v2.0.3", dryRun: true, install: false });
+    expect(() => parseUpgradeArgs(["--to"])).toThrow("--to needs a value");
+    expect(() => parseUpgradeArgs(["--yes"])).toThrow("Unknown option: --yes");
+  });
+
+  test("won't upgrade a site outside git, which it couldn't undo", () => {
+    const { site, base, target } = cleanSite();
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--no-install");
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("isn't in a git repository");
+    expect(read(site, "src/untouched.ts")).toBe("a\n");
+  });
+
+  test("won't upgrade over uncommitted changes", () => {
+    const { site, base, target } = cleanSite();
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    fs.writeFileSync(path.join(site, "src", "yours.ts"), "unsaved\n");
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--no-install");
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("uncommitted changes");
+  });
+
+  test("upgrades a committed site, and exits 0 when nothing needs a look", () => {
+    const { site, base, target } = cleanSite();
+    git(site, "init", "-q");
+    git(site, "add", "-A");
+    git(site, "commit", "-qm", "site");
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--no-install");
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Upgrading from Amytis v2.0.0 to v2.0.1");
+    expect(result.stdout).toContain("Upgrading to 2.0.1, from CHANGELOG.md:\n\n- Run bun install.");
+    expect(read(site, "src/untouched.ts")).toBe("a2\n");
+    expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");
+  });
+
+  test("says so when the release changed nothing the site has", () => {
+    const { site, base } = cleanSite();
+    const result = run(site, "--base-dir", base, "--target-dir", base, "--dry-run");
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Nothing to change");
+  });
+
+  test("--dry-run changes nothing, and needs no git", () => {
+    const { site, base, target } = cleanSite();
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run");
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("update   src/untouched.ts");
+    expect(result.stdout).toContain("Dry run: nothing was changed.");
+    expect(read(site, "src/untouched.ts")).toBe("a\n");
+  });
+
+  test("refuses to run outside a site", () => {
+    const result = run(makeTmpDir(), "--dry-run");
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("There's no package.json here");
+  });
+});

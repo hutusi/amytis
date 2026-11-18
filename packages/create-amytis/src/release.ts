@@ -158,6 +158,20 @@ export function buildExtractCommand(
   };
 }
 
+// Downloads a release and unpacks it at outDir. The archive is downloaded
+// next to outDir, and deleted once unpacked.
+export async function downloadRelease(tag: string, outDir: string): Promise<string> {
+  const archive = getArchiveMetadata(tag);
+  const archivePath = path.join(path.dirname(outDir), archive.filename);
+  try {
+    await downloadFile(archive.url, archivePath);
+  } catch (err) {
+    throw new Error(`Couldn't download Amytis ${tag}: ${(err as Error).message}`);
+  }
+  extractArchive(archivePath, outDir, archive.kind);
+  return outDir;
+}
+
 export function extractArchive(archivePath: string, outDir: string, kind: "zip" | "tar.gz", platform: NodeJS.Platform = process.platform): void {
   // Extract into a temp dir, then move the inner folder out
   const tmpDir = `${outDir}.__tmp__`;

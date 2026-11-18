@@ -74,6 +74,13 @@ function removeTestFiles(dir: string): number {
   return count;
 }
 
+// Whether removeEngineFiles removes the file at this relative path (with /
+// separators). An upgrade leaves these out of the release it upgrades to.
+export function isEngineOnlyPath(rel: string): boolean {
+  return ENGINE_ONLY_PATHS.some((p) => rel === p || rel.startsWith(`${p}/`)) ||
+    (rel.startsWith("src/") && TEST_FILE.test(rel));
+}
+
 // Removes the engine's own tests, CI and tooling. Returns what was removed.
 export function removeEngineFiles(projectDir: string): string[] {
   const removed: string[] = [];
@@ -154,6 +161,8 @@ export function toSitePackage(pkg: Record<string, unknown>, projectName: string)
         .filter((step) => !/^bun run test(:|\s|$)/.test(step))
         .join(" && ");
     }
+    // Brings in a newer release later (upgrade.ts).
+    scripts["upgrade"] = "bunx create-amytis@latest upgrade";
   }
 
   return site;
