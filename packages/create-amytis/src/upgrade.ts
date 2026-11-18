@@ -513,7 +513,62 @@ export function planUpgrade(options: {
     return { path: change.path, kind: "kept", reason: `${what}, and the upgrade doesn't write through links; Amytis changed it, so update it by hand` };
   });
 
-  return { changes: guarded, packageConflicts: pkg.conflicts, configNote: config.note };
+  // So is one where a release turned a file into a folder, or the other way
+  // round, and the site has something of its own in the way.
+  const deleted = deletedPaths(guarded);
+  const placed = guarded.map((change): Change => {
+    const clash = pathClash(siteDir, change, deleted);
+    return clash ? { path: change.path, kind: "kept", reason: `${clash}, so it was left as it is; sort it out by hand` } : change;
+  });
+
+  return { changes: placed, packageConflicts: pkg.conflicts, configNote: config.note };
+}
+
+function deletedPaths(changes: Change[]): Set<string> {
+  return new Set(changes.filter((c) => c.kind === "delete").map((c) => c.path));
+}
+
+// Every file and link under dir, relative to the site.
+function filesUnder(siteDir: string, rel: string): string[] {
+  const found: string[] = [];
+  for (const entry of fs.readdirSync(path.join(siteDir, ...rel.split("/")), { withFileTypes: true })) {
+    const child = `${rel}/${entry.name}`;
+    if (entry.isDirectory()) found.push(...filesUnder(siteDir, child));
+    else found.push(child);
+  }
+  return found;
+}
+
+// Why a change can't be written where the site has a file in place of a
+// folder the release needs, or a folder in place of a file; null if it can.
+// Deletions happen first, so a folder the plan empties is no obstacle.
+function pathClash(siteDir: string, change: Change, deleted: Set<string>): string | null {
+  for (const rel of writtenPaths(change)) {
+    if (change.kind === "delete" && rel === change.path) continue;
+    const parts = rel.split("/");
+    for (let i = 1; i < parts.length; i++) {
+      const folder = parts.slice(0, i).join("/");
+      let stat: fs.Stats;
+      try {
+        stat = fs.lstatSync(path.join(siteDir, ...parts.slice(0, i)));
+      } catch {
+        break; // Doesn't exist, so neither does anything below it.
+      }
+      if (!stat.isDirectory() && !deleted.has(folder)) {
+        return `${folder} is a file in your site, where the new release has a folder`;
+      }
+    }
+    let stat: fs.Stats | null = null;
+    try {
+      stat = fs.lstatSync(path.join(siteDir, ...parts));
+    } catch {
+      // Doesn't exist: nothing in the way.
+    }
+    if (stat?.isDirectory() && filesUnder(siteDir, rel).some((file) => !deleted.has(file))) {
+      return `${rel} is a folder in your site, where the new release has a file`;
+    }
+  }
+  return null;
 }
 
 function exists(file: string): boolean {
@@ -569,13 +624,24 @@ export function applyPlan(siteDir: string, plan: UpgradePlan): void {
       throw new Error(`${sidecarOf(change)} exists already, and the upgrade won't overwrite it. Nothing was changed.`);
     }
   }
+  // Nor does a file go where the site has a folder, or into a "folder" that
+  // is a file. planUpgrade keeps such changes for the owner already.
+  const deleted = deletedPaths(plan.changes);
+  for (const change of plan.changes) {
+    const clash = pathClash(root, change, deleted);
+    if (clash) throw new Error(`${change.path}: ${clash}. Nothing was changed.`);
+  }
+
+  // Deletions first, so a folder the release replaced with a file is gone
+  // before the file is written.
+  for (const change of plan.changes) {
+    if (change.kind !== "delete") continue;
+    const file = path.join(root, ...change.path.split("/"));
+    fs.rmSync(file, { force: true });
+    removeEmptyDirs(path.dirname(file), root);
+  }
   for (const change of plan.changes) {
     const file = path.join(root, ...change.path.split("/"));
-    if (change.kind === "delete") {
-      fs.rmSync(file, { force: true });
-      removeEmptyDirs(path.dirname(file), root);
-      continue;
-    }
     if (change.write) {
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, change.write);

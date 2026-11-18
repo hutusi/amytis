@@ -561,6 +561,79 @@ describe.skipIf(process.platform === "win32")("symbolic links in the site", () =
   });
 });
 
+describe("a release that turns a folder into a file, or a file into a folder", () => {
+  function releases(): { base: string; target: string } {
+    const root = makeTmpDir();
+    const base = path.join(root, "base");
+    const target = path.join(root, "target");
+    writeTree(base, {
+      "package.json": PKG("2.0.0", { next: "16.0.0" }),
+      "site.config.example.ts": STARTER(""),
+      "src/widget/index.ts": "folder\n",
+      "src/thing": "file\n",
+    });
+    writeTree(target, {
+      "package.json": PKG("2.0.1", { next: "16.0.0" }),
+      "site.config.example.ts": STARTER(""),
+      "src/widget": "now a file\n",
+      "src/thing/index.ts": "now a folder\n",
+    });
+    return { base, target };
+  }
+
+  function siteFrom(base: string): string {
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "shapes", title: "Shapes", description: "Shapes." });
+    return site;
+  }
+
+  test("deletes first, so the new file or folder takes the old one's place", () => {
+    const { base, target } = releases();
+    const site = siteFrom(base);
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    expect(plan.changes.filter((c) => c.kind === "kept")).toEqual([]);
+    applyPlan(site, plan);
+    expect(read(site, "src/widget")).toBe("now a file\n");
+    expect(read(site, "src/thing/index.ts")).toBe("now a folder\n");
+  });
+
+  test("keeps the change for the owner when the site's own files are in the way", () => {
+    const { base, target } = releases();
+    const site = siteFrom(base);
+    writeTree(site, { "src/widget/mine.ts": "mine\n", "src/thing": "changed\n" });
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    const byPath = Object.fromEntries(plan.changes.map((c) => [c.path, c]));
+    expect(byPath["src/widget"]).toEqual({
+      path: "src/widget",
+      kind: "kept",
+      reason: expect.stringContaining("src/widget is a folder in your site, where the new release has a file"),
+    });
+    expect(byPath["src/thing/index.ts"]).toEqual({
+      path: "src/thing/index.ts",
+      kind: "kept",
+      reason: expect.stringContaining("src/thing is a file in your site, where the new release has a folder"),
+    });
+    applyPlan(site, plan);
+    expect(read(site, "src/widget/mine.ts")).toBe("mine\n");
+    expect(read(site, "src/thing")).toBe("changed\n");
+  });
+
+  test("applyPlan refuses a plan that would, before it writes anything", () => {
+    const site = makeTmpDir();
+    writeTree(site, { "src/widget/mine.ts": "mine\n" });
+    const plan: UpgradePlan = {
+      changes: [
+        { path: "src/first.ts", kind: "add", write: Buffer.from("1\n") },
+        { path: "src/widget", kind: "add", write: Buffer.from("file\n") },
+      ],
+      packageConflicts: [],
+    };
+    expect(() => applyPlan(site, plan)).toThrow("src/widget is a folder in your site");
+    expect(read(site, "src/first.ts")).toBeUndefined();
+  });
+});
+
 describe("the release's copy of a kept file", () => {
   test("goes under a free name, so an earlier copy isn't overwritten", () => {
     const { base, target } = makeReleases();
