@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Upgrading a Site**: `bun run upgrade` brings a newer release into a site made with `bun create amytis` (sites made before it run `bunx create-amytis@latest upgrade`). It merges file by file, the way git would. Files you never changed take the new release's version, and your changes stay. Only files both of you changed are merged, with conflict markers where the edits overlap. Your content is never touched, `package.json` keeps the dependencies you added, and `site.config.ts` gains new config fields. It prints the upgrade notes of every release in between. Guide: `docs/guides/upgrading-a-site.md`. Needs `create-amytis` 0.2.0.
+- **Upgrading a Site**: `bun run upgrade` brings a newer release into a site made with `bun create amytis` (sites made before it run `bunx create-amytis@latest upgrade`). It merges file by file, the way git would. Files you never changed take the new release's version, and your changes stay. Only files both of you changed are merged, with conflict markers where the edits overlap. Your content is never touched, `package.json` keeps the dependencies you added, and a `site.config.ts` that began as the starter config gains new config fields (older sites made from the demo config copy them by hand). It prints the upgrade notes of every release in between. Guide: `docs/guides/upgrading-a-site.md`. Needs `create-amytis` 0.2.0.
 - **CI**: an Upgrade check job makes a site from the last release, upgrades it to each change and builds it, so a change existing sites can't take fails before it is released.
 
 ## [2.0.2] - 2026-11-18

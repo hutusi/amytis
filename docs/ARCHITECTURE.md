@@ -589,8 +589,13 @@ with the site's title and description patched in, which is how new config
 fields reach existing sites. So a new field belongs in the example like any
 other, and a step owners must take by hand belongs in the changelog's
 `### Upgrading from …` section, which the upgrade prints. CI's Upgrade check
-job makes a site from the last release tag (`git describe … HEAD^`), upgrades
-it to the checkout, then runs its `validate` and an error-mode link check.
+job makes a site from the last release tag (`git describe … HEAD^`) with the
+scaffolder that release shipped, upgrades it to the checkout, checks that it
+gained the `upgrade` script, then runs its `validate` and an error-mode link
+check. The upgrade only writes what git can undo: it stops on uncommitted
+changes (checked again just before writing) and on existing files git doesn't
+track, never writes through a symbolic link, and never overwrites a
+`*.amytis-new` copy.
 
 ### Config validation
 

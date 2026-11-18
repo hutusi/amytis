@@ -8,7 +8,10 @@ your content, and merges file by file the way git would.
 
 - **Commit everything.** The upgrade won't run with uncommitted changes, or
   outside a git repository, so that the whole upgrade is one diff you can
-  review and undo. (`--force` runs it anyway.)
+  review and undo. For the same reason, it won't change a file git doesn't
+  track, such as an ignored one, because git couldn't restore it. `--force`
+  runs it anyway; then git can't tell the upgrade's changes from yours, so
+  it lists every file it changes.
 - **Have git and bun installed.** The upgrade merges with `git merge-file` and
   runs `bun install` at the end.
 - **Older sites have no `bun run upgrade` script.** Sites made before
@@ -38,7 +41,7 @@ the new release's.
 | You never changed it | It becomes the new release's version, or is deleted if the release removed it. |
 | The release didn't change it | It stays as you have it. |
 | You both changed it (text) | The changes are merged. Where they overlap, the file gets conflict markers. |
-| You both changed it (binary, or a README) | Yours is kept. The release's is saved beside it as `<file>.amytis-new`. |
+| You both changed it (binary, or a README) | Yours is kept. The release's is saved beside it as `<file>.amytis-new` (or `<file>.2.amytis-new`, if an earlier upgrade's copy is still there). |
 | The release removed it, but you changed it | Yours is kept. |
 | You removed it, and the release changed it | It stays removed. The release's is saved as `<file>.amytis-new`. |
 
@@ -64,6 +67,9 @@ Some files have their own rules:
   site, where git can't undo a change. So when a file the release changed is
   a link, or is in a linked folder, the upgrade lists it for you to update by
   hand.
+- **A file that became a folder, or the reverse.** If a release replaces a
+  folder with a file of the same name, or a file with a folder, and you have
+  something of your own in the way, the upgrade leaves that for you too.
 - **The Amytis repo's own tests and CI** (`tests/`, `.github/`, `packages/`)
   aren't part of a site. Sites made before create-amytis 0.1.4 still have
   them; the upgrade removes them if you haven't changed them.
@@ -76,12 +82,14 @@ Some files have their own rules:
    `Amytis vX.Y.Z`. Keep what you need, and delete the markers.
 3. Compare each `*.amytis-new` file with yours, take what you need, then
    delete it.
-4. Check that the site builds: `bun run validate`.
-5. Commit.
+4. If you changed `package.json` while resolving, run `bun install` again.
+5. Check that the site builds: `bun run validate`.
+6. Commit.
 
 The upgrade exits with status 1 when it leaves conflicts or kept files to look
-at, or when `bun install` fails, so a script can tell. To undo the upgrade before you commit, run
-`git restore .`, then delete the new files `git status` lists.
+at, or when `bun install` fails, so a script can tell. To undo the upgrade
+before you commit, run `git restore .`, delete the new files `git status`
+lists, then run `bun install` to put back the dependencies you had.
 
 ## When it can't tell which release you started from
 
