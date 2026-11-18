@@ -819,7 +819,7 @@ describe("undoProblem", () => {
     writeTree(site, { "package.json": JSON.stringify({ version: "2.0.0" }) });
     const before = siteState(site);
     // The base version the upgrade starts from is this snapshot's.
-    expect(before).toEqual({ commit: null, version: "2.0.0" });
+    expect(before).toEqual({ commit: null, version: "2.0.0", manifestError: null });
     expect(sameSiteState(siteState(site), before)).toBe(true);
     writeTree(site, { "package.json": JSON.stringify({ version: "2.0.2" }) });
     expect(sameSiteState(siteState(site), before)).toBe(false);
@@ -965,6 +965,19 @@ describe("create-amytis upgrade", () => {
     expect(result.stdout).toContain("update   src/untouched.ts");
     expect(result.stdout).toContain("Dry run: nothing was changed.");
     expect(read(site, "src/untouched.ts")).toBe("a\n");
+  });
+
+  test("asks for a broken package.json to be fixed, not for --from", () => {
+    const { site, base, target } = cleanSite();
+    const pkg = read(site, "package.json")!;
+    fs.writeFileSync(path.join(site, "package.json"), pkg.replace(/\n}\n$/, ",\n}\n"));
+    for (const args of [[], ["--from", "v2.0.0"]]) {
+      const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run", ...args);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("package.json can't be read");
+      expect(result.stderr).toContain("Fix it, then run the upgrade again.");
+      expect(result.stderr).not.toContain("--from");
+    }
   });
 
   test("refuses to run outside a site", () => {

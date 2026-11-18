@@ -780,18 +780,23 @@ function readVersion(dir: string): Version {
 export interface SiteState {
   commit: string | null;
   version: unknown;
+  // Why package.json couldn't be read, such as invalid JSON; null if it could.
+  manifestError: string | null;
 }
 
 export function siteState(siteDir: string): SiteState {
   const head = spawnSync("git", ["rev-parse", "--verify", "-q", "HEAD"], { cwd: siteDir, encoding: "utf8" });
   const commit = head.status === 0 ? head.stdout.trim() : null;
   let version: unknown = null;
+  let manifestError: string | null = null;
   try {
     version = (JSON.parse(fs.readFileSync(path.join(siteDir, PACKAGE_JSON), "utf8")) as JsonObject)["version"];
-  } catch {
-    // Unreadable now; that counts as a change, as it differs from before.
+  } catch (err) {
+    // At the start, the upgrade stops on this. Later, an unreadable
+    // package.json counts as a change, as its version differs from before.
+    manifestError = (err as Error).message;
   }
-  return { commit, version };
+  return { commit, version, manifestError };
 }
 
 export function sameSiteState(a: SiteState, b: SiteState): boolean {
@@ -931,6 +936,11 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
   }
 
   const startState = siteState(siteDir);
+  // Before the --from hint below: --from wouldn't help, as the upgrade
+  // merges package.json too.
+  if (startState.manifestError) {
+    throw new Error(`package.json can't be read (${startState.manifestError}). Fix it, then run the upgrade again.`);
+  }
   const baseVersion = options.from
     ? requireVersion(options.from, "--from")
     : options.baseDir
