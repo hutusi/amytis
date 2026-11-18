@@ -137,6 +137,8 @@ export function patchSiteConfig(projectDir: string, title: string, description: 
   fs.writeFileSync(configPath, patchSiteConfigSource(src, title, description), "utf8");
 }
 
+export const UPGRADE_SCRIPT = "bunx create-amytis@latest upgrade";
+
 // The release's package.json as a new site gets it. Returns a new object.
 export function toSitePackage(pkg: Record<string, unknown>, projectName: string): Record<string, unknown> {
   const site: Record<string, unknown> = structuredClone(pkg);
@@ -162,7 +164,7 @@ export function toSitePackage(pkg: Record<string, unknown>, projectName: string)
         .join(" && ");
     }
     // Brings in a newer release later (upgrade.ts).
-    scripts["upgrade"] = "bunx create-amytis@latest upgrade";
+    scripts["upgrade"] = UPGRADE_SCRIPT;
   }
 
   return site;

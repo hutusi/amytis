@@ -168,6 +168,29 @@ describe("mergePackageJson", () => {
     });
   });
 
+  test("adds the upgrade script to a site made before it existed, even when the release changed no scripts", () => {
+    // As create-amytis 0.1.4 made it: no test scripts, and no upgrade script yet.
+    const made014 = { ...site, scripts: { dev: "next dev", validate: "bun run lint && bun run build:dev" } };
+    const sameScripts = { ...target, scripts: base.scripts };
+    const { merged, conflicts } = mergePackageJson(base, made014, sameScripts);
+    expect(conflicts).toEqual([]);
+    expect(merged.scripts).toEqual({ dev: "next dev", validate: "bun run lint && bun run build:dev", upgrade: "bunx create-amytis@latest upgrade" });
+  });
+
+  test("keeps a site's own upgrade script", () => {
+    const pinned = { ...site, scripts: { ...site.scripts, upgrade: "bunx create-amytis@0.2.0 upgrade" } };
+    expect((mergePackageJson(base, pinned, target).merged.scripts as Record<string, string>).upgrade).toBe("bunx create-amytis@0.2.0 upgrade");
+  });
+
+  test("merges keys that Object.prototype also has as plain keys", () => {
+    const withPreview = { ...site, scripts: { ...site.scripts, preview: "bun run build && bun run start" } };
+    const withConstructor = { ...target, scripts: { ...target.scripts, constructor: "echo built" } };
+    const { merged } = mergePackageJson(base, withPreview, withConstructor);
+    const scripts = merged.scripts as Record<string, string>;
+    expect(Object.getOwnPropertyDescriptor(scripts, "constructor")?.value).toBe("echo built");
+    expect(scripts.preview).toBe("bun run build && bun run start");
+  });
+
   test("records the target's version even when the site changed its own", () => {
     const { merged, conflicts } = mergePackageJson(base, { ...site, version: "9.9.9" }, target);
     expect(merged.version).toBe("2.0.1");

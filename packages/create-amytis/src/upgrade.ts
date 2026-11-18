@@ -14,7 +14,7 @@ import * as os from "os";
 import * as path from "path";
 import { spawnSync } from "child_process";
 import { downloadRelease, getLatestReleaseTag } from "./release.js";
-import { isEngineOnlyPath, patchSiteConfigSource, toSitePackage } from "./setup.js";
+import { UPGRADE_SCRIPT, isEngineOnlyPath, patchSiteConfigSource, toSitePackage } from "./setup.js";
 
 // ---------------------------------------------------------------------------
 // Versions
@@ -234,6 +234,11 @@ export interface PackageConflict {
   release: Json;
 }
 
+// A key's own value: a key such as "constructor" isn't read from the prototype.
+function own(value: Json, key: string): Json {
+  return isObject(value) && Object.hasOwn(value, key) ? value[key] : undefined;
+}
+
 function mergeValue(
   key: string,
   base: Json,
@@ -247,17 +252,18 @@ function mergeValue(
   if (jsonEqual(target, base) || jsonEqual(target, cleanBase)) return site;
   if (isObject(site) && isObject(target)) {
     const merged: JsonObject = {};
-    const keys = [...Object.keys(site), ...Object.keys(target).filter((k) => !(k in site))];
+    const keys = [...Object.keys(site), ...Object.keys(target).filter((k) => !Object.hasOwn(site, k))];
     for (const k of keys) {
       const value = mergeValue(
         key ? `${key}.${k}` : k,
-        isObject(base) ? base[k] : undefined,
-        isObject(cleanBase) ? cleanBase[k] : undefined,
-        site[k],
-        target[k],
+        own(base, k),
+        own(cleanBase, k),
+        own(site, k),
+        own(target, k),
         conflicts,
       );
-      if (value !== undefined) merged[k] = value;
+      // defineProperty, so a key such as "__proto__" stays a plain key.
+      if (value !== undefined) Object.defineProperty(merged, k, { value, enumerable: true, writable: true, configurable: true });
     }
     return merged;
   }
@@ -277,16 +283,26 @@ export function mergePackageJson(
   target: JsonObject,
 ): { merged: JsonObject; conflicts: PackageConflict[] } {
   const name = typeof site["name"] === "string" ? site["name"] : "my-site";
+  // The upgrade script is create-amytis's, not the release's, and sites made
+  // before it was added don't have it. Left in, it would make an unchanged
+  // release's scripts look different from the site's, so it is added after.
+  const asSite = (pkg: JsonObject) => {
+    const sitePkg = toSitePackage(pkg, name);
+    if (isObject(sitePkg["scripts"])) delete sitePkg["scripts"]["upgrade"];
+    return sitePkg;
+  };
   const conflicts: PackageConflict[] = [];
   const merged = mergeValue(
     "",
     base,
-    toSitePackage(base, name),
+    asSite(base),
     { ...site, version: base["version"] },
-    toSitePackage(target, name),
+    asSite(target),
     conflicts,
   ) as JsonObject;
   if (target["version"] !== undefined) merged["version"] = target["version"];
+  const scripts = merged["scripts"];
+  if (isObject(scripts) && !Object.hasOwn(scripts, "upgrade")) scripts["upgrade"] = UPGRADE_SCRIPT;
   return { merged, conflicts };
 }
 
