@@ -774,7 +774,14 @@ function readVersion(dir: string): Version {
 // package.json names. If either changes while the upgrade downloads (a commit,
 // say, or another upgrade finishing), the plan's base no longer matches the
 // site, even when the work tree is clean again.
-export function siteState(siteDir: string): string {
+// The base version is read from this same snapshot, so what the plan starts
+// from and what the final check compares are one read, not two.
+export interface SiteState {
+  commit: string | null;
+  version: unknown;
+}
+
+export function siteState(siteDir: string): SiteState {
   const head = spawnSync("git", ["rev-parse", "--verify", "-q", "HEAD"], { cwd: siteDir, encoding: "utf8" });
   const commit = head.status === 0 ? head.stdout.trim() : null;
   let version: unknown = null;
@@ -783,7 +790,11 @@ export function siteState(siteDir: string): string {
   } catch {
     // Unreadable now; that counts as a change, as it differs from before.
   }
-  return JSON.stringify({ commit, version });
+  return { commit, version };
+}
+
+export function sameSiteState(a: SiteState, b: SiteState): boolean {
+  return a.commit === b.commit && jsonEqual(a.version, b.version);
 }
 
 type GitState = "clean" | "dirty" | "no-repo";
@@ -915,15 +926,14 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
   }
 
   const startState = siteState(siteDir);
-  const sitePkg = JSON.parse(fs.readFileSync(path.join(siteDir, PACKAGE_JSON), "utf8")) as JsonObject;
   const baseVersion = options.from
     ? requireVersion(options.from, "--from")
     : options.baseDir
       ? readVersion(options.baseDir)
-      : parseVersion(String(sitePkg["version"]));
+      : parseVersion(String(startState.version));
   if (!baseVersion) {
     throw new Error(
-      `package.json's version (${String(sitePkg["version"])}) isn't an Amytis release, so the release ` +
+      `package.json's version (${String(startState.version)}) isn't an Amytis release, so the release ` +
       `this site was made from is unknown. Pass it with --from, e.g. --from v2.0.2.`,
     );
   }
@@ -992,7 +1002,7 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     // Checked again now, not only at the start: the downloads take a while,
     // and the site may have changed meanwhile. A new commit or version makes
     // the plan's base wrong, so that stops the upgrade even with --force.
-    if (!options.dryRun && siteState(siteDir) !== startState) {
+    if (!options.dryRun && !sameSiteState(siteState(siteDir), startState)) {
       throw new Error(
         "The site got a new commit, or its package.json version changed, while the upgrade was getting ready, " +
         "so nothing was changed. Run the upgrade again.",

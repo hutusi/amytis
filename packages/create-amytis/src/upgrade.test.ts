@@ -17,6 +17,7 @@ import {
   readConfigString,
   releaseNotes,
   shareUnchanged,
+  sameSiteState,
   siteState,
   undoProblem,
   type FileVersions,
@@ -803,16 +804,18 @@ describe("undoProblem", () => {
     const before = siteState(site);
     fs.writeFileSync(path.join(site, "src", "yours.ts"), "committed while downloading\n");
     git(site, "commit", "-qam", "meanwhile");
-    expect(siteState(site)).not.toBe(before);
+    expect(sameSiteState(siteState(site), before)).toBe(false);
   });
 
   test("siteState changes with package.json's version, in or out of git", () => {
     const site = makeTmpDir();
     writeTree(site, { "package.json": JSON.stringify({ version: "2.0.0" }) });
     const before = siteState(site);
-    expect(siteState(site)).toBe(before);
+    // The base version the upgrade starts from is this snapshot's.
+    expect(before).toEqual({ commit: null, version: "2.0.0" });
+    expect(sameSiteState(siteState(site), before)).toBe(true);
     writeTree(site, { "package.json": JSON.stringify({ version: "2.0.2" }) });
-    expect(siteState(site)).not.toBe(before);
+    expect(sameSiteState(siteState(site), before)).toBe(false);
   });
 
   test("is no-repo outside git", () => {
