@@ -195,7 +195,7 @@ describe('Integration: discovery (slug registry, backlinks, tags)', () => {
   });
 });
 
-describe('Integration: discovery — flow feature disabled', () => {
+describe('Integration: discovery — disabled features', () => {
   // Notes and flows aren't built when `flow` is off, so nothing may link to
   // them: not a wikilink, not a "linked from" backlink on a post. The registry
   // and backlink index rebuild per call outside production (no memo to reset).
@@ -219,6 +219,29 @@ describe('Integration: discovery — flow feature disabled', () => {
       for (const slug of postSlugs) {
         expect(getBacklinks(slug).filter(b => b.type !== 'post')).toEqual([]);
       }
+    } finally {
+      mock.module('@/lib/features', () => realFeatures);
+    }
+  });
+
+  test('series leave the wikilink registry of every tree when the series feature is off', async () => {
+    const features = await import('@/lib/features');
+    const realFeatures = { ...features };
+    const seriesEntries = (locale?: string) => [...buildSlugRegistry(locale).values()].filter(e => e.type === 'series');
+    // Non-vacuous: both the default tree and the zh overlay register series.
+    expect(seriesEntries().length).toBeGreaterThan(0);
+    expect(seriesEntries('zh').some(e => e.url.startsWith('/zh/series/'))).toBe(true);
+
+    mock.module('@/lib/features', () => ({
+      ...realFeatures,
+      isFeatureEnabled: (feature: string) => feature !== 'series' && realFeatures.isFeatureEnabled(feature as never),
+    }));
+    try {
+      expect(seriesEntries()).toEqual([]);
+      expect(seriesEntries('zh')).toEqual([]);
+      // Posts in a series still resolve.
+      const seriesPost = getAllPosts().find(p => p.series);
+      expect(buildSlugRegistry().get(seriesPost!.slug)?.type).toBe('post');
     } finally {
       mock.module('@/lib/features', () => realFeatures);
     }

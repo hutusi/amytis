@@ -92,8 +92,9 @@ export function buildSlugRegistry(locale: string = DEFAULT_LOCALE): Map<string, 
 
 function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
     const map = new Map<string, SlugRegistryEntry>();
-    // Notes and flows belong to the `flow` feature: when it's off their pages
-    // aren't built, so [[links]] to them must not resolve to those URLs.
+    // Notes and flows belong to the `flow` feature, series pages to `series`:
+    // when a feature is off its pages aren't built, so [[links]] must not
+    // resolve to them. Posts register either way.
     const flowEnabled = isFeatureEnabled('flow');
 
     // Posts throw on canonical-URL collisions, not bare-slug ones: a
@@ -157,7 +158,7 @@ function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
     });
 
     const localeSeriesDir = domainDir('series', locale);
-    if (fs.existsSync(localeSeriesDir)) {
+    if (isFeatureEnabled('series') && fs.existsSync(localeSeriesDir)) {
       fs.readdirSync(localeSeriesDir, { withFileTypes: true }).forEach(entry => {
         if (!entry.isDirectory()) return;
         const slug = entry.name;
