@@ -1,7 +1,8 @@
 /**
  * Generate public/knowledge-graph.json for the Knowledge Graph visualization.
  *
- * Nodes: all posts, all notes, and flows that appear as wikilink source/target.
+ * Nodes: all posts, all notes, and flows that appear as wikilink source/target,
+ * for the features that are on.
  * Edges: wikilink edges (from backlink index) + series membership edges.
  *
  * Run: NODE_ENV=production bun scripts/generate-knowledge-graph.ts
@@ -14,6 +15,7 @@ import { getAllPosts, getPostsWithLocaleOriginals } from '../src/lib/content/pos
 import { getAllNotes, getNotesWithLocaleOriginals } from '../src/lib/content/notes';
 import { getAllFlows } from '../src/lib/content/flows';
 import { getNoteUrl, getPostUrl, localizeUrl } from '../src/lib/urls';
+import { isFeatureEnabled } from '../src/lib/features';
 import { siteConfig } from '../site.config';
 
 const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
@@ -42,12 +44,15 @@ function extractWikilinks(content: string): string[] {
   return slugs;
 }
 
-async function main() {
-  console.log('Generating knowledge graph…');
-
+/**
+ * The graph covers only content whose pages are built: notes and flows belong
+ * to the `flow` feature, series nodes to `series`.
+ */
+export function buildKnowledgeGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const flowEnabled = isFeatureEnabled('flow');
   const posts = getAllPosts();
-  const notes = getAllNotes();
-  const flows = getAllFlows();
+  const notes = flowEnabled ? getAllNotes() : [];
+  const flows = flowEnabled ? getAllFlows() : [];
 
   // Nodes are keyed by canonical URL, not bare slug: posts carry the URL from
   // getPostUrl (series prefixes, custom basePath), and duplicate slugs across
@@ -69,7 +74,7 @@ async function main() {
   const localePostDocs = getPostsWithLocaleOriginals()
     .filter(p => p.locale !== DEFAULT_LOCALE)
     .map(p => ({ slug: p.slug, title: p.title, type: 'post' as const, content: p.content, url: getPostUrl(p) }));
-  const localeNoteDocs = getNotesWithLocaleOriginals()
+  const localeNoteDocs = (flowEnabled ? getNotesWithLocaleOriginals() : [])
     .filter(n => n.locale !== DEFAULT_LOCALE)
     .map(n => ({ slug: n.slug, title: n.title, type: 'note' as const, content: n.content, url: localizeUrl(getNoteUrl(n.slug), n.locale) }));
 
@@ -122,8 +127,10 @@ async function main() {
 
   // Add series nodes + series membership edges
   const seriesSlugsSet = new Set<string>();
-  for (const post of posts) {
-    if (post.series) seriesSlugsSet.add(post.series);
+  if (isFeatureEnabled('series')) {
+    for (const post of posts) {
+      if (post.series) seriesSlugsSet.add(post.series);
+    }
   }
 
   for (const seriesSlug of seriesSlugsSet) {
@@ -178,15 +185,22 @@ async function main() {
     node.connections = connectionCounts.get(node.id) ?? 0;
   }
 
-  const graphData = { nodes, edges: validEdges };
-
-  const outputPath = path.join(process.cwd(), 'public', 'knowledge-graph.json');
-  fs.writeFileSync(outputPath, JSON.stringify(graphData, null, 2));
-
-  console.log(`✓ Written ${nodes.length} nodes, ${validEdges.length} edges → ${outputPath}`);
+  return { nodes, edges: validEdges };
 }
 
-main().catch(err => {
-  console.error('Error generating knowledge graph:', err);
-  process.exit(1);
-});
+function main() {
+  console.log('Generating knowledge graph…');
+  const graphData = buildKnowledgeGraph();
+  const outputPath = path.join(process.cwd(), 'public', 'knowledge-graph.json');
+  fs.writeFileSync(outputPath, JSON.stringify(graphData, null, 2));
+  console.log(`✓ Written ${graphData.nodes.length} nodes, ${graphData.edges.length} edges → ${outputPath}`);
+}
+
+if (import.meta.main) {
+  try {
+    main();
+  } catch (err) {
+    console.error('Error generating knowledge graph:', err);
+    process.exit(1);
+  }
+}

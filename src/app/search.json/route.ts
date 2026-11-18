@@ -3,6 +3,7 @@ import { getAllNotes } from '@/lib/content/notes';
 import { getAllFlows } from '@/lib/content/flows';
 import { getAllBooks, getBookChapter } from '@/lib/content/books';
 import { stripMarkdown } from '@/lib/search-utils';
+import { isFeatureEnabled } from '@/lib/features';
 import { getBookChapterUrl, getNonDefaultLocales, getNoteUrl, getPostUrl, localizeUrl } from '@/lib/urls';
 import { siteConfig } from '../../../site.config';
 
@@ -12,6 +13,10 @@ const DEFAULT_LOCALE = siteConfig.i18n.defaultLocale;
 
 export async function GET() {
   const posts = getAllPosts();
+  // Index only content whose pages are built: books have their own feature,
+  // notes and flows belong to `flow`.
+  const booksEnabled = isFeatureEnabled('books');
+  const flowEnabled = isFeatureEnabled('flow');
 
   const searchIndex: Record<string, unknown>[] = posts.map((post) => ({
     title: post.title,
@@ -25,7 +30,7 @@ export async function GET() {
   }));
 
   // Add book chapters to search index
-  const books = getAllBooks();
+  const books = booksEnabled ? getAllBooks() : [];
   for (const book of books) {
     for (const ch of book.chapters) {
       const chapter = getBookChapter(book.slug, ch.id);
@@ -45,7 +50,7 @@ export async function GET() {
   }
 
   // Add flows to search index
-  const flows = getAllFlows();
+  const flows = flowEnabled ? getAllFlows() : [];
   for (const flow of flows) {
     searchIndex.push({
       title: flow.title,
@@ -60,7 +65,7 @@ export async function GET() {
   }
 
   // Add notes to search index
-  const notes = getAllNotes();
+  const notes = flowEnabled ? getAllNotes() : [];
   for (const note of notes) {
     searchIndex.push({
       title: note.title,
@@ -91,7 +96,7 @@ export async function GET() {
         lang: locale,
       });
     }
-    for (const book of getAllBooks(locale)) {
+    for (const book of booksEnabled ? getAllBooks(locale) : []) {
       for (const ch of book.chapters) {
         const chapter = getBookChapter(book.slug, ch.id, locale);
         if (!chapter) continue;
@@ -107,7 +112,7 @@ export async function GET() {
         });
       }
     }
-    for (const note of getAllNotes(locale)) {
+    for (const note of flowEnabled ? getAllNotes(locale) : []) {
       searchIndex.push({
         title: note.title,
         slug: localizeUrl(getNoteUrl(note.slug), locale).replace(/^\//, ''),

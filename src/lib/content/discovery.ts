@@ -92,6 +92,10 @@ export function buildSlugRegistry(locale: string = DEFAULT_LOCALE): Map<string, 
 
 function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
     const map = new Map<string, SlugRegistryEntry>();
+    // Notes and flows belong to the `flow` feature, series pages to `series`:
+    // when a feature is off its pages aren't built, so [[links]] must not
+    // resolve to them. Posts register either way.
+    const flowEnabled = isFeatureEnabled('flow');
 
     // Posts throw on canonical-URL collisions, not bare-slug ones: a
     // duplicate slug is legal when series prefixes (autoPaths/customPaths)
@@ -114,7 +118,7 @@ function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
     });
 
     // Flows have no locale trees (deferred) — only the default registry sees them.
-    if (locale === DEFAULT_LOCALE) {
+    if (flowEnabled && locale === DEFAULT_LOCALE) {
       getAllFlows().forEach(f => {
         const existing = map.get(f.slug);
         if (existing) {
@@ -129,7 +133,7 @@ function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
       });
     }
 
-    getAllNotes(locale).forEach(n => {
+    (flowEnabled ? getAllNotes(locale) : []).forEach(n => {
       // Slugs and aliases must be unique across all content so a wikilink
       // [[target]] resolves unambiguously. A collision is a build-time error,
       // not a silent overwrite (strict-build invariant).
@@ -154,7 +158,7 @@ function computeTreeRegistry(locale: string): Map<string, SlugRegistryEntry> {
     });
 
     const localeSeriesDir = domainDir('series', locale);
-    if (fs.existsSync(localeSeriesDir)) {
+    if (isFeatureEnabled('series') && fs.existsSync(localeSeriesDir)) {
       fs.readdirSync(localeSeriesDir, { withFileTypes: true }).forEach(entry => {
         if (!entry.isDirectory()) return;
         const slug = entry.name;
@@ -234,9 +238,12 @@ function buildBacklinkIndex(locale: string): Map<string, BacklinkSource[]> {
   };
 
   getAllPosts(locale).forEach(p => addBacklinks(p.content, p.slug, p.title, 'post', getPostUrl(p)));
-  getAllNotes(locale).forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', localizeUrl(getNoteUrl(n.slug), locale)));
-  if (locale === DEFAULT_LOCALE) {
-    getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', getFlowUrl(f.slug)));
+  // A note or flow is only a backlink when its page is built (the `flow` feature).
+  if (isFeatureEnabled('flow')) {
+    getAllNotes(locale).forEach(n => addBacklinks(n.content, n.slug, n.title, 'note', localizeUrl(getNoteUrl(n.slug), locale)));
+    if (locale === DEFAULT_LOCALE) {
+      getAllFlows().forEach(f => addBacklinks(f.content, f.slug, f.title, 'flow', getFlowUrl(f.slug)));
+    }
   }
 
   return index;

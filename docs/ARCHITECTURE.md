@@ -567,10 +567,16 @@ plain strings in the example.
 
 `create-amytis` copies the example over `site.config.ts` in a new site and
 removes the locale trees (`content/<locale>/`), which a single-language config
-can't build. CI's Starter site job does the same to the checkout and runs
-`typecheck` and `build:dev`, so the code has to work with both configs: type
-the example's empty arrays, and treat locale-aware fields as
-`string | Record<string, string>`.
+can't build. It also removes what only this repo uses (`setUpNewSite` in
+`packages/create-amytis/src/index.ts`): the tests, which test the demo site's
+content and config, `src/test-utils/`, `.github/`, `packages/` and the `test*`
+scripts. CI's Starter site job runs `setUpNewSite` on the checkout, then the
+new site's `validate` (lint, typecheck, `build:dev`) and a link check in
+error mode. So the code has to work with both configs: type the example's
+empty arrays, and treat locale-aware fields as `string | Record<string, string>`.
+It also has to work without the tests: nothing outside them may import from
+them, and with disabled features (books and flows are off in the starter) no
+page may link to a page that isn't built.
 
 ### Config validation
 

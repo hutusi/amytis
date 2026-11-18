@@ -95,7 +95,7 @@ cd my-garden
 bun dev
 ```
 
-The scaffold command downloads the latest tagged Amytis release, starts your `site.config.ts` from the single-language starter (`site.config.example.ts`) and drops the demo's Chinese translations (`content/zh/`), fills in your site title and description, renames the package and installs dependencies.
+The scaffold command downloads the latest tagged Amytis release, starts your `site.config.ts` from the single-language starter (`site.config.example.ts`) and drops the demo's Chinese translations (`content/zh/`), fills in your site title and description, renames the package and installs dependencies. It leaves out what only the Amytis repo uses: its test suite (which tests the demo site), its CI workflows and the scaffolder's own source; `bun run validate` in the new site runs lint, the type check and a build.
 
 ### Clone & Run
 

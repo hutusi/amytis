@@ -47,7 +47,7 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 `site.config.ts` (this repo — i18n object form, `{ en, zh }`) and `site.config.example.ts` (shipped via `create-amytis` — plain strings, single-locale, optional features default disabled) must stay in sync. Any schema change to one must be mirrored in the other.
 
-The code must also type-check and build against the example: `create-amytis` makes it the new site's `site.config.ts` (and drops `content/<locale>/` trees), and CI's **Starter site** job builds the repo that way. Give an empty array in it a type (`[] as Foo[]`, or TypeScript infers `never[]`), and read a locale-aware field as `string | Record<string, string>`, never as a map.
+The code must also type-check and build against the example: `create-amytis` makes it the new site's `site.config.ts` (and drops `content/<locale>/` trees, the tests, `src/test-utils/`, `.github/` and `packages/`), and CI's **Starter site** job builds the repo that way (`setUpNewSite`, then `validate`, then a link check that fails on broken links). So app code and scripts must never import from tests, and must not lean on types only test files load. Give an empty array in it a type (`[] as Foo[]`, or TypeScript infers `never[]`), and read a locale-aware field as `string | Record<string, string>`, never as a map.
 
 ## Gotchas (things Claude will get wrong on first try)
 

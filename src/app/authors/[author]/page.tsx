@@ -2,6 +2,7 @@ import { getSeriesData, getSeriesPosts } from '@/lib/content/series';
 import { getAllAuthors, getAuthorRouteParams, getAuthorSlug, getPostsByAuthor, resolveAuthorParam } from '@/lib/content/authors';
 import { resolveFromParam, safeDecodeParam } from '@/lib/route-params';
 import { getBooksByAuthor } from '@/lib/content/books';
+import { isFeatureEnabled } from '@/lib/features';
 import PostList from '@/components/PostList';
 import Tag from '@/components/Tag';
 import ContentCard from '@/components/ContentCard';
@@ -94,10 +95,11 @@ export default async function AuthorPage({
     .slice(0, 8)
     .map(([name]) => name);
 
-  // Collect series the author contributed to
-  const seriesSlugs = [...new Set(
+  // Collect series the author contributed to. Series and books are listed
+  // only when their feature is on: otherwise their pages aren't built.
+  const seriesSlugs = isFeatureEnabled('series') ? [...new Set(
     posts.filter(p => p.series).map(p => p.series!)
-  )];
+  )] : [];
   const authorSeries = seriesSlugs
     .map(slug => {
       const data = getSeriesData(slug);
@@ -108,7 +110,7 @@ export default async function AuthorPage({
     .filter((s): s is NonNullable<typeof s> => s !== null);
 
   // Collect books the author wrote
-  const authorBooks = getBooksByAuthor(resolvedAuthor);
+  const authorBooks = isFeatureEnabled('books') ? getBooksByAuthor(resolvedAuthor) : [];
 
   // Author initial for avatar
   const initial = resolvedAuthor.charAt(0).toUpperCase();

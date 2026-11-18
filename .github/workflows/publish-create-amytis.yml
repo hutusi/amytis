@@ -1,0 +1,59 @@
+name: Publish create-amytis to npm
+
+# Pushing a tag named create-amytis-v<version>, matching the version in
+# packages/create-amytis/package.json, publishes the scaffolder. npm Trusted
+# Publishing authenticates this workflow, so no token or 2FA code is needed,
+# and the package gets provenance.
+#
+# Push only the tag. A GitHub release for it would run publish.yml (the amytis
+# package) and become the "latest release" that new sites are made from.
+on:
+  push:
+    tags:
+      - 'create-amytis-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Trusted Publishing
+    defaults:
+      run:
+        working-directory: packages/create-amytis
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.11
+
+      - name: Check the tag matches the package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "create-amytis-v$version" ]; then
+            echo "::error::Tag $TAG does not match packages/create-amytis/package.json version $version"
+            exit 1
+          fi
+
+      - name: Test
+        run: bun test src
+
+      - name: Build
+        run: bun run build
+
+      - name: Publish to npm
+        # No NODE_AUTH_TOKEN: Trusted Publishing authenticates this workflow.
+        run: npm publish --provenance --access public

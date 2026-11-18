@@ -8,7 +8,10 @@ import {
   getArchiveMetadata,
   patchPackageJson,
   patchSiteConfig,
+  removeEngineFiles,
   removeLocaleTrees,
+  setUpNewSite,
+  tagFromReleaseUrl,
 } from "./index";
 
 // Minimal site.config.ts that mirrors the real file's patchable fields.
@@ -202,6 +205,86 @@ describe("applyStarterConfig", () => {
 });
 
 // ---------------------------------------------------------------------------
+// removeEngineFiles
+// ---------------------------------------------------------------------------
+
+describe("removeEngineFiles", () => {
+  const tmpDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tmpDirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("removes the repo's tests, CI and tooling, and keeps the site's own files", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    const files = [
+      ".github/workflows/ci.yml",
+      ".entire/settings.json",
+      "packages/create-amytis/src/index.ts",
+      "tests/integration/a.test.ts",
+      "src/test-utils/render.ts",
+      "src/lib/a.ts",
+      "src/lib/a.test.ts",
+      "src/components/B.tsx",
+      "src/components/ui/C.test.tsx",
+      "playwright.config.ts",
+      "TODO.md",
+      "docs/guide.md",
+      "scripts/new-post.ts",
+      "content/posts/hello.md",
+      "CHANGELOG.md",
+    ];
+    for (const file of files) {
+      fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+      fs.writeFileSync(path.join(dir, file), "");
+    }
+
+    expect(removeEngineFiles(dir)).toEqual([
+      ".github/",
+      ".entire/",
+      "packages/",
+      "tests/",
+      "src/test-utils/",
+      "playwright.config.ts",
+      "TODO.md",
+      "src/**/*.test.ts(x) (2 files)",
+    ]);
+    const left = files.filter((file) => fs.existsSync(path.join(dir, file)));
+    expect(left).toEqual(["src/lib/a.ts", "src/components/B.tsx", "docs/guide.md", "scripts/new-post.ts", "content/posts/hello.md", "CHANGELOG.md"]);
+  });
+
+  test("does nothing in a directory without them", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    expect(removeEngineFiles(dir)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// tagFromReleaseUrl
+// ---------------------------------------------------------------------------
+
+describe("tagFromReleaseUrl", () => {
+  test("reads the tag from the /releases/latest redirect", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v2.0.1")).toBe("v2.0.1");
+    expect(tagFromReleaseUrl("/hutusi/amytis/releases/tag/v2.1.0-beta.1/")).toBe("v2.1.0-beta.1");
+  });
+
+  test("is null for a repo without releases, which redirects to /releases", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases")).toBeNull();
+  });
+
+  test("refuses a tag that could leave the download folder or break the URL", () => {
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/..")).toBeNull();
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v1%2F..%2Fx")).toBeNull();
+    expect(tagFromReleaseUrl("https://github.com/hutusi/amytis/releases/tag/v1?x=1")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Sync with the real repo files
 //
 // The scaffolder patches whatever site.config.ts / package.json ship in the
@@ -243,6 +326,29 @@ describe("sync with the real repo files", () => {
     expect(result).not.toContain("twitter.com/hutusi");
   });
 
+  test("setUpNewSite turns the real files into a new site", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    for (const file of ["site.config.ts", "site.config.example.ts", "package.json"]) {
+      fs.copyFileSync(path.join(repoRoot, file), path.join(dir, file));
+    }
+    fs.mkdirSync(path.join(dir, "content", "zh"), { recursive: true });
+    fs.mkdirSync(path.join(dir, "tests"));
+
+    const result = setUpNewSite(dir, { projectName: "sync-check", title: "Sync Check", description: "A new site" });
+    expect(result).toEqual({ starter: true, localeTrees: ["content/zh/"], engineFiles: ["tests/"] });
+    expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toContain(`  title: "Sync Check",`);
+    expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name).toBe("sync-check");
+  });
+
+  test("create-amytis names the repository that publishes it", () => {
+    // npm checks a Trusted Publishing provenance statement against
+    // repository.url and refuses the publish when it is missing or differs.
+    const own = JSON.parse(fs.readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8"));
+    const root = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+    expect(own.repository).toEqual({ ...root.repository, directory: "packages/create-amytis" });
+  });
+
   test("patchPackageJson patches the real package.json", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
@@ -260,7 +366,14 @@ describe("sync with the real repo files", () => {
     expect(pkg.bugs).toBeUndefined();
     expect(pkg.homepage).toBeUndefined();
     // The scaffolded project must keep its build scripts intact.
-    expect((pkg.scripts as Record<string, string>).build).toBeTruthy();
+    const scripts = pkg.scripts as Record<string, string>;
+    expect(scripts.build).toBeTruthy();
+    // ...and lose the ones that run the engine's tests, which aren't shipped.
+    expect(Object.keys(scripts).filter((name) => name.startsWith("test"))).toEqual([]);
+    for (const [name, command] of Object.entries(scripts)) {
+      expect({ name, command }).toEqual({ name, command: expect.not.stringMatching(/\btests\/|packages\/|playwright|bun run test/) });
+    }
+    expect(scripts.validate).toBe("bun run lint && bun run typecheck && bun run build:dev");
   });
 });
 
@@ -342,6 +455,27 @@ describe("patchPackageJson", () => {
     tmpDirs.push(dir);
     // file intentionally absent
     expect(() => patchPackageJson(dir, "my-garden")).not.toThrow();
+  });
+
+  test("drops the test scripts and the test step of validate", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
+      name: "@hutusi/amytis",
+      scripts: {
+        build: "next build",
+        test: "bun test src && bun run test:int",
+        "test:int": "bun test tests/integration",
+        testing: "kept: only test and test:* are the engine's",
+        validate: "bun run lint && bun run test && bun run build:dev",
+      },
+    }));
+    patchPackageJson(dir, "my-garden");
+    expect(readPkg(dir).scripts).toEqual({
+      build: "next build",
+      testing: "kept: only test and test:* are the engine's",
+      validate: "bun run lint && bun run build:dev",
+    });
   });
 });
 
