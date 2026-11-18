@@ -57,6 +57,9 @@ Some files have their own rules:
   fields come in with their default values, and your settings stay.
 - **`bun.lock` is regenerated** by `bun install` from the merged
   `package.json`.
+- **Line endings don't count as changes.** A site cloned on Windows, where git
+  turns line endings into CRLF by default, is compared with the release as if
+  it had LF, and its files keep CRLF.
 - **The Amytis repo's own tests and CI** (`tests/`, `.github/`, `packages/`)
   aren't part of a site. Sites made before create-amytis 0.1.4 still have
   them; the upgrade removes them if you haven't changed them.

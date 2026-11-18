@@ -16,6 +16,7 @@ import {
   planUpgrade,
   readConfigString,
   releaseNotes,
+  shareUnchanged,
   type FileVersions,
 } from "./upgrade";
 
@@ -434,6 +435,50 @@ describe("planUpgrade and applyPlan", () => {
     expect(pkg.scripts.check).toBe("bun scripts/check.ts");
     expect(pkg.scripts.test).toBeUndefined();
     expect(pkg.scripts.upgrade).toBe("bunx create-amytis@latest upgrade");
+  });
+});
+
+// A site cloned on Windows, where git's core.autocrlf is on by default.
+function toCrlf(root: string): void {
+  for (const rel of listFiles(root)) {
+    const file = path.join(root, ...rel.split("/"));
+    const buf = fs.readFileSync(file);
+    if (!buf.includes(0)) fs.writeFileSync(file, buf.toString("utf8").replace(/\n/g, "\r\n"));
+  }
+}
+
+describe("a site with CRLF line endings", () => {
+  const { base, target } = makeReleases();
+  const site = makeTmpDir();
+  fs.cpSync(base, site, { recursive: true });
+  setUpNewSite(site, { projectName: "windows", title: "Windows Site", description: "CRLF." });
+  writeTree(site, { "src/both.ts": NINE_LINES("one", "9") });
+  toCrlf(site);
+
+  test("counts files that differ only in line endings as unchanged", () => {
+    // Every file in src/ but the one the site edited.
+    expect(shareUnchanged(site, base)).toBe(6 / 7);
+  });
+
+  test("is compared and merged with LF, and keeps its line endings", () => {
+    const plan = planUpgrade({ siteDir: site, baseDir: base, targetDir: target, labels, scratchDir: makeTmpDir() });
+    const kinds = Object.fromEntries(plan.changes.map((c) => [c.path, c.kind]));
+    expect(kinds["src/yours.ts"]).toBeUndefined();
+    expect(kinds["src/clash.ts"]).toBe("update");
+    expect(kinds["src/both.ts"]).toBe("merged");
+    expect(kinds["site.config.ts"]).toBe("update");
+    expect(kinds["package.json"]).toBe("update");
+    expect(plan.changes.filter((c) => c.kind === "conflict" || c.kind === "kept").map((c) => c.path)).toEqual([]);
+
+    applyPlan(site, plan);
+    expect(read(site, "src/untouched.ts")).toBe("a2\r\n");
+    expect(read(site, "src/both.ts")).toBe(NINE_LINES("one", "nine").replace(/\n/g, "\r\n"));
+    // A file the site didn't have comes as the release has it.
+    expect(read(site, "src/added.ts")).toBe("new\n");
+    const config = read(site, "site.config.ts")!;
+    expect(config).toContain("  linkCheck: 'warn',\r\n");
+    expect(config).not.toMatch(/[^\r]\n/);
+    expect(read(site, "package.json")).toContain(`"version": "2.0.1",\r\n`);
   });
 });
 

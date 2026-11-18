@@ -119,6 +119,30 @@ function isBinary(buf: Buffer | undefined): boolean {
   return buf !== undefined && buf.subarray(0, 8000).includes(0);
 }
 
+// Line endings. Releases have LF, but a site cloned on Windows, where git's
+// core.autocrlf is on by default, has CRLF. So text is compared and merged
+// with LF, and written back with the line endings the site's file has.
+// (latin1 maps each byte to one character, so the round trip keeps every
+// other byte as it was; no UTF-8 sequence contains a CR or LF byte.)
+function toLf(buf: Buffer): Buffer {
+  return buf.includes("\r\n") ? Buffer.from(buf.toString("latin1").replace(/\r\n/g, "\n"), "latin1") : buf;
+}
+
+function normalized(buf: Buffer | undefined): Buffer | undefined {
+  return buf === undefined || isBinary(buf) ? buf : toLf(buf);
+}
+
+function usesCrlf(buf: Buffer | undefined): boolean {
+  if (buf === undefined || isBinary(buf)) return false;
+  const text = buf.toString("latin1");
+  const crlf = text.split("\r\n").length - 1;
+  return crlf > 0 && crlf * 2 > text.split("\n").length - 1;
+}
+
+function withCrlf(buf: Buffer, crlf: boolean): Buffer {
+  return crlf ? Buffer.from(buf.toString("latin1").replace(/\r?\n/g, "\r\n"), "latin1") : buf;
+}
+
 export interface MergeLabels {
   site: string;
   base: string;
@@ -294,9 +318,14 @@ export interface UpgradePlan {
 
 export const NEW_COPY_SUFFIX = ".amytis-new";
 
-function planFile(rel: string, v: FileVersions, labels: MergeLabels, scratchDir: string): Change | null {
+function planFile(rel: string, raw: FileVersions, labels: MergeLabels, scratchDir: string): Change | null {
   const keepYours = KEEP_YOURS.has(rel) || rel === LOCKFILE;
-  const binary = isBinary(v.base) || isBinary(v.site) || isBinary(v.target);
+  const binary = isBinary(raw.base) || isBinary(raw.site) || isBinary(raw.target);
+  // Compared and merged with LF; written with the site file's line endings.
+  const lf = (buf: Buffer | undefined) => (binary ? buf : normalized(buf));
+  const v: FileVersions = { base: lf(raw.base), cleanBase: lf(raw.cleanBase), site: lf(raw.site), target: lf(raw.target) };
+  const crlf = usesCrlf(raw.site);
+  const out = (buf: Buffer) => (binary ? buf : withCrlf(buf, crlf));
   const decision = decideFile(v, !keepYours && !binary);
 
   switch (decision) {
@@ -304,23 +333,23 @@ function planFile(rel: string, v: FileVersions, labels: MergeLabels, scratchDir:
       return null;
     case "take":
       if (v.target === undefined) return v.site === undefined ? null : { path: rel, kind: "delete" };
-      return { path: rel, kind: v.site === undefined ? "add" : "update", write: v.target };
+      return { path: rel, kind: v.site === undefined ? "add" : "update", write: out(v.target) };
     case "merge": {
       const merged = mergeText(v.site!, v.base, v.target!, labels, scratchDir);
       if (!merged) {
-        return { path: rel, kind: "kept", newCopy: v.target, reason: "git isn't installed, so it couldn't be merged" };
+        return { path: rel, kind: "kept", newCopy: out(v.target!), reason: "git isn't installed, so it couldn't be merged" };
       }
       return merged.conflicts > 0
-        ? { path: rel, kind: "conflict", write: merged.content, conflicts: merged.conflicts }
-        : { path: rel, kind: "merged", write: merged.content };
+        ? { path: rel, kind: "conflict", write: out(merged.content), conflicts: merged.conflicts }
+        : { path: rel, kind: "merged", write: out(merged.content) };
     }
     case "keep-yours":
       if (rel === LOCKFILE) return { path: rel, kind: "kept", reason: "bun install updates it" };
-      return { path: rel, kind: "kept", newCopy: v.target, reason: binary ? "a binary file can't be merged" : "you rewrote it" };
+      return { path: rel, kind: "kept", newCopy: out(v.target!), reason: binary ? "a binary file can't be merged" : "you rewrote it" };
     case "release-deleted":
       return { path: rel, kind: "kept", reason: "Amytis removed it, but you changed it" };
     case "you-deleted":
-      return { path: rel, kind: "kept", newCopy: v.target, reason: "you deleted it, and Amytis changed it" };
+      return { path: rel, kind: "kept", newCopy: out(v.target!), reason: "you deleted it, and Amytis changed it" };
   }
 }
 
@@ -331,11 +360,12 @@ function planPackageJson(siteDir: string, baseDir: string, targetDir: string): {
   const target = read(targetDir);
   const { merged, conflicts } = mergePackageJson(read(baseDir), site, target);
   const text = JSON.stringify(merged, null, 2) + "\n";
-  if (text === siteText) return { change: null, conflicts };
+  if (text === siteText.replace(/\r\n/g, "\n")) return { change: null, conflicts };
   // "update" when the result is just the release's, as a new site gets it.
   const asNewSite = toSitePackage(target, typeof site["name"] === "string" ? site["name"] : "my-site");
   const kind = jsonEqual(merged, asNewSite) ? "update" : "merged";
-  return { change: { path: PACKAGE_JSON, kind, write: Buffer.from(text) }, conflicts };
+  const write = withCrlf(Buffer.from(text), usesCrlf(Buffer.from(siteText)));
+  return { change: { path: PACKAGE_JSON, kind, write }, conflicts };
 }
 
 // The site's config began as the base release's starter config with its title
@@ -351,7 +381,8 @@ function planSiteConfig(
   labels: MergeLabels,
   scratchDir: string,
 ): { change: Change | null; note?: string } {
-  const read = (dir: string, rel: string) => readFile(dir, rel)?.toString("utf8");
+  const read = (dir: string, rel: string) => readFile(dir, rel)?.toString("utf8").replace(/\r\n/g, "\n");
+  const siteRaw = readFile(siteDir, SITE_CONFIG);
   const site = read(siteDir, SITE_CONFIG);
   const starterBase = read(baseDir, "site.config.example.ts");
   const starterTarget = read(targetDir, "site.config.example.ts");
@@ -385,7 +416,7 @@ function planSiteConfig(
 
   const change = planFile(
     SITE_CONFIG,
-    { base: Buffer.from(base), cleanBase: Buffer.from(starterBase), site: Buffer.from(site), target: Buffer.from(target) },
+    { base: Buffer.from(base), cleanBase: Buffer.from(starterBase), site: siteRaw, target: Buffer.from(target) },
     labels,
     scratchDir,
   );
@@ -544,11 +575,11 @@ function gitState(dir: string): GitState {
 // How much of the base release's src/ the site has unchanged. A site made
 // from that release keeps most of it even when customized; a low share means
 // package.json's version isn't the release the site was made from.
-function shareUnchanged(siteDir: string, baseDir: string): number {
+export function shareUnchanged(siteDir: string, baseDir: string): number {
   if (!fs.existsSync(path.join(baseDir, "src"))) return 1;
   const files = listFiles(path.join(baseDir, "src")).map((rel) => `src/${rel}`).filter((rel) => !isEngineOnlyPath(rel));
   if (files.length === 0) return 1;
-  const unchanged = files.filter((rel) => same(readFile(siteDir, rel), readFile(baseDir, rel))).length;
+  const unchanged = files.filter((rel) => same(normalized(readFile(siteDir, rel)), normalized(readFile(baseDir, rel)))).length;
   return unchanged / files.length;
 }
 
