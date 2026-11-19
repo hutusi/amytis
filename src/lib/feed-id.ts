@@ -17,8 +17,19 @@ export const FEED_ID_HINT =
  * Atom requires <id> to be an IRI, so the value must be an absolute URI: a
  * scheme, then no whitespace. It is used verbatim, with no trailing-slash
  * normalization, so a pre-2.0 bare-URL id can be restored exactly.
+ *
+ * Neither `\S` nor `new URL()` rejects control characters, and most are
+ * illegal in XML: the feed escapers strip them (`stripXmlIllegal` in
+ * feed-utils.ts), so the id readers receive would silently differ from
+ * the one written here and never match the old <guid>. So control
+ * characters (C0, DEL, C1), lone surrogates and the U+FFFE/U+FFFF
+ * noncharacters fail validation instead. Other Unicode stays legal: ids of
+ * posts with CJK slugs carry it raw.
  */
+const XML_UNSAFE = /[\p{Cc}\p{Cs}\uFFFE\uFFFF]/u;
+
 export function isValidFeedId(value: string): boolean {
+  if (XML_UNSAFE.test(value)) return false;
   if (!/^[a-z][a-z0-9+.-]*:\S+$/i.test(value)) return false;
   try {
     new URL(value);

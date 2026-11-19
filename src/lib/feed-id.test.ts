@@ -17,4 +17,19 @@ describe('isValidFeedId', () => {
     expect(isValidFeedId('https://example.com/old slug/')).toBe(false);
     expect(isValidFeedId('https://')).toBe(false);
   });
+
+  // Illegal in feed XML, so the feed would strip them and emit a different
+  // id than the author wrote; `\S` / `new URL()` let them through.
+  test('rejects characters that are illegal or invisible in feed XML', () => {
+    for (const ch of ['\u0001', '\u001F', '\u007F', '\u0085', '\uD800', '\uDC00', '\uFFFE', '\uFFFF']) {
+      expect(isValidFeedId(`tag:example.com,2026:a${ch}b`)).toBe(false);
+    }
+  });
+
+  test('keeps non-ASCII ids, as posts with CJK slugs have', () => {
+    expect(isValidFeedId('https://example.com/zh/posts/中文标题/')).toBe(true);
+    expect(isValidFeedId('https://example.com/posts/café/')).toBe(true);
+    // A well-formed surrogate pair (astral character) is fine
+    expect(isValidFeedId('tag:example.com,2026:\u{1F600}')).toBe(true);
+  });
 });

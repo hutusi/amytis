@@ -249,10 +249,14 @@ describe("content/parse", () => {
       ["---", 'title: "Moved"', 'date: "2026-01-01"', `feedId: "${feedId}"`, "---", "", "Body", ""].join("\n");
     fs.writeFileSync(good, frontmatter("https://example.com/posts/old-slug"), "utf8");
     fs.writeFileSync(bad, frontmatter("/posts/old-slug/"), "utf8");
+    // A YAML "\x01" escape decodes to U+0001, which the feed would strip, changing the id
+    const control = path.join(tempDir, "control.md");
+    fs.writeFileSync(control, frontmatter("tag:example.com,2026:a\\x01b"), "utf8");
 
     try {
       expect(parseMarkdownFileForTests(good, "moved").feedId).toBe("https://example.com/posts/old-slug");
       expect(() => parseMarkdownFileForTests(bad, "bad")).toThrow(/feedId/);
+      expect(() => parseMarkdownFileForTests(control, "control")).toThrow(/feedId/);
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

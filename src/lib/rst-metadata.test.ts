@@ -81,5 +81,7 @@ describe('rst-metadata', () => {
     const metadata: RstMetadata = {};
     expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(RstParseError);
     expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(/absolute URI/);
+    // Control characters would be stripped from the feed, changing the id
+    expect(() => normalizeRstMetadata({ feedid: 'tag:example.com,2026:a\u0001b' })).toThrow(RstParseError);
   });
 });
