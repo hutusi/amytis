@@ -97,6 +97,8 @@ bun dev
 
 脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts` 并移除示例站点的中文翻译（`content/zh/`），填入站点标题和描述，修改包名，并安装依赖。只有 Amytis 仓库自己用到的内容不会带进新站点：测试（它们测试的是示例站点）、CI 工作流和脚手架自身的源码；在新站点里运行 `bun run validate` 会依次做代码检查、类型检查和构建。
 
+以后要把新版本的 Amytis 带进站点，先提交你的改动，再运行 `bun run upgrade`（create-amytis 0.2.0 之前创建的站点用 `bunx create-amytis@latest upgrade`）。它会像 git 那样把新版本合并进来，保留你的改动和内容。详见[升级站点](docs/guides/upgrading-a-site.md)（英文）。
+
 ### 克隆并运行
 
 1. **安装依赖:**
@@ -322,7 +324,7 @@ amytis/
       content/          # 数据访问层（posts、series、books、flows、notes）
   tests/                # 单元、集成、e2e、工具测试
   packages/
-    create-amytis/      # `bun create amytis` 脚手架 CLI
+    create-amytis/      # `bun create amytis` 脚手架与升级 CLI
   site.config.ts        # 站点配置
 ```
 

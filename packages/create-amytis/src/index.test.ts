@@ -8,6 +8,7 @@ import {
   getArchiveMetadata,
   patchPackageJson,
   patchSiteConfig,
+  patchSiteConfigSource,
   removeEngineFiles,
   removeLocaleTrees,
   setUpNewSite,
@@ -159,6 +160,30 @@ describe("patchSiteConfig", () => {
     expect(result).toContain("  footerText: `© ${new Date().getFullYear()} Tom $& Jerry. All rights reserved.`,");
     expect(result).toContain(`    title: "A place for ideas to grow",`);
     expect(result).not.toContain("My Garden");
+  });
+
+  test("replaces a starter value that continues on the next line", () => {
+    const starter = 'export const siteConfig = {\n  title: "My \\\nGarden",\n  description: "A garden.",\n  footerText: `Mine \\\r\n${new Date().getFullYear()}`,\n};\n';
+    const result = patchSiteConfigSource(starter, "New", "Fresh");
+    expect(result).toContain('  title: "New",\n  description: "Fresh",\n');
+    expect(result).not.toContain("Garden");
+    expect(result).not.toContain("Mine");
+  });
+
+  test("replaces a whole starter value, escaped quotes included", () => {
+    const starter = `export const siteConfig = {
+  title: "Ada's \\"Garden\\"",
+  description: { en: "Say \\"hi\\"", zh: "说 \\"你好\\"" },
+  footerText: \`© \\\`Ada\\\` \${new Date().getFullYear()}\`,
+};
+`;
+    const result = patchSiteConfigSource(starter, "New", "Fresh");
+    expect(result).toBe(`export const siteConfig = {
+  title: "New",
+  description: { en: "Fresh", zh: "Fresh" },
+  footerText: \`© \${new Date().getFullYear()} New. All rights reserved.\`,
+};
+`);
   });
 });
 
@@ -374,6 +399,8 @@ describe("sync with the real repo files", () => {
       expect({ name, command }).toEqual({ name, command: expect.not.stringMatching(/\btests\/|packages\/|playwright|bun run test/) });
     }
     expect(scripts.validate).toBe("bun run lint && bun run typecheck && bun run build:dev");
+    // ...and gain the one that brings in a newer release.
+    expect(scripts.upgrade).toBe("bunx create-amytis@latest upgrade");
   });
 });
 
@@ -457,7 +484,7 @@ describe("patchPackageJson", () => {
     expect(() => patchPackageJson(dir, "my-garden")).not.toThrow();
   });
 
-  test("drops the test scripts and the test step of validate", () => {
+  test("drops the test scripts and the test step of validate, and adds upgrade", () => {
     const dir = makeTmpDir();
     tmpDirs.push(dir);
     fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
@@ -475,6 +502,7 @@ describe("patchPackageJson", () => {
       build: "next build",
       testing: "kept: only test and test:* are the engine's",
       validate: "bun run lint && bun run build:dev",
+      upgrade: "bunx create-amytis@latest upgrade",
     });
   });
 });
@@ -505,12 +533,19 @@ describe("buildExtractCommand", () => {
       "-ExecutionPolicy",
       "Bypass",
       "-Command",
-      "Expand-Archive",
-      "-LiteralPath",
-      "C:\\tmp\\amytis-v1.13.0.zip",
-      "-DestinationPath",
-      "C:\\tmp\\my-garden.__tmp__",
-      "-Force",
+      "Expand-Archive -LiteralPath 'C:\\tmp\\amytis-v1.13.0.zip' -DestinationPath 'C:\\tmp\\my-garden.__tmp__' -Force",
+    ]);
+  });
+
+  test("keeps Windows paths with spaces and quotes as one PowerShell literal each", () => {
+    // PowerShell joins the arguments after -Command once Windows has removed
+    // their quotes, so the whole command must be one argument.
+    const archive = "C:\\Users\\Jane Doe\\AppData\\Local\\Temp\\amytis-v2.0.2.zip";
+    const out = "C:\\Users\\Jane Doe\\O'Brien’s sites\\my-garden.__tmp__";
+    const command = buildExtractCommand(archive, out, "zip", "win32");
+    expect(command.args.slice(5)).toEqual([
+      "Expand-Archive -LiteralPath 'C:\\Users\\Jane Doe\\AppData\\Local\\Temp\\amytis-v2.0.2.zip' " +
+        "-DestinationPath 'C:\\Users\\Jane Doe\\O''Brien’’s sites\\my-garden.__tmp__' -Force",
     ]);
   });
 

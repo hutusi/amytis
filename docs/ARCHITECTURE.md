@@ -568,7 +568,7 @@ plain strings in the example.
 `create-amytis` copies the example over `site.config.ts` in a new site and
 removes the locale trees (`content/<locale>/`), which a single-language config
 can't build. It also removes what only this repo uses (`setUpNewSite` in
-`packages/create-amytis/src/index.ts`): the tests, which test the demo site's
+`packages/create-amytis/src/setup.ts`): the tests, which test the demo site's
 content and config, `src/test-utils/`, `.github/`, `packages/` and the `test*`
 scripts. CI's Starter site job runs `setUpNewSite` on the checkout, then the
 new site's `validate` (lint, typecheck, `build:dev`) and a link check in
@@ -577,6 +577,27 @@ empty arrays, and treat locale-aware fields as `string | Record<string, string>`
 It also has to work without the tests: nothing outside them may import from
 them, and with disabled features (books and flows are off in the starter) no
 page may link to a page that isn't built.
+
+Existing sites take a new release with `create-amytis upgrade`
+(`packages/create-amytis/src/upgrade.ts`; user guide:
+`docs/guides/upgrading-a-site.md`). The site's `package.json` version names
+the release it was made from; the upgrade downloads that one and the target,
+and three-way merges each file (`git merge-file` for text). `content/` and
+`public/images/` are never touched. `package.json` merges by key.
+`site.config.ts` merges against the base release's `site.config.example.ts`
+with the site's title and description patched in, which is how new config
+fields reach existing sites. So a new field belongs in the example like any
+other, and a step owners must take by hand belongs in the changelog's
+`### Upgrading from …` section, which the upgrade prints. CI's Upgrade check
+job makes a site from the last release tag (`git describe … HEAD^`) with the
+scaffolder that release shipped, upgrades it to the checkout, checks that it
+gained the `upgrade` script, then runs its `validate` and an error-mode link
+check. By default the upgrade only writes what git can undo: it stops outside
+git, on uncommitted changes (checked again just before writing) and on
+existing files git doesn't track. `--force` skips those git checks, but not the
+others: it still stops if the site gets a new commit or version while the
+upgrade downloads, never writes through a symbolic link, and never writes a
+new `*.amytis-new` copy over an existing file.
 
 ### Config validation
 

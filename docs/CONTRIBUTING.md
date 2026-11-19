@@ -315,4 +315,6 @@ Both packages publish to npm from GitHub Actions with npm Trusted Publishing, so
 
 Don't create a GitHub release for a `create-amytis-v*` tag: it would run `publish.yml` and become the latest release that new sites are made from.
 
+**Existing sites** take a release with `create-amytis upgrade` ([guide](guides/upgrading-a-site.md)). The upgrade prints each release's `### Upgrading from …` section of the changelog, so put anything site owners must do by hand there. CI's **Upgrade check** job makes a site from the last release tag, upgrades it to the commit under test and builds it: a change that fails there would fail in existing sites. When a create-amytis change is what makes an engine release work in new or upgraded sites, release that change first and say so in the changelog ("Needs create-amytis X.Y.Z").
+
 The workflow can only publish once npm trusts it. In the package's settings on npmjs.com, under **Trusted Publisher**, add GitHub Actions with the repository `hutusi/amytis` and the workflow `publish-create-amytis.yml`.

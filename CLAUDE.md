@@ -49,6 +49,8 @@ Quick "where do routes live" lookup. Full reference: `docs/ARCHITECTURE.md`.
 
 The code must also type-check and build against the example: `create-amytis` makes it the new site's `site.config.ts` (and drops `content/<locale>/` trees, the tests, `src/test-utils/`, `.github/` and `packages/`), and CI's **Starter site** job builds the repo that way (`setUpNewSite`, then `validate`, then a link check that fails on broken links). So app code and scripts must never import from tests, and must not lean on types only test files load. Give an empty array in it a type (`[] as Foo[]`, or TypeScript infers `never[]`), and read a locale-aware field as `string | Record<string, string>`, never as a map.
 
+Existing sites take releases through `create-amytis upgrade` (`packages/create-amytis/src/upgrade.ts`), which merges new `site.config.example.ts` fields into their config. CI's **Upgrade check** job upgrades a site made from the last release tag to the checkout and builds it. Anything site owners must do by hand goes in the CHANGELOG's `### Upgrading from …` section, which the upgrade prints.
+
 ## Gotchas (things Claude will get wrong on first try)
 
 Feature-local gotchas live in path-scoped rules under `.claude/rules/` and auto-load when you touch matching files: `rst.md` (docutils setup, sanitize-html allowlist, disk-cache version) and `immersive-reading.md` (chrome-hiding hooks, provider boundaries, prefs persistence).

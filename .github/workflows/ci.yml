@@ -105,6 +105,72 @@ jobs:
       - name: No broken links
         run: bun scripts/check-links.ts --site out --mode error
 
+  upgrade-check:
+    # Sites already made from the last release upgrade with `create-amytis
+    # upgrade`. A change they can't take (a config field the starter merge
+    # can't bring in, code their content no longer builds with) fails here,
+    # before it is released, instead of in someone's site.
+    name: Upgrade check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # The history and tags, to find the last release.
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.11
+
+      # git archive gives the same files as a release's download. The release
+      # is the last one before this commit, so a release commit is checked
+      # against the one before it. The site is made by the scaffolder that
+      # release shipped, as the sites people have were, not by this commit's,
+      # and installed before its first commit, as `bun create amytis` does: the
+      # install renames the package in bun.lock, so the lockfile takes the
+      # kept-lockfile path real sites take, and the site has its dependencies
+      # even when the upgrade changes nothing and installs nothing.
+      - name: Make a site from the last release
+        run: |
+          base=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)
+          echo "Last release: $base"
+          mkdir -p "$RUNNER_TEMP/base" "$RUNNER_TEMP/target" "$RUNNER_TEMP/site"
+          git archive "$base" | tar -x -C "$RUNNER_TEMP/base"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/target"
+          cp -R "$RUNNER_TEMP/base/." "$RUNNER_TEMP/site"
+          SITE="$RUNNER_TEMP/site" bun -e "import { setUpNewSite } from '$RUNNER_TEMP/base/packages/create-amytis/src/index.ts';
+            setUpNewSite(process.env.SITE, { projectName: 'upgrade-check', title: 'Upgrade Check', description: 'A site from the last release' });"
+          cd "$RUNNER_TEMP/site"
+          bun install
+          git init -q
+          git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -qm "Site made from $base"
+
+      # Exits 1 if the upgrade leaves anything to resolve by hand, which a
+      # site that changed nothing never should.
+      - name: Upgrade it to this commit
+        working-directory: ${{ runner.temp }}/site
+        run: bun "$GITHUB_WORKSPACE/packages/create-amytis/src/index.ts" upgrade --base-dir "$RUNNER_TEMP/base" --target-dir "$RUNNER_TEMP/target"
+
+      # Every upgraded site has `bun run upgrade`, including ones made before
+      # create-amytis added it, and this site never changed it.
+      - name: The site can upgrade again
+        working-directory: ${{ runner.temp }}/site
+        run: |
+          node -e "const s = require('./package.json').scripts; if (s.upgrade !== 'bunx create-amytis@latest upgrade') throw new Error('unexpected upgrade script: ' + JSON.stringify(s.upgrade));"
+
+      - name: Validate
+        working-directory: ${{ runner.temp }}/site
+        run: bun run validate
+
+      - name: No broken links
+        working-directory: ${{ runner.temp }}/site
+        run: bun scripts/check-links.ts --site out --mode error
+
   windows-build:
     name: Windows build
     runs-on: windows-latest

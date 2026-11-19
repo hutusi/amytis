@@ -97,6 +97,8 @@ bun dev
 
 The scaffold command downloads the latest tagged Amytis release, starts your `site.config.ts` from the single-language starter (`site.config.example.ts`) and drops the demo's Chinese translations (`content/zh/`), fills in your site title and description, renames the package and installs dependencies. It leaves out what only the Amytis repo uses: its test suite (which tests the demo site), its CI workflows and the scaffolder's own source; `bun run validate` in the new site runs lint, the type check and a build.
 
+To bring a newer Amytis release into the site later, commit your work and run `bun run upgrade` (in sites made before create-amytis 0.2.0: `bunx create-amytis@latest upgrade`). It merges the release in the way git would, and keeps your changes and your content. See [Upgrading a site](docs/guides/upgrading-a-site.md).
+
 ### Clone & Run
 
 1. **Install Dependencies:**
@@ -316,7 +318,7 @@ amytis/
       content/          # Data access layer (posts, series, books, flows, notes)
   tests/                # Unit, integration, e2e, tooling tests
   packages/
-    create-amytis/      # `bun create amytis` scaffold CLI
+    create-amytis/      # `bun create amytis` scaffold and upgrade CLI
   site.config.ts        # Site configuration
 ```
 
