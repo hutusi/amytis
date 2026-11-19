@@ -462,3 +462,86 @@ describe("stripXmlIllegal", () => {
     expect(stripXmlIllegal(legal)).toBe(legal);
   });
 });
+
+// Feed item ids (RSS <guid>, Atom <id>) are permanent: readers store every id
+// they have seen, forever, and treat an unknown id as a new item. Changing
+// the id's form (dropping the trailing slash, a new host, a new scheme)
+// re-shows every item in every subscriber's reader once. v2.0.0 did that
+// once, moving bare /slug ids to the /slug/ URLs the export serves. These
+// tests pin the form with literal URLs, not withTrailingSlash(), so a
+// change to the helper itself fails here too.
+describe("Integration: feed item ids are permanent", () => {
+  const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
+
+  function allItemUrls(): string[] {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      return getFeedItems("all").map((item) => item.url);
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  }
+
+  test("every id is an absolute, trailing-slash URL on the site host", () => {
+    const urls = allItemUrls();
+    expect(urls.length).toBeGreaterThan(0);
+    for (const url of urls) {
+      expect(url.startsWith(`${baseUrl}/`)).toBe(true);
+      expect(url.endsWith("/")).toBe(true);
+      expect(url.endsWith("//")).toBe(false);
+    }
+  });
+
+  test("ids are unique across posts and flows", () => {
+    const urls = allItemUrls();
+    expect(new Set(urls).size).toBe(urls.length);
+  });
+
+  test("default-tree post ids keep their exact form", () => {
+    const urls = allItemUrls();
+    expect(urls).toContain(`${baseUrl}/posts/code-block-features-showcase/`);
+    expect(urls).toContain(`${baseUrl}/markdown-showcase/syntax-highlighting/`);
+  });
+
+  test("locale-tree originals get /<locale>/ ids; twins get none", () => {
+    const urls = allItemUrls();
+    expect(urls).toContain(`${baseUrl}/zh/posts/zh-original-demo/`);
+    expect(urls).toContain(`${baseUrl}/zh/zh-demo-series/di-yi-pian/`);
+    // zh twin of a default-tree post: the feed carries the default post only
+    expect(urls).not.toContain(`${baseUrl}/zh/posts/code-block-features-showcase/`);
+  });
+
+  test("flow ids are /flows/YYYY/MM/DD/", () => {
+    const flowUrls = allItemUrls().filter((url) => url.startsWith(`${baseUrl}/flows/`));
+    expect(flowUrls.length).toBe(getAllFlows().length);
+    for (const url of flowUrls) {
+      expect(url.slice(baseUrl.length)).toMatch(/^\/flows\/\d{4}\/\d{2}\/\d{2}\/$/);
+    }
+  });
+
+  test("ids follow posts.basePath and keep the trailing slash", () => {
+    const original = siteConfig.posts.basePath;
+    try {
+      siteConfig.posts.basePath = "articles";
+      const urls = allItemUrls();
+      expect(urls).toContain(`${baseUrl}/articles/code-block-features-showcase/`);
+      expect(urls).toContain(`${baseUrl}/zh/articles/zh-original-demo/`);
+      expect(urls).not.toContain(`${baseUrl}/posts/code-block-features-showcase/`);
+    } finally {
+      siteConfig.posts.basePath = original;
+    }
+  });
+
+  test("ids follow series.customPaths and keep the trailing slash", () => {
+    const original = siteConfig.series.customPaths;
+    try {
+      siteConfig.series.customPaths = { "markdown-showcase": "showcase" };
+      const urls = allItemUrls();
+      expect(urls).toContain(`${baseUrl}/showcase/syntax-highlighting/`);
+      expect(urls).not.toContain(`${baseUrl}/markdown-showcase/syntax-highlighting/`);
+    } finally {
+      siteConfig.series.customPaths = original;
+    }
+  });
+});

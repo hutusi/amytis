@@ -73,6 +73,32 @@ function xmlIllegalCodePoints(xml: string): number[] {
   );
 }
 
+interface FeedItemIdentity {
+  link: string;
+  id: string;
+  /** RSS `isPermaLink` attribute; undefined for Atom. */
+  isPermaLink?: string;
+}
+
+/** Per-item link + id, read from <item> (RSS) or <entry> (Atom) blocks only. */
+function extractItemIdentities(body: string, kind: FeedKind): FeedItemIdentity[] {
+  const blockPattern = kind === 'rss' ? /<item>([\s\S]*?)<\/item>/g : /<entry>([\s\S]*?)<\/entry>/g;
+  return Array.from(stripCdata(body).matchAll(blockPattern), ([, block]) => {
+    if (kind === 'rss') {
+      const guid = /<guid isPermaLink="([^"]*)">([^<]*)<\/guid>/.exec(block);
+      return {
+        link: /<link>([^<]*)<\/link>/.exec(block)?.[1] ?? '',
+        id: guid?.[2] ?? '',
+        isPermaLink: guid?.[1],
+      };
+    }
+    return {
+      link: /<link href="([^"]*)"/.exec(block)?.[1] ?? '',
+      id: /<id>([^<]*)<\/id>/.exec(block)?.[1] ?? '',
+    };
+  });
+}
+
 interface FeedResult {
   status: number;
   contentType: string | null;
@@ -139,6 +165,25 @@ describe('Integration: feed route handlers', () => {
 
       test('contains no code points XML forbids', () => {
         expect(xmlIllegalCodePoints(results.get(name)!.body)).toEqual([]);
+      });
+
+      // Item ids are permanent (see "feed item ids are permanent" in
+      // feed-utils.test.ts): readers re-show every item whose id changes form.
+      test('item ids are the trailing-slash page URL, unique per feed', () => {
+        const { body } = results.get(name)!;
+        const items = extractItemIdentities(body, kind);
+        expect(items.length).toBeGreaterThan(0);
+        for (const { link, id, isPermaLink } of items) {
+          expect(id.startsWith(`${baseUrl}/`)).toBe(true);
+          expect(id.endsWith('/')).toBe(true);
+          expect(id).toBe(link);
+          if (kind === 'rss') expect(isPermaLink).toBe('true');
+        }
+        const ids = items.map((item) => item.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        if (name.startsWith('/flows/')) {
+          for (const id of ids) expect(id.slice(baseUrl.length)).toMatch(/^\/flows\/\d{4}\/\d{2}\/\d{2}\/$/);
+        }
       });
 
       test('structural XML contains no interpolated undefined values', () => {

@@ -112,6 +112,10 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
     source: FeedContentSource;
   }
 
+  // An item's url doubles as its feed id (RSS <guid>, Atom <id>), and feed
+  // ids are permanent: readers keep every id they have seen and show an
+  // unknown one as a new item. Keep the canonical trailing-slash form
+  // exactly; changing it re-shows every item in every reader once.
   const getPostEntries = (): FeedEntry[] => getPostsWithLocaleOriginals().map((post) => {
     const url = withTrailingSlash(`${baseUrl}${getPostUrl(post)}`);
     return {
@@ -129,6 +133,7 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
   });
 
   const getFlowEntries = (): FeedEntry[] => getAllFlows().map((flow) => {
+    // Permanent feed id too; see getPostEntries.
     const url = withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`);
     return {
       item: {
