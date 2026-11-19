@@ -26,6 +26,33 @@ describe('isValidFeedId', () => {
     }
   });
 
+  // new URL() accepts these (a non-fatal validation error), but an Atom <id>
+  // must be an IRI, and the feed emits the original string.
+  test('rejects malformed percent escapes and characters IRIs never carry raw', () => {
+    for (const id of [
+      'https://example.com/%ZZ',
+      'https://example.com/a%2',
+      'https://example.com/a%',
+      'tag:example.com,2026:50%off',
+      'https://example.com/a<b',
+      'https://example.com/a>b',
+      'https://example.com/a"b',
+      'https://example.com/a{b}',
+      'https://example.com/a|b',
+      'https://example.com/a\\b',
+      'https://example.com/a^b',
+      'https://example.com/a`b',
+    ]) {
+      expect(isValidFeedId(id)).toBe(false);
+    }
+  });
+
+  test('keeps valid percent escapes exactly as written', () => {
+    expect(isValidFeedId('https://example.com/posts/100%25-done/')).toBe(true);
+    expect(isValidFeedId('https://example.com/posts/%E4%B8%AD%E6%96%87/')).toBe(true);
+    expect(isValidFeedId('tag:example.com,2026:a%2fb')).toBe(true);
+  });
+
   test('keeps non-ASCII ids, as posts with CJK slugs have', () => {
     expect(isValidFeedId('https://example.com/zh/posts/中文标题/')).toBe(true);
     expect(isValidFeedId('https://example.com/posts/café/')).toBe(true);

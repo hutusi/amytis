@@ -28,8 +28,18 @@ export const FEED_ID_HINT =
  */
 const XML_UNSAFE = /[\p{Cc}\p{Cs}\uFFFE\uFFFF]/u;
 
+/**
+ * Not an IRI (RFC 3987): a `%` that doesn't start a two-hex-digit escape,
+ * or an ASCII character IRIs never carry raw. `new URL()` accepts both,
+ * only flagging a non-fatal error and encoding them when it serializes,
+ * but the feed emits the original string. Valid escapes such as `%25`
+ * pass untouched: a permanent id is never normalized.
+ */
+const NOT_IRI = /%(?![0-9A-Fa-f]{2})|[<>"{}|\\^`]/;
+
 export function isValidFeedId(value: string): boolean {
   if (XML_UNSAFE.test(value)) return false;
+  if (NOT_IRI.test(value)) return false;
   if (!/^[a-z][a-z0-9+.-]*:\S+$/i.test(value)) return false;
   try {
     new URL(value);
