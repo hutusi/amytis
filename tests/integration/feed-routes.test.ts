@@ -169,6 +169,7 @@ describe('Integration: feed route handlers', () => {
 
       // Item ids are permanent (see "feed item ids are permanent" in
       // feed-utils.test.ts): readers re-show every item whose id changes form.
+      // The demo corpus sets no feedId, so every id is still its page URL.
       test('item ids are the trailing-slash page URL, unique per feed', () => {
         const { body } = results.get(name)!;
         const items = extractItemIdentities(body, kind);

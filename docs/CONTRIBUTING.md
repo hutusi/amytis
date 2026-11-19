@@ -211,6 +211,9 @@ has posts; pages without a translation simply have no `/zh/` twin (the
 language switch falls back to the locale home). Moving existing published
 content into a locale tree changes its URL — declare the old paths in
 `redirectFrom` (see `docs/guides/migrating-content-to-locale-trees.md`).
+The same goes for any move (a slug rename, a new series or basePath), and
+to keep feed readers from showing the moved post again as new, set
+`feedId` to its old `<guid>` from the published feed.
 
 ## Running Tests
 

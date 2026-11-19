@@ -15,7 +15,13 @@ import { sanitizeRenderedRstHtml } from './rst-sanitize';
 
 export interface FeedItem {
   title: string;
+  /** The page URL: RSS <link>, Atom <link href>. */
   url: string;
+  /**
+   * The item's permanent identity: RSS <guid>, Atom <id>. The page URL
+   * unless a post sets `feedId` (see `src/lib/feed-id.ts`).
+   */
+  id: string;
   date: Date;
   excerpt: string;
   /** Rendered HTML content for use in content:encoded / Atom <content> */
@@ -92,6 +98,27 @@ function itemContentHtml(
   });
 }
 
+/**
+ * Two items sharing a feed id look like one item to a reader, which shows
+ * one and silently drops the other. Canonical URLs are unique already, so a
+ * clash means a `feedId` repeats another post's or matches another item's
+ * page URL: fail the build rather than ship a feed that loses a post.
+ */
+export function assertUniqueFeedIds(items: ReadonlyArray<Pick<FeedItem, 'id' | 'url'>>): void {
+  const urlById = new Map<string, string>();
+  for (const { id, url } of items) {
+    const other = urlById.get(id);
+    if (other !== undefined) {
+      throw new Error(
+        `[amytis] Feed id "${id}" is shared by ${other} and ${url}. ` +
+        'Feed readers would show only one of them. Give each post a distinct feedId ' +
+        '(or remove a feedId that matches another page\'s URL).'
+      );
+    }
+    urlById.set(id, url);
+  }
+}
+
 export type FeedType = 'main' | 'posts' | 'flows' | 'all';
 
 /**
@@ -112,16 +139,18 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
     source: FeedContentSource;
   }
 
-  // An item's url doubles as its feed id (RSS <guid>, Atom <id>), and feed
-  // ids are permanent: readers keep every id they have seen and show an
-  // unknown one as a new item. Keep the canonical trailing-slash form
-  // exactly; changing it re-shows every item in every reader once.
+  // An item's feed id (RSS <guid>, Atom <id>) is its url unless the post
+  // sets feedId, and feed ids are permanent: readers keep every id they
+  // have seen and show an unknown one as a new item. Keep the canonical
+  // trailing-slash form exactly; changing it re-shows every item in every
+  // reader once.
   const getPostEntries = (): FeedEntry[] => getPostsWithLocaleOriginals().map((post) => {
     const url = withTrailingSlash(`${baseUrl}${getPostUrl(post)}`);
     return {
       item: {
         title: post.title,
         url,
+        id: post.feedId ?? url,
         date: new Date(post.date),
         excerpt: post.excerpt,
         content: '',
@@ -133,12 +162,14 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
   });
 
   const getFlowEntries = (): FeedEntry[] => getAllFlows().map((flow) => {
-    // Permanent feed id too; see getPostEntries.
+    // Permanent feed id too; see getPostEntries. Flows are date-keyed, so
+    // they take no feedId override.
     const url = withTrailingSlash(`${baseUrl}${getFlowUrl(flow.slug)}`);
     return {
       item: {
         title: flow.title,
         url,
+        id: url,
         date: new Date(flow.date),
         excerpt: flow.excerpt,
         content: '',
@@ -149,16 +180,22 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
     };
   });
 
+  const postEntries = getPostEntries();
+  const flowEntries = getFlowEntries();
+  // Over every item any feed serves, so a clash fails each feed's build,
+  // not only the firehose's.
+  assertUniqueFeedIds([...postEntries, ...flowEntries].map(({ item }) => item));
+
   let entries: FeedEntry[];
   if (feedType === 'posts') {
-    entries = getPostEntries();
+    entries = postEntries;
   } else if (feedType === 'flows') {
-    entries = getFlowEntries();
+    entries = flowEntries;
   } else if (feedType === 'all') {
-    entries = [...getPostEntries(), ...getFlowEntries()];
+    entries = [...postEntries, ...flowEntries];
   } else {
     // main
-    entries = includeFlows ? [...getPostEntries(), ...getFlowEntries()] : getPostEntries();
+    entries = includeFlows ? [...postEntries, ...flowEntries] : postEntries;
   }
 
   // Sort descending by date
@@ -197,6 +234,49 @@ const escapeXml = (v: string) =>
 
 const escapeCdata = (v: string) => stripXmlIllegal(v).replace(/]]>/g, ']]]]><![CDATA[>');
 
+/**
+ * One RSS <item>. The <guid> is the item's permanent id; it is a permalink
+ * only while it still is the page URL (a `feedId` override is opaque).
+ */
+export function rssItemXml(item: FeedItem, fullContent: boolean): string {
+  const fullContentXml = fullContent
+    ? `\n          <content:encoded><![CDATA[${escapeCdata(item.content)}]]></content:encoded>`
+    : '';
+  const authorsXml = item.authors?.length
+    ? item.authors.map((a) => `\n          <dc:creator><![CDATA[${escapeCdata(a)}]]></dc:creator>`).join('')
+    : '';
+  const isPermaLink = item.id === item.url ? 'true' : 'false';
+  return `
+        <item>
+          <title><![CDATA[${escapeCdata(item.title)}]]></title>
+          <link>${escapeXml(item.url)}</link>
+          <guid isPermaLink="${isPermaLink}">${escapeXml(item.id)}</guid>
+          <pubDate>${item.date.toUTCString()}</pubDate>
+          <description><![CDATA[${escapeCdata(item.excerpt)}]]></description>${fullContentXml}${authorsXml}
+          ${item.tags.map((tag) => `<category><![CDATA[${escapeCdata(tag)}]]></category>`).join('')}
+        </item>`;
+}
+
+/** One Atom <entry>; <id> is the item's permanent id, <link> its page. */
+export function atomEntryXml(item: FeedItem, fullContent: boolean): string {
+  const contentXml = fullContent
+    ? `<content type="html"><![CDATA[${escapeCdata(item.content)}]]></content>\n    <summary><![CDATA[${escapeCdata(item.excerpt)}]]></summary>`
+    : `<summary><![CDATA[${escapeCdata(item.excerpt)}]]></summary>`;
+  const authorsXml = item.authors?.map((a) => `<author><name>${escapeXml(a)}</name></author>`).join('') ?? '';
+  const categoriesXml = item.tags.map((tag) => `<category term="${escapeXml(tag)}" />`).join('');
+  return `
+  <entry>
+    <title><![CDATA[${escapeCdata(item.title)}]]></title>
+    <link href="${escapeXml(item.url)}" />
+    <id>${escapeXml(item.id)}</id>
+    <published>${item.date.toISOString()}</published>
+    <updated>${item.date.toISOString()}</updated>
+    ${contentXml}
+    ${authorsXml}
+    ${categoriesXml}
+  </entry>`;
+}
+
 export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Response {
   const { format, content: contentMode } = siteConfig.feed;
   if (format === 'atom') {
@@ -216,25 +296,7 @@ export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Respon
     ? `\n    <image>\n      <url>${escapeXml(resolveImageUrl(undefined, siteConfig.ogImage, baseUrl))}</url>\n      <title>${escapeXml(siteTitle)}</title>\n      <link>${escapeXml(baseUrl)}</link>\n    </image>`
     : '';
 
-  const rssItemsXml = items
-    .map((item) => {
-      const fullContentXml = useFullContent
-        ? `\n          <content:encoded><![CDATA[${escapeCdata(item.content)}]]></content:encoded>`
-        : '';
-      const authorsXml = item.authors?.length
-        ? item.authors.map((a) => `\n          <dc:creator><![CDATA[${escapeCdata(a)}]]></dc:creator>`).join('')
-        : '';
-      return `
-        <item>
-          <title><![CDATA[${escapeCdata(item.title)}]]></title>
-          <link>${escapeXml(item.url)}</link>
-          <guid isPermaLink="true">${escapeXml(item.url)}</guid>
-          <pubDate>${item.date.toUTCString()}</pubDate>
-          <description><![CDATA[${escapeCdata(item.excerpt)}]]></description>${fullContentXml}${authorsXml}
-          ${item.tags.map((tag) => `<category><![CDATA[${escapeCdata(tag)}]]></category>`).join('')}
-        </item>`;
-    })
-    .join('');
+  const rssItemsXml = items.map((item) => rssItemXml(item, useFullContent)).join('');
 
   const rssXml = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"${contentNs}>
@@ -276,26 +338,7 @@ export function generateAtomFeed(feedType: FeedType, selfUrlPath: string): Respo
   const feedAuthorName = defaultAuthor ? defaultAuthor : siteTitle;
   const feedAuthorXml = hasAllAuthors ? '' : `\n  <author><name>${escapeXml(feedAuthorName)}</name></author>`;
 
-  const entriesXml = items
-    .map((item) => {
-      const contentXml = useFullContent
-        ? `<content type="html"><![CDATA[${escapeCdata(item.content)}]]></content>\n    <summary><![CDATA[${escapeCdata(item.excerpt)}]]></summary>`
-        : `<summary><![CDATA[${escapeCdata(item.excerpt)}]]></summary>`;
-      const authorsXml = item.authors?.map((a) => `<author><name>${escapeXml(a)}</name></author>`).join('') ?? '';
-      const categoriesXml = item.tags.map((tag) => `<category term="${escapeXml(tag)}" />`).join('');
-      return `
-  <entry>
-    <title><![CDATA[${escapeCdata(item.title)}]]></title>
-    <link href="${escapeXml(item.url)}" />
-    <id>${escapeXml(item.url)}</id>
-    <published>${item.date.toISOString()}</published>
-    <updated>${item.date.toISOString()}</updated>
-    ${contentXml}
-    ${authorsXml}
-    ${categoriesXml}
-  </entry>`;
-    })
-    .join('');
+  const entriesXml = items.map((item) => atomEntryXml(item, useFullContent)).join('');
 
   const atomXml = `<?xml version="1.0" encoding="UTF-8" ?>
 <feed xmlns="http://www.w3.org/2005/Atom">

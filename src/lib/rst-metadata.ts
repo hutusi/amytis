@@ -8,6 +8,8 @@
  * the error type live here and only here.
  */
 
+import { FEED_ID_HINT, isValidFeedId } from './feed-id';
+
 export class RstParseError extends Error {
   constructor(message: string) {
     super(message);
@@ -35,6 +37,7 @@ export interface RstMetadata {
   toc?: boolean;
   commentable?: boolean;
   redirectFrom?: string[];
+  feedId?: string;
   type?: 'collection';
 }
 
@@ -65,6 +68,14 @@ function parseStringArray(field: string, value: unknown): string[] {
       .filter(Boolean);
   }
   throw new RstParseError(`Invalid list for "${field}": ${String(value)}`);
+}
+
+function parseFeedId(value: unknown): string {
+  const feedId = parseString('feedId', value);
+  if (!isValidFeedId(feedId)) {
+    throw new RstParseError(`Invalid feedId "${feedId}": ${FEED_ID_HINT}`);
+  }
+  return feedId;
 }
 
 function parseDate(value: unknown): string {
@@ -164,6 +175,9 @@ export function normalizeRstMetadataField(metadata: RstMetadata, rawField: strin
       break;
     case 'redirectfrom':
       metadata.redirectFrom = parseStringArray('redirectFrom', value);
+      break;
+    case 'feedid':
+      metadata.feedId = parseFeedId(value);
       break;
     case 'type':
       metadata.type = parseType(value);

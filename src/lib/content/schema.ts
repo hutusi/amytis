@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FEED_ID_HINT, isValidFeedId } from '../feed-id';
 
 /**
  * Frontmatter fields and validation-error helpers shared across the content
@@ -87,6 +88,9 @@ export function isDraftVisible(
 
 /** Optional tag list; defaults to []. */
 export const tagsField = z.array(z.string()).optional().default([]);
+
+/** Optional permanent feed id override (see `src/lib/feed-id.ts`). */
+export const feedIdField = z.string().trim().refine(isValidFeedId, { message: FEED_ID_HINT }).optional();
 
 /**
  * Build the error thrown when frontmatter fails Zod validation. The

@@ -68,4 +68,18 @@ describe('rst-metadata', () => {
     normalizeRstMetadataField(metadata, 'tags', '  ');
     expect(metadata.tags).toEqual([]);
   });
+
+  test('feedId parses identically from both adapters', () => {
+    const fromPython = normalizeRstMetadata({ feedid: 'https://example.com/posts/old/' });
+    const fromStrings: RstMetadata = {};
+    normalizeRstMetadataField(fromStrings, 'FeedId', '  https://example.com/posts/old/  ');
+    expect(fromPython.feedId).toBe('https://example.com/posts/old/');
+    expect(fromStrings).toEqual(fromPython);
+  });
+
+  test('feedId must be an absolute URI', () => {
+    const metadata: RstMetadata = {};
+    expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(RstParseError);
+    expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(/absolute URI/);
+  });
 });

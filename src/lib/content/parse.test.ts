@@ -240,4 +240,51 @@ describe("content/parse", () => {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
+
+  test("markdown feedId reaches PostData verbatim; an invalid one fails the build", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-md-"));
+    const good = path.join(tempDir, "moved.md");
+    const bad = path.join(tempDir, "bad.md");
+    const frontmatter = (feedId: string) =>
+      ["---", 'title: "Moved"', 'date: "2026-01-01"', `feedId: "${feedId}"`, "---", "", "Body", ""].join("\n");
+    fs.writeFileSync(good, frontmatter("https://example.com/posts/old-slug"), "utf8");
+    fs.writeFileSync(bad, frontmatter("/posts/old-slug/"), "utf8");
+
+    try {
+      expect(parseMarkdownFileForTests(good, "moved").feedId).toBe("https://example.com/posts/old-slug");
+      expect(() => parseMarkdownFileForTests(bad, "bad")).toThrow(/feedId/);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("markdown without feedId leaves it undefined", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-md-"));
+    const filePath = path.join(tempDir, "plain.md");
+    fs.writeFileSync(filePath, ["---", 'title: "Plain"', 'date: "2026-01-01"', "---", "", "Body", ""].join("\n"), "utf8");
+
+    try {
+      expect(parseMarkdownFileForTests(filePath, "plain").feedId).toBeUndefined();
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("rst :feedId: reaches PostData", () => {
+    process.env.AMYTIS_ENABLE_PYTHON_RST = "0";
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "amytis-rst-"));
+    const filePath = path.join(tempDir, "moved.rst");
+    fs.writeFileSync(
+      filePath,
+      [":Date: 2026-01-01", ":FeedId: tag:example.com,2026:moved", "", "Moved", "*****", "", "Body", ""].join("\n"),
+      "utf8",
+    );
+
+    try {
+      expect(parseRstFileForTests(filePath, "moved").feedId).toBe("tag:example.com,2026:moved");
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
 });
