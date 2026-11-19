@@ -173,11 +173,24 @@ export function getFeedItems(feedType: FeedType = 'main', includeFullContent: bo
   }));
 }
 
+/**
+ * Characters XML 1.0 forbids anywhere in a document, CDATA included: C0
+ * controls other than tab/LF/CR, lone surrogates, and U+FFFE/U+FFFF. One of
+ * them in a title, excerpt, tag or post body makes the whole feed fail to
+ * parse, while the page itself renders fine, so authors never notice (a
+ * stray U+0008 pasted from a terminal, a YAML "\x01" escape). Strip them:
+ * they carry no visible text. Both escapers run every value through this,
+ * which covers all author text in the feeds.
+ */
+const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|\p{Cs}/gu;
+
+export const stripXmlIllegal = (v: string) => v.replace(XML_ILLEGAL, '');
+
 const escapeXml = (v: string) =>
-  v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  stripXmlIllegal(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
-const escapeCdata = (v: string) => v.replace(/]]>/g, ']]]]><![CDATA[>');
+const escapeCdata = (v: string) => stripXmlIllegal(v).replace(/]]>/g, ']]]]><![CDATA[>');
 
 export function generateRssFeed(feedType: FeedType, selfUrlPath: string): Response {
   const { format, content: contentMode } = siteConfig.feed;

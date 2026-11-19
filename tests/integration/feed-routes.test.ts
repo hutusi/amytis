@@ -60,6 +60,19 @@ function extractLinks(body: string, kind: FeedKind): string[] {
   return Array.from(body.matchAll(pattern), (m) => m[1]);
 }
 
+/**
+ * Code points XML 1.0 forbids (its `Char` production), checked per code point
+ * independently of feed-utils' own regex: C0 controls but tab/LF/CR, lone
+ * surrogates, U+FFFE/U+FFFF.
+ */
+function xmlIllegalCodePoints(xml: string): number[] {
+  return Array.from(xml, (ch) => ch.codePointAt(0)!).filter((cp) =>
+    (cp < 0x20 && cp !== 0x09 && cp !== 0x0a && cp !== 0x0d) ||
+    (cp >= 0xd800 && cp <= 0xdfff) ||
+    cp === 0xfffe || cp === 0xffff
+  );
+}
+
 interface FeedResult {
   status: number;
   contentType: string | null;
@@ -124,6 +137,10 @@ describe('Integration: feed route handlers', () => {
         }
       });
 
+      test('contains no code points XML forbids', () => {
+        expect(xmlIllegalCodePoints(results.get(name)!.body)).toEqual([]);
+      });
+
       test('structural XML contains no interpolated undefined values', () => {
         const { body } = results.get(name)!;
         expect(stripCdata(body)).not.toContain('undefined');
@@ -139,6 +156,29 @@ describe('Integration: feed route handlers', () => {
       });
     });
   }
+
+  describe('XML-illegal characters in author text', () => {
+    // A stray control character renders invisibly on the page but makes the
+    // whole feed unparseable, so the feed strips it.
+    test('are stripped, so both formats stay parseable', async () => {
+      const config = siteConfig as unknown as { title: unknown; description: unknown };
+      const saved = { title: config.title, description: config.description, format: siteConfig.feed.format };
+      try {
+        siteConfig.feed.format = 'both';
+        config.title = 'Amy\u0001tis\uFFFE';
+        config.description = 'A\u0008 garden\uD800';
+        for (const get of [getMainRss, getMainAtom]) {
+          const body = await (await get()).text();
+          expect(xmlIllegalCodePoints(body)).toEqual([]);
+          expect(body).toContain('Amytis');
+        }
+      } finally {
+        config.title = saved.title;
+        config.description = saved.description;
+        siteConfig.feed.format = saved.format;
+      }
+    });
+  });
 
   describe('format gating', () => {
     test('atom routes return 404 when the feed format is rss-only', async () => {

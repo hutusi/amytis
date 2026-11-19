@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getFeedItems } from "../../src/lib/feed-utils";
+import { getFeedItems, stripXmlIllegal } from "../../src/lib/feed-utils";
 import { getAllPosts, getTwinPost } from '../../src/lib/content/posts';
 import { getAllFlows } from '../../src/lib/content/flows';
 import { getPostUrl, getFlowUrl, withTrailingSlash } from "../../src/lib/urls";
@@ -448,5 +448,17 @@ describe("Integration: Feed Utils", () => {
     } finally {
       siteConfig.feed.maxItems = originalMaxItems;
     }
+  });
+});
+
+describe("stripXmlIllegal", () => {
+  test("drops the code points XML 1.0 forbids", () => {
+    const illegal = ["\u0000", "\u0001", "\u0008", "\u000B", "\u000C", "\u000E", "\u001F", "\uD800", "\uDFFF", "\uFFFE", "\uFFFF"];
+    for (const ch of illegal) expect(stripXmlIllegal(`a${ch}b`)).toBe("ab");
+  });
+
+  test("keeps everything XML allows", () => {
+    const legal = "tab\there\nline\r\u007F\u0085 中文 café \u{1F600} \uFDD0 ]]> & <";
+    expect(stripXmlIllegal(legal)).toBe(legal);
   });
 });
