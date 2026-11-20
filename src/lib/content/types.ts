@@ -69,6 +69,8 @@ export interface PostData {
   commentable?: boolean;
   externalLinks?: ExternalLink[];
   redirectFrom?: string[];
+  /** Permanent RSS <guid> / Atom <id> override; defaults to the page URL. */
+  feedId?: string;
   readingMinutes: number;
   wordCount: number;
   content: string;

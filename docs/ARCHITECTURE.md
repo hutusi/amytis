@@ -88,7 +88,7 @@ src/app/
   - Default: `/<posts.basePath>/<post.slug>` (basePath defaults to `posts`)
   - Series auto path: `/<series.slug>/<post.slug>` when `series.autoPaths` is enabled
   - Series override: `/<series.customPaths[seriesSlug]>/<post.slug>`
-- Legacy aliases declared in frontmatter `redirectFrom` are emitted as static redirect pages, so old URLs can continue resolving after a rename or path migration.
+- Legacy aliases declared in frontmatter `redirectFrom` are emitted as static redirect pages, so old URLs can continue resolving after a rename or path migration. Feed readers key items on their id, not on redirects: set `feedId` to the post's old `<guid>` too, or subscribers get the moved post again as a new item (see "Feeds").
 - Dynamic route handlers validate whether a request is canonical or legacy, then either render the content or return `RedirectPage`.
 - Dynamic route params should return raw segment values from `generateStaticParams()` (do not pre-encode values).
 - Links should always target concrete paths, not route placeholders such as `/posts/[slug]`.
@@ -243,6 +243,10 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 - rST items embed their docutils `renderedHtml`, sanitized by the same shared allowlist the on-page renderer uses (`src/lib/rst-sanitize.ts`); when docutils didn't run, the item falls back to the plain-text excerpt rather than mis-parsing rST source as Markdown.
 - Sorting and the `maxItems` cut happen before content rendering, so only surviving items pay the render cost. URLs are absolutized on the HAST by `src/lib/rehype-absolute-urls.ts` (never by regex over serialized HTML, which would rewrite code samples): `<img src>`, `<video poster>` and media `src` (`<video>`, `<audio>`, `<source>`, `<track>`) resolve through `resolveContentImagePath` (`src/lib/image-utils.ts`) against the entry's asset base — the same resolver `rehype-image-metadata` and `rehype-media-paths` use on the page, so co-located files of series posts on autoPaths/customPaths URLs point at `/posts/<slug>/…` in both places; the CDN prefix applies to images and posters only — and every other URL resolves against the item's page URL.
 
+**Item ids are permanent.** An item's RSS `<guid isPermaLink="true">` and Atom `<id>` are its canonical trailing-slash page URL (`withTrailingSlash(baseUrl + getPostUrl(post))`, or `getFlowUrl` for flows), the URL the export actually serves. Readers keep every id they have seen and show an unknown one as a new item, so changing the id's *form* (dropping the slash, another host or scheme) makes every reader show every item again. That happened once, in v2.0.0, when bare `/slug` ids became `/slug/`. `tests/integration/feed-utils.test.ts` ("feed item ids are permanent") and `feed-routes.test.ts` pin the form with literal URLs across all eight routes, locale-tree originals, flows, `posts.basePath` and `series.customPaths`.
+
+A post that moves (slug rename, into a series, a locale tree, a new `basePath` or domain) gets a new URL and so a new id. Its optional `feedId` frontmatter (`:FeedId:` in rST) keeps the old one, used verbatim so an old `<guid>` copied from the feed matches exactly, pre-2.0 bare URLs included. It is an **opaque id**, deliberately not validated against the IRI grammar (RFC 3987): readers only compare ids as strings, so what matters is that it is written exactly as given, XML-escaped in every format and never normalized (`tests/integration/feed-routes.test.ts` round-trips one full of XML-special characters through all routes). `src/lib/feed-id.ts`, shared by the Zod schema and the rST docinfo parser, checks only that it starts with a URI scheme (old `<guid>`s are absolute, and a site-relative `/posts/old/` is rejected) and has no whitespace or control characters, which are invisible in the source and partly stripped from the XML, so readers would get a different id than the one written. `FeedItem.url` stays the page (`<link>`), `FeedItem.id` carries the override (`<guid isPermaLink="false">`, Atom `<id>`). Flows are date-keyed and take no override. `assertUniqueFeedIds` throws at build time when two items would share an id (a repeated `feedId`, or one matching another page's URL), since a reader would silently drop one of them.
+
 ## Share Cards
 
 With `generateOgImages: true`, every post, note and book chapter without a cover image of its own gets a 1200×630 PNG share card at build time: the site logo and name, the series / book / "Notes" label, the title in Libre Baskerville (Noto Serif SC for Chinese), the date and authors, in the light palette of `themeColor`. A chapter whose book has a cover keeps sharing that cover.
@@ -339,6 +343,7 @@ externalLinks:                    # Links to external discussions
 redirectFrom:                     # Old URLs to redirect to this post (prefix changes only)
   - /posts/my-old-slug
   - /old-series/my-old-slug
+feedId: "https://example.com/posts/my-old-slug/"  # Keep the old feed id after a move (copy the old <guid>)
 ---
 ```
 

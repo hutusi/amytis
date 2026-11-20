@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getFeedItems, stripXmlIllegal } from "../../src/lib/feed-utils";
+import { getFeedItems, stripXmlIllegal, assertUniqueFeedIds, rssItemXml, atomEntryXml, type FeedItem } from "../../src/lib/feed-utils";
 import { getAllPosts, getTwinPost } from '../../src/lib/content/posts';
 import { getAllFlows } from '../../src/lib/content/flows';
 import { getPostUrl, getFlowUrl, withTrailingSlash } from "../../src/lib/urls";
@@ -460,5 +460,154 @@ describe("stripXmlIllegal", () => {
   test("keeps everything XML allows", () => {
     const legal = "tab\there\nline\r\u007F\u0085 中文 café \u{1F600} \uFDD0 ]]> & <";
     expect(stripXmlIllegal(legal)).toBe(legal);
+  });
+});
+
+// Feed item ids (RSS <guid>, Atom <id>) are permanent: readers store every id
+// they have seen, forever, and treat an unknown id as a new item. Changing
+// the id's form (dropping the trailing slash, a new host, a new scheme)
+// re-shows every item in every subscriber's reader once. v2.0.0 did that
+// once, moving bare /slug ids to the /slug/ URLs the export serves. These
+// tests pin the form with literal URLs, not withTrailingSlash(), so a
+// change to the helper itself fails here too.
+describe("Integration: feed item ids are permanent", () => {
+  const baseUrl = siteConfig.baseUrl.replace(/\/+$/, "");
+
+  function allItemIds(): string[] {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      return getFeedItems("all").map((item) => item.id);
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
+  }
+
+  test("every id is an absolute, trailing-slash URL on the site host", () => {
+    const ids = allItemIds();
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(id.startsWith(`${baseUrl}/`)).toBe(true);
+      expect(id.endsWith("/")).toBe(true);
+      expect(id.endsWith("//")).toBe(false);
+    }
+  });
+
+  test("ids are unique across posts and flows", () => {
+    const ids = allItemIds();
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test("default-tree post ids keep their exact form", () => {
+    const ids = allItemIds();
+    expect(ids).toContain(`${baseUrl}/posts/code-block-features-showcase/`);
+    expect(ids).toContain(`${baseUrl}/markdown-showcase/syntax-highlighting/`);
+  });
+
+  test("locale-tree originals get /<locale>/ ids; twins get none", () => {
+    const ids = allItemIds();
+    expect(ids).toContain(`${baseUrl}/zh/posts/zh-original-demo/`);
+    expect(ids).toContain(`${baseUrl}/zh/zh-demo-series/di-yi-pian/`);
+    // zh twin of a default-tree post: the feed carries the default post only
+    expect(ids).not.toContain(`${baseUrl}/zh/posts/code-block-features-showcase/`);
+  });
+
+  test("flow ids are /flows/YYYY/MM/DD/", () => {
+    const flowIds = allItemIds().filter((id) => id.startsWith(`${baseUrl}/flows/`));
+    expect(flowIds.length).toBe(getAllFlows().length);
+    for (const id of flowIds) {
+      expect(id.slice(baseUrl.length)).toMatch(/^\/flows\/\d{4}\/\d{2}\/\d{2}\/$/);
+    }
+  });
+
+  test("ids follow posts.basePath and keep the trailing slash", () => {
+    const original = siteConfig.posts.basePath;
+    try {
+      siteConfig.posts.basePath = "articles";
+      const ids = allItemIds();
+      expect(ids).toContain(`${baseUrl}/articles/code-block-features-showcase/`);
+      expect(ids).toContain(`${baseUrl}/zh/articles/zh-original-demo/`);
+      expect(ids).not.toContain(`${baseUrl}/posts/code-block-features-showcase/`);
+    } finally {
+      siteConfig.posts.basePath = original;
+    }
+  });
+
+  test("ids follow series.customPaths and keep the trailing slash", () => {
+    const original = siteConfig.series.customPaths;
+    try {
+      siteConfig.series.customPaths = { "markdown-showcase": "showcase" };
+      const ids = allItemIds();
+      expect(ids).toContain(`${baseUrl}/showcase/syntax-highlighting/`);
+      expect(ids).not.toContain(`${baseUrl}/markdown-showcase/syntax-highlighting/`);
+    } finally {
+      siteConfig.series.customPaths = original;
+    }
+  });
+});
+
+// feedId: a post can keep its old feed id after its URL moves.
+describe("Integration: feedId overrides", () => {
+  const item = (overrides: Partial<FeedItem> = {}): FeedItem => ({
+    title: "Moved",
+    url: "https://example.com/posts/new-slug/",
+    id: "https://example.com/posts/new-slug/",
+    date: new Date("2026-01-01T00:00:00Z"),
+    excerpt: "Excerpt",
+    content: "",
+    tags: [],
+    ...overrides,
+  });
+
+  test("without an override, the id is the page URL and a permalink", () => {
+    for (const fullContent of [false, true]) {
+      const rss = rssItemXml(item(), fullContent);
+      expect(rss).toContain('<link>https://example.com/posts/new-slug/</link>');
+      expect(rss).toContain('<guid isPermaLink="true">https://example.com/posts/new-slug/</guid>');
+      const atom = atomEntryXml(item(), fullContent);
+      expect(atom).toContain('<link href="https://example.com/posts/new-slug/" />');
+      expect(atom).toContain('<id>https://example.com/posts/new-slug/</id>');
+    }
+  });
+
+  test("an override becomes the guid/id (not a permalink); the link stays the page", () => {
+    const moved = item({ id: "https://example.com/posts/old-slug/" });
+    const rss = rssItemXml(moved, false);
+    expect(rss).toContain('<link>https://example.com/posts/new-slug/</link>');
+    expect(rss).toContain('<guid isPermaLink="false">https://example.com/posts/old-slug/</guid>');
+    const atom = atomEntryXml(moved, false);
+    expect(atom).toContain('<link href="https://example.com/posts/new-slug/" />');
+    expect(atom).toContain('<id>https://example.com/posts/old-slug/</id>');
+  });
+
+  test("ids are XML-escaped", () => {
+    const tagged = item({ id: "tag:example.com,2026:a&b" });
+    expect(rssItemXml(tagged, false)).toContain('<guid isPermaLink="false">tag:example.com,2026:a&amp;b</guid>');
+    expect(atomEntryXml(tagged, false)).toContain('<id>tag:example.com,2026:a&amp;b</id>');
+  });
+
+  test("assertUniqueFeedIds passes distinct ids", () => {
+    expect(() => assertUniqueFeedIds([
+      { id: "https://example.com/a/", url: "https://example.com/a/" },
+      { id: "https://example.com/old-b/", url: "https://example.com/b/" },
+    ])).not.toThrow();
+  });
+
+  test("assertUniqueFeedIds throws on a shared id, naming both items", () => {
+    // A feedId that repeats another post's page URL
+    expect(() => assertUniqueFeedIds([
+      { id: "https://example.com/a/", url: "https://example.com/a/" },
+      { id: "https://example.com/a/", url: "https://example.com/b/" },
+    ])).toThrow(/https:\/\/example\.com\/a\/ and https:\/\/example\.com\/b\//);
+  });
+
+  test("the demo corpus sets no feedId, so every id is still the page URL", () => {
+    const originalMaxItems = siteConfig.feed.maxItems;
+    try {
+      siteConfig.feed.maxItems = 0;
+      for (const { id, url } of getFeedItems("all")) expect(id).toBe(url);
+    } finally {
+      siteConfig.feed.maxItems = originalMaxItems;
+    }
   });
 });

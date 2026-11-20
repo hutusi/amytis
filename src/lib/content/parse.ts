@@ -10,7 +10,7 @@ import { DEFAULT_CATEGORY, type PostData, type CollectionItem, type Heading } fr
 import { domainDir, treePathFor, readUtf8File } from './io';
 import { getSeriesAuthors, getSeriesTitle } from './series-metadata';
 import { normalizeCoverImage } from './cover-image';
-import { dateField, draftField, tagsField, invalidFrontmatterError } from './schema';
+import { dateField, draftField, tagsField, feedIdField, invalidFrontmatterError } from './schema';
 
 /**
  * Frontmatter validation and file→PostData parsing for Markdown and rST
@@ -60,6 +60,7 @@ export const PostSchema = z.object({
   commentable: z.boolean().optional(),
   externalLinks: z.array(ExternalLinkSchema).optional().default([]),
   redirectFrom: z.array(z.string()).optional().default([]),
+  feedId: feedIdField,
 }).superRefine((data, ctx) => {
   if (data.type === 'collection' && (!data.items || data.items.length === 0)) {
     ctx.addIssue({
@@ -258,6 +259,7 @@ export function parseMarkdownFile(
     items: data.items as CollectionItem[] | undefined,
     externalLinks: data.externalLinks,
     redirectFrom: data.redirectFrom,
+    feedId: data.feedId,
     readingMinutes,
     wordCount,
     content: contentWithoutH1,
@@ -393,6 +395,7 @@ export function parseRstFile(
       toc: data.toc ?? true,
       commentable: data.commentable,
       redirectFrom: data.redirectFrom ?? [],
+      feedId: data.feedId,
       readingMinutes: parsedReadingMinutes,
       wordCount: parsedWordCount,
       content: parsedBody,

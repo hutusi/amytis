@@ -37,7 +37,12 @@ it to live under its locale prefix (`/zh/my-series/…`).
 
 - **Feeds:** moved items keep appearing (locale-tree originals are included in
   every feed), but their GUID is their URL — subscribers receive each moved
-  item once more under its new `/zh/…` permalink. One-time, unavoidable.
+  item once more under its new `/zh/…` permalink. To avoid that, set each
+  moved post's `feedId` to its old `<guid>`, copied from the published feed:
+
+  ```yaml
+  feedId: "https://example.com/my-series/some-post/"
+  ```
 - **Search/sitemap/graph:** the new URLs replace the old ones on the next
   build; the sitemap carries no entry for the old paths (they are redirect
   stubs).
