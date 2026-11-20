@@ -5,12 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2026-11-20
 
 ### Added
 - **Upgrading a Site**: `bun run upgrade` brings a newer release into a site made with `bun create amytis` (sites made before it run `bunx create-amytis@latest upgrade`). It merges file by file, the way git would. Files you never changed take the new release's version, and your changes stay. Only files both of you changed are merged, with conflict markers where the edits overlap. Your content is never touched, `package.json` keeps the dependencies you added, and a `site.config.ts` that began as the starter config gains new config fields (older sites made from the demo config copy them by hand). It prints the upgrade notes of every release in between. Guide: `docs/guides/upgrading-a-site.md`. Needs `create-amytis` 0.2.0.
 - **CI**: an Upgrade check job makes a site from the last release, upgrades it to each change and builds it, so a change existing sites can't take fails before it is released.
 - **Keep a Moved Post's Feed Id**: a post's optional `feedId` frontmatter (`:FeedId:` in rST) sets the id its RSS `<guid>` and Atom `<id>` carry. After a slug rename, a move into a series or locale tree, or a new domain, set it to the post's old `<guid>` and feed readers don't show the post again as new. It is used exactly as written; it must start with a URI scheme (`https:`, `tag:`, ...) and contain no spaces or control characters, and two items sharing an id fail the build. Item ids otherwise stay the page URL, unchanged.
+
+### Fixed
+- **Feeds With Control Characters**: a control character in a post's title, excerpt, tags or body (a stray backspace pasted from a terminal, a YAML `\x01` escape) made the whole RSS or Atom feed unparseable, while the page itself rendered fine. The feeds now drop the characters XML forbids.
 
 ## [2.0.2] - 2026-11-18
 
