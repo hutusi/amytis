@@ -47,6 +47,21 @@ describe('isValidFeedId', () => {
     }
   });
 
+  test('allows brackets only around an IPv6 host', () => {
+    for (const id of [
+      'https://example.com/a[b]',
+      'https://example.com/a?q=[1]',
+      'https://example.com/a#[x]',
+      'tag:example.com,2026:[draft]',
+      'https://exa[mple.com/',
+    ]) {
+      expect(isValidFeedId(id)).toBe(false);
+    }
+    expect(isValidFeedId('https://[::1]/a')).toBe(true);
+    expect(isValidFeedId('https://[2001:db8::1]:8080/posts/a/')).toBe(true);
+    expect(isValidFeedId('https://example.com/a%5Bb%5D')).toBe(true);
+  });
+
   test('keeps valid percent escapes exactly as written', () => {
     expect(isValidFeedId('https://example.com/posts/100%25-done/')).toBe(true);
     expect(isValidFeedId('https://example.com/posts/%E4%B8%AD%E6%96%87/')).toBe(true);

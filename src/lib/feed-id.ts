@@ -37,9 +37,22 @@ const XML_UNSAFE = /[\p{Cc}\p{Cs}\uFFFE\uFFFF]/u;
  */
 const NOT_IRI = /%(?![0-9A-Fa-f]{2})|[<>"{}|\\^`]/;
 
+/**
+ * Raw `[` / `]` are legal only around an IPv6 host (`https://[::1]/`), so
+ * they must not appear after the authority, nor anywhere in an id without
+ * one (`tag:`, `urn:`). `new URL()` accepts them in a path; it does reject
+ * a malformed bracketed host, which covers the authority side. Escaped
+ * brackets (`%5B`) are fine.
+ */
+function hasBracketOutsideAuthority(value: string): boolean {
+  const authority = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i.exec(value)?.[0] ?? '';
+  return /[[\]]/.test(value.slice(authority.length));
+}
+
 export function isValidFeedId(value: string): boolean {
   if (XML_UNSAFE.test(value)) return false;
   if (NOT_IRI.test(value)) return false;
+  if (hasBracketOutsideAuthority(value)) return false;
   if (!/^[a-z][a-z0-9+.-]*:\S+$/i.test(value)) return false;
   try {
     new URL(value);
