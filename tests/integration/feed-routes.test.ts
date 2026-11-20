@@ -8,6 +8,7 @@ import { GET as getPostsAtom } from '@/app/posts/feed.atom/route';
 import { GET as getFlowsRss } from '@/app/flows/feed.xml/route';
 import { GET as getFlowsAtom } from '@/app/flows/feed.atom/route';
 import { resolveLocaleValue } from '@/lib/i18n';
+import { getPostsWithLocaleOriginals } from '@/lib/content/posts';
 import { siteConfig } from '../../site.config';
 
 type FeedKind = 'rss' | 'atom';
@@ -202,6 +203,53 @@ describe('Integration: feed route handlers', () => {
       });
     });
   }
+
+  // feedId is an opaque id (src/lib/feed-id.ts): any XML-special characters
+  // in it must be escaped in every format and read back exactly as written.
+  describe('feedId overrides in every feed format', () => {
+    const feedId = 'tag:example.com,2026:a<b>&"c\'d]]>/中文';
+    const escaped = feedId
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    const unescape = (v: string) => v
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+    const pageUrl = `${baseUrl}/posts/code-block-features-showcase/`;
+
+    test('is XML-escaped, round-trips exactly, and keeps <link> on the page', async () => {
+      const post = getPostsWithLocaleOriginals().find(
+        (p) => p.slug === 'code-block-features-showcase' && !p.series && p.locale === siteConfig.i18n.defaultLocale
+      );
+      expect(post).toBeDefined();
+      const saved = {
+        feedId: post!.feedId,
+        format: siteConfig.feed.format,
+        content: siteConfig.feed.content,
+        maxItems: siteConfig.feed.maxItems,
+      };
+      try {
+        post!.feedId = feedId;
+        siteConfig.feed.format = 'both';
+        siteConfig.feed.content = 'excerpt';
+        siteConfig.feed.maxItems = 0;
+        for (const { name, get, kind } of routes) {
+          if (name.startsWith('/flows/')) continue; // posts only
+          const body = await (await get()).text();
+          expectBalancedXml(body);
+          const item = extractItemIdentities(body, kind).find((i) => i.link === pageUrl);
+          expect(item).toBeDefined();
+          expect(item!.id).toBe(escaped);
+          expect(unescape(item!.id)).toBe(feedId);
+          if (kind === 'rss') expect(item!.isPermaLink).toBe('false');
+        }
+      } finally {
+        post!.feedId = saved.feedId;
+        siteConfig.feed.format = saved.format;
+        siteConfig.feed.content = saved.content;
+        siteConfig.feed.maxItems = saved.maxItems;
+      }
+    });
+  });
 
   describe('XML-illegal characters in author text', () => {
     // A stray control character renders invisibly on the page but makes the

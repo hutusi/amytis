@@ -245,7 +245,7 @@ All eight feed routes are thin wrappers over `src/lib/feed-utils.ts` (`generateR
 
 **Item ids are permanent.** An item's RSS `<guid isPermaLink="true">` and Atom `<id>` are its canonical trailing-slash page URL (`withTrailingSlash(baseUrl + getPostUrl(post))`, or `getFlowUrl` for flows), the URL the export actually serves. Readers keep every id they have seen and show an unknown one as a new item, so changing the id's *form* (dropping the slash, another host or scheme) makes every reader show every item again. That happened once, in v2.0.0, when bare `/slug` ids became `/slug/`. `tests/integration/feed-utils.test.ts` ("feed item ids are permanent") and `feed-routes.test.ts` pin the form with literal URLs across all eight routes, locale-tree originals, flows, `posts.basePath` and `series.customPaths`.
 
-A post that moves (slug rename, into a series, a locale tree, a new `basePath` or domain) gets a new URL and so a new id. Its optional `feedId` frontmatter (`:FeedId:` in rST) keeps the old one: an absolute URI (`src/lib/feed-id.ts`, shared by the Zod schema and the rST docinfo parser), used verbatim so an old `<guid>` copied from the feed matches exactly, pre-2.0 bare URLs included. `FeedItem.url` stays the page (`<link>`), `FeedItem.id` carries the override (`<guid isPermaLink="false">`, Atom `<id>`). Flows are date-keyed and take no override. `assertUniqueFeedIds` throws at build time when two items would share an id (a repeated `feedId`, or one matching another page's URL), since a reader would silently drop one of them.
+A post that moves (slug rename, into a series, a locale tree, a new `basePath` or domain) gets a new URL and so a new id. Its optional `feedId` frontmatter (`:FeedId:` in rST) keeps the old one, used verbatim so an old `<guid>` copied from the feed matches exactly, pre-2.0 bare URLs included. It is an **opaque id**, deliberately not validated against the IRI grammar (RFC 3987): readers only compare ids as strings, so what matters is that it is written exactly as given, XML-escaped in every format and never normalized (`tests/integration/feed-routes.test.ts` round-trips one full of XML-special characters through all routes). `src/lib/feed-id.ts`, shared by the Zod schema and the rST docinfo parser, checks only that it starts with a URI scheme (old `<guid>`s are absolute, and a site-relative `/posts/old/` is rejected) and has no whitespace or control characters, which are invisible in the source and partly stripped from the XML, so readers would get a different id than the one written. `FeedItem.url` stays the page (`<link>`), `FeedItem.id` carries the override (`<guid isPermaLink="false">`, Atom `<id>`). Flows are date-keyed and take no override. `assertUniqueFeedIds` throws at build time when two items would share an id (a repeated `feedId`, or one matching another page's URL), since a reader would silently drop one of them.
 
 ## Share Cards
 
@@ -343,7 +343,7 @@ externalLinks:                    # Links to external discussions
 redirectFrom:                     # Old URLs to redirect to this post (prefix changes only)
   - /posts/my-old-slug
   - /old-series/my-old-slug
-feedId: "https://example.com/posts/my-old-slug/"  # Keep the old feed id after a move (absolute URI)
+feedId: "https://example.com/posts/my-old-slug/"  # Keep the old feed id after a move (copy the old <guid>)
 ---
 ```
 

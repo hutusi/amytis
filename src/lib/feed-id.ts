@@ -7,57 +7,38 @@
  *
  * Shared by the Markdown frontmatter schema and the rST docinfo parser, so
  * both formats accept exactly the same values.
+ *
+ * The value is treated as an OPAQUE id, not validated against the IRI
+ * grammar (RFC 3987), and this is deliberate. Readers only ever compare
+ * ids as strings; none parse them. What protects them is that the id is
+ * written exactly as given: XML-escaped in every feed format, never
+ * normalized (no trailing-slash fixing, no percent re-encoding), so a
+ * pre-2.0 bare-URL id or any other old <guid> can be restored exactly.
+ * Chasing the full IRI grammar (percent escapes, brackets by component,
+ * fragment rules) added a check per corner case without protecting a
+ * single reader, so only these rules remain:
+ *
+ * - It starts with a URI scheme (`https:`, `tag:`, `urn:`, ...). This keeps
+ *   it absolute: a site-relative `/posts/old/` would be ambiguous, and old
+ *   <guid>s are always absolute anyway.
+ * - It contains no whitespace or control characters (C0, DEL, C1), no lone
+ *   surrogates and no U+FFFE/U+FFFF. Those are invisible in the source,
+ *   and the feed escapers strip the ones XML forbids (`stripXmlIllegal` in
+ *   feed-utils.ts), so the id readers receive would silently differ from
+ *   the one written here and never match the old <guid>.
+ *
+ * Everything else, including non-ASCII (posts with CJK slugs have raw
+ * Unicode in their ids), passes through untouched.
  */
 
 export const FEED_ID_HINT =
-  'feedId must be an absolute URI, such as https://example.com/posts/old-slug/ ' +
-  '(copy the post\'s old <guid> from your feed) or tag:example.com,2026:old-slug';
+  'feedId must be an absolute id that starts with a URI scheme and has no spaces or control characters, ' +
+  'such as https://example.com/posts/old-slug/ (copy the post\'s old <guid> from your feed) ' +
+  'or tag:example.com,2026:old-slug';
 
-/**
- * Atom requires <id> to be an IRI, so the value must be an absolute URI: a
- * scheme, then no whitespace. It is used verbatim, with no trailing-slash
- * normalization, so a pre-2.0 bare-URL id can be restored exactly.
- *
- * Neither `\S` nor `new URL()` rejects control characters, and most are
- * illegal in XML: the feed escapers strip them (`stripXmlIllegal` in
- * feed-utils.ts), so the id readers receive would silently differ from
- * the one written here and never match the old <guid>. So control
- * characters (C0, DEL, C1), lone surrogates and the U+FFFE/U+FFFF
- * noncharacters fail validation instead. Other Unicode stays legal: ids of
- * posts with CJK slugs carry it raw.
- */
-const XML_UNSAFE = /[\p{Cc}\p{Cs}\uFFFE\uFFFF]/u;
-
-/**
- * Not an IRI (RFC 3987): a `%` that doesn't start a two-hex-digit escape,
- * or an ASCII character IRIs never carry raw. `new URL()` accepts both,
- * only flagging a non-fatal error and encoding them when it serializes,
- * but the feed emits the original string. Valid escapes such as `%25`
- * pass untouched: a permanent id is never normalized.
- */
-const NOT_IRI = /%(?![0-9A-Fa-f]{2})|[<>"{}|\\^`]/;
-
-/**
- * Raw `[` / `]` are legal only around an IPv6 host (`https://[::1]/`), so
- * they must not appear after the authority, nor anywhere in an id without
- * one (`tag:`, `urn:`). `new URL()` accepts them in a path; it does reject
- * a malformed bracketed host, which covers the authority side. Escaped
- * brackets (`%5B`) are fine.
- */
-function hasBracketOutsideAuthority(value: string): boolean {
-  const authority = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i.exec(value)?.[0] ?? '';
-  return /[[\]]/.test(value.slice(authority.length));
-}
+const SCHEME = /^[a-z][a-z0-9+.-]*:./i;
+const INVISIBLE_OR_STRIPPED = /[\s\p{Cc}\p{Cs}\uFFFE\uFFFF]/u;
 
 export function isValidFeedId(value: string): boolean {
-  if (XML_UNSAFE.test(value)) return false;
-  if (NOT_IRI.test(value)) return false;
-  if (hasBracketOutsideAuthority(value)) return false;
-  if (!/^[a-z][a-z0-9+.-]*:\S+$/i.test(value)) return false;
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
+  return SCHEME.test(value) && !INVISIBLE_OR_STRIPPED.test(value);
 }

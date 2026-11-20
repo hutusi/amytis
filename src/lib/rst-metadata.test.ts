@@ -77,10 +77,10 @@ describe('rst-metadata', () => {
     expect(fromStrings).toEqual(fromPython);
   });
 
-  test('feedId must be an absolute URI', () => {
+  test('feedId must start with a URI scheme', () => {
     const metadata: RstMetadata = {};
     expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(RstParseError);
-    expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(/absolute URI/);
+    expect(() => normalizeRstMetadataField(metadata, 'feedId', '/posts/old/')).toThrow(/URI scheme/);
     // Control characters would be stripped from the feed, changing the id
     expect(() => normalizeRstMetadata({ feedid: 'tag:example.com,2026:a\u0001b' })).toThrow(RstParseError);
   });
