@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.0] - 2026-11-22
 
 ### Upgrading from 2.1.0
 - **The demo content stays in your site.** New sites now start without it (see **Lean New Sites**), but the upgrade never changes `content/` or `public/images/`, so it only says how many demo files you still have unchanged. "Demo content" in `docs/guides/upgrading-a-site.md` shows how to remove exactly those.
