@@ -317,6 +317,11 @@ describe("isEngineOnlyPath", () => {
       "src/components/Nav.test.tsx",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
+      ".claude/rules/rst.md",
+      "docs/CLAUDE.md",
       "src/lib/urls.ts",
       "src/lib/testing.ts",
       "scripts/check.test.ts",
@@ -383,6 +388,8 @@ function makeReleases(): { base: string; target: string } {
     "content/posts/hello.md": "hi\n",
     "content/zh/posts/hello.md": "你好\n",
     "tests/engine.test.ts": "t\n",
+    "CLAUDE.md": "engine notes\n",
+    ".claude/rules/rst.md": "rule\n",
     "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
   });
   writeTree(target, {
@@ -403,6 +410,8 @@ function makeReleases(): { base: string; target: string } {
     "content/posts/hello.md": "hi 2\n",
     "content/zh/posts/hello.md": "你好 2\n",
     "tests/engine.test.ts": "t2\n",
+    "CLAUDE.md": "engine notes 2\n",
+    ".claude/rules/rst.md": "rule 2\n",
     "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
   });
   return { base, target };
@@ -427,8 +436,11 @@ function makeSite(base: string): string {
     "src/gone.ts": "g mine\n",
     "src/mine.ts": "only mine\n",
     "public/logo.png": Buffer.from([0x89, 0x50, 0x00, 0x03]),
-    // Made by an older create-amytis, which kept the engine's tests.
+    // Made by an older create-amytis, which kept the engine's tests and agent
+    // docs; the owner rewrote one of the docs.
     "tests/engine.test.ts": "t\n",
+    "CLAUDE.md": "engine notes\n",
+    ".claude/rules/rst.md": "my rule\n",
   });
   fs.rmSync(path.join(site, "src", "dropped.ts"));
   return site;
@@ -452,6 +464,7 @@ describe("planUpgrade and applyPlan", () => {
   test("decides each file by comparing the two releases and the site", () => {
     const kinds = Object.fromEntries(plan.changes.map((c) => [c.path, c.kind]));
     expect(kinds).toEqual({
+      "CLAUDE.md": "delete",
       "README.md": "kept",
       "bun.lock": "kept",
       "package.json": "merged",
@@ -490,6 +503,9 @@ describe("planUpgrade and applyPlan", () => {
     // The engine's own tests stay out of the site.
     expect(fs.existsSync(path.join(site, "tests"))).toBe(false);
     expect(read(site, "src/lib/x.test.ts")).toBeUndefined();
+    // So do its agent docs, unless the owner made one their own.
+    expect(read(site, "CLAUDE.md")).toBeUndefined();
+    expect(read(site, ".claude/rules/rst.md")).toBe("my rule\n");
 
     // Binary files and READMEs aren't merged line by line.
     expect([...fs.readFileSync(path.join(site, "public", "logo.png"))]).toEqual([0x89, 0x50, 0x00, 0x03]);

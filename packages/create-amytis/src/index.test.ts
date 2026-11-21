@@ -362,7 +362,12 @@ describe("removeEngineFiles", () => {
       "src/components/ui/C.test.tsx",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
+      ".claude/rules/rst.md",
       "docs/guide.md",
+      "docs/CLAUDE.md",
       "scripts/new-post.ts",
       "content/posts/hello.md",
       "CHANGELOG.md",
@@ -375,15 +380,27 @@ describe("removeEngineFiles", () => {
     expect(removeEngineFiles(dir)).toEqual([
       ".github/",
       ".entire/",
+      ".claude/",
       "packages/",
       "tests/",
       "src/test-utils/",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
       "src/**/*.test.ts(x) (2 files)",
     ]);
     const left = files.filter((file) => fs.existsSync(path.join(dir, file)));
-    expect(left).toEqual(["src/lib/a.ts", "src/components/B.tsx", "docs/guide.md", "scripts/new-post.ts", "content/posts/hello.md", "CHANGELOG.md"]);
+    expect(left).toEqual([
+      "src/lib/a.ts",
+      "src/components/B.tsx",
+      "docs/guide.md",
+      "docs/CLAUDE.md",
+      "scripts/new-post.ts",
+      "content/posts/hello.md",
+      "CHANGELOG.md",
+    ]);
   });
 
   test("does nothing in a directory without them", () => {

@@ -101,8 +101,22 @@ export function removeLocaleTrees(projectDir: string): string[] {
 // What only the Amytis repo itself uses: its tests check the demo site's
 // content and two-language config, so they fail in a new site; its workflows
 // run them and publish the amytis package; packages/ is this CLI's source;
-// TODO.md is the project's roadmap.
-const ENGINE_ONLY_PATHS = [".github", ".entire", "packages", "tests", "src/test-utils", "playwright.config.ts", "TODO.md"];
+// TODO.md is the project's roadmap. The agent docs (CLAUDE.md, AGENTS.md,
+// GEMINI.md, .claude/) guide work on the engine itself, its tests and
+// releases, and would mislead an assistant working on a site.
+const ENGINE_ONLY_PATHS = [
+  ".github",
+  ".entire",
+  ".claude",
+  "packages",
+  "tests",
+  "src/test-utils",
+  "playwright.config.ts",
+  "TODO.md",
+  "CLAUDE.md",
+  "AGENTS.md",
+  "GEMINI.md",
+];
 const TEST_FILE = /\.test\.tsx?$/;
 
 function removeTestFiles(dir: string): number {
