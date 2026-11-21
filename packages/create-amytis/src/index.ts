@@ -12,13 +12,17 @@ import { UPGRADE_USAGE, parseUpgradeArgs, upgrade } from "./upgrade.js";
 export { buildExtractCommand, getArchiveMetadata, tagFromReleaseUrl } from "./release.js";
 export {
   applyStarterConfig,
+  applyStarterContent,
   isEngineOnlyPath,
   patchPackageJson,
   patchSiteConfig,
   patchSiteConfigSource,
+  pruneDemoImages,
   removeEngineFiles,
   removeLocaleTrees,
   setUpNewSite,
+  STARTER_CONTENT,
+  STARTER_IMAGES,
   toSitePackage,
 } from "./setup.js";
 
@@ -110,6 +114,12 @@ async function createSite(nameArg: string): Promise<void> {
   const setup = setUpNewSite(targetDir, { projectName, title: siteTitle, description: siteDescription });
   if (!setup.starter) {
     console.warn("  Warning: site.config.example.ts not found, keeping the release's site.config.ts");
+  }
+  if (setup.starterContent) {
+    console.log("  Started content/ with a welcome post and the About, Privacy and Subscribe pages");
+  }
+  if (setup.images.length > 0) {
+    console.log(`  Removed the demo's images (${setup.images.length} files)`);
   }
   if (setup.localeTrees.length > 0) {
     console.log(`  Removed the demo's translations: ${setup.localeTrees.join(", ")}`);

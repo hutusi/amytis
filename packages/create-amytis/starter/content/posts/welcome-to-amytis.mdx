@@ -1,0 +1,76 @@
+---
+title: "Welcome to Amytis"
+date: "2026-11-21"
+excerpt: "Your garden is planted. Here is where things live, how to write your first post, and how to put the site online."
+category: "Getting Started"
+tags: ["amytis", "getting-started"]
+featured: true
+---
+
+Your new site is ready. This post is a short tour: where things live, how to write, and how to put the site online. Delete it whenever you like; it's `content/posts/welcome-to-amytis.mdx`.
+
+## Where things live
+
+| Path | What it holds |
+| --- | --- |
+| `site.config.ts` | Title, navigation, features, comments, analytics, and more |
+| `content/posts/` | Posts, one `.md` or `.mdx` file (or folder) each |
+| `content/series/` | Series: a folder with an `index.mdx` and its posts |
+| `content/*.mdx` | Pages such as [About](/about/), [Privacy](/privacy/) and [Subscribe](/subscribe/) |
+| `public/` | Images and other files served as they are |
+
+## Write your first post
+
+Start the dev server, then create a post from the template:
+
+```bash
+bun dev                          # http://localhost:3000
+bun run new "My First Post"      # creates content/posts/<date>-my-first-post.mdx
+```
+
+A post is Markdown with a little frontmatter on top:
+
+```markdown
+---
+title: "My First Post"
+date: "2026-01-01"
+tags: ["notes"]
+---
+
+Write here. **Markdown**, code blocks, math and diagrams all work.
+```
+
+> [!TIP]
+> Put a post's images next to it: `bun run new "Trip Notes" --folder` makes `content/posts/<date>-trip-notes/index.mdx` with an `images/` folder beside it.
+
+## Grow the garden
+
+Amytis has more than posts. Flows (short daily notes) and books (long-form writing in chapters) are off to begin with. Turn them on under `features` in `site.config.ts`; the comments there show the nav entries and homepage sections to add with them. `bun run new-series "Name"`, `bun run new-flow` and `bun run new-note "Title"` make the other kinds of content.
+
+The comments in `site.config.ts` also show how to add a second language, comments (Giscus or Disqus) and analytics.
+
+## Put it online
+
+```bash
+bun run build      # a static site in out/
+```
+
+Upload `out/` to any static host, such as Vercel, Netlify, Cloudflare Pages, GitHub Pages or your own server. [The deployment guide](https://github.com/hutusi/amytis/blob/main/docs/deployment.md) has the steps for each.
+
+## Stay up to date
+
+When Amytis has a new release, commit your work and run:
+
+```bash
+bun run upgrade
+```
+
+It brings in the new release and keeps your changes and your content. See [Upgrading a site](https://github.com/hutusi/amytis/blob/main/docs/guides/upgrading-a-site.md).
+
+## Learn more
+
+- [Configuration reference](https://github.com/hutusi/amytis/blob/main/docs/ARCHITECTURE.md#configuration-reference-siteconfigts) for every `site.config.ts` field
+- [Frontmatter fields](https://github.com/hutusi/amytis/blob/main/docs/ARCHITECTURE.md#content-frontmatter) for posts, series and books
+- [Alerts](https://github.com/hutusi/amytis/blob/main/docs/ALERTS.md) and [code blocks](https://github.com/hutusi/amytis/blob/main/docs/CODE-BLOCKS.md)
+
+Happy gardening!

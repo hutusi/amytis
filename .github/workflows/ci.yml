@@ -94,7 +94,8 @@ jobs:
           bun -e "import { setUpNewSite } from './packages/create-amytis/src/index.ts';
           const result = setUpNewSite('.', { projectName: 'starter-check', title: 'Starter Check', description: 'A new Amytis site' });
           console.log(result);
-          if (!result.starter) throw new Error('site.config.example.ts is missing');"
+          if (!result.starter) throw new Error('site.config.example.ts is missing');
+          if (!result.starterContent) throw new Error('the starter content is missing');"
 
       # The new site's own validate: lint, typecheck and build, without the
       # engine's tests, which setUpNewSite removed.
