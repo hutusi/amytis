@@ -1047,8 +1047,19 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     // When git can't undo it, list every file the upgrade touches.
     printPlan(plan, options.dryRun || problem !== null);
     // Only from a release whose new sites start without the demo, and whose
-    // upgrading guide says how to remove it.
-    const demoFiles = fs.existsSync(path.join(targetDir, ...STARTER_CONTENT.split("/"))) ? countDemoFiles(siteDir, baseDir) : 0;
+    // upgrading guide says how to remove it. It's only a hint, so a file it
+    // can't read doesn't stop the upgrade, which never reads those folders.
+    let demoFiles = 0;
+    if (fs.existsSync(path.join(targetDir, ...STARTER_CONTENT.split("/")))) {
+      try {
+        demoFiles = countDemoFiles(siteDir, baseDir);
+      } catch (error) {
+        console.log(
+          `\n  Couldn't count the Amytis demo's files left in content/ and public/images/ (${(error as Error).message}). ` +
+          `"Demo content" in docs/guides/upgrading-a-site.md says how to find and remove them.`,
+        );
+      }
+    }
     if (demoFiles > 0) {
       const files = demoFiles === 1 ? "1 file in content/ and public/images/ is" : `${demoFiles} files in content/ and public/images/ are`;
       console.log(

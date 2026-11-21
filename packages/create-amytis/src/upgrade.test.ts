@@ -992,6 +992,24 @@ describe("create-amytis upgrade", () => {
     expect(read(site, "content/posts/hello.md")).toBe("hi\n");
   });
 
+  // Root reads a file whatever its mode, and Windows ignores chmod.
+  test.skipIf(process.platform === "win32" || process.getuid?.() === 0)("still upgrades when it can't read a demo file", () => {
+    const { site, base, target } = cleanSite();
+    writeTree(target, { [`${STARTER_CONTENT}/about.mdx`]: "About\n" });
+    const hello = path.join(site, "content", "posts", "hello.md");
+    fs.chmodSync(hello, 0o000);
+    try {
+      const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run");
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("Couldn't count the Amytis demo's files left in content/ and public/images/ (EACCES");
+      expect(result.stdout).not.toContain("still the Amytis demo's");
+      expect(result.stdout).toContain("Dry run: nothing was changed.");
+    } finally {
+      fs.chmodSync(hello, 0o644);
+    }
+  });
+
   test.skipIf(process.platform === "win32")("fails when bun install does, after upgrading the files", () => {
     const { site, base, target } = cleanSite();
     git(site, "init", "-q");
