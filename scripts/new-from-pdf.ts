@@ -87,7 +87,6 @@ date: "${date}"
 excerpt: "Content extracted from PDF document."
 category: "Document"
 tags: ["pdf", "document"]
-authors: ["Amytis"]
 layout: "post"
 draft: false
 latex: false
