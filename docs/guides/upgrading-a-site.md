@@ -110,24 +110,41 @@ Privacy and Subscribe pages instead. The upgrade never changes `content/` or
 `public/images/`, so it doesn't remove the demo; it only says how many of its
 files you still have unchanged.
 
-To remove them, delete each file that is still exactly the demo's. In your
-site, in a bash shell (Git Bash on Windows), with the release you made the
-site from in place of `v2.1.0`:
+To remove them, list the files that are still the demo's, look the list
+over, then delete what's left on it. In your site, in a bash shell (Git Bash
+on Windows), with the release you made the site from in place of `v2.1.0`:
 
 ```bash
 mkdir -p /tmp/amytis-demo
 curl -sL https://github.com/hutusi/amytis/archive/refs/tags/v2.1.0.tar.gz | tar xz -C /tmp/amytis-demo
 demo=/tmp/amytis-demo/amytis-2.1.0
+# Each file still the same as the demo's, line endings aside, into demo-files.txt
 (cd "$demo" && find content public/images -type f ! -path public/images/avatar.jpg -print0) |
-  while IFS= read -r -d '' f; do cmp -s "$demo/$f" "$f" && git rm -q "$f"; done
+  while IFS= read -r -d '' f; do
+    [ -f "$f" ] && cmp -s <(LC_ALL=C tr -d '\r' < "$demo/$f") <(LC_ALL=C tr -d '\r' < "$f") && printf '%s\n' "$f"
+  done > demo-files.txt
 ```
 
-Files you changed stay, and so does `public/images/avatar.jpg`, which the
-starter config uses. The nav and footer link to `/about/`, `/privacy/` and
-`/subscribe/`, so if those pages went too, write your own or copy the
-starter's from
+Files you changed aren't on the list, and neither is
+`public/images/avatar.jpg`, which the starter config uses. But an unchanged
+file that something you kept still uses is: if you rewrote a demo series'
+page, say, its cover image and the posts you left alone are listed. Delete
+the line of anything you want to keep, then remove the rest:
+
+```bash
+tr '\n' '\0' < demo-files.txt | xargs -0 -r git rm -q -- && rm demo-files.txt
+```
+
+Then build with `bun run validate`, and bring back anything it misses with
+`git restore --staged --worktree <file>`. The build stops on a post you
+removed that a page you kept names, such as a series page's manual order,
+and its link report lists each removed image a page still shows. It names
+an image by its optimized copy: `/images/nextImageExportOptimizer/mountains-opt-1920.WEBP`
+is `public/images/mountains.jpg`. The nav and footer link to
+`/about/`, `/privacy/` and `/subscribe/`, so if those pages went too, write
+your own or copy the starter's from
 [`packages/create-amytis/starter/content`](https://github.com/hutusi/amytis/tree/main/packages/create-amytis/starter/content).
-Then check the site with `bun run validate`, and commit.
+When the report is clean, commit.
 
 ## When it can't tell which release you started from
 
