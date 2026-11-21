@@ -72,7 +72,10 @@ Some files have their own rules:
   something of your own in the way, the upgrade leaves that for you too.
 - **The Amytis repo's own tests and CI** (`tests/`, `.github/`, `packages/`)
   aren't part of a site. Sites made before create-amytis 0.1.4 still have
-  them; the upgrade removes them if you haven't changed them.
+  them; the upgrade removes them if you haven't changed them. The same goes
+  for the repo's notes for AI assistants (`CLAUDE.md`, `AGENTS.md`,
+  `GEMINI.md`, `.claude/`), which are about working on Amytis itself; a copy
+  you rewrote for your site stays.
 
 ## After the upgrade
 
@@ -97,6 +100,34 @@ anything you've staged since), delete the files it says it created
 upgrade that ran without `--force`. After a `--force` run over uncommitted
 changes, restoring would throw those changes away too, so undo it by hand,
 from the list of files the upgrade printed.
+
+## Demo content
+
+Sites made from Amytis v2.1.0 or earlier began with the demo site's content:
+about a hundred posts, series, books, flows and notes in `content/`, and
+photos in `public/images/`. New sites begin with a welcome post and About,
+Privacy and Subscribe pages instead. The upgrade never changes `content/` or
+`public/images/`, so it doesn't remove the demo; it only says how many of its
+files you still have unchanged.
+
+To remove them, delete each file that is still exactly the demo's. In your
+site, in a bash shell (Git Bash on Windows), with the release you made the
+site from in place of `v2.1.0`:
+
+```bash
+mkdir -p /tmp/amytis-demo
+curl -sL https://github.com/hutusi/amytis/archive/refs/tags/v2.1.0.tar.gz | tar xz -C /tmp/amytis-demo
+demo=/tmp/amytis-demo/amytis-2.1.0
+(cd "$demo" && find content public/images -type f ! -path public/images/avatar.jpg -print0) |
+  while IFS= read -r -d '' f; do cmp -s "$demo/$f" "$f" && git rm -q "$f"; done
+```
+
+Files you changed stay, and so does `public/images/avatar.jpg`, which the
+starter config uses. The nav and footer link to `/about/`, `/privacy/` and
+`/subscribe/`, so if those pages went too, write your own or copy the
+starter's from
+[`packages/create-amytis/starter/content`](https://github.com/hutusi/amytis/tree/main/packages/create-amytis/starter/content).
+Then check the site with `bun run validate`, and commit.
 
 ## When it can't tell which release you started from
 

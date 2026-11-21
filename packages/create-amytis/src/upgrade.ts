@@ -14,7 +14,7 @@ import * as os from "os";
 import * as path from "path";
 import { spawnSync } from "child_process";
 import { downloadRelease, getLatestReleaseTag } from "./release.js";
-import { UPGRADE_SCRIPT, isEngineOnlyPath, patchSiteConfigSource, toSitePackage } from "./setup.js";
+import { STARTER_CONTENT, STARTER_IMAGES, UPGRADE_SCRIPT, isEngineOnlyPath, patchSiteConfigSource, toSitePackage } from "./setup.js";
 
 // ---------------------------------------------------------------------------
 // Versions
@@ -852,6 +852,25 @@ function undoProblemError(problem: UndoProblem): Error {
   }
 }
 
+// How many files in the site's content/ and public/images/ are still the base
+// release's demo files, unchanged. Sites made before create-amytis started
+// them from the starter content have the whole demo. The upgrade never
+// changes those folders, so it only counts what is left of it. The images
+// new sites keep (STARTER_IMAGES) don't count.
+export function countDemoFiles(siteDir: string, baseDir: string): number {
+  let count = 0;
+  for (const dir of SITE_OWNED_DIRS) {
+    const baseRoot = path.join(baseDir, ...dir.split("/").filter(Boolean));
+    if (!fs.existsSync(baseRoot)) continue;
+    for (const rel of listFiles(baseRoot)) {
+      if (dir === "public/images/" && STARTER_IMAGES.has(rel)) continue;
+      const site = readFile(siteDir, dir + rel);
+      if (site !== undefined && same(normalized(site), normalized(readFile(baseDir, dir + rel)))) count++;
+    }
+  }
+  return count;
+}
+
 // How much of the base release's src/ the site has unchanged. A site made
 // from that release keeps most of it even when customized; a low share means
 // package.json's version isn't the release the site was made from.
@@ -1027,6 +1046,16 @@ export async function upgrade(siteDir: string, options: UpgradeOptions): Promise
     if (problem && !options.force) throw undoProblemError(problem);
     // When git can't undo it, list every file the upgrade touches.
     printPlan(plan, options.dryRun || problem !== null);
+    // Only from a release whose new sites start without the demo, and whose
+    // upgrading guide says how to remove it.
+    const demoFiles = fs.existsSync(path.join(targetDir, ...STARTER_CONTENT.split("/"))) ? countDemoFiles(siteDir, baseDir) : 0;
+    if (demoFiles > 0) {
+      const files = demoFiles === 1 ? "1 file in content/ and public/images/ is" : `${demoFiles} files in content/ and public/images/ are`;
+      console.log(
+        `\n  ${files} still the Amytis demo's. The upgrade leaves those folders alone; ` +
+        `"Demo content" in docs/guides/upgrading-a-site.md says how to remove ${demoFiles === 1 ? "it" : "them"}.`,
+      );
+    }
 
     if (options.dryRun) {
       console.log("\nDry run: nothing was changed.");

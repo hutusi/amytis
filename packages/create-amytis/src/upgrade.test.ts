@@ -3,10 +3,11 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { spawnSync } from "child_process";
-import { isEngineOnlyPath, removeEngineFiles, setUpNewSite } from "./setup";
+import { STARTER_CONTENT, isEngineOnlyPath, removeEngineFiles, setUpNewSite } from "./setup";
 import {
   applyPlan,
   compareVersions,
+  countDemoFiles,
   decideFile,
   listFiles,
   mergePackageJson,
@@ -861,6 +862,44 @@ describe("site.config.ts made from the demo site's own config", () => {
   });
 });
 
+describe("countDemoFiles", () => {
+  const demo = {
+    "content/about.mdx": "About Amytis\n",
+    "content/posts/hello.md": "hi\n",
+    "content/series/demo/index.mdx": "a series\n",
+    "public/images/avatar.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x01]),
+    "public/images/lake.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x02]),
+  };
+
+  test("counts the demo files a site still has unchanged", () => {
+    const base = makeTmpDir();
+    const site = makeTmpDir();
+    writeTree(base, { ...demo, "src/page.tsx": "x\n" });
+    writeTree(site, {
+      ...demo,
+      // Rewritten by the owner, and their own.
+      "content/about.mdx": "About me\n",
+      "content/posts/mine.md": "mine\n",
+      // Checked out on Windows: the same file.
+      "content/posts/hello.md": "hi\r\n",
+      "src/page.tsx": "x\n",
+    });
+    fs.rmSync(path.join(site, "content", "series"), { recursive: true });
+    // hello.md and lake.jpg. The avatar is one new sites keep, so it isn't
+    // the demo's to remove; src/ isn't the site's content.
+    expect(countDemoFiles(site, base)).toBe(2);
+  });
+
+  test("is 0 for a site made from the starter content", () => {
+    const base = makeTmpDir();
+    writeTree(base, { ...demo, [`${STARTER_CONTENT}/about.mdx`]: "About\n", [`${STARTER_CONTENT}/posts/welcome.mdx`]: "Welcome\n" });
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "fresh", title: "Fresh", description: "New." });
+    expect(countDemoFiles(site, base)).toBe(0);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // The command
 // ---------------------------------------------------------------------------
@@ -919,6 +958,21 @@ describe("create-amytis upgrade", () => {
     expect(result.stdout).toContain("delete the files it created, then run bun install. It created:\n  src/added.ts");
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
     expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");
+    // The target has no starter content, so its new sites still get the demo.
+    expect(result.stdout).not.toContain("still the Amytis demo's");
+  });
+
+  test("tells a site with the demo content still in it how to remove it", () => {
+    const { site, base, target } = cleanSite();
+    writeTree(target, { [`${STARTER_CONTENT}/about.mdx`]: "About\n" });
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run");
+    expect(result.status).toBe(0);
+    // content/posts/hello.md; the site's content is left alone.
+    expect(result.stdout).toContain(
+      `1 file in content/ and public/images/ is still the Amytis demo's. The upgrade leaves those folders alone; ` +
+      `"Demo content" in docs/guides/upgrading-a-site.md says how to remove it.`,
+    );
+    expect(read(site, "content/posts/hello.md")).toBe("hi\n");
   });
 
   test.skipIf(process.platform === "win32")("fails when bun install does, after upgrading the files", () => {
