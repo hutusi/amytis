@@ -118,10 +118,11 @@ on Windows), with the release you made the site from in place of `v2.1.0`:
 mkdir -p /tmp/amytis-demo
 curl -sL https://github.com/hutusi/amytis/archive/refs/tags/v2.1.0.tar.gz | tar xz -C /tmp/amytis-demo
 demo=/tmp/amytis-demo/amytis-2.1.0
-# Each file still the same as the demo's, line endings aside, into demo-files.txt
+# Each file still the demo's into demo-files.txt. Like the upgrade, this
+# ignores CRLF line endings in text, and compares images byte for byte.
 (cd "$demo" && find content public/images -type f ! -path public/images/avatar.jpg -print0) |
   while IFS= read -r -d '' f; do
-    [ -f "$f" ] && cmp -s <(LC_ALL=C tr -d '\r' < "$demo/$f") <(LC_ALL=C tr -d '\r' < "$f") && printf '%s\n' "$f"
+    [ -f "$f" ] && git diff --no-index --quiet --ignore-cr-at-eol -- "$demo/$f" "$f" && printf '%s\n' "$f"
   done > demo-files.txt
 ```
 
@@ -132,17 +133,20 @@ page, say, its cover image and the posts you left alone are listed. Delete
 the line of anything you want to keep, then remove the rest:
 
 ```bash
-tr '\n' '\0' < demo-files.txt | xargs -0 -r git rm -q -- && rm demo-files.txt
+tr -d '\r' < demo-files.txt | tr '\n' '\0' | xargs -0 -r git rm -q -- && rm demo-files.txt
 ```
 
-Then build with `bun run validate`, and bring back anything it misses with
-`git restore --staged --worktree <file>`. The build stops on a post you
-removed that a page you kept names, such as a series page's manual order,
-and its link report lists each removed image a page still shows. It names
-an image by its optimized copy: `/images/nextImageExportOptimizer/mountains-opt-1920.WEBP`
-is `public/images/mountains.jpg`. The nav and footer link to
-`/about/`, `/privacy/` and `/subscribe/`, so if those pages went too, write
-your own or copy the starter's from
+Then build from scratch with `bun run clean && bun run validate`, and bring
+back anything it misses with `git restore --staged --worktree <file>`. (Clean
+first: a production build leaves optimized copies of your images in
+`public/images/nextImageExportOptimizer/`, and a stale copy would hide an
+image you removed.) The build stops on a post you removed that a page you
+kept names, such as a series page's manual order, and its link report lists
+each removed image a page still shows. It names an image by its optimized
+copy: `/images/nextImageExportOptimizer/mountains-opt-1920.WEBP` is
+`public/images/mountains.jpg`. The nav and footer link to `/about/`,
+`/privacy/` and `/subscribe/`, so if those pages went too, write your own or
+copy the starter's from
 [`packages/create-amytis/starter/content`](https://github.com/hutusi/amytis/tree/main/packages/create-amytis/starter/content).
 When the report is clean, commit.
 
