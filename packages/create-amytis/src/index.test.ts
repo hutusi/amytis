@@ -487,6 +487,8 @@ describe("sync with the real repo files", () => {
     expect(result).toEqual({ starter: true, starterContent: true, localeTrees: [], images: [], engineFiles: ["packages/", "tests/"] });
     expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toContain(`  title: "Sync Check",`);
     expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name).toBe("sync-check");
+    // Its script for the demo's weekly series goes with the demo content.
+    expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).scripts["new-weekly"]).toBeUndefined();
     // The nav and footer link these pages, so a new site must have them.
     expect(filesUnder(path.join(dir, "content"))).toEqual([
       "about.mdx",
@@ -658,18 +660,26 @@ describe("patchPackageJson", () => {
     });
   });
 
-  test("drops the demo site's own scripts", () => {
-    const dir = makeTmpDir();
-    tmpDirs.push(dir);
-    fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
-      name: "@hutusi/amytis",
-      scripts: {
-        new: "bun scripts/new-post.ts",
-        "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
-      },
-    }));
-    patchPackageJson(dir, "my-garden");
-    expect(Object.keys(readPkg(dir).scripts as Record<string, string>)).toEqual(["new", "upgrade"]);
+  test("drops the demo site's own scripts only for a site without the demo content", () => {
+    const write = () => {
+      const dir = makeTmpDir();
+      tmpDirs.push(dir);
+      fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
+        name: "@hutusi/amytis",
+        scripts: {
+          new: "bun scripts/new-post.ts",
+          "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
+        },
+      }));
+      return dir;
+    };
+    const lean = write();
+    patchPackageJson(lean, "my-garden", { dropDemoScripts: true });
+    expect(Object.keys(readPkg(lean).scripts as Record<string, string>)).toEqual(["new", "upgrade"]);
+    // A release without starter content keeps the demo series new-weekly writes to.
+    const demo = write();
+    patchPackageJson(demo, "my-garden");
+    expect(Object.keys(readPkg(demo).scripts as Record<string, string>)).toEqual(["new", "new-weekly", "upgrade"]);
   });
 });
 

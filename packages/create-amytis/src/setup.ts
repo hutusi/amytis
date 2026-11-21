@@ -210,7 +210,12 @@ export function patchSiteConfig(projectDir: string, title: string, description: 
 export const UPGRADE_SCRIPT = "bunx create-amytis@latest upgrade";
 
 // Scripts for the demo site's own content: new-weekly adds a post to its
-// ai-nexus-weekly series, which a new site doesn't have.
+// ai-nexus-weekly series. Only a site that starts from the starter content
+// goes without them. toSitePackage keeps them: the upgrade's merge reads it
+// as what the site began with, and a site made from the demo content still
+// has that series, so an upgrade mustn't take its script away. (A release
+// that changes one of these scripts reports a package.json conflict in the
+// sites without it; remove such a script from the repo instead.)
 const DEMO_SCRIPTS = ["new-weekly"];
 
 // The release's package.json as a new site gets it. Returns a new object.
@@ -228,7 +233,7 @@ export function toSitePackage(pkg: Record<string, unknown>, projectName: string)
   const scripts = site["scripts"] as Record<string, string> | undefined;
   if (scripts) {
     for (const name of Object.keys(scripts)) {
-      if (name === "test" || name.startsWith("test:") || DEMO_SCRIPTS.includes(name)) delete scripts[name];
+      if (name === "test" || name.startsWith("test:")) delete scripts[name];
     }
     if (scripts["validate"]) {
       scripts["validate"] = scripts["validate"]
@@ -244,14 +249,20 @@ export function toSitePackage(pkg: Record<string, unknown>, projectName: string)
   return site;
 }
 
-export function patchPackageJson(projectDir: string, projectName: string): void {
+// dropDemoScripts: the site starts from the starter content, not the demo's.
+export function patchPackageJson(projectDir: string, projectName: string, options: { dropDemoScripts?: boolean } = {}): void {
   const pkgPath = path.join(projectDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     console.warn("  Warning: package.json not found, skipping patch");
     return;
   }
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
-  fs.writeFileSync(pkgPath, JSON.stringify(toSitePackage(pkg, projectName), null, 2) + "\n", "utf8");
+  const site = toSitePackage(pkg, projectName);
+  const scripts = site["scripts"] as Record<string, string> | undefined;
+  if (options.dropDemoScripts && scripts) {
+    for (const name of DEMO_SCRIPTS) delete scripts[name];
+  }
+  fs.writeFileSync(pkgPath, JSON.stringify(site, null, 2) + "\n", "utf8");
 }
 
 // Everything that turns the downloaded release into a new site, after the
@@ -268,6 +279,6 @@ export function setUpNewSite(
   const images = starterContent ? pruneDemoImages(projectDir) : [];
   const engineFiles = removeEngineFiles(projectDir);
   patchSiteConfig(projectDir, site.title, site.description);
-  patchPackageJson(projectDir, site.projectName);
+  patchPackageJson(projectDir, site.projectName, { dropDemoScripts: starterContent });
   return { starter, starterContent, localeTrees, images, engineFiles };
 }

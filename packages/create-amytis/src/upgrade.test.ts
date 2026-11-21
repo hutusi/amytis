@@ -195,6 +195,23 @@ describe("mergePackageJson", () => {
     expect(scripts.preview).toBe("bun run build && bun run start");
   });
 
+  test("keeps the demo's weekly script in a site made from the demo content", () => {
+    // Older sites still have content/series/ai-nexus-weekly/, which
+    // new-weekly writes to, so the upgrade leaves it be even when the
+    // release changed other scripts.
+    const weekly = { "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly" };
+    const demoBase = { ...base, scripts: { ...base.scripts, ...weekly } };
+    const demoTarget = { ...target, scripts: { ...target.scripts, ...weekly } };
+    const demoSite = { ...site, scripts: { ...site.scripts, ...weekly } };
+    const { merged, conflicts } = mergePackageJson(demoBase, demoSite, demoTarget);
+    expect(conflicts).toEqual([]);
+    expect((merged.scripts as Record<string, string>)["new-weekly"]).toBe(weekly["new-weekly"]);
+    // A site made from the starter content never had it, and doesn't gain it.
+    const lean = mergePackageJson(demoBase, site, demoTarget);
+    expect(lean.conflicts).toEqual([]);
+    expect((lean.merged.scripts as Record<string, string>)["new-weekly"]).toBeUndefined();
+  });
+
   test("records the target's version even when the site changed its own", () => {
     const { merged, conflicts } = mergePackageJson(base, { ...site, version: "9.9.9" }, target);
     expect(merged.version).toBe("2.0.1");
