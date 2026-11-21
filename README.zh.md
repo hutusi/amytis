@@ -6,7 +6,7 @@
 
 [**在线演示**](https://amytis.vercel.app/)
 
-![Amytis 截图](public/images/amytis-screenshot.jpg)
+![Amytis 截图](https://raw.githubusercontent.com/hutusi/amytis/main/public/images/amytis-screenshot.jpg)
 
 ## 为什么要做 Amytis ?
 
@@ -146,8 +146,8 @@ bun run build:dev
 bun run clean
 bun run deploy                 # 部署到 Linux/nginx 服务器（需要 .env.local）
 
-## Test
-bun test
+## Test（仅 Amytis 仓库：新站点不包含这些测试）
+bun run test
 bun run test:unit
 bun run test:int
 bun run test:e2e
@@ -155,7 +155,7 @@ bun run test:mobile
 
 ## Create Content
 bun run new "Post Title"
-bun run new-weekly "Weekly Topic"
+bun run new-weekly "Weekly Topic"   # 示例站点的周刊系列；新站点没有
 bun run new-series "Series Name"
 bun run new-note "Concept"
 bun run new-flow            # --folder: DD/index.md，可放图片或幻灯片

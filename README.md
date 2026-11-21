@@ -6,7 +6,7 @@
 
 [**Live Demo**](https://amytis.vercel.app/)
 
-![Amytis Screenshot](public/images/amytis-screenshot.jpg)
+![Amytis Screenshot](https://raw.githubusercontent.com/hutusi/amytis/main/public/images/amytis-screenshot.jpg)
 
 ## Why Amytis?
 
@@ -140,7 +140,7 @@ bun run build:dev
 bun run clean
 bun run deploy                 # Deploy to Linux/nginx server (requires .env.local)
 
-## Test
+## Test (the Amytis repo only: new sites don't get the tests)
 bun run test
 bun run test:unit
 bun run test:int
@@ -149,7 +149,7 @@ bun run test:mobile
 
 ## Create Content
 bun run new "Post Title"
-bun run new-weekly "Weekly Topic"
+bun run new-weekly "Weekly Topic"   # the demo's weekly series; not in new sites
 bun run new-series "Series Name"
 bun run new-note "Concept"
 bun run new-flow            # --folder: DD/index.md, for images or slides
