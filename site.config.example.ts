@@ -56,6 +56,10 @@ export const siteConfig = {
     // i18n is disabled: the language switcher is hidden and defaultLocale is always used.
     // To enable multi-language support, set enabled: true, add more locales, and
     // convert plain string fields to locale maps: e.g. title: { en: '...', zh: '...' }.
+    // A two-language site, for example, sets:
+    //   enabled: true,
+    //   locales: ['en', 'zh'],
+    // See "Locale Content Trees" in docs/ARCHITECTURE.md.
     //
     // Content in another language lives in a locale tree mirroring content/:
     // content/zh/posts/foo.md is served at /zh/posts/foo/ and pairs with
@@ -68,6 +72,16 @@ export const siteConfig = {
   },
 
   // ── Navigation ────────────────────────────────────────────────────────────
+  // Entries sort by weight, lowest first; any number works, e.g. 2.5. Flow and
+  // Books are off (see `features`); after turning one on, add its entry:
+  //   { name: "Flow", url: "/flows", weight: 0 },
+  //   { name: "Books", url: "/books", weight: 2.5 },
+  // On the /series or /books entry, `dropdown` lists the series or book slugs
+  // to show under it:
+  //   { name: "Series", url: "/series", weight: 2, dropdown: ["my-series"] },
+  // For a Links (blogroll) page, write content/links.mdx, then add
+  //   { name: "Links", url: "/links" },
+  // to the children of "More".
   nav: [
     { name: "Posts", url: `/${postsBasePath}`, weight: 1 },
     { name: "Series", url: "/series", weight: 2 },
@@ -99,8 +113,11 @@ export const siteConfig = {
       url: "https://github.com/hutusi/amytis",
       text: "Built with Amytis",
     },
+    // Optional links in the footer's bottom bar: an ICP or PSB registration
+    // (China), a cookie policy, a sitemap. For example:
     // bottomLinks: [
     //   { text: '京ICP备12345678号', url: 'https://beian.miit.gov.cn/' },
+    //   { text: 'Cookie Policy' },     // url is optional — renders as plain text
     // ],
     bottomLinks: [] as { text: string; url?: string }[],
   },
@@ -130,6 +147,9 @@ export const siteConfig = {
   },
 
   // ── Features ──────────────────────────────────────────────────────────────
+  // Turning on flow or books here builds its pages. Its nav entry (see `nav`)
+  // and its homepage section (`recent-flows`, `featured-books`) are turned on
+  // separately.
   features: {
     posts: {
       enabled: true,
@@ -156,6 +176,8 @@ export const siteConfig = {
     subtitle: "Notes, articles, and explorations — written for curiosity, shared for connection.",
   },
   homepage: {
+    // A section shows when it is enabled here and its feature is on:
+    // recent-flows needs features.flow, featured-books needs features.books.
     sections: [
       { id: 'hero',            enabled: true, weight: 1 },
       { id: 'featured-posts',  enabled: true, weight: 2, maxItems: 4, order: 'shuffle' as 'shuffle' | 'date-desc' | 'date-asc' },
@@ -234,6 +256,11 @@ export const siteConfig = {
   },
 
   // ── Analytics ─────────────────────────────────────────────────────────────
+  // For Umami, for example, set providers: ['umami'] and put your website ID
+  // (and, if you self-host, your script URL) in .env.local:
+  //   NEXT_PUBLIC_UMAMI_WEBSITE_ID=...
+  //   NEXT_PUBLIC_UMAMI_URL=https://your-umami.example.com/script.js
+  // If you turn analytics on, say so in content/privacy.mdx.
   analytics: {
     providers: [] as ('umami' | 'plausible' | 'google')[], // enable one or many; [] disables analytics
     umami: {
@@ -250,6 +277,10 @@ export const siteConfig = {
   },
 
   // ── Comments ──────────────────────────────────────────────────────────────
+  // For Giscus (comments in GitHub Discussions), set provider: 'giscus' and
+  // fill in giscus.repo, repoId, category and categoryId with the values
+  // https://giscus.app gives for your repository. For Disqus, set
+  // provider: 'disqus' and disqus.shortname.
   comments: {
     provider: null, // 'giscus' | 'disqus' | null
     // Per-category defaults. Set false to disable comments for an entire content type.
