@@ -72,7 +72,10 @@ Some files have their own rules:
   something of your own in the way, the upgrade leaves that for you too.
 - **The Amytis repo's own tests and CI** (`tests/`, `.github/`, `packages/`)
   aren't part of a site. Sites made before create-amytis 0.1.4 still have
-  them; the upgrade removes them if you haven't changed them.
+  them; the upgrade removes them if you haven't changed them. The same goes
+  for the repo's notes for AI assistants (`CLAUDE.md`, `AGENTS.md`,
+  `GEMINI.md`, `.claude/`), which are about working on Amytis itself; a copy
+  you rewrote for your site stays.
 
 ## After the upgrade
 
@@ -97,6 +100,61 @@ anything you've staged since), delete the files it says it created
 upgrade that ran without `--force`. After a `--force` run over uncommitted
 changes, restoring would throw those changes away too, so undo it by hand,
 from the list of files the upgrade printed.
+
+## Demo content
+
+Sites made from Amytis v2.1.0 or earlier began with the demo site's content:
+about a hundred posts, series, books, flows and notes in `content/`, and
+photos in `public/images/`. New sites begin with a welcome post and About,
+Privacy and Subscribe pages instead. The upgrade never changes `content/` or
+`public/images/`, so it doesn't remove the demo; it only says how many of its
+files you still have unchanged.
+
+To remove them, list the files that are still the demo's, look the list
+over, then delete what's left on it. In your site, in a bash shell (Git Bash
+on Windows), with the release you made the site from in place of `v2.1.0`:
+
+```bash
+mkdir -p /tmp/amytis-demo
+curl -sL https://github.com/hutusi/amytis/archive/refs/tags/v2.1.0.tar.gz | tar xz -C /tmp/amytis-demo
+demo=/tmp/amytis-demo/amytis-2.1.0
+# Each file still the demo's into demo-files.txt. Like the upgrade, this
+# ignores CRLF line endings in text, and compares images byte for byte.
+(cd "$demo" && find content public/images -type f ! -path public/images/avatar.jpg -print0) |
+  while IFS= read -r -d '' f; do
+    [ -f "$f" ] && git diff --no-index --quiet --ignore-cr-at-eol -- "$demo/$f" "$f" && printf '%s\n' "$f"
+  done > demo-files.txt
+```
+
+Files you changed aren't on the list, and neither is
+`public/images/avatar.jpg`, which the starter config uses. But an unchanged
+file that something you kept still uses is: if you rewrote a demo series'
+page, say, its cover image and the posts you left alone are listed. Delete
+the line of anything you want to keep, then remove the rest:
+
+```bash
+tr -d '\r' < demo-files.txt | tr '\n' '\0' | xargs -0 -r git rm -q -- && rm demo-files.txt
+```
+
+Then build from scratch, and check every link, even if your config sets
+`linkCheck: 'off'`:
+
+```bash
+bun run clean && bun run validate && bun run check-links --mode error --all
+```
+
+Bring back anything they miss with `git restore --staged --worktree <file>`.
+(Clean first: a production build leaves optimized copies of your images in
+`public/images/nextImageExportOptimizer/`, and a stale copy would hide an
+image you removed.) The build stops on a post you removed that a page you
+kept names, such as a series page's manual order, and the link check lists
+each removed image a page still shows. It names an image by its optimized
+copy: `/images/nextImageExportOptimizer/mountains-opt-1920.WEBP` is
+`public/images/mountains.jpg`. The nav and footer link to `/about/`,
+`/privacy/` and `/subscribe/`, so if those pages went too, write your own or
+copy the starter's from
+[`packages/create-amytis/starter/content`](https://github.com/hutusi/amytis/tree/main/packages/create-amytis/starter/content).
+When the report is clean, commit.
 
 ## When it can't tell which release you started from
 

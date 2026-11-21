@@ -35,13 +35,57 @@ export function applyStarterConfig(projectDir: string): boolean {
   return true;
 }
 
+// A new site's content: a welcome post and the pages the nav and footer link
+// to. It ships in the release next to this CLI's source, so it always matches
+// the engine release it is built with.
+export const STARTER_CONTENT = "packages/create-amytis/starter/content";
+
+// New sites start from the starter content, not from the demo site's (its
+// posts, series, books, flows, notes and translations). Returns whether the
+// release had a starter; releases before it keep their demo content.
+export function applyStarterContent(projectDir: string): boolean {
+  const starterDir = path.join(projectDir, ...STARTER_CONTENT.split("/"));
+  if (!fs.existsSync(starterDir)) return false;
+  const contentDir = path.join(projectDir, "content");
+  fs.rmSync(contentDir, { recursive: true, force: true });
+  fs.cpSync(starterDir, contentDir, { recursive: true });
+  return true;
+}
+
+// What the starter config and content use from public/images/: the author
+// avatar in site.config.example.ts.
+export const STARTER_IMAGES = new Set(["avatar.jpg"]);
+// The image optimizer's cache of hashes; the build writes it again.
+const IMAGE_HASHES = "public/next-image-export-optimizer-hashes.json";
+
+// Removes the demo content's images, which the starter content doesn't use,
+// and the optimizer's cache of their hashes. Returns what was removed.
+export function pruneDemoImages(projectDir: string): string[] {
+  const removed: string[] = [];
+  const imagesDir = path.join(projectDir, "public", "images");
+  if (fs.existsSync(imagesDir)) {
+    for (const entry of fs.readdirSync(imagesDir, { withFileTypes: true })) {
+      if (STARTER_IMAGES.has(entry.name)) continue;
+      fs.rmSync(path.join(imagesDir, entry.name), { recursive: true, force: true });
+      removed.push(`public/images/${entry.name}${entry.isDirectory() ? "/" : ""}`);
+    }
+  }
+  const hashes = path.join(projectDir, ...IMAGE_HASHES.split("/"));
+  if (fs.existsSync(hashes)) {
+    fs.rmSync(hashes);
+    removed.push(IMAGE_HASHES);
+  }
+  return removed;
+}
+
 // Same shape test the build applies to directories under content/
 // (src/lib/content/io.ts): a locale-shaped directory must be a configured
 // locale, or the build fails.
 const LOCALE_DIR_SHAPE = /^[a-z]{2}(-[A-Z]{2})?$/;
 
 // The starter config is single-language, so the demo site's translations
-// (content/zh/ and the like) would fail its build. Returns what was removed.
+// (content/zh/ and the like) would fail its build. Only needed for a release
+// without starter content. Returns what was removed.
 export function removeLocaleTrees(projectDir: string): string[] {
   const contentDir = path.join(projectDir, "content");
   if (!fs.existsSync(contentDir)) return [];
@@ -57,8 +101,22 @@ export function removeLocaleTrees(projectDir: string): string[] {
 // What only the Amytis repo itself uses: its tests check the demo site's
 // content and two-language config, so they fail in a new site; its workflows
 // run them and publish the amytis package; packages/ is this CLI's source;
-// TODO.md is the project's roadmap.
-const ENGINE_ONLY_PATHS = [".github", ".entire", "packages", "tests", "src/test-utils", "playwright.config.ts", "TODO.md"];
+// TODO.md is the project's roadmap. The agent docs (CLAUDE.md, AGENTS.md,
+// GEMINI.md, .claude/) guide work on the engine itself, its tests and
+// releases, and would mislead an assistant working on a site.
+const ENGINE_ONLY_PATHS = [
+  ".github",
+  ".entire",
+  ".claude",
+  "packages",
+  "tests",
+  "src/test-utils",
+  "playwright.config.ts",
+  "TODO.md",
+  "CLAUDE.md",
+  "AGENTS.md",
+  "GEMINI.md",
+];
 const TEST_FILE = /\.test\.tsx?$/;
 
 function removeTestFiles(dir: string): number {
@@ -151,6 +209,15 @@ export function patchSiteConfig(projectDir: string, title: string, description: 
 
 export const UPGRADE_SCRIPT = "bunx create-amytis@latest upgrade";
 
+// Scripts for the demo site's own content: new-weekly adds a post to its
+// ai-nexus-weekly series. Only a site that starts from the starter content
+// goes without them. toSitePackage keeps them: the upgrade's merge reads it
+// as what the site began with, and a site made from the demo content still
+// has that series, so an upgrade mustn't take its script away. (A release
+// that changes one of these scripts reports a package.json conflict in the
+// sites without it; remove such a script from the repo instead.)
+const DEMO_SCRIPTS = ["new-weekly"];
+
 // The release's package.json as a new site gets it. Returns a new object.
 export function toSitePackage(pkg: Record<string, unknown>, projectName: string): Record<string, unknown> {
   const site: Record<string, unknown> = structuredClone(pkg);
@@ -182,14 +249,20 @@ export function toSitePackage(pkg: Record<string, unknown>, projectName: string)
   return site;
 }
 
-export function patchPackageJson(projectDir: string, projectName: string): void {
+// dropDemoScripts: the site starts from the starter content, not the demo's.
+export function patchPackageJson(projectDir: string, projectName: string, options: { dropDemoScripts?: boolean } = {}): void {
   const pkgPath = path.join(projectDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     console.warn("  Warning: package.json not found, skipping patch");
     return;
   }
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
-  fs.writeFileSync(pkgPath, JSON.stringify(toSitePackage(pkg, projectName), null, 2) + "\n", "utf8");
+  const site = toSitePackage(pkg, projectName);
+  const scripts = site["scripts"] as Record<string, string> | undefined;
+  if (options.dropDemoScripts && scripts) {
+    for (const name of DEMO_SCRIPTS) delete scripts[name];
+  }
+  fs.writeFileSync(pkgPath, JSON.stringify(site, null, 2) + "\n", "utf8");
 }
 
 // Everything that turns the downloaded release into a new site, after the
@@ -198,11 +271,14 @@ export function patchPackageJson(projectDir: string, projectName: string): void 
 export function setUpNewSite(
   projectDir: string,
   site: { projectName: string; title: string; description: string },
-): { starter: boolean; localeTrees: string[]; engineFiles: string[] } {
+): { starter: boolean; starterContent: boolean; localeTrees: string[]; images: string[]; engineFiles: string[] } {
   const starter = applyStarterConfig(projectDir);
-  const localeTrees = starter ? removeLocaleTrees(projectDir) : [];
+  // Before removeEngineFiles, which removes packages/ and the starter in it.
+  const starterContent = applyStarterContent(projectDir);
+  const localeTrees = starter && !starterContent ? removeLocaleTrees(projectDir) : [];
+  const images = starterContent ? pruneDemoImages(projectDir) : [];
   const engineFiles = removeEngineFiles(projectDir);
   patchSiteConfig(projectDir, site.title, site.description);
-  patchPackageJson(projectDir, site.projectName);
-  return { starter, localeTrees, engineFiles };
+  patchPackageJson(projectDir, site.projectName, { dropDemoScripts: starterContent });
+  return { starter, starterContent, localeTrees, images, engineFiles };
 }

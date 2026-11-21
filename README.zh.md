@@ -6,7 +6,7 @@
 
 [**在线演示**](https://amytis.vercel.app/)
 
-![Amytis 截图](public/images/amytis-screenshot.jpg)
+![Amytis 截图](https://raw.githubusercontent.com/hutusi/amytis/main/public/images/amytis-screenshot.jpg)
 
 ## 为什么要做 Amytis ?
 
@@ -95,7 +95,7 @@ cd my-garden
 bun dev
 ```
 
-脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts` 并移除示例站点的中文翻译（`content/zh/`），填入站点标题和描述，修改包名，并安装依赖。只有 Amytis 仓库自己用到的内容不会带进新站点：测试（它们测试的是示例站点）、CI 工作流和脚手架自身的源码；在新站点里运行 `bun run validate` 会依次做代码检查、类型检查和构建。
+脚手架命令会下载最新打标签发布的 Amytis 版本，以单语言的入门配置（`site.config.example.ts`）作为你的 `site.config.ts`，填入站点标题和描述，修改包名，并安装依赖。新站点不会带上示例站点的内容和图片：`content/` 里只有一篇欢迎文章，以及“关于”“隐私”“订阅”三个页面；`site.config.ts` 里的注释说明了如何开启随笔、书籍、第二种语言、评论和统计。只有 Amytis 仓库自己用到的内容不会带进新站点：测试（它们测试的是示例站点）、CI 工作流、给 AI 助手的说明文件和脚手架自身的源码；在新站点里运行 `bun run validate` 会依次做代码检查、类型检查和构建。
 
 以后要把新版本的 Amytis 带进站点，先提交你的改动，再运行 `bun run upgrade`（create-amytis 0.2.0 之前创建的站点用 `bunx create-amytis@latest upgrade`）。它会像 git 那样把新版本合并进来，保留你的改动和内容。详见[升级站点](docs/guides/upgrading-a-site.md)（英文）。
 
@@ -146,8 +146,8 @@ bun run build:dev
 bun run clean
 bun run deploy                 # 部署到 Linux/nginx 服务器（需要 .env.local）
 
-## Test
-bun test
+## Test（仅 Amytis 仓库：新站点不包含这些测试）
+bun run test
 bun run test:unit
 bun run test:int
 bun run test:e2e
@@ -155,7 +155,7 @@ bun run test:mobile
 
 ## Create Content
 bun run new "Post Title"
-bun run new-weekly "Weekly Topic"
+bun run new-weekly "Weekly Topic"   # 示例站点的周刊系列；新站点没有
 bun run new-series "Series Name"
 bun run new-note "Concept"
 bun run new-flow            # --folder: DD/index.md，可放图片或幻灯片

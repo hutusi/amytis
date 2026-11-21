@@ -123,7 +123,6 @@ date: "${date}"
 excerpt: "A collection of ${images.length} images."
 category: "Gallery"
 tags: ["images", "gallery"]
-authors: ["Amytis"]
 layout: "post"
 draft: false
 latex: false

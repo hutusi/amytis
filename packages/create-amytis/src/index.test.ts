@@ -4,14 +4,18 @@ import * as os from "os";
 import * as path from "path";
 import {
   applyStarterConfig,
+  applyStarterContent,
   buildExtractCommand,
   getArchiveMetadata,
   patchPackageJson,
   patchSiteConfig,
   patchSiteConfigSource,
+  pruneDemoImages,
   removeEngineFiles,
   removeLocaleTrees,
   setUpNewSite,
+  STARTER_CONTENT,
+  STARTER_IMAGES,
   tagFromReleaseUrl,
 } from "./index";
 
@@ -56,6 +60,21 @@ const SAMPLE_PKG = JSON.stringify(
 
 function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "create-amytis-test-"));
+}
+
+function writeFiles(dir: string, files: string[]): void {
+  for (const file of files) {
+    fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+    fs.writeFileSync(path.join(dir, file), file);
+  }
+}
+
+// Relative paths, with / separators, of every file under dir.
+function filesUnder(dir: string): string[] {
+  return (fs.readdirSync(dir, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.relative(dir, path.join(entry.parentPath, entry.name)).split(path.sep).join("/"))
+    .sort();
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +249,92 @@ describe("applyStarterConfig", () => {
 });
 
 // ---------------------------------------------------------------------------
+// applyStarterContent, pruneDemoImages
+// ---------------------------------------------------------------------------
+
+describe("applyStarterContent", () => {
+  const tmpDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tmpDirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("replaces the demo's content with the starter's", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    writeFiles(dir, [
+      "content/about.mdx",
+      "content/posts/demo.mdx",
+      "content/series/demo/index.mdx",
+      "content/books/demo/index.mdx",
+      "content/zh/posts/demo.mdx",
+      `${STARTER_CONTENT}/about.mdx`,
+      `${STARTER_CONTENT}/posts/welcome.mdx`,
+    ]);
+    expect(applyStarterContent(dir)).toBe(true);
+    expect(filesUnder(path.join(dir, "content"))).toEqual(["about.mdx", "posts/welcome.mdx"]);
+    expect(fs.readFileSync(path.join(dir, "content", "about.mdx"), "utf8")).toBe(`${STARTER_CONTENT}/about.mdx`);
+  });
+
+  test("leaves the content alone in a release without a starter", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    writeFiles(dir, ["content/posts/demo.mdx"]);
+    expect(applyStarterContent(dir)).toBe(false);
+    expect(filesUnder(path.join(dir, "content"))).toEqual(["posts/demo.mdx"]);
+  });
+
+  test("setUpNewSite then removes only the locale trees, as before", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    fs.writeFileSync(path.join(dir, "site.config.ts"), SAMPLE_CONFIG);
+    fs.writeFileSync(path.join(dir, "site.config.example.ts"), SAMPLE_STARTER);
+    fs.writeFileSync(path.join(dir, "package.json"), SAMPLE_PKG);
+    writeFiles(dir, ["content/posts/demo.mdx", "content/zh/posts/demo.mdx", "public/images/demo.jpg"]);
+    const result = setUpNewSite(dir, { projectName: "old-release", title: "Old", description: "An older release" });
+    expect(result).toMatchObject({ starter: true, starterContent: false, localeTrees: ["content/zh/"], images: [] });
+    expect(filesUnder(path.join(dir, "content"))).toEqual(["posts/demo.mdx"]);
+    expect(fs.existsSync(path.join(dir, "public", "images", "demo.jpg"))).toBe(true);
+  });
+});
+
+describe("pruneDemoImages", () => {
+  const tmpDirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of tmpDirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps the starter's images and removes the rest and the hash cache", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    writeFiles(dir, [
+      "public/images/avatar.jpg",
+      "public/images/lake.jpg",
+      "public/images/gallery/one.png",
+      "public/next-image-export-optimizer-hashes.json",
+      "public/og-image.png",
+    ]);
+    expect(pruneDemoImages(dir).sort()).toEqual([
+      "public/images/gallery/",
+      "public/images/lake.jpg",
+      "public/next-image-export-optimizer-hashes.json",
+    ]);
+    expect(filesUnder(path.join(dir, "public"))).toEqual(["images/avatar.jpg", "og-image.png"]);
+  });
+
+  test("does nothing without them", () => {
+    const dir = makeTmpDir();
+    tmpDirs.push(dir);
+    expect(pruneDemoImages(dir)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // removeEngineFiles
 // ---------------------------------------------------------------------------
 
@@ -257,7 +362,12 @@ describe("removeEngineFiles", () => {
       "src/components/ui/C.test.tsx",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
+      ".claude/rules/rst.md",
       "docs/guide.md",
+      "docs/CLAUDE.md",
       "scripts/new-post.ts",
       "content/posts/hello.md",
       "CHANGELOG.md",
@@ -270,15 +380,27 @@ describe("removeEngineFiles", () => {
     expect(removeEngineFiles(dir)).toEqual([
       ".github/",
       ".entire/",
+      ".claude/",
       "packages/",
       "tests/",
       "src/test-utils/",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
       "src/**/*.test.ts(x) (2 files)",
     ]);
     const left = files.filter((file) => fs.existsSync(path.join(dir, file)));
-    expect(left).toEqual(["src/lib/a.ts", "src/components/B.tsx", "docs/guide.md", "scripts/new-post.ts", "content/posts/hello.md", "CHANGELOG.md"]);
+    expect(left).toEqual([
+      "src/lib/a.ts",
+      "src/components/B.tsx",
+      "docs/guide.md",
+      "docs/CLAUDE.md",
+      "scripts/new-post.ts",
+      "content/posts/hello.md",
+      "CHANGELOG.md",
+    ]);
   });
 
   test("does nothing in a directory without them", () => {
@@ -357,13 +479,45 @@ describe("sync with the real repo files", () => {
     for (const file of ["site.config.ts", "site.config.example.ts", "package.json"]) {
       fs.copyFileSync(path.join(repoRoot, file), path.join(dir, file));
     }
+    fs.cpSync(path.join(repoRoot, STARTER_CONTENT), path.join(dir, STARTER_CONTENT), { recursive: true });
     fs.mkdirSync(path.join(dir, "content", "zh"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"));
 
     const result = setUpNewSite(dir, { projectName: "sync-check", title: "Sync Check", description: "A new site" });
-    expect(result).toEqual({ starter: true, localeTrees: ["content/zh/"], engineFiles: ["tests/"] });
+    expect(result).toEqual({ starter: true, starterContent: true, localeTrees: [], images: [], engineFiles: ["packages/", "tests/"] });
     expect(fs.readFileSync(path.join(dir, "site.config.ts"), "utf8")).toContain(`  title: "Sync Check",`);
     expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name).toBe("sync-check");
+    // Its script for the demo's weekly series goes with the demo content.
+    expect(JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).scripts["new-weekly"]).toBeUndefined();
+    // The nav and footer link these pages, so a new site must have them.
+    expect(filesUnder(path.join(dir, "content"))).toEqual([
+      "about.mdx",
+      "posts/welcome-to-amytis.mdx",
+      "privacy.mdx",
+      "subscribe.mdx",
+    ]);
+  });
+
+  test("the starter config only uses images that pruneDemoImages keeps", () => {
+    const starter = fs.readFileSync(path.join(repoRoot, "site.config.example.ts"), "utf8");
+    // Values, not comments: a comment's example paths needn't exist. A
+    // comment starts with // after whitespace; a URL's // follows a colon.
+    const code = starter.split("\n").map((line) => line.replace(/(^|\s)\/\/.*$/, "")).join("\n");
+    const images = [...code.matchAll(/["'`]\/images\/([^"'`]+)["'`]/g)].map((m) => m[1]);
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) {
+      expect({ image, kept: STARTER_IMAGES.has(image) }).toEqual({ image, kept: true });
+      expect(fs.existsSync(path.join(repoRoot, "public", "images", image))).toBe(true);
+    }
+  });
+
+  test("the starter content uses no images", () => {
+    // pruneDemoImages keeps only what the starter config needs.
+    const starterDir = path.join(repoRoot, STARTER_CONTENT);
+    for (const rel of filesUnder(starterDir)) {
+      const text = fs.readFileSync(path.join(starterDir, rel), "utf8");
+      expect({ rel, images: text.match(/!\[[^\]]*\]\([^)]*\)|<img\b|coverImage:/g) ?? [] }).toEqual({ rel, images: [] });
+    }
   });
 
   test("create-amytis names the repository that publishes it", () => {
@@ -504,6 +658,28 @@ describe("patchPackageJson", () => {
       validate: "bun run lint && bun run build:dev",
       upgrade: "bunx create-amytis@latest upgrade",
     });
+  });
+
+  test("drops the demo site's own scripts only for a site without the demo content", () => {
+    const write = () => {
+      const dir = makeTmpDir();
+      tmpDirs.push(dir);
+      fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({
+        name: "@hutusi/amytis",
+        scripts: {
+          new: "bun scripts/new-post.ts",
+          "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly --md --folder --prefix weekly",
+        },
+      }));
+      return dir;
+    };
+    const lean = write();
+    patchPackageJson(lean, "my-garden", { dropDemoScripts: true });
+    expect(Object.keys(readPkg(lean).scripts as Record<string, string>)).toEqual(["new", "upgrade"]);
+    // A release without starter content keeps the demo series new-weekly writes to.
+    const demo = write();
+    patchPackageJson(demo, "my-garden");
+    expect(Object.keys(readPkg(demo).scripts as Record<string, string>)).toEqual(["new", "new-weekly", "upgrade"]);
   });
 });
 

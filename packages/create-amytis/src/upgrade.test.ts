@@ -3,10 +3,11 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { spawnSync } from "child_process";
-import { isEngineOnlyPath, removeEngineFiles, setUpNewSite } from "./setup";
+import { STARTER_CONTENT, isEngineOnlyPath, removeEngineFiles, setUpNewSite } from "./setup";
 import {
   applyPlan,
   compareVersions,
+  countDemoFiles,
   decideFile,
   listFiles,
   mergePackageJson,
@@ -194,6 +195,23 @@ describe("mergePackageJson", () => {
     expect(scripts.preview).toBe("bun run build && bun run start");
   });
 
+  test("keeps the demo's weekly script in a site made from the demo content", () => {
+    // Older sites still have content/series/ai-nexus-weekly/, which
+    // new-weekly writes to, so the upgrade leaves it be even when the
+    // release changed other scripts.
+    const weekly = { "new-weekly": "bun scripts/new-post.ts --series ai-nexus-weekly" };
+    const demoBase = { ...base, scripts: { ...base.scripts, ...weekly } };
+    const demoTarget = { ...target, scripts: { ...target.scripts, ...weekly } };
+    const demoSite = { ...site, scripts: { ...site.scripts, ...weekly } };
+    const { merged, conflicts } = mergePackageJson(demoBase, demoSite, demoTarget);
+    expect(conflicts).toEqual([]);
+    expect((merged.scripts as Record<string, string>)["new-weekly"]).toBe(weekly["new-weekly"]);
+    // A site made from the starter content never had it, and doesn't gain it.
+    const lean = mergePackageJson(demoBase, site, demoTarget);
+    expect(lean.conflicts).toEqual([]);
+    expect((lean.merged.scripts as Record<string, string>)["new-weekly"]).toBeUndefined();
+  });
+
   test("records the target's version even when the site changed its own", () => {
     const { merged, conflicts } = mergePackageJson(base, { ...site, version: "9.9.9" }, target);
     expect(merged.version).toBe("2.0.1");
@@ -317,6 +335,11 @@ describe("isEngineOnlyPath", () => {
       "src/components/Nav.test.tsx",
       "playwright.config.ts",
       "TODO.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "GEMINI.md",
+      ".claude/rules/rst.md",
+      "docs/CLAUDE.md",
       "src/lib/urls.ts",
       "src/lib/testing.ts",
       "scripts/check.test.ts",
@@ -383,6 +406,8 @@ function makeReleases(): { base: string; target: string } {
     "content/posts/hello.md": "hi\n",
     "content/zh/posts/hello.md": "你好\n",
     "tests/engine.test.ts": "t\n",
+    "CLAUDE.md": "engine notes\n",
+    ".claude/rules/rst.md": "rule\n",
     "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
   });
   writeTree(target, {
@@ -403,6 +428,8 @@ function makeReleases(): { base: string; target: string } {
     "content/posts/hello.md": "hi 2\n",
     "content/zh/posts/hello.md": "你好 2\n",
     "tests/engine.test.ts": "t2\n",
+    "CLAUDE.md": "engine notes 2\n",
+    ".claude/rules/rst.md": "rule 2\n",
     "CHANGELOG.md": "## [2.0.1] - 2026-11-20\n\n### Upgrading from 2.0.0\n- Run bun install.\n\n## [2.0.0] - 2026-11-17\n",
   });
   return { base, target };
@@ -427,8 +454,11 @@ function makeSite(base: string): string {
     "src/gone.ts": "g mine\n",
     "src/mine.ts": "only mine\n",
     "public/logo.png": Buffer.from([0x89, 0x50, 0x00, 0x03]),
-    // Made by an older create-amytis, which kept the engine's tests.
+    // Made by an older create-amytis, which kept the engine's tests and agent
+    // docs; the owner rewrote one of the docs.
     "tests/engine.test.ts": "t\n",
+    "CLAUDE.md": "engine notes\n",
+    ".claude/rules/rst.md": "my rule\n",
   });
   fs.rmSync(path.join(site, "src", "dropped.ts"));
   return site;
@@ -452,6 +482,7 @@ describe("planUpgrade and applyPlan", () => {
   test("decides each file by comparing the two releases and the site", () => {
     const kinds = Object.fromEntries(plan.changes.map((c) => [c.path, c.kind]));
     expect(kinds).toEqual({
+      "CLAUDE.md": "delete",
       "README.md": "kept",
       "bun.lock": "kept",
       "package.json": "merged",
@@ -490,6 +521,9 @@ describe("planUpgrade and applyPlan", () => {
     // The engine's own tests stay out of the site.
     expect(fs.existsSync(path.join(site, "tests"))).toBe(false);
     expect(read(site, "src/lib/x.test.ts")).toBeUndefined();
+    // So do its agent docs, unless the owner made one their own.
+    expect(read(site, "CLAUDE.md")).toBeUndefined();
+    expect(read(site, ".claude/rules/rst.md")).toBe("my rule\n");
 
     // Binary files and READMEs aren't merged line by line.
     expect([...fs.readFileSync(path.join(site, "public", "logo.png"))]).toEqual([0x89, 0x50, 0x00, 0x03]);
@@ -845,6 +879,44 @@ describe("site.config.ts made from the demo site's own config", () => {
   });
 });
 
+describe("countDemoFiles", () => {
+  const demo = {
+    "content/about.mdx": "About Amytis\n",
+    "content/posts/hello.md": "hi\n",
+    "content/series/demo/index.mdx": "a series\n",
+    "public/images/avatar.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x01]),
+    "public/images/lake.jpg": Buffer.from([0xff, 0xd8, 0x00, 0x02]),
+  };
+
+  test("counts the demo files a site still has unchanged", () => {
+    const base = makeTmpDir();
+    const site = makeTmpDir();
+    writeTree(base, { ...demo, "src/page.tsx": "x\n" });
+    writeTree(site, {
+      ...demo,
+      // Rewritten by the owner, and their own.
+      "content/about.mdx": "About me\n",
+      "content/posts/mine.md": "mine\n",
+      // Checked out on Windows: the same file.
+      "content/posts/hello.md": "hi\r\n",
+      "src/page.tsx": "x\n",
+    });
+    fs.rmSync(path.join(site, "content", "series"), { recursive: true });
+    // hello.md and lake.jpg. The avatar is one new sites keep, so it isn't
+    // the demo's to remove; src/ isn't the site's content.
+    expect(countDemoFiles(site, base)).toBe(2);
+  });
+
+  test("is 0 for a site made from the starter content", () => {
+    const base = makeTmpDir();
+    writeTree(base, { ...demo, [`${STARTER_CONTENT}/about.mdx`]: "About\n", [`${STARTER_CONTENT}/posts/welcome.mdx`]: "Welcome\n" });
+    const site = makeTmpDir();
+    fs.cpSync(base, site, { recursive: true });
+    setUpNewSite(site, { projectName: "fresh", title: "Fresh", description: "New." });
+    expect(countDemoFiles(site, base)).toBe(0);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // The command
 // ---------------------------------------------------------------------------
@@ -903,6 +975,39 @@ describe("create-amytis upgrade", () => {
     expect(result.stdout).toContain("delete the files it created, then run bun install. It created:\n  src/added.ts");
     expect(read(site, "src/untouched.ts")).toBe("a2\n");
     expect(JSON.parse(read(site, "package.json")!).version).toBe("2.0.1");
+    // The target has no starter content, so its new sites still get the demo.
+    expect(result.stdout).not.toContain("still the Amytis demo's");
+  });
+
+  test("tells a site with the demo content still in it how to remove it", () => {
+    const { site, base, target } = cleanSite();
+    writeTree(target, { [`${STARTER_CONTENT}/about.mdx`]: "About\n" });
+    const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run");
+    expect(result.status).toBe(0);
+    // content/posts/hello.md; the site's content is left alone.
+    expect(result.stdout).toContain(
+      `1 file in content/ and public/images/ is still the Amytis demo's. The upgrade leaves those folders alone; ` +
+      `"Demo content" in docs/guides/upgrading-a-site.md says how to remove it.`,
+    );
+    expect(read(site, "content/posts/hello.md")).toBe("hi\n");
+  });
+
+  // Root reads a file whatever its mode, and Windows ignores chmod.
+  test.skipIf(process.platform === "win32" || process.getuid?.() === 0)("still upgrades when it can't read a demo file", () => {
+    const { site, base, target } = cleanSite();
+    writeTree(target, { [`${STARTER_CONTENT}/about.mdx`]: "About\n" });
+    const hello = path.join(site, "content", "posts", "hello.md");
+    fs.chmodSync(hello, 0o000);
+    try {
+      const result = run(site, "--base-dir", base, "--target-dir", target, "--dry-run");
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("Couldn't count the Amytis demo's files left in content/ and public/images/ (EACCES");
+      expect(result.stdout).not.toContain("still the Amytis demo's");
+      expect(result.stdout).toContain("Dry run: nothing was changed.");
+    } finally {
+      fs.chmodSync(hello, 0o644);
+    }
   });
 
   test.skipIf(process.platform === "win32")("fails when bun install does, after upgrading the files", () => {

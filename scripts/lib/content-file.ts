@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 // Shared file-creation helpers for the content-creation scripts (new-post,
 // new-note, new-flow, and the importers). Only genuinely common mechanics
@@ -52,9 +53,12 @@ export function exitIfExists(filePath: string, kind: string): void {
 
 /**
  * Write the new content file and print the standard
- * `Created new <kind>: <path>` feedback.
+ * `Created new <kind>: <path>` feedback. Creates the folder it goes in: a
+ * new site whose owner deleted its only post has no content/posts/, as git
+ * doesn't keep empty folders.
  */
 export function writeContentFile(filePath: string, content: string, kind: string): void {
+  ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, content);
   console.log(`Created new ${kind}: ${filePath}`);
 }

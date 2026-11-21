@@ -572,13 +572,27 @@ in the other. Locale-aware fields use `{ en, zh }` in `site.config.ts` and
 plain strings in the example.
 
 `create-amytis` copies the example over `site.config.ts` in a new site and
-removes the locale trees (`content/<locale>/`), which a single-language config
-can't build. It also removes what only this repo uses (`setUpNewSite` in
+replaces `content/` with the starter content in
+`packages/create-amytis/starter/content/`: a welcome post and the About,
+Privacy and Subscribe pages, which the nav and footer always link. It removes
+the demo's images from `public/images/` except the ones the starter uses
+(`STARTER_IMAGES`: the avatar), along with the image optimizer's hash cache.
+(From a release without starter content it keeps the demo content and only
+removes the locale trees, `content/<locale>/`, which a single-language config
+can't build.) It also removes what only this repo uses (`setUpNewSite` in
 `packages/create-amytis/src/setup.ts`): the tests, which test the demo site's
-content and config, `src/test-utils/`, `.github/`, `packages/` and the `test*`
-scripts. CI's Starter site job runs `setUpNewSite` on the checkout, then the
-new site's `validate` (lint, typecheck, `build:dev`) and a link check in
-error mode. So the code has to work with both configs: type the example's
+content and config, `src/test-utils/`, `.github/`, `packages/`, the notes for
+AI assistants (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/`), the `test*`
+scripts and the demo-only `new-weekly` script. CI's Starter site job runs
+`setUpNewSite` on the checkout, then the new site's `validate` (lint,
+typecheck, `build:dev`) and a link check in error mode. So the starter
+content must build and link-check on its own, against the starter config.
+
+The starter config shows features it leaves off (flows, books, a Links page,
+a second language, comments, analytics) as comments. Each hint sits in the
+comment above its block's opening line, never next to a value: an upgrade
+merges the starter into every site's config, and a change next to a line the
+owner edited would be a conflict. So the code has to work with both configs: type the example's
 empty arrays, and treat locale-aware fields as `string | Record<string, string>`.
 It also has to work without the tests: nothing outside them may import from
 them, and with disabled features (books and flows are off in the starter) no
@@ -589,7 +603,10 @@ Existing sites take a new release with `create-amytis upgrade`
 `docs/guides/upgrading-a-site.md`). The site's `package.json` version names
 the release it was made from; the upgrade downloads that one and the target,
 and three-way merges each file (`git merge-file` for text). `content/` and
-`public/images/` are never touched. `package.json` merges by key.
+`public/images/` are never touched; when the target release has starter
+content, the upgrade counts the files in them that are still the base
+release's demo files, unchanged, and points at the upgrading guide's recipe
+for removing them. `package.json` merges by key.
 `site.config.ts` merges against the base release's `site.config.example.ts`
 with the site's title and description patched in, which is how new config
 fields reach existing sites. So a new field belongs in the example like any
