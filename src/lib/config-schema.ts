@@ -107,6 +107,15 @@ export const SiteConfigSchema = z.object({
     wechat: z.object({ qrCode: z.string(), account: z.string() }),
     email: z.string(),
   }),
+  // Optional so a config written before the field existed still validates.
+  // The pattern is Tela's own handle rule; a pasted "@name" or profile URL
+  // fails the build instead of producing a link Tela can't match.
+  telaread: z.object({
+    username: z.string().regex(
+      /^(?:[a-z0-9_]{3,30})?$/,
+      'must be your Tela username only (3–30 lowercase letters, digits or _), without "@" or the URL; leave empty for no link',
+    ),
+  }).optional(),
 
   // ── Features ──
   features: z.object({

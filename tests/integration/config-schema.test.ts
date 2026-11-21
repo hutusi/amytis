@@ -54,6 +54,27 @@ describe("SiteConfigSchema", () => {
     expect(SiteConfigSchema.safeParse(bad).success).toBe(false);
   });
 
+  test("accepts a config without the optional telaread block", () => {
+    const old = structuredClone(siteConfig) as Record<string, unknown>;
+    delete old.telaread;
+    expect(SiteConfigSchema.safeParse(old).success).toBe(true);
+  });
+
+  test("accepts a Tela username", () => {
+    const good = structuredClone(siteConfig) as Record<string, unknown>;
+    good.telaread = { username: "alice_92" };
+    expect(SiteConfigSchema.safeParse(good).success).toBe(true);
+  });
+
+  test("rejects a telaread.username that isn't a bare Tela username", () => {
+    for (const value of ["@alice", "https://telaread.com/@alice", "Alice", "ab", "alice-b"]) {
+      const bad = structuredClone(siteConfig) as Record<string, unknown>;
+      bad.telaread = { username: value };
+      expect(SiteConfigSchema.safeParse(bad).success).toBe(false);
+      expect(() => validateSiteConfig(bad)).toThrow(/telaread\.username/);
+    }
+  });
+
   test("error message is prefixed and lists the offending path", () => {
     const bad = structuredClone(siteConfig) as Record<string, unknown>;
     (bad.feed as Record<string, unknown>).content = "summary";

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Claim Your Site on Tela**: set `telaread.username` in `site.config.ts` to your Tela (telaread.com) username and the footer's Connect column links to your Tela profile with `rel="me"`. Tela accepts that link as proof that the site is yours, so you can claim it there with no token or extra file. It is empty by default, which shows no link. The field is optional: a site made from the demo config keeps building without it, and can copy the `telaread` block from `site.config.example.ts` to use it.
+
 ## [2.1.0] - 2026-11-20
 
 ### Added

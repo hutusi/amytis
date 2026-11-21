@@ -2,10 +2,14 @@ import LocaleLink from '@/components/LocaleLink';
 import { siteConfig } from '../../site.config';
 import { T, TLabel, TLocale } from '@/components/T';
 import LanguageSwitch from './LanguageSwitch';
+import { telareadProfileLink } from '@/lib/telaread';
+
+const connectLinkClass = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center justify-center lg:justify-start gap-2";
 
 // Server component: all language-reactive strings render via the T/TLabel/
 // TLocale client leaves; LanguageSwitch is its own client island.
 export default function Footer() {
+  const telareadLink = telareadProfileLink();
   return (
     <footer data-site-footer className="bg-surface-faint border-t border-line mt-auto select-none">
       <div className="max-w-6xl mx-auto px-6 py-10 lg:py-16">
@@ -55,21 +59,28 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               {[...(siteConfig.footer?.connect ?? [])].sort((a, b) => a.weight - b.weight).map((item) => {
                 const isExternal = item.external || item.url.startsWith('http');
-                const className = "text-foreground/80 hover:text-accent transition-colors no-underline flex items-center justify-center lg:justify-start gap-2";
                 return (
                   <li key={item.url}>
                     {isExternal ? (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className={connectLinkClass}>
                         <TLabel name={item.name} />
                       </a>
                     ) : (
-                      <LocaleLink href={item.url} className={className}>
+                      <LocaleLink href={item.url} className={connectLinkClass}>
                         <TLabel name={item.name} />
                       </LocaleLink>
                     )}
                   </li>
                 );
               })}
+              {/* rel="me" on this link is how Tela verifies the site's owner. */}
+              {telareadLink && (
+                <li>
+                  <a href={telareadLink.href} rel={telareadLink.rel} target="_blank" className={connectLinkClass}>
+                    Tela
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

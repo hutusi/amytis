@@ -122,6 +122,12 @@ export const siteConfig = {
     },
     email: '',          // Newsletter/mailing list URL (distinct from social.email contact address)
   },
+  // Your Tela (telaread.com) username, e.g. 'yourname'. When set, the footer's
+  // Connect column links to https://telaread.com/@yourname with rel="me", which
+  // is how you claim this site on Tela. Leave empty for no link.
+  telaread: {
+    username: '',
+  },
 
   // ── Features ──────────────────────────────────────────────────────────────
   features: {
