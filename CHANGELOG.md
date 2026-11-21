@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading from 2.1.0
+- **The demo content stays in your site.** New sites now start without it (see **Lean New Sites**), but the upgrade never changes `content/` or `public/images/`, so it only says how many demo files you still have unchanged. "Demo content" in `docs/guides/upgrading-a-site.md` shows how to remove exactly those.
+- **The repo's notes for AI assistants go.** The upgrade removes `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` and `.claude/rules/` if you never changed them; they are about working on Amytis itself. A copy you rewrote stays.
+
 ### Added
 - **Claim Your Site on Tela**: set `telaread.username` in `site.config.ts` to your Tela (telaread.com) username and the footer's Connect column links to your Tela profile with `rel="me"`. Tela accepts that link as proof that the site is yours, so you can claim it there with no token or extra file. It is empty by default, which shows no link. The field is optional: a site made from the demo config keeps building without it, and can copy the `telaread` block from `site.config.example.ts` to use it.
+- **Lean New Sites**: `bun create amytis` no longer copies the demo site's content (about a hundred posts, series, books, flows and notes) and photos into a new site. `content/` starts with a welcome post that shows where things live and how to write, deploy and upgrade, plus generic About, Privacy and Subscribe pages. The demo's privacy page had claimed Umami and Giscus, which the starter turns off. New sites also leave out the repo's notes for AI assistants and the demo-only `new-weekly` script. Needs `create-amytis` 0.3.0.
+- **Starter Config Hints**: `site.config.example.ts` shows, in comments, how to turn on what it leaves off: the Flow, Books and Links nav entries, series and book dropdowns, the matching homepage sections, a second language, Umami analytics, and Giscus or Disqus comments. They are comments above each block, so the upgrade merges them into a customized config without conflicts.
+
+### Fixed
+- **New Posts' Author**: `bun run new`, `new-from-pdf` and `new-from-images` (and `templates/default.mdx`) wrote `authors: ["Amytis"]` into every post. Posts now take the site's `posts.authors.default`.
+
+### Removed
+- **Unused SVGs**: `public/next.svg`, `vercel.svg`, `window.svg`, `globe.svg` and `file.svg`, left over from the create-next-app template. The upgrade removes them from a site that never changed them.
 
 ## [2.1.0] - 2026-11-20
 

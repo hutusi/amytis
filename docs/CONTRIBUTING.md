@@ -237,7 +237,11 @@ manual `workflow_dispatch` job.
 
 New sites made with `bun create amytis` don't get the tests or their scripts
 (see "Config sync" in `docs/ARCHITECTURE.md`): they test this repo's demo
-content. CI's Starter site job checks the code still builds without them.
+content. Nor do they get that content: their `content/` is a copy of
+`packages/create-amytis/starter/content/` (a welcome post and the About,
+Privacy and Subscribe pages). CI's Starter site job checks that the code
+still builds without the tests, and builds and link-checks the starter
+content, so edit it like any other content.
 
 `tests/dom/` holds client-behavior tests (state, events, keyboard interaction).
 They run with happy-dom registered via `--preload ./tests/dom/setup.ts` — only
