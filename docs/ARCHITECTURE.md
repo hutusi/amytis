@@ -541,7 +541,7 @@ Shiki code blocks deliberately keep their normal theme.
 | `generateOgImages` | Generate a share card per post, note and chapter without its own cover (see Share Cards); `false` in the example config |
 | `nav` | Navigation links with weights |
 | `social` | GitHub, Twitter, email links for the footer |
-| `telaread.username` | Your Tela (telaread.com) username, `''` by default. When set, the footer's Connect column links to `https://telaread.com/@username` with `rel="me"`, which is how you claim the site on Tela. The build fails on anything but a bare username (3–30 lowercase letters, digits or `_`). Tela checks the domain's root page, so a site served under a sub-path of a shared host (`user.github.io/repo`) can't be claimed this way |
+| `telaread.username` | Your Tela (telaread.com) username, `''` by default. When set, the footer's Connect column links to `https://telaread.com/@username` with `rel="me"`, which is how you claim the site on Tela. The build fails on anything but a bare username (3–30 lowercase letters, digits or `_`). On the static hosts an Amytis site deploys to, Tela reads the home page at the root of the domain, so a site served under a sub-path (a GitHub Pages project site, `user.github.io/repo`) can't be claimed this way |
 | `series.navbar` | Series slugs to show in the navbar dropdown |
 | `series.customPaths` | Per-series URL prefix, e.g. `{ 'weeklies': 'weeklies' }` → `/weeklies/[slug]` |
 | `pagination.posts`, `pagination.series` | Items per page |

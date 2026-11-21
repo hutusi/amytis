@@ -7,9 +7,8 @@ export const TELAREAD_ORIGIN = 'https://telaread.com';
  * (telaread.com), or null when `siteConfig.telaread.username` is empty.
  *
  * Tela verifies a claim by fetching the home page and looking for a link to
- * `https://telaread.com/@<username>` whose `rel` contains `me` (and no
- * `nofollow` / `ugc` / `sponsored`), so both the URL shape and the `rel`
- * tokens here are the contract.
+ * `https://telaread.com/@<username>` whose `rel` contains `me`, so the URL
+ * shape and that `me` token are the contract.
  *
  * Takes the config as a plain `object` because code type-checks against each
  * site's own inferred config type: a site.config.ts written before this field

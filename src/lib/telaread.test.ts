@@ -5,10 +5,8 @@ describe('telareadProfileLink', () => {
   test('links to the Tela profile with rel="me" when a username is set', () => {
     const link = telareadProfileLink({ telaread: { username: 'alice_92' } });
     expect(link?.href).toBe('https://telaread.com/@alice_92');
-    // Tela's claim check needs the `me` token and rejects nofollow/ugc/sponsored.
-    const rel = link?.rel.split(/\s+/) ?? [];
-    expect(rel).toContain('me');
-    for (const token of ['nofollow', 'ugc', 'sponsored']) expect(rel).not.toContain(token);
+    // Tela accepts the link as proof of ownership by its `me` token.
+    expect(link?.rel.split(/\s+/)).toContain('me');
   });
 
   test('is null for an empty username (the default)', () => {
