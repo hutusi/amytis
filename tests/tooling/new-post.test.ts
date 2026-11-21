@@ -1,6 +1,7 @@
 import { describe, test, expect, afterAll } from "bun:test";
 import { spawnSync } from "bun";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import matter from "gray-matter";
 import { slugifyAscii } from "../../scripts/lib/slug";
@@ -125,5 +126,18 @@ describe("Tooling: New Post Script", () => {
     
     expect(fs.existsSync(filePath)).toBe(true);
     createdDirs.push(dirPath); // Will remove dir recursively
+  });
+
+  test("creates content/posts/ when a site has none", () => {
+    // A new site whose owner deleted the welcome post: git drops the empty
+    // folder. With no templates/ either, the built-in template is used.
+    const site = fs.mkdtempSync(path.join(os.tmpdir(), "new-post-"));
+    createdDirs.push(site);
+    const result = spawnSync(["bun", path.resolve(SCRIPT_PATH), "First Post"], { cwd: site });
+    expect(result.stderr.toString()).toBe("");
+    expect(result.exitCode).toBe(0);
+    const date = new Date().toISOString().split('T')[0];
+    const filePath = path.join(site, CONTENT_DIR, `${date}-first-post.mdx`);
+    expect(matter(fs.readFileSync(filePath, "utf-8")).data.title).toBe("First Post");
   });
 });
