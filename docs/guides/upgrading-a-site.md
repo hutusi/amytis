@@ -136,12 +136,18 @@ the line of anything you want to keep, then remove the rest:
 tr -d '\r' < demo-files.txt | tr '\n' '\0' | xargs -0 -r git rm -q -- && rm demo-files.txt
 ```
 
-Then build from scratch with `bun run clean && bun run validate`, and bring
-back anything it misses with `git restore --staged --worktree <file>`. (Clean
-first: a production build leaves optimized copies of your images in
+Then build from scratch, and check every link, even if your config sets
+`linkCheck: 'off'`:
+
+```bash
+bun run clean && bun run validate && bun run check-links --mode error --all
+```
+
+Bring back anything they miss with `git restore --staged --worktree <file>`.
+(Clean first: a production build leaves optimized copies of your images in
 `public/images/nextImageExportOptimizer/`, and a stale copy would hide an
 image you removed.) The build stops on a post you removed that a page you
-kept names, such as a series page's manual order, and its link report lists
+kept names, such as a series page's manual order, and the link check lists
 each removed image a page still shows. It names an image by its optimized
 copy: `/images/nextImageExportOptimizer/mountains-opt-1920.WEBP` is
 `public/images/mountains.jpg`. The nav and footer link to `/about/`,
